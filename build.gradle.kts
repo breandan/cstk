@@ -16,7 +16,10 @@ repositories {
 dependencies {
   implementation(kotlin("stdlib"))
   implementation("com.google.jimfs:jimfs:1.2")
+  implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
+
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
+
 }
 
 tasks {

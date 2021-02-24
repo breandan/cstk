@@ -1,34 +1,66 @@
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import com.google.common.jimfs.*
+import com.googlecode.concurrenttrees.radix.ConcurrentRadixTree
+import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import java.nio.file.*
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) = Loader().main(args)
 
 class Loader: CliktCommand() {
-  val jfs = Jimfs.newFileSystem(Configuration.forCurrentPlatform())
-
-  private val rootDir by option(
+  val rootDir by option(
     "--path", help = "Root directory"
   ).default(Paths.get("").toAbsolutePath().toString())
 
-  private val query by option(
+  val query by option(
     "--query", help = "Query to find"
   ).default("match")
 
+  // An in-memory file system mirroring the contents of rootDir
+  val jfs = Jimfs.newFileSystem(Configuration.forCurrentPlatform())
+  // Radix trie multimap for (file, offset) pairs of matching prefixes
+  val trie = ConcurrentRadixTree<Queue<Pair<Path, Int>>>(DefaultCharArrayNodeFactory())
+
   override fun run() {
     println("Searching $rootDir for $query")
-    Files.createDirectories(jfs.getPath(rootDir))
-    Path.of(rootDir).allFilesRecursively()
-      .forEach { src ->
-        val path = src.toAbsolutePath().toString()
-        Files.createDirectories(jfs.getPath(path).parent)
-        Files.copy(src, jfs.getPath(path))
-      }
+    val jfsRoot = Path.of(rootDir).mirrorHDFS()
+    indexFS(jfsRoot)
 
-    val foo = jfs.getPath(rootDir)
+    measureTimeMillis { jfsRoot.grep(query)
+      .also { println("Grep found ${it.size} results") } }
+      .let { println("Grep took $it ms") }
 
-    foo.grep(query).forEach { println(it) }
+    measureTimeMillis { trie.getValuesForKeysStartingWith(query)
+      .also { println("Trie found ${ it.flatten().size } results") } }
+      .let { println("Trie took $it ms") }
+  }
+
+  // Indexes all words in all files in the path
+  private fun indexFS(jfsRoot: Path) {
+    jfsRoot.allFilesRecursively().parallelStream().forEach { src ->
+      try {
+        val content = Files.readString(src)
+        Regex("(\\w+)").findAll(content).forEach {
+            val result = src to it.range.first
+            trie.putIfAbsent(it.value,
+              ConcurrentLinkedQueue(listOf(result)))?.offer(result)
+        }
+      } catch (e: Exception) {}
+    }
+  }
+
+  // Creates a mirror image of the HD path in memory
+  private fun Path.mirrorHDFS(): Path {
+    val jfsRoot = jfs.getPath(toString()).also { Files.createDirectories(it) }
+    allFilesRecursively().parallelStream().forEach { src ->
+      val path = src.toAbsolutePath().toString()
+      Files.createDirectories(jfs.getPath(path).parent)
+      Files.copy(src, jfs.getPath(path))
+    }
+    return jfsRoot
   }
 }
 

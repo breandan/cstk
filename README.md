@@ -14,3 +14,8 @@ Interface:
 # Usage
 
 Manual grep: `./gradlew Loader --args='--query=<QUERY>'`
+
+# Resources
+
+* [Concurrent Trees](https://github.com/npgall/concurrent-trees) - For fast indexing and retrieval.
+* [Jimfs](https://github.com/google/jimfs) - An in-memory file system for dynamic document parsing.
