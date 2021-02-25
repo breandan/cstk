@@ -24,7 +24,7 @@ class Grepper: CliktCommand() {
 
     measureTimedValue { search(query) }.let { (res, time) ->
       res.take(10).forEachIndexed { i, it ->
-        println("$i.) " + it.getLine().chop(query))
+        println("$i.) " + it.getLine().chop(query) + "\nFrom: $it")
       }
       println("\nFound ${res.size} results in $time")
     }
