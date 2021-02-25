@@ -13,7 +13,7 @@ Interface:
 
 # Usage
 
-Manual grep: `./gradlew grep --args='--query=<QUERY>
+Manual grep: `./gradlew -q grep --args='--query=<QUERY>
 [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'`
 
 # Resources
