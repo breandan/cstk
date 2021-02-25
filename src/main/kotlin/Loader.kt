@@ -21,7 +21,7 @@ class Loader: CliktCommand() {
 
   // An in-memory file system mirroring the contents of rootDir
   val jfs = Jimfs.newFileSystem(Configuration.forCurrentPlatform())
-  // Radix trie multimap for (file, offset) pairs of matching prefixes
+  // Suffix trie multimap for (file, offset) pairs of matching prefixes
   val trie = ConcurrentSuffixTree<Queue<Pair<Path, Int>>>(DefaultCharArrayNodeFactory())
 
   override fun run() {
@@ -30,26 +30,31 @@ class Loader: CliktCommand() {
     measureTimeMillis { indexFS(jfsRoot) }
       .let { println("Indexing took $it ms") }
 
+    println("\nSearching grep for [?]=[$query]...\n")
     measureTimeMillis { jfsRoot.grep(query)
+      .also { it.forEachIndexed { i, it -> println("$i.) " + it.context.chop(query)) } }
       .also { println("Grep found ${it.size} results") } }
       .let { println("Grep took $it ms") }
 
-    measureTimeMillis { trie.getValuesForKeysContaining(query)
-      .also { println("Trie found ${ it.flatten().size } results") } }
+    println("\nSearching trie for [?]=[$query]...\n")
+    measureTimeMillis { trie.getValuesForKeysContaining(query).flatten()
+      .also { it.forEachIndexed { i, it -> println("$i.) " + it.getLine().chop(query)) } }
+      .also { println("Trie found ${ it.size } results") } }
       .let { println("Trie took $it ms") }
   }
 
-  // Indexes all words in all files in the path
+  // Indexes all lines in all files in the path
   private fun indexFS(jfsRoot: Path) {
     jfsRoot.allFilesRecursively().parallelStream().forEach { src ->
       try {
-        val content = Files.readString(src)
-        Regex("(\\w+)").findAll(content).forEach {
-            val result = src to it.range.first
-            trie.putIfAbsent(it.value,
-              ConcurrentLinkedQueue(listOf(result)))?.offer(result)
+        Files.readAllLines(src).forEachIndexed { lineIndex, line ->
+          if (line.length < 500)
+            ConcurrentLinkedQueue(listOf(src to lineIndex))
+              .let { trie.putIfAbsent(line + 1, it)?.offer(it.first()) }
         }
-      } catch (e: Exception) {}
+      } catch (e: Exception) {
+//        System.err.println("Unreadable …${src.fileName} due to ${e.message}")
+      }
     }
   }
 
@@ -65,10 +70,10 @@ class Loader: CliktCommand() {
   }
 }
 
-fun Path.grep(query: String, glob: String = "*") =
+fun Path.grep(query: String, glob: String = "*"): List<QIC> =
   allFilesRecursively(glob).mapNotNull { path ->
     path.read()?.let { contents ->
-      contents.extractConcordances(query).map { (cxt, idx) ->
+      contents.extractConcordances(".*$query.*").map { (cxt, idx) ->
         QIC(query, path, cxt, idx)
       }
     }
@@ -97,10 +102,19 @@ fun Path.read(start: Int = 0, end: Int = -1) =
     null
   }
 
-fun String.extractConcordances(query: String? = null) =
-  Regex(".*$query.*").findAll(this).map {
+fun String.extractConcordances(query: String) =
+  Regex(query).findAll(this).map {
+    val range = 0..length
     val (matchStart, matchEnd) =
-      (it.range.first).coerceAtLeast(0) to
-        (it.range.last + 1).coerceAtMost(length)
+      it.range.first.coerceIn(range) to (it.range.last + 1).coerceIn(range)
     substring(matchStart, matchEnd) to matchStart
   }.toList()
+
+fun String.chop(query: String, window: Int = 10) =
+  extractConcordances(query).joinToString("…", "…", "…") { (q, b) ->
+    val range = 0..length
+    substring((b - window).coerceIn(range), b) + "[?]" +
+      substring(b + q.length, (b + q.length + window).coerceIn(range)) }
+
+fun Pair<Path, Int>.getLine() =
+  Files.newBufferedReader(first).lineSequence().take(second + 1).last()

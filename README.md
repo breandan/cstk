@@ -13,7 +13,7 @@ Interface:
 
 # Usage
 
-Manual grep: `./gradlew Loader --args='--query=<QUERY>'`
+Manual grep: `./gradlew Loader --args='--query=<QUERY> [--path=<PATH>]'`
 
 # Resources
 
