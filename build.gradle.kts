@@ -21,12 +21,9 @@ dependencies {
 }
 
 tasks {
-  listOf("Loader").forEach {
-    register("Loader", JavaExec::class) {
-      main = "${it}Kt"
-//      findProperty("ath")?.let { args = listOf("--path=$it") }
-      classpath = sourceSets["main"].runtimeClasspath
-    }
+  register("grep", JavaExec::class) {
+    main = "GrepperKt"
+    classpath = sourceSets["main"].runtimeClasspath
   }
 
   withType<KotlinCompile> {
