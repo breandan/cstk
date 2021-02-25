@@ -1,3 +1,5 @@
+package edu.mcgill.gymfs
+
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import java.io.*

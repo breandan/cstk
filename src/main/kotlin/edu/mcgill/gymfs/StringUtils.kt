@@ -1,3 +1,5 @@
+package edu.mcgill.gymfs
+
 import java.nio.file.*
 
 // Query in context

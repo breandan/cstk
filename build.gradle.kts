@@ -5,12 +5,10 @@ plugins {
   id("com.github.ben-manes.versions") version "0.36.0"
 }
 
-group = "org.example"
+group = "edu.mcgill"
 version = "1.0-SNAPSHOT"
 
-repositories {
-  mavenCentral()
-}
+repositories.mavenCentral()
 
 dependencies {
   implementation(kotlin("stdlib"))
@@ -22,7 +20,7 @@ dependencies {
 
 tasks {
   register("grep", JavaExec::class) {
-    main = "GrepperKt"
+    main = "edu.mcgill.gymfs.GrepperKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
