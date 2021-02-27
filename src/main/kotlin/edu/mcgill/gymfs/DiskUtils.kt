@@ -60,6 +60,9 @@ fun buildOrLoadIndex(
     deserialize(index) as ConcurrentSuffixTree<Queue<Pair<String, Int>>>
   }
 
+fun Pair<String, Int>.getLine() =
+  Files.newBufferedReader(Path.of(first)).lineSequence().take(second + 1).last()
+
 fun Any?.serialize(path: File) =
   ObjectOutputStream(GZIPOutputStream(FileOutputStream(path))).use { it.writeObject(this) }
 

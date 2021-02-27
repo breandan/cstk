@@ -32,9 +32,6 @@ class Grepper: CliktCommand() {
     }
   }
 
-  fun Pair<String, Int>.getLine() =
-    Files.newBufferedReader(Path.of(first)).lineSequence().take(second + 1).last()
-
   fun search(query: String) = trie.getValuesForKeysContaining(query).flatten()
 }
 
