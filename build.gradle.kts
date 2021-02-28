@@ -48,4 +48,14 @@ tasks {
       jvmTarget = VERSION_1_8.toString()
     }
   }
+
+  withType<Jar> {
+    manifest {
+      attributes["Main-Class"] = "edu.mcgill.gymfs.BertTrainerKt"
+    }
+
+    from(configurations.compileClasspath.get().files
+      .map { if (it.isDirectory) it else zipTree(it) })
+    archiveBaseName.set("${project.name}-fat")
+  }
 }
