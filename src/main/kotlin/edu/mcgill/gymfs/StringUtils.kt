@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs
 
 import java.nio.file.*
+import kotlin.io.path.*
 
 // Query in context
 data class QIC(
@@ -19,7 +20,9 @@ fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
   }.flatten()
 
 fun Path.allFilesRecursively(glob: String = "*"): List<Path> =
-  Files.newDirectoryStream(this, glob).partition { Files.isDirectory(it) }
+  (Files.newDirectoryStream(this).filter { it.toFile().isDirectory } +
+    Files.newDirectoryStream(this, glob))
+    .partition { Files.isDirectory(it) }
     .let { (dirs, files) ->
       files + dirs.map { it.allFilesRecursively(glob) }.flatten()
     }
