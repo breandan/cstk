@@ -27,8 +27,7 @@ fun main() { TrainBertOnCode.runExample() }
 @ExperimentalStdlibApi
 object TrainBertOnCode {
   fun runExample(): TrainingResult {
-    val files = File("/home/breandan/IdeaProjects").toPath()
-      .allFilesRecursively("*.java").also { println(it.size) }.map { ParsedFile(it) }
+    val files = ROOT_DIR.allFilesRecursively("*.kt").map { ParsedFile(it) }
     val countedTokens = countTokens(files)
     val dictionary = buildDictionary(countedTokens)
     createBertPretrainingModel(dictionary).use { model ->

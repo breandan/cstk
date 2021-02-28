@@ -2,7 +2,9 @@ package edu.mcgill.gymfs
 
 import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
+import java.io.File
 import kotlin.random.Random
+import kotlin.system.exitProcess
 
 val UNK = "<unk>"
 val CLS = "<cls>"
@@ -20,7 +22,7 @@ val MAX_BATCH = 50
 val MAX_GPUS = 1
 val EPOCHS = 10
 val BERT_BUILDER = BertBlock.builder().micro()
-
+val ROOT_DIR = File(".").toPath()
 val MAX_VOCAB = 35000
 val TOKENIZER = BertTokenizer()
 val rand = Random(1)
