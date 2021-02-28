@@ -1,3 +1,4 @@
+import org.gradle.api.JavaVersion.VERSION_1_8
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -31,7 +32,7 @@ dependencies {
 
 tasks {
   register("grep", JavaExec::class) {
-    main = "edu.mcgill.gymfs.GrepperKt"
+    main = "edu.mcgill.gymfs.EnvironmentKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
@@ -39,7 +40,7 @@ tasks {
     kotlinOptions {
       languageVersion = "1.5"
       apiVersion = "1.5"
-      jvmTarget = JavaVersion.VERSION_1_8.toString()
+      jvmTarget = VERSION_1_8.toString()
     }
   }
 }
