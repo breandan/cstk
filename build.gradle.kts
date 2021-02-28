@@ -36,6 +36,11 @@ tasks {
     classpath = sourceSets["main"].runtimeClasspath
   }
 
+  register("train", JavaExec::class) {
+    main = "edu.mcgill.gymfs.BertTrainerKt"
+    classpath = sourceSets["main"].runtimeClasspath
+  }
+
   withType<KotlinCompile> {
     kotlinOptions {
       languageVersion = "1.5"
