@@ -2,8 +2,8 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.4.31"
-  id("com.github.ben-manes.versions") version "0.36.0"
+  kotlin("jvm") version "1.5.0-M1"
+  id("com.github.ben-manes.versions") version "0.38.0"
 }
 
 group = "com.github.breandan"
