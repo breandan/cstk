@@ -43,7 +43,9 @@ object TrainBird {
   )
   @JvmStatic
   fun main(args: Array<String>) {
-    val arguments: Arguments = Arguments.parseArgs(args)
+    val defaults = arrayOf("-g")
+//    val defaults = arrayOf("-p", "-t")
+    val arguments = Arguments(if(args.isEmpty()) defaults else args)
     val model = createOrLoadModel(arguments)
     if (arguments.isTesting) test(model) else train(arguments, model)
   }
@@ -52,13 +54,13 @@ object TrainBird {
   fun createOrLoadModel(arguments: Arguments): Model {
     val model = Model.newInstance("QNetwork")
     model.block = block
-    if (arguments.usePreTrained())
+    if (arguments.preTrained)
       model.load(Paths.get(Constant.MODEL_PATH), PARAMS_PREFIX)
     return model
   }
 
   fun train(arguments: Arguments, model: Model) {
-    val withGraphics = arguments.withGraphics()
+    val withGraphics = arguments.graphics
     val training = !arguments.isTesting
     val batchSize = arguments.batchSize // size of mini batch
     val game = FlappyBird(

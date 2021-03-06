@@ -3,22 +3,17 @@ package com.kingyu.rlbird.util
 import org.apache.commons.cli.*
 
 class Arguments(cmd: CommandLine) {
+  constructor(args: Array<String>?):
+    this(DefaultParser().parse(options, args, null, false))
+
   var batchSize =
     if (cmd.hasOption("batch-size")) cmd.getOptionValue("batch-size").toInt()
     else 32
-  private val graphics: Boolean = true
-  private val preTrained: Boolean = true
-  val isTesting: Boolean = true
-
-  fun withGraphics(): Boolean = graphics
-
-  fun usePreTrained(): Boolean = preTrained
+  val graphics: Boolean = cmd.hasOption("graphics")
+  val preTrained: Boolean = cmd.hasOption("pre-trained")
+  val isTesting: Boolean = cmd.hasOption("testing")
 
   companion object {
-    @Throws(ParseException::class)
-    fun parseArgs(args: Array<String>?): Arguments =
-      Arguments(DefaultParser().parse(options, args, null, false))
-
     val options: Options
       get() {
         val options = Options()
