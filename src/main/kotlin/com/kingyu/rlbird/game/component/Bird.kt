@@ -25,13 +25,12 @@ class Bird {
   BIRD_HEIGHT - RECT_DESCALE * 4
   ) // 碰撞矩形的坐标与小鸟相同
 
-
   companion object {
     const val BIRD_READY = 0
     const val BIRD_FALL = 1
     const val BIRD_DEAD = 2
     const val RECT_DESCALE = 2 // 碰撞矩形宽高的补偿参数
-    var birdImages: BufferedImage = GameUtil.loadBufferedImage(Constant.BIRDS_IMG_PATH)!!
+    val birdImages: BufferedImage = GameUtil.loadBufferedImage(Constant.BIRDS_IMG_PATH)
     val BIRD_WIDTH = birdImages.width
     val BIRD_HEIGHT = birdImages.height
     const val ACC_FLAP = 15 // players speed on flapping
@@ -44,18 +43,15 @@ class Bird {
   fun draw(g: Graphics) {
     movement()
     drawBirdImg(g)
-    //        g.setColor(Color.white);
-//        g.drawRect((int) birdCollisionRect.getX(), (int)birdCollisionRect.getY(), (int) birdCollisionRect.getWidth(), (int) birdCollisionRect.getHeight());
   }
 
-  fun drawBirdImg(g: Graphics) {
+  fun drawBirdImg(g: Graphics) =
     g.drawImage(
       birdImages,
       birdX - (BIRD_WIDTH shr 1),
       y - (BIRD_HEIGHT shr 1),
       null
     )
-  }
 
   private var velocity = 0 // bird's velocity along Y, default same as playerFlapped
 

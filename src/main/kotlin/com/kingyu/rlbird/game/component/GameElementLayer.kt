@@ -13,21 +13,16 @@ import java.awt.Graphics
 class GameElementLayer {
   private val pipes : MutableList<Pipe?> = ArrayList()
 
-  fun draw(g: Graphics, bird: Bird?) {
+  fun draw(g: Graphics, bird: Bird) {
     // 遍历水管容器，如果可见则绘制，不可见则归还
     var i = 0
     while (i < pipes.size) {
       val pipe = pipes[i]
-      if (pipe!!.isVisible) {
-        pipe.draw(g, bird)
-      } else {
-        val remove = pipes.removeAt(i)
-        PipePool.giveBack(remove)
-        i--
-      }
+      if (pipe!!.isVisible) pipe.draw(g, bird)
+      else PipePool.giveBack(pipes.removeAt(i)).also { i-- }
       i++
     }
-    bird!!.drawBirdImg(g)
+    bird.drawBirdImg(g)
     isCollideBird(bird)
     generatePipe(bird)
   }
@@ -36,9 +31,7 @@ class GameElementLayer {
    * 当容器中添加的最后一个水管完全显示到屏幕后，添加下一对；
    */
   private fun generatePipe(bird: Bird?) {
-    if (bird!!.isDead) {
-      return
-    }
+    if (bird!!.isDead) return
     if (pipes.size == 0) {
       // 若容器为空，则添加一对水管
       val topHeight =
@@ -64,9 +57,9 @@ class GameElementLayer {
     } else {
       // 判断最后一对水管是否完全进入游戏窗口，若进入则添加水管
       val lastPipe = pipes[pipes.size - 1]!! // 获得容器中最后一个水管
-      val currentDistance: Int =
+      val currentDistance =
         lastPipe.x - bird.birdX + Bird.BIRD_WIDTH / 2 // 小鸟和最后一根水管的距离
-      val SCORE_DISTANCE: Int =
+      val SCORE_DISTANCE =
         Pipe.PIPE_WIDTH * 2 + HORIZONTAL_INTERVAL // 小于得分距离则得分
       if (pipes.size >= PipePool.FULL_PIPE && currentDistance <= SCORE_DISTANCE + Pipe.PIPE_WIDTH * 3 / 2 && currentDistance > SCORE_DISTANCE + Pipe.PIPE_WIDTH * 3 / 2 - Constant.GAME_SPEED) {
         FlappyBird.setCurrentReward(0.8f)
@@ -74,9 +67,7 @@ class GameElementLayer {
       if (pipes.size >= PipePool.FULL_PIPE && currentDistance <= SCORE_DISTANCE && currentDistance > SCORE_DISTANCE - Constant.GAME_SPEED) {
         ScoreCounter.score(bird)
       }
-      if (lastPipe.isInFrame) {
-        addNormalPipe(lastPipe)
-      }
+      if (lastPipe.isInFrame) addNormalPipe(lastPipe)
     }
   }
 

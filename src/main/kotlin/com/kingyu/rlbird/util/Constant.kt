@@ -42,7 +42,7 @@ object Constant {
   const val BIRDS_IMG_PATH = "src/main/resources/img/0.png"
 
   // 水管图片
-  val PIPE_IMG_PATH = arrayOf<String?>(
+  val PIPE_IMG_PATH = arrayOf(
     "src/main/resources/img/pipe.png", "src/main/resources/img/pipe_top.png",
     "src/main/resources/img/pipe_bottom.png"
   )

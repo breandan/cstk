@@ -12,7 +12,7 @@ class Ground {
   private var layerX: Int = 0
 
   companion object {
-    private val BackgroundImg = GameUtil.loadBufferedImage(Constant.BG_IMG_PATH)!!
+    private val BackgroundImg = GameUtil.loadBufferedImage(Constant.BG_IMG_PATH)
     val GROUND_HEIGHT = BackgroundImg.height
   }
 

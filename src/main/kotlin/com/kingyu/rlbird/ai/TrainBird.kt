@@ -34,7 +34,8 @@ object TrainBird {
   const val INITIAL_EPSILON = 0.01f
   const val FINAL_EPSILON = 0.0001f
   const val PARAMS_PREFIX = "dqn-trained"
-  var batchSteps: Array<RlEnv.Step> = arrayOf()
+  var batchSteps = arrayOf<RlEnv.Step>()
+
   @Throws(
     ParseException::class,
     IOException::class,
@@ -44,11 +45,7 @@ object TrainBird {
   fun main(args: Array<String>) {
     val arguments: Arguments = Arguments.parseArgs(args)
     val model = createOrLoadModel(arguments)
-    if (arguments.isTesting) {
-      test(model)
-    } else {
-      train(arguments, model)
-    }
+    if (arguments.isTesting) test(model) else train(arguments, model)
   }
 
   @Throws(IOException::class, MalformedModelException::class)
@@ -70,8 +67,7 @@ object TrainBird {
       REPLAY_BUFFER_SIZE,
       withGraphics
     )
-    val config = setupTrainingConfig()
-    model.newTrainer(config).use { trainer ->
+    model.newTrainer(trainingConfig).use { trainer ->
       trainer.initialize(Shape(batchSize.toLong(), 4, 80, 80))
       trainer.notifyListeners { listener: TrainingListener ->
         listener.onTrainingBegin(trainer)
@@ -83,22 +79,19 @@ object TrainBird {
         .optMinValue(FINAL_EPSILON)
         .build()
       agent = EpsilonGreedy(agent, exploreRate)
+
       val numOfThreads = 2
       val callables: MutableList<Callable<Any?>> = ArrayList(numOfThreads)
       callables.add(GeneratorCallable(game, agent, training))
-      if (training) {
-        callables.add(TrainerCallable(model, agent))
-      }
+      if (training) callables.add(TrainerCallable(model, agent))
+
       val executorService = Executors.newFixedThreadPool(numOfThreads)
       try {
         try {
           val futures: MutableList<Future<Any?>> = ArrayList()
-          for (callable in callables) {
+          for (callable in callables)
             futures.add(executorService.submit(callable))
-          }
-          for (future in futures) {
-            future.get()
-          }
+          for (future in futures) future.get()
         } catch (e: InterruptedException) {
           logger.error("", e)
         } catch (e: ExecutionException) {
@@ -110,19 +103,15 @@ object TrainBird {
     }
   }
 
-  fun test(model: Model) {
-    val game = FlappyBird(NDManager.newBaseManager(), 1, 1, true)
-    val config = setupTrainingConfig()
-    model.newTrainer(config).use { trainer ->
+  fun test(model: Model) =
+    model.newTrainer(trainingConfig).use { trainer ->
       val agent: RlAgent = QAgent(trainer, REWARD_DISCOUNT)
+      val game = FlappyBird(NDManager.newBaseManager(), 1, 1, true)
       while (true) game.runEnvironment(agent, false)
     }
-  }
 
   // conv -> conv -> conv -> fc -> fc
-  val block: SequentialBlock
-    get() =// conv -> conv -> conv -> fc -> fc
-      SequentialBlock()
+  val block: SequentialBlock = SequentialBlock()
         .add(
           Conv2d.builder()
             .setKernelShape(Shape(8, 8))
@@ -150,7 +139,7 @@ object TrainBird {
         .add { arrays: NDList? -> Activation.relu(arrays) }
         .add(Linear.builder().setUnits(2).build())
 
-  fun setupTrainingConfig(): DefaultTrainingConfig =
+  val trainingConfig =
     DefaultTrainingConfig(Loss.l2Loss())
       .optOptimizer(
         Adam.builder().optLearningRateTracker(Tracker.fixed(1e-6f)).build()

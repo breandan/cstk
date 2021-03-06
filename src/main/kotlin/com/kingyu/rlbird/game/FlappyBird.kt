@@ -66,16 +66,11 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
    * action[1] == 1 : flap the bird
    */
   override fun step(action: NDList, training: Boolean): RlEnv.Step {
-    trainState = if (gameStep <= TrainBird.OBSERVE) {
-      "observe"
-    } else {
-      "explore"
-    }
+    trainState = if (gameStep <= TrainBird.OBSERVE) "observe" else "explore"
     gameStep++
-    if (action.singletonOrThrow().getInt(1) == 1) {
-      bird.birdFlap()
-    }
+    if (action.singletonOrThrow().getInt(1) == 1) bird.birdFlap()
     stepFrame()
+
     if (withGraphics) {
       repaint()
       try {
@@ -84,6 +79,7 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
         e.printStackTrace()
       }
     }
+
     val preObservation = currentObservation
     currentObservation = createObservation(currentImg)
     val step = FlappyBirdStep(
@@ -94,9 +90,9 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
       currentReward,
       currentTerminal
     )
-    if (training) {
-      replayBuffer.addStep(step)
-    }
+
+    if (training) replayBuffer.addStep(step)
+
     logger.info(
       "GAME_STEP " + gameStep +
         " / " + "TRAIN_STEP " + trainStep +
@@ -107,9 +103,8 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
         " / " + "REWARD " + step.reward.getFloat() +
         " / " + "SCORE " + ScoreCounter.currentScore
     )
-    if (gameState == GAME_OVER) {
-      restartGame()
-    }
+    if (gameState == GAME_OVER) restartGame()
+
     return step
   }
 
@@ -154,9 +149,7 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
   fun createObservation(currentImg: BufferedImage?): NDList {
     val observation = GameUtil.imgPreprocess(currentImg)
     return if (imgQueue.isEmpty()) {
-      for (i in 0..3) {
-        imgQueue.offer(observation)
-      }
+      for (i in 0..3) imgQueue.offer(observation)
       NDList(
         NDArrays.stack(
           NDList(
@@ -170,11 +163,7 @@ class FlappyBird(private val manager: NDManager, private val replayBuffer: Repla
     } else {
       imgQueue.remove()
       imgQueue.offer(observation)
-      val buf = arrayOfNulls<NDArray>(4)
-      var i = 0
-      for (nd in imgQueue) {
-        buf[i++] = nd
-      }
+      val buf = imgQueue.take(4)
       NDList(NDArrays.stack(NDList(buf[0], buf[1], buf[2], buf[3]), 1))
     }
   }

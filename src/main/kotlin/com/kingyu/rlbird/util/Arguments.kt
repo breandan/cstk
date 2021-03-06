@@ -16,12 +16,8 @@ class Arguments(cmd: CommandLine) {
 
   companion object {
     @Throws(ParseException::class)
-    fun parseArgs(args: Array<String>?): Arguments {
-      val options = options
-      val parser = DefaultParser()
-      val cmd = parser.parse(options, args, null, false)
-      return Arguments(cmd)
-    }
+    fun parseArgs(args: Array<String>?): Arguments =
+      Arguments(DefaultParser().parse(options, args, null, false))
 
     val options: Options
       get() {

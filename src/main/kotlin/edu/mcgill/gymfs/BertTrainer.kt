@@ -162,16 +162,12 @@ object TrainBertOnCode {
   private class ParsedFile(
     val sourceFile: Path,
     val normalizedLines: List<String> =
-      sourceFile.readLines(UTF_8).filter(::isNotBlank),
+      sourceFile.readLines(UTF_8).filter { it.trim { it <= ' ' }.isNotEmpty() },
     val tokenizedLines: List<List<String>> =
       normalizedLines.map(TOKENIZER::tokenize)
   ) {
     fun allSentencePairs() =
       tokenizedLines.map { ArrayList(it) }.zipWithNext()
         .map { (a, b) -> SentencePair(a, b) }
-
-    companion object {
-      fun isNotBlank(line: String) = line.trim { it <= ' ' }.isNotEmpty()
-    }
   }
 }

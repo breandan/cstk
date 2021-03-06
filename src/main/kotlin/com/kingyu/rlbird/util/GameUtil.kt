@@ -16,17 +16,10 @@ object GameUtil {
   /**
    * 装载图片
    *
-   * @param imgPath 图片路径
+   * @param path 图片路径
    * @return 图片资源
    */
-  fun loadBufferedImage(imgPath: String?): BufferedImage? {
-    try {
-      return ImageIO.read(FileInputStream(imgPath))
-    } catch (e: IOException) {
-      e.printStackTrace()
-    }
-    return null
-  }
+  fun loadBufferedImage(path: String) = ImageIO.read(FileInputStream(path))!!
 
   /**
    * 返回指定区间的一个随机数

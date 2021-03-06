@@ -12,7 +12,7 @@ import java.awt.image.BufferedImage
 class Pipe {
   companion object {
     var images: Array<BufferedImage> =
-      Array(3) { GameUtil.loadBufferedImage(Constant.PIPE_IMG_PATH[it])!!}
+      Array(3) { GameUtil.loadBufferedImage(Constant.PIPE_IMG_PATH[it]) }
 
     // 水管图片的宽高
     val PIPE_WIDTH = images[0].width
