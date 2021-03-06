@@ -43,7 +43,7 @@ object TrainBird {
   )
   @JvmStatic
   fun main(args: Array<String>) {
-    val defaults = arrayOf("-g")
+    val defaults = arrayOf(" ")
 //    val defaults = arrayOf("-p", "-t")
     val arguments = Arguments(if(args.isEmpty()) defaults else args)
     val model = createOrLoadModel(arguments)
