@@ -19,7 +19,7 @@ dependencies {
   implementation("ai.djl:api:0.10.0")
   implementation("org.slf4j:slf4j-simple:1.7.30")
   implementation("ai.djl.mxnet:mxnet-engine:0.10.0")
-  implementation("ai.djl.mxnet:mxnet-native-auto:1.7.0-backport")
+  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
 
 //  implementation("ai.djl:examples:0.6.0")
 
