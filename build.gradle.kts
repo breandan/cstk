@@ -37,8 +37,13 @@ tasks {
     classpath = sourceSets["main"].runtimeClasspath
   }
 
-  register("train", JavaExec::class) {
+  register("trainBert", JavaExec::class) {
     main = "edu.mcgill.gymfs.BertTrainerKt"
+    classpath = sourceSets["main"].runtimeClasspath
+  }
+
+  register("trainBird", JavaExec::class) {
+    main = "com.kingyu.rlbird.ai.TrainBirdKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
