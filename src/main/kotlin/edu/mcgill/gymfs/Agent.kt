@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs
 
 import ai.djl.Model
+import ai.djl.modality.nlp.preprocess.Tokenizer
 import ai.djl.ndarray.types.Shape
 import ai.djl.nn.*
 import ai.djl.nn.convolutional.Conv2d

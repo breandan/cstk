@@ -7,11 +7,11 @@ import ai.djl.nn.transformer.*
 import ai.djl.training.*
 import ai.djl.training.dataset.Batch
 import ai.djl.training.initializer.TruncatedNormalInitializer
-import ai.djl.training.listener.TrainingListener
+import ai.djl.training.listener.*
+import ai.djl.training.listener.EvaluatorTrainingListener.TRAIN_ALL
 import ai.djl.training.optimizer.*
 import ai.djl.training.tracker.*
 import ai.djl.translate.Batchifier
-import java.io.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.*
 import kotlin.io.path.*
@@ -19,7 +19,10 @@ import kotlin.random.Random
 
 @ExperimentalPathApi
 @ExperimentalStdlibApi
-fun main() { TrainBertOnCode.runExample() }
+fun main() {
+  println("training bert on code...")
+  TrainBertOnCode.runExample()
+}
 
 // https://github.com/awslabs/djl/blob/master/examples/src/main/java/ai/djl/examples/training/TrainBertOnCode.java
 /** Simple example that performs Bert pretraining on the java source files in this repo.  */
@@ -68,6 +71,7 @@ object TrainBertOnCode {
   private fun createBertPretrainingTrainer(model: Model): Trainer =
     Adam.builder()
       .optEpsilon(1e-5f)
+      .optClipGrad(1f)
       .optLearningRateTracker(
         WarmUpTracker.builder()
           .optWarmUpBeginValue(0f)
@@ -82,11 +86,19 @@ object TrainBertOnCode {
               .build()
           ).build()
       ).build()
-      .let { optimizer ->
+      .let { optimizer: Adam ->
         model.newTrainer(
-          DefaultTrainingConfig(BertPretrainingLoss()).optOptimizer(optimizer)
+          DefaultTrainingConfig(BertPretrainingLoss())
+            .optOptimizer(optimizer)
             .optDevices(Device.getDevices(MAX_GPUS))
-            .addTrainingListeners(*TrainingListener.Defaults.logging())
+            .addTrainingListeners(object: DivergenceCheckTrainingListener(){
+              override fun onTrainingBatch(
+                trainer: Trainer,
+                batchData: TrainingListener.BatchData
+              ) {
+                  println(trainer.loss.getAccumulator(TRAIN_ALL))
+                  println(batchData.batch.data)
+              }}, *TrainingListener.Defaults.logging())
         )
       }
 
@@ -162,7 +174,8 @@ object TrainBertOnCode {
   private class ParsedFile(
     val sourceFile: Path,
     val normalizedLines: List<String> =
-      sourceFile.readLines(UTF_8).filter { it.trim { it <= ' ' }.isNotEmpty() },
+      sourceFile.readLines(UTF_8)
+        .filter { line -> line.trim { it <= ' ' }.isNotEmpty() },
     val tokenizedLines: List<List<String>> =
       normalizedLines.map(TOKENIZER::tokenize)
   ) {

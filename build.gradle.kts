@@ -56,9 +56,7 @@ tasks {
   }
 
   withType<Jar> {
-    manifest {
-      attributes["Main-Class"] = "edu.mcgill.gymfs.BertTrainerKt"
-    }
+    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.TrainSeq2Seq"
 
     from(configurations.compileClasspath.get().files
       .map { if (it.isDirectory) it else zipTree(it) })
