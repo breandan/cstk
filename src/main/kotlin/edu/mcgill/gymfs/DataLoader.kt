@@ -4,7 +4,7 @@ import kotlin.random.Random
 
 
 /** A single bert pretraining instance. Applies masking to a given sentence pair.  */
-class MaskedInstance constructor(
+class MaskedInstance(
   rand: Random,
   val dictionary: Dictionary,
   val originalSentencePair: SentencePair,

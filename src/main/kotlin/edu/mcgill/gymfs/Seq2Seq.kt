@@ -31,21 +31,17 @@ import ai.djl.training.listener.*
 import ai.djl.training.loss.MaskedSoftmaxCrossEntropyLoss
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.*
-import com.kingyu.rlbird.util.Arguments
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.*
 
+fun main() {
+  TrainSeq2Seq.runExample()
+}
 
 object TrainSeq2Seq {
   @Throws(IOException::class, TranslateException::class)
-  @JvmStatic
-  fun main(args: Array<String>) {
-    runExample(args)
-  }
-
-  @Throws(IOException::class, TranslateException::class)
-  fun runExample(args: Array<String>?): TrainingResult? {
+  fun runExample(): TrainingResult? {
     val executorService = Executors.newFixedThreadPool(8)
     Model.newInstance("seq2seqMTEn-Fr").use { model ->
       // get training and validation dataset
@@ -177,7 +173,7 @@ object TrainSeq2Seq {
       .optLimit(100)
     val sourceConfig = TextData.Configuration()
       .setTextProcessors(
-        Arrays.asList(
+        listOf(
           SimpleTokenizer(),
           LowerCaseConvertor(Locale.ENGLISH),
           PunctuationSeparator(),
@@ -186,7 +182,7 @@ object TrainSeq2Seq {
       )
     val targetConfig = TextData.Configuration()
       .setTextProcessors(
-        Arrays.asList(
+        listOf(
           SimpleTokenizer(),
           LowerCaseConvertor(Locale.FRENCH),
           PunctuationSeparator(),
