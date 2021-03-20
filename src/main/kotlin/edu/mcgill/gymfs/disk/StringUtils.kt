@@ -41,8 +41,8 @@ fun String.extractConcordances(query: String) =
   }.toList()
 
 fun String.preview(query: String, window: Int = 10) =
-  extractConcordances(query).joinToString("…", "…", "…") { (q, b) ->
+  extractConcordances(query).map { (q, b) ->
     val range = 0..length
     substring((b - window).coerceIn(range), b) + "[?]" +
       substring(b + q.length, (b + q.length + window).coerceIn(range))
-  }.trim()
+  }.joinToString("…", "…", "…") { it.trim() }

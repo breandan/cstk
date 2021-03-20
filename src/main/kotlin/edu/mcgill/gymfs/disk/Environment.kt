@@ -34,20 +34,20 @@ class Grepper: CliktCommand() {
 
     measureTimedValue { search(query) }.let { (res, time) ->
       res.take(10).forEachIndexed { i, it ->
-        println("$i.) " + it.getContext(0).preview(query))
-        println("From: $it")
-        val keywords = it.topKeywordsFromContext { search(it).size.toDouble() }
-        println("Keywords: $keywords")
-        val nextLocations = keywords.map { search(it.first).take(3) }.flatten()
+        println("$i.) ${previewResult(query, it)}")
+        val nextLocations = it.expand(this@Grepper)
         println("Next locations:")
-        nextLocations.forEachIndexed { index, c ->
-          println("\t$index.) ${c.getContext(0)}")
+        nextLocations.forEachIndexed { index, (query, loc) ->
+          println("\t$index.) ${previewResult(query, loc)}")
         }
         println()
       }
       println("\nFound ${res.size} results in $time")
     }
   }
+
+  private fun previewResult(query: String, loc: Location) =
+    "[?=$query] ${loc.getContext(0).preview(query)}\t($loc)"
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -59,10 +59,11 @@ data class Location(val file: URI, val line: Int): Serializable {
         .take(surroundingLines + 1).joinToString("\n")
     }
 
-  fun topKeywordsFromContext(
-    mostKeywordsToTake: Int = 3,
+  private fun topKeywordsFromContext(
+    mostKeywordsToTake: Int = 5,
     score: (String) -> Double
-  ) = getContext(3).split(Regex("[^\\w']+"))
+  ): List<Pair<String, Double>> =
+    getContext(3).split(Regex("[^\\w']+"))
     .asSequence()
     .filter(String::isNotEmpty)
     .distinct()
@@ -71,6 +72,24 @@ data class Location(val file: URI, val line: Int): Serializable {
     .sortedBy { it.second }
     .take(mostKeywordsToTake)
     .toList()
+
+  /*
+   * Expand keywords by least common first. Common keywords are
+   * unlikely to contain any useful information.
+   *
+   * TODO: Reweight score by other metrics?
+   */
+
+  fun expand(grepper: Grepper): List<Pair<String, Location>> =
+    topKeywordsFromContext { grepper.search(it).size.toDouble() }
+      .also { println("Keyword scores: $it") }
+      .map { (kw, _) ->
+        grepper.search(kw)
+          .filter { it != this }
+          .take(5).map { kw to it }
+      }.flatten()
+
+  override fun toString() = "…${file.path.substringAfterLast('/')}:L${line + 1}"
 }
 
 @OptIn(ExperimentalTime::class)
@@ -98,7 +117,7 @@ fun indexPath(rootDir: Path): ConcurrentSuffixTree<Queue<Location>> =
           Files.readAllLines(src).forEachIndexed { lineIndex, line ->
             if (line.length < 500)
               ConcurrentLinkedQueue(listOf(Location(src.toUri(), lineIndex)))
-                .let { trie.putIfAbsent(line + 1, it)?.offer(it.first()) }
+                .let { trie.putIfAbsent(line, it)?.offer(it.first()) }
           }
         } catch (e: Exception) {
 //        System.err.println("Unreadable …${src.fileName} due to ${e.message}")
