@@ -1,9 +1,11 @@
-import org.gradle.api.JavaVersion.VERSION_1_8
+import org.gradle.api.JavaVersion.VERSION_11
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.5.0-M1"
+  val kotlinVersion = "1.5.0-M1"
+  kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.38.0"
+//  kotlin("plugin.serialization") version kotlinVersion
 }
 
 group = "com.github.breandan"
@@ -13,6 +15,7 @@ repositories.mavenCentral()
 
 dependencies {
   implementation(kotlin("stdlib"))
+//  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
   implementation("com.google.jimfs:jimfs:1.2")
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
@@ -33,17 +36,17 @@ dependencies {
 
 tasks {
   register("grep", JavaExec::class) {
-    main = "edu.mcgill.gymfs.EnvironmentKt"
+    main = "edu.mcgill.gymfs.disk.EnvironmentKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
   register("trainBert", JavaExec::class) {
-    main = "edu.mcgill.gymfs.BertTrainerKt"
+    main = "edu.mcgill.gymfs.agent.BertTrainerKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
   register("trainBird", JavaExec::class) {
-    main = "com.kingyu.rlbird.ai.TrainBirdKt"
+    main = "com.kingyu.rlbird.ai.agent.TrainBirdKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 
@@ -51,12 +54,12 @@ tasks {
     kotlinOptions {
       languageVersion = "1.5"
       apiVersion = "1.5"
-      jvmTarget = VERSION_1_8.toString()
+      jvmTarget = VERSION_11.toString()
     }
   }
 
   withType<Jar> {
-    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.TrainSeq2Seq"
+    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.TrainSeq2Seq"
 
     from(configurations.compileClasspath.get().files
       .map { if (it.isDirectory) it else zipTree(it) })

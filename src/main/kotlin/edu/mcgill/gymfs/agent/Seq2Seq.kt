@@ -1,4 +1,4 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.agent
 
 /*
  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -31,6 +31,7 @@ import ai.djl.training.listener.*
 import ai.djl.training.loss.MaskedSoftmaxCrossEntropyLoss
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.*
+import edu.mcgill.gymfs.BATCH_SIZE
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.*

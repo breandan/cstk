@@ -1,4 +1,4 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.agent
 
 import ai.djl.*
 import ai.djl.ndarray.*
@@ -12,6 +12,8 @@ import ai.djl.training.listener.EvaluatorTrainingListener.TRAIN_ALL
 import ai.djl.training.optimizer.*
 import ai.djl.training.tracker.*
 import ai.djl.translate.Batchifier
+import edu.mcgill.gymfs.*
+import edu.mcgill.gymfs.disk.allFilesRecursively
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.*
 import kotlin.io.path.*

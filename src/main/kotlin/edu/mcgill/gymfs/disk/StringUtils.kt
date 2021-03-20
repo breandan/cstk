@@ -1,5 +1,6 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.disk
 
+import edu.mcgill.gymfs.FILE_EXT
 import java.nio.file.*
 import kotlin.io.path.*
 
@@ -19,7 +20,7 @@ fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
     }
   }.flatten()
 
-fun Path.allFilesRecursively(glob: String = "*"): List<Path> =
+fun Path.allFilesRecursively(glob: String = FILE_EXT): List<Path> =
   (Files.newDirectoryStream(this).filter { it.toFile().isDirectory } +
     Files.newDirectoryStream(this, glob))
     .partition { Files.isDirectory(it) }
@@ -39,9 +40,9 @@ fun String.extractConcordances(query: String) =
     substring(matchStart, matchEnd) to matchStart
   }.toList()
 
-fun String.chop(query: String, window: Int = 10) =
+fun String.preview(query: String, window: Int = 10) =
   extractConcordances(query).joinToString("…", "…", "…") { (q, b) ->
     val range = 0..length
     substring((b - window).coerceIn(range), b) + "[?]" +
       substring(b + q.length, (b + q.length + window).coerceIn(range))
-  }
+  }.trim()

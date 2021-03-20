@@ -10,12 +10,12 @@ class MaskedInstance(
   val originalSentencePair: SentencePair,
 ) {
   val label: ArrayList<String> =
-    ArrayList<String>(originalSentencePair.totalLength + 3).also { label ->
-      label.add(CLS)
-      label.addAll(originalSentencePair.sentenceA)
-      label.add(SEP)
-      label.addAll(originalSentencePair.sentenceB)
-      label.add(SEP)
+    ArrayList<String>(originalSentencePair.totalLength + 3).apply {
+      add(CLS)
+      addAll(originalSentencePair.sentenceA)
+      add(SEP)
+      addAll(originalSentencePair.sentenceB)
+      add(SEP)
     }
 
   // Randomly pick 20% of indices to mask
