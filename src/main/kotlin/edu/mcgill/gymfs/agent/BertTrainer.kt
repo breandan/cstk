@@ -96,15 +96,19 @@ object TrainBertOnCode {
             .optDevices(Device.getDevices(MAX_GPUS))
             .addTrainingListeners(
               *TrainingListener.Defaults.logging(10),
-              SaveModelTrainingListener("", "codebert", 10),
-              object: DivergenceCheckTrainingListener(){
-              override fun onTrainingBatch(
-                trainer: Trainer,
-                batchData: TrainingListener.BatchData
-              ) {
-                  println(trainer.loss.getAccumulator(TRAIN_ALL))
+              SaveModelTrainingListener("", "codebert", 200),
+              object: DivergenceCheckTrainingListener() {
+                var numEpochs = 0
+                override fun onTrainingBatch(
+                  trainer: Trainer,
+                  batchData: TrainingListener.BatchData
+                ) {
+                  numEpochs++
+                  if (numEpochs % 20 == 0)
+                    println(trainer.loss.getAccumulator(TRAIN_ALL))
 //                  println(batchData.batch.data)
-              }}
+                }
+              }
             )
         )
       }
