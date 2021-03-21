@@ -18,7 +18,7 @@ const val MAX_MASKING_PER_INSTANCE = 20
 const val BATCH_SIZE = 24
 const val MAX_BATCH = 50
 const val MAX_GPUS = 1
-const val EPOCHS = 10
+const val EPOCHS = 1000
 const val MAX_VOCAB = 35000
 
 val RESERVED_TOKENS = listOf(UNK, CLS, SEP, MSK)

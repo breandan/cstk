@@ -27,7 +27,7 @@ fun main() {
 }
 
 // https://github.com/awslabs/djl/blob/master/examples/src/main/java/ai/djl/examples/training/TrainBertOnCode.java
-/** Simple example that performs Bert pretraining on the java source files in this repo.  */
+/** Simple example that performs Bert pretraining on the source files in this repo.  */
 @ExperimentalPathApi
 @ExperimentalStdlibApi
 object TrainBertOnCode {
@@ -50,7 +50,7 @@ object TrainBertOnCode {
               // the following uses the GPUs alternating
               // EasyTrain.trainBatch(trainer, batch);
               // this actually uses both GPUs at once
-              ParallelTrain(trainer.devices).trainBatch(trainer, batch)
+              EasyTrain.trainBatch(trainer, batch)
             }
           }
           trainer.notifyListeners { it.onEpoch(trainer) }
@@ -72,8 +72,6 @@ object TrainBertOnCode {
 
   private fun createBertPretrainingTrainer(model: Model): Trainer =
     Adam.builder()
-      .optEpsilon(1e-5f)
-      .optClipGrad(1f)
       .optLearningRateTracker(
         WarmUpTracker.builder()
           .optWarmUpBeginValue(0f)
@@ -87,20 +85,26 @@ object TrainBertOnCode {
               .optPower(1f)
               .build()
           ).build()
-      ).build()
+      )
+      .optEpsilon(1e-5f)
+      .optClipGrad(0.0f) // Does not seem to work?
+      .build()
       .let { optimizer: Adam ->
         model.newTrainer(
           DefaultTrainingConfig(BertPretrainingLoss())
             .optOptimizer(optimizer)
             .optDevices(Device.getDevices(MAX_GPUS))
-            .addTrainingListeners(object: DivergenceCheckTrainingListener(){
-              override fun onTrainingBatch(
-                trainer: Trainer,
-                batchData: TrainingListener.BatchData
-              ) {
-                  println(trainer.loss.getAccumulator(TRAIN_ALL))
-                  println(batchData.batch.data)
-              }}, *TrainingListener.Defaults.logging())
+            .addTrainingListeners(
+              *TrainingListener.Defaults.logging(),
+//              object: DivergenceCheckTrainingListener(){
+//              override fun onTrainingBatch(
+//                trainer: Trainer,
+//                batchData: TrainingListener.BatchData
+//              ) {
+//                  println(trainer.loss.getAccumulator(TRAIN_ALL))
+//                  println(batchData.batch.data)
+//              }}
+            )
         )
       }
 
@@ -110,9 +114,9 @@ object TrainBertOnCode {
     parsedFiles: List<ParsedFile>,
   ): List<MaskedInstance> =
     // turn data into sentence pairs containing consecutive lines
-    parsedFiles.flatMap { it.allSentencePairs() }//.shuffled(rand)
+    parsedFiles.flatMap { it.allSentencePairs() }.shuffled(rand)
       // swap sentences with 50% probability for next sentence task
-//      .chunked(2).apply { map { it[0].maybeSwap(rand, it[1]) } }.flatten()
+      .chunked(2).apply { map { it[0].maybeSwap(rand, it[1]) } }.flatten()
       // Create masked instances for training
       .take(MAX_BATCH).map { sentencePair: SentencePair ->
         MaskedInstance(

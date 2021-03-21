@@ -46,12 +46,8 @@ object TrainSeq2Seq {
     val executorService = Executors.newFixedThreadPool(8)
     Model.newInstance("seq2seqMTEn-Fr").use { model ->
       // get training and validation dataset
-      val trainingSet = getDataset(
-        Dataset.Usage.TRAIN,
-        executorService,
-        null,
-        null
-      )
+      val trainingSet =
+        getDataset(Dataset.Usage.TRAIN, executorService, null, null)
       // Fetch TextEmbedding from dataset
       val sourceEmbedding =
         trainingSet.getTextEmbedding(true) as TrainableTextEmbedding
@@ -66,11 +62,9 @@ object TrainSeq2Seq {
       )
       model.block = block
 
-      // setup training configuration
-      val config =
-        setupTrainingConfig()
       try {
-        model.newTrainer(config).use { trainer ->
+        // setup training configuration
+        model.newTrainer(setupTrainingConfig()).use { trainer ->
           trainer.metrics = Metrics()
           /*
   In Sequence-Sequence model for MT, the decoder input must be staggered by one wrt
@@ -97,25 +91,18 @@ object TrainSeq2Seq {
     targetEmbedding: TrainableTextEmbedding,
     vocabSize: Long
   ): Block {
+    val lstm = LSTM.Builder()
+      .setStateSize(32)
+      .setNumLayers(2)
+      .optDropRate(0f)
+      .optBatchFirst(true)
     val simpleTextEncoder = SimpleTextEncoder(
       sourceEmbedding,
-      LSTM.Builder()
-        .setStateSize(32)
-        .setNumLayers(2)
-        .optDropRate(0f)
-        .optBatchFirst(true)
-        .optReturnState(true)
-        .build()
+      lstm.optReturnState(true).build()
     )
     val simpleTextDecoder = SimpleTextDecoder(
       targetEmbedding,
-      LSTM.Builder()
-        .setStateSize(32)
-        .setNumLayers(2)
-        .optDropRate(0f)
-        .optBatchFirst(true)
-        .optReturnState(false)
-        .build(),
+      lstm.optReturnState(false).build(),
       vocabSize
     )
     return EncoderDecoder(simpleTextEncoder, simpleTextDecoder)
@@ -126,16 +113,9 @@ object TrainSeq2Seq {
     listener.setSaveModelCallback { trainer: Trainer ->
       val result = trainer.trainingResult
       val model = trainer.model
-      val accuracy =
-        result.getValidateEvaluation("Accuracy")
-      model.setProperty(
-        "Accuracy",
-        String.format("%.5f", accuracy)
-      )
-      model.setProperty(
-        "Loss",
-        String.format("%.5f", result.validateLoss)
-      )
+      val accuracy = result.getValidateEvaluation("Accuracy")
+      model.setProperty( "Accuracy", String.format("%.5f", accuracy))
+      model.setProperty("Loss", String.format("%.5f", result.validateLoss) )
     }
     return DefaultTrainingConfig(MaskedSoftmaxCrossEntropyLoss())
       .addEvaluator(Accuracy("Accuracy", 0, 2))
@@ -156,17 +136,13 @@ object TrainSeq2Seq {
       .optDataBatchifier(
         PaddingStackBatchifier.builder()
           .optIncludeValidLengths(true)
-          .addPad(0, 0,
-            { m: NDManager -> m.zeros(Shape(1)) }, 10
-          )
+          .addPad(0, 0, { m: NDManager -> m.zeros(Shape(1)) }, 10)
           .build()
       )
       .optLabelBatchifier(
         PaddingStackBatchifier.builder()
           .optIncludeValidLengths(true)
-          .addPad(0, 0,
-            { m: NDManager -> m.ones(Shape(1)) }, 10
-          )
+          .addPad(0, 0, { m: NDManager -> m.ones(Shape(1)) }, 10)
           .build()
       )
       .optUsage(usage)
