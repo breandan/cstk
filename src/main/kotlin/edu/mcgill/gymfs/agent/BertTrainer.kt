@@ -87,7 +87,6 @@ object TrainBertOnCode {
           ).build()
       )
       .optEpsilon(1e-5f)
-      .optClipGrad(0.0f) // Does not seem to work?
       .build()
       .let { optimizer: Adam ->
         model.newTrainer(
@@ -103,8 +102,7 @@ object TrainBertOnCode {
                   trainer: Trainer,
                   batchData: TrainingListener.BatchData
                 ) {
-                  numEpochs++
-                  if (numEpochs % 20 == 0)
+                  if (numEpochs++ % 20 == 0)
                     println(trainer.loss.getAccumulator(TRAIN_ALL))
 //                  println(batchData.batch.data)
                 }
