@@ -95,15 +95,16 @@ object TrainBertOnCode {
             .optOptimizer(optimizer)
             .optDevices(Device.getDevices(MAX_GPUS))
             .addTrainingListeners(
-              *TrainingListener.Defaults.logging(),
-//              object: DivergenceCheckTrainingListener(){
-//              override fun onTrainingBatch(
-//                trainer: Trainer,
-//                batchData: TrainingListener.BatchData
-//              ) {
-//                  println(trainer.loss.getAccumulator(TRAIN_ALL))
+              *TrainingListener.Defaults.logging(10),
+              SaveModelTrainingListener("", "codebert", 10),
+              object: DivergenceCheckTrainingListener(){
+              override fun onTrainingBatch(
+                trainer: Trainer,
+                batchData: TrainingListener.BatchData
+              ) {
+                  println(trainer.loss.getAccumulator(TRAIN_ALL))
 //                  println(batchData.batch.data)
-//              }}
+              }}
             )
         )
       }
