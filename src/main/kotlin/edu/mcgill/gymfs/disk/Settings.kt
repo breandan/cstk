@@ -6,7 +6,7 @@ import java.io.File
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
-const val FILE_EXT = "*.kt"
+const val FILE_EXT = "*.java"
 
 const val UNK = "<unk>"
 const val CLS = "<cls>"
@@ -18,7 +18,7 @@ const val MAX_MASKING_PER_INSTANCE = 20
 const val BATCH_SIZE = 24
 const val MAX_BATCH = 50
 const val MAX_GPUS = 1
-const val EPOCHS = 1000
+const val EPOCHS = 100000
 const val MAX_VOCAB = 35000
 
 val RESERVED_TOKENS = listOf(UNK, CLS, SEP, MSK)

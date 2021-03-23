@@ -32,7 +32,7 @@ fun main() {
 @ExperimentalStdlibApi
 object TrainBertOnCode {
   fun runExample(): TrainingResult {
-    val files = ROOT_DIR.allFilesRecursively("*.kt").map { ParsedFile(it) }
+    val files = ROOT_DIR.allFilesRecursively().map { ParsedFile(it) }
     val countedTokens = countTokens(files)
     val dictionary = buildDictionary(countedTokens)
     createBertPretrainingModel(dictionary).use { model ->
@@ -80,7 +80,7 @@ object TrainBertOnCode {
           .setMainTracker(
             PolynomialDecayTracker.builder()
               .setBaseValue(5e-5f)
-              .setEndLearningRate(5e-5f / 1000)
+              .setEndLearningRate(5e-5f / 100)
               .setDecaySteps(100000)
               .optPower(1f)
               .build()
