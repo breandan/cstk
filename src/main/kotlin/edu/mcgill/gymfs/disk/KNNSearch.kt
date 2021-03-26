@@ -39,7 +39,7 @@ class KNNSearch: CliktCommand() {
 
   @OptIn(ExperimentalTime::class)
   override fun run() {
-    println("\nSearching index of size ${knnIndex.size()} for [?]=[$query]…\n")
+    println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = search(query)
     val (metric, metricName) = MetricLCS().let { it to it::class.simpleName }
     val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)

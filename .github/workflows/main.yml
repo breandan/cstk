@@ -18,4 +18,4 @@ jobs:
         with:
           graalvm-version: '19.3.3.java11'
       - name: Build with Gradle
-        run: ./gradlew grep --args='--query=match'
+        run: ./gradlew trieSearch knnSearch --args='--query=match'

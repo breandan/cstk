@@ -88,6 +88,8 @@ Searching index of size 1939 for [?]=[const val MAX_VOCAB = 35000]…
  81->7.) rectY + RECT_DESCALE * 2,
 111->8.) private var height = 0
 352->9.) private var birdState = 0
+
+Fetched nearest neighbors in 2.29919ms
 ```
 
 # Deployment
