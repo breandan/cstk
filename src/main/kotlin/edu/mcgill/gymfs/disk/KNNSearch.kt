@@ -44,8 +44,14 @@ class KNNSearch: CliktCommand() {
     val mostSimilarHits = nearestNeighbors.sortedByDist(query, MetricLCS())
 
     println("\nFetched nearest neighbors in " + measureTime {
-      mostSimilarHits.take(10).forEachIndexed { i, s ->
-        println("${nearestNeighbors.indexOf(s).toString().padStart(3)}->$i.) $s")
+      println("""
+        |-----> Original index before reranking by query similarity
+        |    |-----> Current index after reranking by similarity metric
+        |    |
+      """.trimIndent())
+      mostSimilarHits.take(10).forEachIndexed { currentIndex, s ->
+        val originalIndex = nearestNeighbors.indexOf(s).toString().padStart(3)
+        println("${originalIndex}->$currentIndex.) $s")
       }
     }.inMilliseconds + "ms")
   }
