@@ -1,15 +1,9 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.disk
 
-import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
-import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
-import edu.mcgill.gymfs.disk.allFilesRecursively
 import java.io.*
 import java.nio.file.*
-import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.*
 import kotlin.io.path.*
-import kotlin.time.*
 
 // Creates a mirror image of the HD path in memory
 @ExperimentalPathApi
@@ -28,3 +22,8 @@ private fun Path.mirrorHDFS(imfs: FileSystem): Path {
   return jfsRoot
 }
 
+fun Any?.serialize(path: File) =
+  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path))).use { it.writeObject(this) }
+
+fun deserialize(file: File): Any =
+  ObjectInputStream(GZIPInputStream(FileInputStream(file))).use { it.readObject() }

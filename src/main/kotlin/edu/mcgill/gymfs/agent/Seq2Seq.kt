@@ -31,7 +31,7 @@ import ai.djl.training.listener.*
 import ai.djl.training.loss.MaskedSoftmaxCrossEntropyLoss
 import ai.djl.training.util.ProgressBar
 import ai.djl.translate.*
-import edu.mcgill.gymfs.BATCH_SIZE
+import edu.mcgill.gymfs.disk.BATCH_SIZE
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.*

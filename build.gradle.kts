@@ -11,7 +11,10 @@ plugins {
 group = "com.github.breandan"
 version = "1.0-SNAPSHOT"
 
-repositories.mavenCentral()
+repositories {
+  mavenCentral()
+  maven("https://dl.bintray.com/kotlin/kotlin-datascience")
+}
 
 dependencies {
   implementation(kotlin("stdlib"))
@@ -21,8 +24,8 @@ dependencies {
 
   implementation("ai.djl:api:0.10.0")
   implementation("org.slf4j:slf4j-simple:1.7.30")
-  implementation("ai.djl.mxnet:mxnet-engine:0.10.0")
-  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
+//  implementation("ai.djl.mxnet:mxnet-engine:0.10.0")
+//  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
 
 //  implementation("ai.djl:examples:0.6.0")
 
@@ -30,6 +33,20 @@ dependencies {
   implementation("ai.djl.fasttext:fasttext-engine:0.10.0")
   implementation("ai.djl:model-zoo:0.10.0")
   implementation("commons-cli:commons-cli:1.4")
+  implementation("ai.djl.tensorflow:tensorflow-engine:0.10.0")
+  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
+
+//  implementation("ai.djl:model-zoo:0.10.0")
+  implementation("ai.djl.mxnet:mxnet-model-zoo:0.10.0")
+
+  val hnswlibVersion = "0.0.46"
+  implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
+  implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
+
+  val multikVersion = "0.0.1"
+  implementation("org.jetbrains.kotlinx:multik-api:$multikVersion")
+  implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
+  implementation("com.robrua.nlp:easy-bert:1.0.3")
 
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
 }

@@ -1,6 +1,6 @@
 package edu.mcgill.gymfs.disk
 
-import edu.mcgill.gymfs.FILE_EXT
+import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
 
@@ -28,6 +28,13 @@ fun Path.allFilesRecursively(glob: String = FILE_EXT): List<Path> =
       files + dirs.map { it.allFilesRecursively(glob) }.flatten()
     }
 
+@OptIn(ExperimentalPathApi::class)
+fun List<Path>.allCodeFragments() = map { path ->
+  path.readText().lines()
+    .mapIndexed { i, it -> Location(path.toUri(), i) to it.trim() }
+//    .chunked(5).map { it.joinToString("\n") }
+}.flatten()
+
 fun Path.read(start: Int = 0, end: Int = -1) =
   try { Files.readString(this) } catch (e: Exception) { null }
     ?.let { it.substring(start, if (end < 0) it.length else end) }
@@ -46,3 +53,12 @@ fun String.preview(query: String, window: Int = 10) =
     substring((b - window).coerceIn(range), b) + "[?]" +
       substring(b + q.length, (b + q.length + window).coerceIn(range))
   }.joinToString("…", "…", "…") { it.trim() }
+
+fun vectorize(query: String): FloatArray =
+  URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().lines()
+  .map { it.trim().replace("[", "").replace("]", "") }
+  .map { it.split(" ").filter(String::isNotEmpty).map { it.toFloat() } }
+  .flatten().toFloatArray().copyOf(512)
+
+fun tokenize(query: String) =
+  URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")

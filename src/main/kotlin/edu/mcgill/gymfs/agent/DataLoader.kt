@@ -1,5 +1,6 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.agent
 
+import edu.mcgill.gymfs.disk.*
 import kotlin.random.Random
 
 

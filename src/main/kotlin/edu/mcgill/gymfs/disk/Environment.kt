@@ -56,7 +56,7 @@ data class Location(val file: URI, val line: Int): Serializable {
     Files.newBufferedReader(file.toPath()).use {
       it.lineSequence()
         .drop((line - surroundingLines).coerceAtLeast(0))
-        .take(surroundingLines + 1).joinToString("\n")
+        .take(surroundingLines + 1).joinToString("\n") {it.trim()}
     }
 
   private fun topKeywordsFromContext(
@@ -100,7 +100,7 @@ fun buildOrLoadIndex(
   if (!index.exists())
     measureTimedValue { indexPath(rootDir.also { println("Indexing $it") }) }
       .let { (trie, time) ->
-        val file = if (index.name.isEmpty()) File("gymfs.idx") else index
+        val file = if (index.name.isEmpty()) File("keyword.idx") else index
         trie.also { it.serialize(file); println("Indexed in $time to: $file") }
       }
   else {
@@ -125,10 +125,5 @@ fun indexPath(rootDir: Path): ConcurrentSuffixTree<Queue<Location>> =
       }
     }
 
-fun Any?.serialize(path: File) =
-  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path))).use { it.writeObject(this) }
-
-fun deserialize(file: File): Any =
-  ObjectInputStream(GZIPInputStream(FileInputStream(file))).use { it.readObject() }
 
 fun main(args: Array<String>) = Grepper().main(args)

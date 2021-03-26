@@ -1,13 +1,14 @@
-package edu.mcgill.gymfs
+package edu.mcgill.gymfs.disk
 
 import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
 import java.io.File
 import kotlin.random.Random
-import kotlin.system.exitProcess
 
-const val FILE_EXT = "*.java"
+const val FILE_EXT = "*.kt"
+val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
+val SERVER_ADDRESS = "http://localhost:8000/?vectorize="
 const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
@@ -28,5 +29,6 @@ val SEP_ID = RESERVED_TOKENS.indexOf(SEP)
 val MSK_ID = RESERVED_TOKENS.indexOf(MSK)
 val BERT_BUILDER = BertBlock.builder().micro()
 val ROOT_DIR = File(".").toPath()
+val TEST_DIR = File("src/main/resources/test/").toPath()
 val TOKENIZER = BertTokenizer()
 val rand = Random(1)

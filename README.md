@@ -71,7 +71,20 @@ Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reaso
 ./gradlew jar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
 ```
 
+Start CodeBERT server, to vectorize the code fragments:
+
+```bash
+# Serves vectorized code fragments at http://localhost:8000/?<QUERY>
+python codebert_server.py
+```
+
 # Resources
 
 * [Concurrent Trees](https://github.com/npgall/concurrent-trees) - For fast indexing and retrieval.
 * [Jimfs](https://github.com/google/jimfs) - An in-memory file system for dynamic document parsing.
+* [HNSW](https://github.com/jelmerk/hnswlib) - Java library for approximate nearest neighbors search using Hierarchical Navigable Small World graphs
+
+# Papers
+
+* [Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs](https://arxiv.org/pdf/1603.09320.pdf), Malkov & Yashunin (2015
+* [BERT-kNN: Adding a kNN Search Component to Pretrained Language Models for Better QA](https://arxiv.org/pdf/2005.00766.pdf), Kassner & Schutze (2020)
