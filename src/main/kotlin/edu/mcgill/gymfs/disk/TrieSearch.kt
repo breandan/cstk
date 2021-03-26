@@ -58,6 +58,10 @@ data class Location(val file: URI, val line: Int): Serializable {
         .take(surroundingLines + 1).joinToString("\n") {it.trim()}
     }
 
+  /*
+   * Fetches the most salient keywords from the context
+   */
+
   private fun topKeywordsFromContext(
     mostKeywordsToTake: Int = 5,
     score: (String) -> Double

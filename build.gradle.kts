@@ -46,6 +46,7 @@ dependencies {
   val multikVersion = "0.0.1"
   implementation("org.jetbrains.kotlinx:multik-api:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
+
   implementation("com.robrua.nlp:easy-bert:1.0.3")
 
   implementation("info.debatty:java-string-similarity:2.0.0")

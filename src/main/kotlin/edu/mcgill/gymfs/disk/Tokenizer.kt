@@ -20,7 +20,7 @@ fun main() {
           .readText()
           .removePrefix("{\"")
           .substringBeforeLast("\"")
-//        .replace("Ġ", " ")
+//        .replace("Ġ", " ") //https://github.com/huggingface/transformers/issues/3867#issuecomment-616956437
           .split(Regex("\": [0-9]*, \""))
           .joinToString("\n")
       )

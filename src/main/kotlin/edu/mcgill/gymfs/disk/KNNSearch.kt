@@ -40,7 +40,7 @@ class KNNSearch: CliktCommand() {
     knnIndex.items().mapIndexed { i, it ->
       if (i % 100 == 0) println("Vectorized $i out of ${knnIndex.items().size}")
       it to vectorize(it.loc.getContext(0))
-    }.sortedBy { (item, vx) ->
+    }.sortedBy { (_, vx) ->
       vq.zip(vx).map { (x, y) -> x * x - y * y }.sum().pow(0.5f)
     }.map { it.first.loc.getContext(0) }
 
@@ -48,6 +48,11 @@ class KNNSearch: CliktCommand() {
   override fun run() {
     println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = approxKNNSearch(query) //exactKNNSearch(query)
+
+    // TODO: Why are the KNN results so bad?
+    // Hypothesis #1: Language mismatch (Kotlin/Java)
+    // Hypothesis #2: Encoding issue with BERT vectors (MLM/dot product/...)
+    // Hypothesis #3: Pretraining issue / contextual misalignment
 
     println("\nFetched nearest neighbors in " + measureTime {
       nearestNeighbors.take(10).forEachIndexed { i, s -> println("$i.) $s") }
