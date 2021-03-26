@@ -41,12 +41,13 @@ class KNNSearch: CliktCommand() {
   override fun run() {
     println("\nSearching index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = search(query)
-    val mostSimilarHits = nearestNeighbors.sortedByDist(query, MetricLCS())
+    val (metric, metricName) = MetricLCS().let { it to it::class.simpleName }
+    val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)
 
     println("\nFetched nearest neighbors in " + measureTime {
       println("""
-        |-----> Original index before reranking by query similarity
-        |    |-----> Current index after reranking by similarity metric
+        |-----> Original index before reranking by $metricName
+        |    |-----> Current index after reranking by $metricName
         |    |
       """.trimIndent())
       mostSimilarHits.take(10).forEachIndexed { currentIndex, s ->

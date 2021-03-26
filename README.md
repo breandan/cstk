@@ -71,25 +71,23 @@ Nearest neighbor search:
 For example:
 
 ```
-$ ./gradlew -q knnSearch --args='--query="const val MAX_GPUS = 1"'
+$ ./gradlew -q knnSearch --args='--query="const val MAX_VOCAB = 35000"'
 
-Searching index of size 1939 for [?]=[const val MAX_GPUS = 1]…
+Searching index of size 1939 for [?]=[const val MAX_VOCAB = 35000]…
 
-|-----> Original index before reranking by query similarity
-|    |-----> Current index after reranking by similarity metric
+|-----> Original index before reranking by MetricLCS
+|    |-----> Current index after reranking by MetricLCS
 |    |
-503->0.) const val MAX_GPUS = 1
-278->1.) const val MAX_BATCH = 50
-203->2.) const val FPS = 1000 / 30
-498->3.) const val MAX_VOCAB = 35000
-132->4.) const val FINAL_EPSILON = 0.0001f
-241->5.) const val FILE_EXT = "*.kt"
-270->6.) const val MAX_PIPE_COUNT = 30 // 对象池中对象的最大个数
-114->7.) private var height = 0
-334->8.) private var birdState = 0
- 82->9.) rectY + RECT_DESCALE * 2,
-
-Fetched nearest neighbors in 1.354119ms
+494->0.) const val MAX_VOCAB = 35000
+262->1.) const val MAX_BATCH = 50
+499->2.) const val MAX_GPUS = 1
+189->3.) const val FPS = 1000 / 30
+117->4.) const val FINAL_EPSILON = 0.0001f
+234->5.) const val FILE_EXT = "*.kt"
+273->6.) const val MAX_PIPE_COUNT = 30 // 对象池中对象的最大个数
+ 81->7.) rectY + RECT_DESCALE * 2,
+111->8.) private var height = 0
+352->9.) private var birdState = 0
 ```
 
 # Deployment
