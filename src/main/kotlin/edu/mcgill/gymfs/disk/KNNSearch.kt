@@ -8,6 +8,7 @@ import com.github.jelmerk.knn.hnsw.HnswIndex
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
 import java.nio.file.Path
+import kotlin.math.pow
 import kotlin.time.*
 
 /**
@@ -29,19 +30,35 @@ class KNNSearch: CliktCommand() {
     else rebuildIndex()
   }
 
-  fun search(query: String): List<String> =
+  // Cheap index lookup using HNSW index
+  fun approxKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
     knnIndex.findNearest(vectorize(query), 1000)
       .map { it.item().loc.getContext(0) }
+
+  // Expensive, need to compute pairwise distances with all items in the index
+  fun exactKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
+    knnIndex.items().mapIndexed { i, it ->
+      if (i % 100 == 0) println("Vectorized $i out of ${knnIndex.items().size}")
+      it to vectorize(it.loc.getContext(0))
+    }.sortedBy { (item, vx) ->
+      vq.zip(vx).map { (x, y) -> x * x - y * y }.sum().pow(0.5f)
+    }.map { it.first.loc.getContext(0) }
 
   @OptIn(ExperimentalTime::class)
   override fun run() {
     println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
-    val nearestNeighbors = search(query)
+    val nearestNeighbors = approxKNNSearch(query) //exactKNNSearch(query)
+
+    println("\nFetched nearest neighbors in " + measureTime {
+      nearestNeighbors.take(10).forEachIndexed { i, s -> println("$i.) $s") }
+    }.inMilliseconds + "ms")
+
     val (metric, metricName) = MetricLCS().let { it to it::class.simpleName }
     val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)
 
-    println("\nFetched nearest neighbors in " + measureTime {
+    println("\nReranked nearest neighbors in " + measureTime {
       println("""
+        
         |-----> Original index before reranking by $metricName
         |    |-----> Current index after reranking by $metricName
         |    |
