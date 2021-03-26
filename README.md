@@ -71,25 +71,38 @@ Nearest neighbor search:
 For example:
 
 ```
-$ ./gradlew -q knnSearch --args='--query="const val MAX_VOCAB = 35000"'
+./gradlew -q knnSearch --args='--query="const val MAX_VOCAB = 35000"'
 
-Searching index of size 1939 for [?]=[const val MAX_VOCAB = 35000]…
+Searching KNN index of size 887 for [?]=[const val MAX_VOCAB = 35000]…
+
+0.) val trie: ConcurrentSuffixTree<Queue<Location>>
+1.) File("vocab.txt").let {
+2.) }
+3.) TrainBertOnCode.runExample()
+4.) import ai.djl.training.loss.Loss
+5.) 
+6.) .let { (dirs, files) ->
+7.) println("Loading index from ${index.absolutePath}")
+8.) Files.copy(src, imfs.getPath(path))
+9.) instances: List<MaskedInstance>,
+
+Fetched nearest neighbors in 1.135012ms
 
 |-----> Original index before reranking by MetricLCS
 |    |-----> Current index after reranking by MetricLCS
 |    |
-494->0.) const val MAX_VOCAB = 35000
-262->1.) const val MAX_BATCH = 50
-499->2.) const val MAX_GPUS = 1
-189->3.) const val FPS = 1000 / 30
-117->4.) const val FINAL_EPSILON = 0.0001f
-234->5.) const val FILE_EXT = "*.kt"
-273->6.) const val MAX_PIPE_COUNT = 30 // 对象池中对象的最大个数
- 81->7.) rectY + RECT_DESCALE * 2,
-111->8.) private var height = 0
-352->9.) private var birdState = 0
+315->0.) const val MAX_VOCAB = 35000
+163->1.) const val MAX_BATCH = 50
+311->2.) const val EPOCHS = 100000
+321->3.) const val MAX_GPUS = 1
+322->4.) const val BATCH_SIZE = 24
+140->5.) const val FILE_EXT = "*.kt"
+309->6.) const val CLS = "<cls>"
+343->7.) const val MSK = "<msk>"
+353->8.) const val MAX_SEQUENCE_LENGTH = 128
+348->9.) const val MAX_MASKING_PER_INSTANCE = 20
 
-Fetched nearest neighbors in 2.29919ms
+Reranked nearest neighbors in 1.739602ms
 ```
 
 # Deployment
