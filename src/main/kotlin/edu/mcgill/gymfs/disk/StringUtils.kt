@@ -30,7 +30,7 @@ fun Path.allFilesRecursively(glob: String = FILE_EXT): List<Path> =
 
 @OptIn(ExperimentalPathApi::class)
 fun List<Path>.allCodeFragments() = map { path ->
-  path.readText().lines()
+  path.readText().lines().filter { it.isNotBlank() }
     .mapIndexed { i, it -> Location(path.toUri(), i) to it.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
 }.flatten()

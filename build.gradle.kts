@@ -48,6 +48,8 @@ dependencies {
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
   implementation("com.robrua.nlp:easy-bert:1.0.3")
 
+  implementation("info.debatty:java-string-similarity:2.0.0")
+
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
 }
 
