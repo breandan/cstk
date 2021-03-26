@@ -36,13 +36,11 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.*
 
-fun main() {
-  TrainSeq2Seq.runExample()
-}
+fun main() = TrainSeq2Seq.runExample()
 
 object TrainSeq2Seq {
   @Throws(IOException::class, TranslateException::class)
-  fun runExample(): TrainingResult? {
+  fun runExample() {
     val executorService = Executors.newFixedThreadPool(8)
     Model.newInstance("seq2seqMTEn-Fr").use { model ->
       // get training and validation dataset
@@ -78,7 +76,6 @@ object TrainSeq2Seq {
 
           // EncoderDecoder don't implement inference, set validateDataset to null
           EasyTrain.fit(trainer, 1000/*numEpoch*/, trainingSet, null)
-          return trainer.trainingResult
         }
       } finally {
         executorService.shutdownNow()

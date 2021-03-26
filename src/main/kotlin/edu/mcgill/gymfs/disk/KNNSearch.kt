@@ -6,9 +6,8 @@ import com.github.jelmerk.knn.DistanceFunctions.FLOAT_INNER_PRODUCT
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import info.debatty.java.stringsimilarity.MetricLCS
-import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import java.io.File
-import java.nio.file.*
+import java.nio.file.Path
 import kotlin.time.*
 
 /**
@@ -33,9 +32,6 @@ class KNNSearch: CliktCommand() {
   fun search(query: String): List<String> =
     knnIndex.findNearest(vectorize(query), 1000)
       .map { it.item().loc.getContext(0) }
-
-  fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
-    sortedBy { metric.distance(it, query) }
 
   @OptIn(ExperimentalTime::class)
   override fun run() {

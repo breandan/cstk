@@ -1,6 +1,6 @@
 package edu.mcgill.gymfs.disk
 
-import info.debatty.java.stringsimilarity.MetricLCS
+import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -63,3 +63,6 @@ fun vectorize(query: String): FloatArray =
 
 fun tokenize(query: String) =
   URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")
+
+fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
+  sortedBy { metric.distance(it, query) }

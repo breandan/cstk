@@ -20,12 +20,11 @@ fun main() {
           .readText()
           .removePrefix("{\"")
           .substringBeforeLast("\"")
-//          .replace("Ġ", " ")
+//        .replace("Ġ", " ")
           .split(Regex("\": [0-9]*, \""))
           .joinToString("\n")
       )
   }
-
 
   val tok = FullTokenizer(File("vocab.txt"))
   val tokens = tok.tokenize("for i in t doSomething")

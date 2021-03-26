@@ -23,7 +23,9 @@ private fun Path.mirrorHDFS(imfs: FileSystem): Path {
 }
 
 fun Any?.serialize(path: File) =
-  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path))).use { it.writeObject(this) }
+  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
+    .use { it.writeObject(this) }
 
 fun deserialize(file: File): Any =
-  ObjectInputStream(GZIPInputStream(FileInputStream(file))).use { it.readObject() }
+  ObjectInputStream(GZIPInputStream(FileInputStream(file)))
+    .use { it.readObject() }

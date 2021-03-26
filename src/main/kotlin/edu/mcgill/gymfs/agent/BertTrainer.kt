@@ -9,12 +9,12 @@ import ai.djl.training.dataset.Batch
 import ai.djl.training.initializer.TruncatedNormalInitializer
 import ai.djl.training.listener.*
 import ai.djl.training.listener.EvaluatorTrainingListener.TRAIN_ALL
-import ai.djl.training.optimizer.*
+import ai.djl.training.optimizer.Adam
 import ai.djl.training.tracker.*
 import ai.djl.translate.Batchifier
 import edu.mcgill.gymfs.disk.*
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.*
+import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.random.Random
 
