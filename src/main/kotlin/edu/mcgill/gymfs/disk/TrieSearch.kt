@@ -9,12 +9,11 @@ import java.net.URI
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.zip.*
 import kotlin.io.path.*
 import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
-class Grepper: CliktCommand() {
+class TrieSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
     .default(Paths.get("").toAbsolutePath().toString())
 
@@ -35,7 +34,7 @@ class Grepper: CliktCommand() {
     measureTimedValue { search(query) }.let { (res, time) ->
       res.take(10).forEachIndexed { i, it ->
         println("$i.) ${previewResult(query, it)}")
-        val nextLocations = it.expand(this@Grepper)
+        val nextLocations = it.expand(this@TrieSearch)
         println("Next locations:")
         nextLocations.forEachIndexed { index, (query, loc) ->
           println("\t$index.) ${previewResult(query, loc)}")
@@ -80,9 +79,9 @@ data class Location(val file: URI, val line: Int): Serializable {
    * TODO: Reweight score by other metrics?
    */
 
-  fun expand(grepper: Grepper): List<Pair<String, Location>> =
+  fun expand(grepper: TrieSearch): List<Pair<String, Location>> =
     topKeywordsFromContext { grepper.search(it).size.toDouble() }
-      .also { println("Keyword scores: $it") }
+      .also { println("Salient keywords: $it") }
       .map { (kw, _) ->
         grepper.search(kw)
           .filter { it != this }
@@ -125,5 +124,4 @@ fun indexPath(rootDir: Path): ConcurrentSuffixTree<Queue<Location>> =
       }
     }
 
-
-fun main(args: Array<String>) = Grepper().main(args)
+fun main(args: Array<String>) = TrieSearch().main(args)

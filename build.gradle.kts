@@ -54,8 +54,13 @@ dependencies {
 }
 
 tasks {
-  register("grep", JavaExec::class) {
-    main = "edu.mcgill.gymfs.disk.EnvironmentKt"
+  register("trieSearch", JavaExec::class) {
+    main = "edu.mcgill.gymfs.disk.TrieSearchKt"
+    classpath = sourceSets["main"].runtimeClasspath
+  }
+
+  register("knnSearch", JavaExec::class) {
+    main = "edu.mcgill.gymfs.disk.KNNSearchKt"
     classpath = sourceSets["main"].runtimeClasspath
   }
 

@@ -13,13 +13,14 @@ Interface:
 
 # Usage
 
-Manual grep: `./gradlew -q grep --args='--query=<QUERY>
-[--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'`
+Keyword search:
+
+`./gradlew -q trieSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'`
 
 For example:
 
 ```
-$ ./gradlew -q grep
+$ ./gradlew -q trieSearch
 Indexing /home/breandan/IdeaProjects/gym-fs
 Indexed in 524ms to: gymfs.idx
 
@@ -63,6 +64,29 @@ Next locations:
 Found 4 results in 2.82ms
 ```
 
+Nearest neighbor search:
+
+`./gradlew -q knnSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'`
+
+```
+$ ./gradlew -q knnSearch --args='--query="const val MAX_VOCAB = 35000"'
+
+Searching index of size 1939 for [?]=[const val MAX_VOCAB = 35000]…
+
+494->0.) const val MAX_VOCAB = 35000
+262->1.) const val MAX_BATCH = 50
+499->2.) const val MAX_GPUS = 1
+189->3.) const val FPS = 1000 / 30
+117->4.) const val FINAL_EPSILON = 0.0001f
+234->5.) const val FILE_EXT = "*.kt"
+273->6.) const val MAX_PIPE_COUNT = 30 // 对象池中对象的最大个数
+ 81->7.) rectY + RECT_DESCALE * 2,
+111->8.) private var height = 0
+352->9.) private var birdState = 0
+
+Fetched nearest neighbors in 1.354119ms
+```
+
 # Deployment
 
 Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reason.
@@ -71,12 +95,14 @@ Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reaso
 ./gradlew jar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
 ```
 
-Start CodeBERT server, to vectorize the code fragments:
+To reindex, first start CodeBERT server, to vectorize the code fragments:
 
 ```bash
 # Serves vectorized code fragments at http://localhost:8000/?<QUERY>
 python codebert_server.py
 ```
+
+
 
 # Resources
 
