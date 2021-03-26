@@ -1,12 +1,10 @@
-package edu.mcgill.gymfs.disk
+package test
 
 import com.github.jelmerk.knn.DistanceFunctions.*
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import info.debatty.java.stringsimilarity.*
 import java.io.File
-import kotlin.system.measureTimeMillis
-import kotlin.time.*
 
 /**
  * Retrieves the K-nearest fragment embeddings and
@@ -14,22 +12,19 @@ import kotlin.time.*
  * distance.
  */
 
-@OptIn(ExperimentalTime::class)
 fun main() {
-  val query = "val embedding = vectorize(query)"
-  println("[?]=[$query]\n")
-  val embedding = vectorize(query)
+  val query = "* Retrieves the K-nearest fragment embeddings and"
+  println("Query: $query\n\n")
+  val embedding= vectorize(query)
 
-  println("\nFetched nearest neighbors in " + measureTime {
-    val nearestNeighbors = knnIndex.findNearest(embedding, 1000)
-      .map { it.item().loc.getContext(0) }
+  val nearestNeighbors = knnIndex.findNearest(embedding, 100)
+    .map { it.item().loc.getContext(0) }
 
-    val mostSimilarNeighbors = nearestNeighbors.sortedByDist(query)
-    mostSimilarNeighbors.take(10).forEachIndexed { i, s -> println("$i.) $s") }
-  }.inMilliseconds + "ms")
+  val mostSimilarNeighbors = nearestNeighbors.sortedByDist(query)
+  mostSimilarNeighbors.forEachIndexed { i, s -> println("$i.) $s") }
 }
 
-fun List<String>.sortedByDist(query: String, metric: MetricLCS = MetricLCS()) =
+fun List<String>.sortedByDist(query: String, metric: Levenshtein = Levenshtein()) =
   sortedBy { metric.distance(it, query) }
 
 val indexFile = File("knnindex.idx")
@@ -39,15 +34,12 @@ val knnIndex: VecIndex =
 
 typealias VecIndex = HnswIndex<Location, FloatArray, Fragment, Float>
 
-@OptIn(ExperimentalTime::class)
 fun rebuildIndex(): VecIndex =
   HnswIndex.newBuilder(512, FLOAT_INNER_PRODUCT, 1000000)
-    .withM(100).withEf(500).withEfConstruction(500)
+    .withM(50).withEf(500).withEfConstruction(500)
     .build<Location, Fragment>().also { idx ->
-      println("Rebuilt index in " + measureTime {
-        ROOT_DIR.allFilesRecursively().allCodeFragments()
-          .forEach { (loc, text) -> idx.add(Fragment(loc, vectorize(text))) }
-      }.inMinutes + " minutes")
+      ROOT_DIR.allFilesRecursively().allCodeFragments()
+        .forEach { (loc, text) -> idx.add(Fragment(loc, vectorize(text))) }
     }.also { it.serialize(indexFile) }
 
 data class Fragment(val loc: Location, val vector: FloatArray):
