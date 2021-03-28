@@ -26,39 +26,50 @@ Humans are adept information foraging agents. We can quickly find relevant infor
 
 Early work in program learning realized the importance of graph-based representations~\cite{allamanis2017learning}, however explicit graph construction requires extensive feature-engineering. More recent work in program synthesis has explored incorporating a terminal~\cite{ellis2019write}, graphical~\cite{walke2020learning} or other user interface to explore the space of valid programs, however do not consider the scope or variety of artifacts in a software project. Adapting to settings where style, terminology and document structure vary remains a challenge. Early work has shown the feasibility of learning a graph~\cite{johnson2020learning} from source code, but only locally and still requires an explicit parser to form the initial graph.
 
-Unlike prior work, we consider the whole project and related artifacts. Instead of parsing their contents explicitly, which may be computationally expensive or too large to fit in memory, we allow the agent to construct the graph organically by exploring the filesystem, which can later be used to predict a label or sequence at inference time, depending on the task.
+%Unlike prior work, we consider the whole project and related artifacts. Instead of parsing their contents explicitly, which may be computationally expensive or too large to fit in memory, we allow the agent to construct the graph organically by exploring the filesystem, which can later be used to predict a label or sequence at inference time, depending on the task.
 
 Imagine a newly-hired developer, who has programming experience, but no prior knowledge about a closed-source project. She receives access to the team's Git repository and is assigned her first ticket: Fix test broken by \texttt{0fb98be}. After locating the commit and becoming familiar with the code, she queries StackOverflow, discovers a relevant solution, copies the code into the project, makes a few edits, presses run, and the test passes.
 
 In order to accomplish a similar task, an information-seeking agent must be able to explore a database. Similar to a human developer, it might be able to perform simple actions, like \texttt{search(query)}, \texttt{read(text)}, \texttt{copy(text, from, to)}, and \texttt{runCode()} while navigating relevant documents and source code artifacts. As the agent traverses the project using these primitives, it builds up a project-specific knowledge graph.
 
-\begin{figure*}
-  \centering
-  \includegraphics[width=0.8\textwidth]{use_graph}
-  \caption{Software projects consist of many documents which share common references. These references form an entity alignment graph, with vertices decorated by the surrounding context, and edges by the relation type, e.g. exact duplicate, fuzzy match or synthetic relation (learned or engineered).}
-\end{figure*}
+%\begin{figure*}
+%  \centering
+%  \includegraphics[width=0.8\textwidth]{use_graph}
+%  \caption{Software projects consist of many documents which share common references. These references form an entity alignment graph, with vertices decorated by the surrounding context, and edges by the relation type, e.g. exact duplicate, fuzzy match or synthetic relation (learned or engineered).}
+%\end{figure*}
 
 %During evaluation, we measure task performance across search strategies. Depending on the task in question, various loss functions are possible, from a simple string distance metric over a masked code fragment, to more complex properties (e.g. the presence or absence of errors, or some internal state of the REPL) that must be satisfied by interacting with the runtime environment. Many program analysis and repair tasks are also possible, such as defect, duplicate or vulnerability detection and correction.
 
 \section{Method}
 
 
-\begin{figure*}
-  \centering
-  \includegraphics[width=0.85\textwidth]{architecture}
-  \caption{Unlike language models which directly learn the data distribution, our model is designed to query an unseen database only available at test time. The model scores and selectively expands a subset of promising results within the database using a beam search heuristic, then runs message passing over the resulting graph to obtain the final task prediction.}
-\end{figure*}
 
-We fetch a dataset of repositories sampled from popular Java repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs $\texttt{Location<F, O>}$. We also encode CodeBERT~\cite{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\cite{malkov2018efficient} (HNSWG).
+We fetch a dataset of repositories sampled from popular Java repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs. We also encode CodeBERT~\cite{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\cite{malkov2018efficient} (HNSWG).
 
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{bert_embedding}
-  \caption{CodeBERT takes a unicode sequence and emits a vector sequence. We accumulate the vector sequence into a single vector, representing an approximate probability distribution over latent variables.}
+  \caption{CodeBERT takes a unicode sequence and emits a vector sequence, which we accumulate into a single vector.}
 \end{figure}
 
-For each token in a string, CodeBERT emits a length-512 vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{512\times n}$, which we flatten into a vector. Once we have the sequence-embedding, we compare various distance-metrics to fetch the nearest vectors in our database. We then compare precision and recall across various types of distance metrics.
+For each token in a string, CodeBERT emits a length-512 vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{512\times n}$, which we flatten into a vector. Once we have the sequence-embedding, we compare various distance-metrics to fetch the nearest sequence embeddings in our database. We then compare precision and recall across various types of distance metrics.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{latent_kg}
+  \caption{To compute the k-nearest neighbors for a given query, we traverse the HNSWG up to depth $d$, i.e. $d=2$ retrieves the neighbors-of-neighbors, and $d=3$ fetches the neighbors-of-neighbors-of-neighbors.}
+\end{figure}
+
+For a given query location, we compute the context embedding and fetch the k-nearest neighboring documents in latent space. The edges are decorated with the direction vector between neighbors. We then repeat the procedure recursively, pruning with a beam search heuristic based on the path length the latent space.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1.05\textwidth]{architecture}
+  \caption{Unlike language models which directly learn the data distribution, our model is designed to query an unseen database only available at test time. The model scores and selectively expands a subset of promising results within the database using a beam search heuristic, then runs message passing over the resulting graph to obtain the final task prediction.}
+\end{figure}
+
+Once the beam search procedure is complete, we have a graph of the nearest neighboring documents. This forms a virtual knowledge graph, with nodes decorated by the CodeBERT embeddings and edges decorate with the direction vector between the documents. We then run $p$ rounds of message passing to generate a neighborhood summary.
 
 % We initialize the policy network using a pretrained language model. Starting at the site of the prediction task and conditioning on its local context, the policy network draws K queries from its latent state, which are fed into the index to produce a set of matching locations. The model scores and selectively expands a subset of those locations, and the process is repeated using finite-horizon MCTS or similar beam search procedure to retrieve a set of contextually relevant locations within the parent project.
 %

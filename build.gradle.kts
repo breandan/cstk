@@ -52,6 +52,8 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
+  implementation("org.deeplearning4j:deeplearning4j:1.0.0-beta7")
+  implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-beta7")
 }
 
 tasks {

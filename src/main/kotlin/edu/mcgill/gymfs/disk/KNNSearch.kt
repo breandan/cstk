@@ -75,6 +75,7 @@ class KNNSearch: CliktCommand() {
     }.inMilliseconds + "ms")
   }
 
+  // Compare various distance functions
   @OptIn(ExperimentalTime::class)
   fun rebuildIndex(): VecIndex =
     HnswIndex.newBuilder(512, FLOAT_INNER_PRODUCT, 1000000)
