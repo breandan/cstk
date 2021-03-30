@@ -32,8 +32,7 @@ class KNNSearch: CliktCommand() {
 
   // Cheap index lookup using HNSW index
   fun approxKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
-    knnIndex.findNearest(vectorize(query), 1000)
-      .map { it.item().loc.getContext(0) }
+    knnIndex.findNearest(vq, 1000).map { it.item().loc.getContext(0) }
 
   // Expensive, need to compute pairwise distances with all items in the index
   fun exactKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
@@ -51,7 +50,7 @@ class KNNSearch: CliktCommand() {
 
     // TODO: Why are the KNN results so bad?
     // Hypothesis #1: Language mismatch (Kotlin/Java)
-    // Hypothesis #2: Encoding issue with BERT vectors (MLM/dot product/...)
+    // Hypothesis #2: Encoding issue with BERT vectors (MLM/dot product/...) <--
     // Hypothesis #3: Pretraining issue / contextual misalignment
 
     println("\nFetched nearest neighbors in " + measureTime {
@@ -78,7 +77,7 @@ class KNNSearch: CliktCommand() {
   // Compare various distance functions
   @OptIn(ExperimentalTime::class)
   fun rebuildIndex(): VecIndex =
-    HnswIndex.newBuilder(512, FLOAT_INNER_PRODUCT, 1000000)
+    HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, FLOAT_INNER_PRODUCT, 1000000)
       .withM(100).withEf(500).withEfConstruction(500)
       .build<Location, Fragment>().also { idx ->
         println("Rebuilt index in " + measureTime {

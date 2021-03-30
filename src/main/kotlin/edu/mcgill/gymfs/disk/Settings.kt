@@ -14,6 +14,10 @@ const val CLS = "<cls>"
 const val SEP = "<sep>"
 const val MSK = "<msk>"
 
+const val BERT_EMBEDDING_SIZE = 768
+//https://huggingface.co/microsoft/codebert-base/blob/main/special_tokens_map.json
+const val CODEBERT_CLS_TOKEN = "<s>"
+
 const val MAX_SEQUENCE_LENGTH = 128
 const val MAX_MASKING_PER_INSTANCE = 20
 const val BATCH_SIZE = 24

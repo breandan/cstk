@@ -1,0 +1,15 @@
+[libraries]
+cct = "com.googlecode.concurrent-trees:concurrent-trees:2.6.1"
+djl = "ai.djl:api:0.10.0"
+jimfs = "com.google.jimfs:jimfs:1.2"
+slf4j = "org.slf4j:slf4j-simple:1.7.30"
+
+sentencepiece = "ai.djl.sentencepiece:sentencepiece:0.10.0"
+fasttext = "ai.djl.fasttext:fasttext-engine:0.10.0"
+modelzoo = "ai.djl:model-zoo:0.10.0"
+
+djlmxnet = "ai.djl.mxnet:mxnet-engine:0.10.0"
+djlmxnn ="ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport"
+
+djltf = "ai.djl.tensorflow:tensorflow-engine:0.10.0"
+tjltfn = "ai.djl.tensorflow:tensorflow-native-cu101:2.3.1"

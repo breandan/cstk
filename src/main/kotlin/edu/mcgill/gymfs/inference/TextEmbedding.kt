@@ -21,15 +21,17 @@ fun main() {
   val use = UniversalSentenceEncoder
   println("Millis " + measureTimeMillis {
     repeat(100) {
-  val inputs: MutableList<String> = ArrayList()
-  repeat(100) {
-    inputs.add("The quick brown fox jumps over the lazy dog $it") }
-    val embeddings = use.predict(inputs)!!
+      val inputs: MutableList<String> = ArrayList()
+      repeat(100) {
+        inputs.add("The quick brown fox jumps over the lazy dog $it")
+      }
+      val embeddings = use.predict(inputs)!!
 //    if (embeddings == null) println("This example only works for TensorFlow Engine")
 //    else
 //      for (i in inputs.indices) println(embeddings[i].joinToString(","))
       println(embeddings.size)
-  }})
+    }
+  })
 }
 
 object UniversalSentenceEncoder {

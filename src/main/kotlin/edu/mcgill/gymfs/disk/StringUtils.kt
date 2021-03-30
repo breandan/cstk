@@ -55,11 +55,13 @@ fun String.preview(query: String, window: Int = 10) =
       substring(b + q.length, (b + q.length + window).coerceIn(range))
   }.joinToString("…", "…", "…") { it.trim() }
 
+//https://github.com/huggingface/transformers/issues/1950#issuecomment-558679189
 fun vectorize(query: String): FloatArray =
-  URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().lines()
-  .map { it.trim().replace("[", "").replace("]", "") }
-  .map { it.split(" ").filter(String::isNotEmpty).map { it.toFloat() } }
-  .flatten().toFloatArray().copyOf(512)
+  URL(SERVER_ADDRESS + URLEncoder.encode("$CODEBERT_CLS_TOKEN$query", "utf-8"))
+    .readText().lines()
+    .map { it.trim().replace("[", "").replace("]", "") }
+    .map { it.split(" ").filter(String::isNotEmpty).map(String::toFloat) }
+    .first().toFloatArray()
 
 fun tokenize(query: String) =
   URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")

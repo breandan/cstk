@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  val kotlinVersion = "1.5.0-M1"
+  val kotlinVersion = "1.5.0-M2"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.38.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -13,30 +13,32 @@ version = "1.0-SNAPSHOT"
 
 repositories {
   mavenCentral()
+  maven("https://jitpack.io")
   maven("https://dl.bintray.com/kotlin/kotlin-datascience")
+  maven("https://jetbrains.bintray.com/lets-plot-maven")
 }
 
 dependencies {
   implementation(kotlin("stdlib"))
 //  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
-  implementation("com.google.jimfs:jimfs:1.2")
-  implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
+  implementation(libs.jimfs)
+  implementation(libs.cct)
 
-  implementation("ai.djl:api:0.10.0")
-  implementation("org.slf4j:slf4j-simple:1.7.30")
-//  implementation("ai.djl.mxnet:mxnet-engine:0.10.0")
-//  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
+  implementation(libs.djl)
+  implementation(libs.slf4j)
+  implementation(libs.djlmxnet)
+  implementation(libs.djlmxnn)
 
+//  implementation(libs.djltf)
+//  implementation(libs.djltfn)
 //  implementation("ai.djl:examples:0.6.0")
 
-  implementation("ai.djl.sentencepiece:sentencepiece:0.10.0")
-  implementation("ai.djl.fasttext:fasttext-engine:0.10.0")
-  implementation("ai.djl:model-zoo:0.10.0")
-  implementation("commons-cli:commons-cli:1.4")
-  implementation("ai.djl.tensorflow:tensorflow-engine:0.10.0")
-  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
+  implementation(libs.jimfs)
+  implementation(libs.slf4j)
+  implementation(libs.sentencepiece)
+  implementation(libs.fasttext)
+  implementation(libs.modelzoo)
 
-//  implementation("ai.djl:model-zoo:0.10.0")
   implementation("ai.djl.mxnet:mxnet-model-zoo:0.10.0")
 
   val hnswlibVersion = "0.0.46"
@@ -54,6 +56,11 @@ dependencies {
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
   implementation("org.deeplearning4j:deeplearning4j:1.0.0-beta7")
   implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-beta7")
+
+  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
+  implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
+
+  implementation("com.github.breandan:kotlingrad:0.4.2")
 }
 
 tasks {
