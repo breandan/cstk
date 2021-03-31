@@ -55,7 +55,7 @@ fun String.preview(query: String, window: Int = 10) =
       substring(b + q.length, (b + q.length + window).coerceIn(range))
   }.joinToString("…", "…", "…") { it.trim() }
 
-//https://github.com/huggingface/transformers/issues/1950#issuecomment-558679189
+//https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
 fun vectorize(query: String): FloatArray =
   URL(SERVER_ADDRESS + URLEncoder.encode("$CODEBERT_CLS_TOKEN$query", "utf-8"))
     .readText().lines()
