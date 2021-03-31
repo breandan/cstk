@@ -15,17 +15,9 @@ import java.io.File
 import java.nio.file.Path
 
 fun main() {
-  val data = Path.of("/home/breandan/IdeaProjects/djl")
-    .allFilesRecursively("*.java")
-    .allCodeFragments()
-    .shuffled()
-    .take(1000)
-    .mapIndexed { i, it -> it.second to vectorize(it.second).map { it.toDouble() }.toDoubleArray() }
-    .toTypedArray()
+  val (labels, vectors) = fetchOrLoadData()
 
-  val (labels, vectors) = data.unzip()
-
-  val d2vecs = vectors.toTypedArray().reduceDim()
+  val d2vecs = vectors.reduceDim()
 
   labels.forEachIndexed { i, l -> println("${l.length},${d2vecs[i][0]},${d2vecs[i][1]}") }
 
@@ -39,7 +31,7 @@ private fun Array<DoubleArray>.reduceDim(
   perplexity: Double = 10.0,
   tSne: TSne = ParallelBHTsne()
 ): Array<out DoubleArray> =
-  tSne.tsne(TSneUtils.buildConfig(this, outputDims, size - 1, perplexity, 9999))
+  tSne.tsne(TSneUtils.buildConfig(this, outputDims, size - 1, perplexity, 99999))
 
 private fun plot(
   embeddings: Array<out DoubleArray>,

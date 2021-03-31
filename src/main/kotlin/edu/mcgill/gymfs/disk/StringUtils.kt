@@ -56,12 +56,12 @@ fun String.preview(query: String, window: Int = 10) =
   }.joinToString("…", "…", "…") { it.trim() }
 
 //https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
-fun vectorize(query: String): FloatArray =
+fun vectorize(query: String): DoubleArray =
   URL(SERVER_ADDRESS + URLEncoder.encode("$CODEBERT_CLS_TOKEN$query", "utf-8"))
     .readText().lines()
     .map { it.trim().replace("[", "").replace("]", "") }
-    .map { it.split(" ").filter(String::isNotEmpty).map(String::toFloat) }
-    .first().toFloatArray()
+    .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
+    .first().toDoubleArray()
 
 fun tokenize(query: String) =
   URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")

@@ -122,52 +122,48 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}[width]
-    \begin{axis}[title={Levenshtein vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Levenshtein, ylabel=Euclidean]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Levenshtein, ylabel=Euclidean]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {levenshtein.csv};
 
-      \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {levdata.csv};
-
-      \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {levdata.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {levdata.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {levenshtein.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {levenshtein.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
-    \begin{axis}[title={MetricLCS vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=MetricLCS, ylabel=Euclidean]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=MetricLCS]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {metriclcs.csv};
 
-    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {lcsdata.csv};
-
-    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {lcsdata.csv};
-    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {lcsdata.csv};
-    \addplot [fill=red!10] fill between[of=upper and lower];
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {metriclcs.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {metriclcs.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
-    \begin{axis}[title={Jaccard vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Jaccard, ylabel=Euclidean]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Jaccard]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {jaccard.csv};
 
-    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {jacdata.csv};
-
-    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {jacdata.csv};
-    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {jacdata.csv};
-    \addplot [fill=red!10] fill between[of=upper and lower];
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {jaccard.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {jaccard.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
-    \begin{axis}[title={Damerau vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Damerau, ylabel=Euclidean]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Damerau]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {damerau.csv};
 
-    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {damerau.csv};
-
-    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {damerau.csv};
-    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {damerau.csv};
-    \addplot [fill=red!10] fill between[of=upper and lower];
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {damerau.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {damerau.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
-  \caption{CodeBERT latent space correlates with string distance.}
+  \caption{CodeBERT latent space distance correlates with string distance.}
   \label{fig:lev_vs_euclid}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.55\textwidth]{embeddings}
+  \includegraphics[width=0.4\textwidth]{embeddings}
   \caption{Reduced dimensionality TNSE embeddings colored by line length.}
   \label{fig:embedding}
 \end{figure}

@@ -2,6 +2,7 @@ package edu.mcgill.gymfs.disk
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
+import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_INNER_PRODUCT
 import com.github.jelmerk.knn.DistanceFunctions.FLOAT_INNER_PRODUCT
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
@@ -40,23 +41,22 @@ class KNNSearch: CliktCommand() {
   }
 
   // Cheap index lookup using HNSW index
-  fun approxKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
+  fun approxKNNSearch(query: String, vq: DoubleArray = vectorize(query)) =
     knnIndex.findNearest(vq, 1000).map { it.item().loc.getContext(0) }
 
   // Expensive, need to compute pairwise distances with all items in the index
-  fun exactKNNSearch(query: String, vq: FloatArray = vectorize(query)) =
+  fun exactKNNSearch(query: String, vq: DoubleArray = vectorize(query)) =
     knnIndex.items().mapIndexed { i, it ->
       if (i % 100 == 0) println("Vectorized $i out of ${knnIndex.items().size}")
       it to vectorize(it.loc.getContext(0))
     }.sortedBy { (_, vx) ->
-      vq.zip(vx).map { (x, y) -> x * x - y * y }.sum().pow(0.5f)
+      vq.zip(vx).map { (x, y) -> x * x - y * y }.sum().pow(0.5)
     }.map { it.first.loc.getContext(0) }
 
   @OptIn(ExperimentalTime::class)
   override fun run() {
-//    printQuery()
-//    graphs.toIntOrNull()?.let { generateGraphs(it) }
-    generateGraphs(10)
+    printQuery()
+    graphs.toIntOrNull()?.let { generateGraphs(it) }
   }
 
   private fun generateGraphs(total: Int) {
@@ -139,7 +139,7 @@ class KNNSearch: CliktCommand() {
   // Compare various distance functions
   @OptIn(ExperimentalTime::class)
   fun rebuildIndex(): VecIndex =
-    HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, FLOAT_INNER_PRODUCT, 1000000)
+    HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, DOUBLE_INNER_PRODUCT, 1000000)
       .withM(100).withEf(500).withEfConstruction(500)
       .build<Location, Fragment>().also { idx ->
         println("Rebuilt index in " + measureTime {
@@ -151,13 +151,13 @@ class KNNSearch: CliktCommand() {
 
 fun main(args: Array<String>) = KNNSearch().main(args)
 
-typealias VecIndex = HnswIndex<Location, FloatArray, Fragment, Float>
+typealias VecIndex = HnswIndex<Location, DoubleArray, Fragment, Double>
 
-data class Fragment(val loc: Location, val embedding: FloatArray):
-  Item<Location, FloatArray> {
+data class Fragment(val loc: Location, val embedding: DoubleArray):
+  Item<Location, DoubleArray> {
   override fun id(): Location = loc
 
-  override fun vector(): FloatArray = embedding
+  override fun vector(): DoubleArray = embedding
 
   override fun dimensions(): Int = embedding.size
 }
