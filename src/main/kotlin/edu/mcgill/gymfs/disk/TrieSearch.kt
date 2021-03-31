@@ -55,7 +55,7 @@ data class Location(val file: URI, val line: Int): Serializable {
     Files.newBufferedReader(file.toPath()).use {
       it.lineSequence()
         .drop((line - surroundingLines).coerceAtLeast(0))
-        .take(surroundingLines + 1).joinToString("\n") {it.trim()}
+        .take(surroundingLines + 1).joinToString("\n") { it.trim() }
     }
 
   /*

@@ -13,6 +13,7 @@
 \usepackage{pgfplots}
 \usepgfplotslibrary{fillbetween}
 \usepackage{filecontents}
+\usepackage[pdf]{graphviz}
 
 % Document
 
@@ -115,10 +116,12 @@ If our hypothesis is correct, the virtual knowledge graph will span both natural
 
 \section{Results}\label{sec:results}
 
+Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}), explore embedding quality (Fig.~\ref{fig:embedding}) and visualize the synthetic knowledge graphs (Fig.~\ref{fig:graphs}).
+
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}[width]
-    \begin{axis}[title={String Edit vs. Euclidean distance}, width=\textwidth, height=0.4\textwidth, xlabel=Levenstein Distance, ylabel=Euclidean Distance]
+    \begin{axis}[title={String Edit vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Levenstein, ylabel=Euclidean]
 
       \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {data.csv};
 %      \addplot [smooth, name path=upper2,draw=none] table[x=levdist, y=euclidist, y expr=\thisrow{y2}+\thisrow{y2_err}, col sep=comma] {data.csv};
@@ -128,15 +131,31 @@ If our hypothesis is correct, the virtual knowledge graph will span both natural
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
-  \caption{Levenstein edit distance and average Euclidean distance in CodeBERT latent space appears to be positively correlated.}
+  \caption{CodeBERT latent space correlates with string distance.}
+  \label{fig:lev_vs_euclid}
   \end{figure}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.55\textwidth]{embeddings}
   \caption{Reduced dimensionality TNSE embeddings colored by line length.}
+  \label{fig:embedding}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+\resizebox{.2\textwidth}{!}{\includedot{query4}}
+\resizebox{.2\textwidth}{!}{\includedot{query5}}
+\resizebox{.2\textwidth}{!}{\includedot{query6}}
+\resizebox{.2\textwidth}{!}{\includedot{query7}}
+\caption{Example graphs sampled by beam search with $d=10, w=5$.}
+\label{fig:graphs}
 \end{figure}
 
   \bibliography{research_proposal}
   \bibliographystyle{plain}
+%  \pagebreak
+%  \appendix
+%  \section{Appendix}
+
 \end{document}

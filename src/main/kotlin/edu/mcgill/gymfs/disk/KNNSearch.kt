@@ -45,6 +45,32 @@ class KNNSearch: CliktCommand() {
 
   @OptIn(ExperimentalTime::class)
   override fun run() {
+    printQuery()
+//    generateGraphs()
+  }
+
+  private fun generateGraphs() {
+    ROOT_DIR
+      .allFilesRecursively()
+      .allCodeFragments()
+      .shuffled()
+      .take(10)
+      .forEachIndexed { i, (_, query) ->
+        File("latex/query$i.dot").writeText(
+          """digraph {
+              concentrate=true
+              node[label="" fillcolor=red, style=filled, shape=circle];
+              ${query.hashCode()}
+              node[label="" fillcolor=white, style=filled, shape=circle];
+              ${edges(listOf(query))}
+              }
+              """.trimIndent()
+        )
+      }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  private fun printQuery() {
     println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = approxKNNSearch(query) //exactKNNSearch(query)
 
@@ -73,6 +99,24 @@ class KNNSearch: CliktCommand() {
       }
     }.inMilliseconds + "ms")
   }
+
+  tailrec fun edges(
+    queries: List<String>,
+    depth: Int = 10,
+    width: Int = 5,
+    string: String = "",
+  ): String =
+    if(queries.isEmpty() || depth == 0) string
+    else {
+      val query = queries.first()
+      val nearestResults = knnIndex.findNearest(vectorize(query), 100)
+        .map { it.item().loc.getContext(0) }
+        .filter { it.isNotEmpty() && it != query }
+        .take(width)
+
+      val edges = nearestResults.joinToString("\n") { "${query.hashCode()} -> ${it.hashCode()} [dir=both];" }
+      edges(queries.drop(1) + nearestResults, depth - 1, width, "$string\n$edges")
+    }
 
   // Compare various distance functions
   @OptIn(ExperimentalTime::class)
