@@ -108,7 +108,7 @@ fun buildOrLoadIndex(
       }
   else {
     println("Loading index from ${index.absolutePath}")
-    deserialize(index) as ConcurrentSuffixTree<Queue<Location>>
+    index.deserialize() as ConcurrentSuffixTree<Queue<Location>>
   }
 
 // Indexes all lines in all files in the path

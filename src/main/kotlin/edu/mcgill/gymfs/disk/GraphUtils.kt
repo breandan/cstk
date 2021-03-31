@@ -1,0 +1,43 @@
+package edu.mcgill.gymfs.disk
+
+import edu.mcgill.kaliningraph.*
+import edu.mcgill.kaliningraph.Graph
+import guru.nidi.graphviz.*
+import guru.nidi.graphviz.attribute.*
+import guru.nidi.graphviz.engine.*
+import guru.nidi.graphviz.model.*
+import guru.nidi.graphviz.model.Factory
+import java.io.File
+
+fun <G: Graph<G, E, V>, E: Edge<G, E, V>, V: Vertex<G, E, V>>
+  Graph<G, E, V>.renderVKG(): MutableGraph =
+  graph(directed = true, strict = true) {
+    edge[Arrow.NORMAL, Style.lineWidth(THICKNESS)]
+    graph[GraphAttr.CONCENTRATE, Color.TRANSPARENT.background(), GraphAttr.COMPOUND]
+    node[
+      Attributes.attr("shape", "circle"),
+      Attributes.attr("style", "filled"),
+      Attributes.attr("fillcolor", "black"),
+      Attributes.attr("label", ""),
+    ]
+
+    for (vertex in vertices) {
+      Factory.mutNode(vertex.id).also {
+        if (vertex is LGVertex && vertex.occupied) it.add("fillcolor", "red")
+      }
+      for (n in vertex.neighbors)
+        Factory.mutNode(n.id) - Factory.mutNode(vertex.id)
+    }
+  }
+
+fun MutableGraph.show(filename: String = "temp") =
+  render(Format.PNG).run {
+    toFile(File.createTempFile(filename, ".png"))
+  }.show()
+
+fun <T> List<Pair<T, T>>.toLabeledGraph(): LabeledGraph =
+  fold(LGVertex(first().first.hashCode().toString()).graph) { acc, (s, t) ->
+    val a = LGVertex(s.hashCode().toString())
+    val b = LGVertex(t.hashCode().toString())
+    acc + LabeledGraph { a - b; b - a }
+  }

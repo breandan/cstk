@@ -14,6 +14,7 @@
 \usepgfplotslibrary{fillbetween}
 \usepackage{filecontents}
 \usepackage[pdf]{graphviz}
+\usepackage{tikz}
 
 % Document
 
@@ -121,19 +122,48 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}[width]
-    \begin{axis}[title={String Edit vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Levenstein, ylabel=Euclidean]
+    \begin{axis}[title={Levenshtein vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Levenshtein, ylabel=Euclidean]
 
-      \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {data.csv};
-%      \addplot [smooth, name path=upper2,draw=none] table[x=levdist, y=euclidist, y expr=\thisrow{y2}+\thisrow{y2_err}, col sep=comma] {data.csv};
+      \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {levdata.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {levdata.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {levdata.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}[width]
+    \begin{axis}[title={MetricLCS vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=MetricLCS, ylabel=Euclidean]
+
+    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {lcsdata.csv};
+
+    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {lcsdata.csv};
+    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {lcsdata.csv};
+    \addplot [fill=red!10] fill between[of=upper and lower];
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}[width]
+    \begin{axis}[title={Jaccard vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Jaccard, ylabel=Euclidean]
+
+    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {jacdata.csv};
+
+    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {jacdata.csv};
+    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {jacdata.csv};
+    \addplot [fill=red!10] fill between[of=upper and lower];
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}[width]
+    \begin{axis}[title={Damerau vs. CodeBERT Embedding (Euclidean) distance}, width=\textwidth, height=0.3\textwidth, xlabel=Damerau, ylabel=Euclidean]
+
+    \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {damerau.csv};
+
+    \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {damerau.csv};
+    \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {damerau.csv};
+    \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \caption{CodeBERT latent space correlates with string distance.}
   \label{fig:lev_vs_euclid}
-  \end{figure}
+\end{figure}
 
 \begin{figure}[H]
   \centering
@@ -148,6 +178,10 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 \resizebox{.2\textwidth}{!}{\includedot{query5}}
 \resizebox{.2\textwidth}{!}{\includedot{query6}}
 \resizebox{.2\textwidth}{!}{\includedot{query7}}
+\resizebox{.2\textwidth}{!}{\includegraphics{context4}}
+\resizebox{.2\textwidth}{!}{\includegraphics{context5}}
+\resizebox{.2\textwidth}{!}{\includegraphics{context6}}
+\resizebox{.2\textwidth}{!}{\includegraphics{context7}}
 \caption{Example graphs sampled by beam search with $d=10, w=5$.}
 \label{fig:graphs}
 \end{figure}

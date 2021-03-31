@@ -26,6 +26,6 @@ fun Any?.serialize(path: File) =
   ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
     .use { it.writeObject(this) }
 
-fun deserialize(file: File): Any =
-  ObjectInputStream(GZIPInputStream(FileInputStream(file)))
+fun File.deserialize(): Any =
+  ObjectInputStream(GZIPInputStream(FileInputStream(this)))
     .use { it.readObject() }

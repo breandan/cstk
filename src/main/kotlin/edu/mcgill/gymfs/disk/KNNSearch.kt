@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.parameters.options.*
 import com.github.jelmerk.knn.DistanceFunctions.FLOAT_INNER_PRODUCT
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
+import edu.mcgill.kaliningraph.show
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
 import java.nio.file.Path
@@ -21,14 +22,20 @@ class KNNSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
     .default(ROOT_DIR.toAbsolutePath().toString())
 
-  val query by option("--query", help = "Code fragment").default("const val MAX_GPUS = 1")
+  val query by option(
+    "--query",
+    help = "Code fragment"
+  ).default("const val MAX_GPUS = 1")
 
-  val index by option("--index", help = "Prebuilt index file").default("knnindex.idx")
+  val index by option(
+    "--index",
+    help = "Prebuilt index file"
+  ).default("knnindex.idx")
 
   val graphs by option("--graphs", help = "Visualize graphs").default("")
 
   val knnIndex: VecIndex by lazy {
-    if (File(index).exists()) deserialize(File(index)) as VecIndex
+    if (File(index).exists()) File(index).deserialize() as VecIndex
     else rebuildIndex()
   }
 
@@ -47,8 +54,9 @@ class KNNSearch: CliktCommand() {
 
   @OptIn(ExperimentalTime::class)
   override fun run() {
-    printQuery()
-    graphs.toIntOrNull()?.let { generateGraphs(it) }
+//    printQuery()
+//    graphs.toIntOrNull()?.let { generateGraphs(it) }
+    generateGraphs(10)
   }
 
   private fun generateGraphs(total: Int) {
@@ -59,16 +67,13 @@ class KNNSearch: CliktCommand() {
       .shuffled()
       .take(total)
       .forEachIndexed { i, (_, query) ->
-        File("latex/query$i.dot").writeText(
-          """digraph {
-              concentrate=true
-              node[label="" fillcolor=red, style=filled, shape=circle];
-              ${query.hashCode()}
-              node[label="" fillcolor=white, style=filled, shape=circle];
-              ${edges(listOf(query))}
-              }
-              """.trimIndent()
-        )
+        val id = query.hashCode().toString()
+        edges(query)
+          .toLabeledGraph()
+          .also { it.A.show() }
+          .apply { vertices.first { it.label == id }.occupied = true }
+          .renderVKG()
+          .show()
       }
   }
 
@@ -90,12 +95,14 @@ class KNNSearch: CliktCommand() {
     val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)
 
     println("\nReranked nearest neighbors in " + measureTime {
-      println("""
+      println(
+        """
         
         |-----> Original index before reranking by $metricName
         |    |-----> Current index after reranking by $metricName
         |    |
-      """.trimIndent())
+      """.trimIndent()
+      )
       mostSimilarHits.take(10).forEachIndexed { currentIndex, s ->
         val originalIndex = nearestNeighbors.indexOf(s).toString().padStart(3)
         println("${originalIndex}->$currentIndex.) $s")
@@ -104,21 +111,29 @@ class KNNSearch: CliktCommand() {
   }
 
   tailrec fun edges(
-    queries: List<String>,
+    seed: String? = null,
+    queries: List<String> = if(seed == null) emptyList() else listOf(seed),
     depth: Int = 10,
     width: Int = 5,
-    string: String = "",
-  ): String =
-    if(queries.isEmpty() || depth == 0) string
+    edges: List<Pair<String, String>> = emptyList(),
+  ): List<Pair<String, String>> =
+    if (queries.isEmpty() || depth == 0) edges
     else {
-      val query = queries.first()
+      val query = seed ?: queries.first()
       val nearestResults = knnIndex.findNearest(vectorize(query), 100)
         .map { it.item().loc.getContext(0) }
         .filter { it.isNotEmpty() && it != query }
         .take(width)
 
-      val edges = nearestResults.joinToString("\n") { "${query.hashCode()} -> ${it.hashCode()} [dir=both];" }
-      edges(queries.drop(1) + nearestResults, depth - 1, width, "$string\n$edges")
+      val newEdges = nearestResults.map { query to it }
+//
+      edges(
+        null,
+        queries.drop(1) + nearestResults,
+        depth - 1,
+        width,
+        edges + newEdges
+      )
     }
 
   // Compare various distance functions
