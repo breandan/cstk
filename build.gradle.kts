@@ -60,6 +60,8 @@ dependencies {
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
+  implementation("org.nield:kotlin-statistics:1.2.1")
+
   implementation("com.github.breandan:kotlingrad:0.4.2")
 }
 

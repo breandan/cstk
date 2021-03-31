@@ -11,6 +11,7 @@
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{pgfplots}
+\usepgfplotslibrary{fillbetween}
 \usepackage{filecontents}
 
 % Document
@@ -63,7 +64,7 @@ For each token in a string, CodeBERT emits a length-768 vector, so a line with $
   \label{fig:de2kg}
 \end{figure}
 
-For a given query and context, we first compute the context embedding and using a distance metric, fetch the k-nearest neighboring documents in latent space, forming the depth-1 nodes in the graph, and repeat this procedure recursively, pruning with a beam search heuristic based on the total path length in latent space. This procedure is depicted in Fig.~\ref{fig:de2kg}.
+For a given query and context, we first compute the context embedding and using a distance metric, fetch the k-nearest neighboring documents in latent space, forming the depth-1 nodes in our graph, then repeat this procedure recursively, pruning with a beam search heuristic based on the total path length in latent space. This procedure is depicted in Fig.~\ref{fig:de2kg}.
 
 \begin{figure}[H]
   \centering
@@ -114,120 +115,17 @@ If our hypothesis is correct, the virtual knowledge graph will span both natural
 
 \section{Results}\label{sec:results}
 
-\begin{filecontents*}{data.csv}
-  levdist,euclidist
-  0,0.0
-  1,2.3633473184373646
-  2,2.4890602032343545
-  3,2.911810111999512
-  4,2.0028354823589325
-  5,1.4084663391113281
-  6,2.3637032292105933
-  7,4.472905204846309
-  8,2.6024305603720923
-  9,2.5696596684663193
-  10,2.6834484385816673
-  11,3.3063877632743432
-  12,4.491936294656051
-  13,2.9728973135352135
-  14,2.746051150560379
-  15,2.7703943712669505
-  16,2.823648720547773
-  17,2.7505312219994966
-  18,2.7979473780982103
-  19,2.771831948967541
-  20,2.7493412751777497
-  21,3.272918408115705
-  22,3.2250382444831764
-  23,3.0653511084519423
-  24,3.137301045987341
-  25,3.46093900923459
-  26,3.3380240285900276
-  27,3.0999733769532405
-  28,3.407973573014543
-  29,3.2747946337955756
-  30,3.5743897480842395
-  31,3.2816565019496973
-  32,3.2992073810377787
-  33,3.21660378575325
-  34,3.3823076827185496
-  35,3.4550687623402427
-  36,3.653107548516894
-  37,3.9763369475092207
-  38,3.9047256729559985
-  39,4.075039531015287
-  40,3.93511299265931
-  41,4.092973797094254
-  42,4.213170318250303
-  43,4.095147806770948
-  44,3.7521678453468414
-  45,4.114031522701948
-  46,4.2242398541252895
-  47,3.876007026639478
-  48,3.6982129307116494
-  49,3.817896408912463
-  50,3.8123655733854873
-  51,3.825625277402108
-  52,3.653673952701045
-  53,3.747180778153089
-  54,3.5404654390671673
-  55,3.8010367041542414
-  56,3.859985693081005
-  57,4.078702474044541
-  58,4.01475347223736
-  59,3.8205209225416183
-  60,3.777980612773521
-  61,3.84536190032959
-  62,3.908125676970551
-  63,4.051204487255641
-  64,4.066887232992384
-  65,4.028644317930395
-  66,4.119296615406618
-  67,4.142942777494105
-  68,4.540319035130162
-  69,4.221329057538831
-  70,4.1877835669168615
-  71,4.422936993975972
-  72,5.149443597629152
-  73,5.065425028119768
-  74,4.604162693023682
-  75,5.423289246029324
-  76,5.14295246050908
-  77,5.388673737645149
-  78,5.435530768500434
-  79,6.382849454879761
-  80,4.942715644836426
-  81,5.410255829493205
-  82,6.678394447673451
-  83,6.862033176422119
-  84,6.754118633270264
-  86,4.69812536239624
-  87,4.876834869384766
-  88,4.781426429748535
-  89,4.878495693206787
-  90,4.8594865798950195
-  91,5.583544492721558
-  92,5.392730985369001
-  93,5.439589553409153
-  94,5.195530796051026
-  95,5.476902825491769
-  96,5.9483455419540405
-  97,5.545152568817139
-  98,6.094607421330044
-  99,5.674917125701905
-  100,6.297649145126343
-  101,6.044215083122253
-  102,6.99380362033844
-  103,5.960549831390381
-  106,7.0842125415802
-  107,7.431237485673693
-\end{filecontents*}
-
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}[width]
-    \begin{axis}[title={String Edit vs. Euclidean distance}, width=\textwidth, height=0.4\textwidth]
-      \addplot table [x=levdist, y=euclidist, col sep=comma] {data.csv};
+    \begin{axis}[title={String Edit vs. Euclidean distance}, width=\textwidth, height=0.4\textwidth, xlabel=Levenstein Distance, ylabel=Euclidean Distance]
+
+      \addplot table [mark=none,x=levdist, y=euclidist, var=var, col sep=comma] {data.csv};
+%      \addplot [smooth, name path=upper2,draw=none] table[x=levdist, y=euclidist, y expr=\thisrow{y2}+\thisrow{y2_err}, col sep=comma] {data.csv};
+
+      \addplot [smooth, name path=upper,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=levdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \caption{Levenstein edit distance and average Euclidean distance in CodeBERT latent space appears to be positively correlated.}
