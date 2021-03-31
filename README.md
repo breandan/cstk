@@ -66,7 +66,7 @@ Found 4 results in 2.82ms
 
 Nearest neighbor search:
 
-`./gradlew -q knnSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'`
+`./gradlew -q knnSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>] [--graphs=10]'`
 
 For example:
 

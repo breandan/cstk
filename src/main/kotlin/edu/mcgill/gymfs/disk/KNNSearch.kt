@@ -25,6 +25,8 @@ class KNNSearch: CliktCommand() {
 
   val index by option("--index", help = "Prebuilt index file").default("knnindex.idx")
 
+  val graphs by option("--graphs", help = "Visualize graphs").default("")
+
   val knnIndex: VecIndex by lazy {
     if (File(index).exists()) deserialize(File(index)) as VecIndex
     else rebuildIndex()
@@ -46,15 +48,16 @@ class KNNSearch: CliktCommand() {
   @OptIn(ExperimentalTime::class)
   override fun run() {
     printQuery()
-//    generateGraphs()
+    graphs.toIntOrNull()?.let { generateGraphs(it) }
   }
 
-  private fun generateGraphs() {
+  private fun generateGraphs(total: Int) {
+    println("Regenerating $total graphs...")
     ROOT_DIR
       .allFilesRecursively()
       .allCodeFragments()
       .shuffled()
-      .take(10)
+      .take(total)
       .forEachIndexed { i, (_, query) ->
         File("latex/query$i.dot").writeText(
           """digraph {
