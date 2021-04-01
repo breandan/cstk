@@ -6,6 +6,7 @@ import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_INNER_PRODUCT
 import com.github.jelmerk.knn.DistanceFunctions.FLOAT_INNER_PRODUCT
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
+import edu.mcgill.gymfs.experiments.fetchOrLoadData
 import edu.mcgill.kaliningraph.show
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
@@ -50,7 +51,7 @@ class KNNSearch: CliktCommand() {
       if (i % 100 == 0) println("Vectorized $i out of ${knnIndex.items().size}")
       it to vectorize(it.loc.getContext(0))
     }.sortedBy { (_, vx) ->
-      vq.zip(vx).map { (x, y) -> x * x - y * y }.sum().pow(0.5)
+      vq.zip(vx).sumOf { (x, y) -> x * x - y * y }.pow(0.5)
     }.map { it.first.loc.getContext(0) }
 
   @OptIn(ExperimentalTime::class)
@@ -61,12 +62,7 @@ class KNNSearch: CliktCommand() {
 
   private fun generateGraphs(total: Int) {
     println("Regenerating $total graphs...")
-    ROOT_DIR
-      .allFilesRecursively()
-      .allCodeFragments()
-      .shuffled()
-      .take(total)
-      .forEachIndexed { i, (_, query) ->
+    fetchOrLoadData().first.take(total).forEach { query ->
         val id = query.hashCode().toString()
         edges(query)
           .toLabeledGraph()
@@ -81,11 +77,6 @@ class KNNSearch: CliktCommand() {
   private fun printQuery() {
     println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = approxKNNSearch(query) //exactKNNSearch(query)
-
-    // TODO: Why are the KNN results so bad?
-    // Hypothesis #1: Language mismatch (Kotlin/Java)
-    // Hypothesis #2: Encoding issue with BERT vectors (MLM/dot product/...) <--
-    // Hypothesis #3: Pretraining issue / contextual misalignment
 
     println("\nFetched nearest neighbors in " + measureTime {
       nearestNeighbors.take(10).forEachIndexed { i, s -> println("$i.) $s") }
@@ -126,7 +117,7 @@ class KNNSearch: CliktCommand() {
         .take(width)
 
       val newEdges = nearestResults.map { query to it }
-//
+
       edges(
         null,
         queries.drop(1) + nearestResults,

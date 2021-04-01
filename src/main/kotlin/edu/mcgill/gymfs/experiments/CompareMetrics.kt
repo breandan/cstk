@@ -29,9 +29,8 @@ private fun compareDistanceMetrics(
   }.toSortedMap()
   .map { (key, value) -> Triple(key, value.first, value.second) }
 
-fun <T, U> cartProd(c1: Collection<T>, c2: Collection<U>): List<Pair<T, U>> {
-  return c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
-}
+fun <T, U> cartProd(c1: Collection<T>, c2: Collection<U>): List<Pair<T, U>> =
+  c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
 
 fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
   sqrt(f1.mapIndexed { i, f -> (f - f2[i]).pow(2) }.sum())

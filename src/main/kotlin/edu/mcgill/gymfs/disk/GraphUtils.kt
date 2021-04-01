@@ -35,9 +35,11 @@ fun MutableGraph.show(filename: String = "temp") =
     toFile(File.createTempFile(filename, ".png"))
   }.show()
 
-fun <T> List<Pair<T, T>>.toLabeledGraph(): LabeledGraph =
-  fold(LGVertex(first().first.hashCode().toString()).graph) { acc, (s, t) ->
-    val a = LGVertex(s.hashCode().toString())
-    val b = LGVertex(t.hashCode().toString())
-    acc + LabeledGraph { a - b; b - a }
+// TODO: replace with adj list constructor
+fun <T> List<Pair<T, T>>.toLabeledGraph(
+  toVertex: T.() -> LGVertex = { LGVertex(hashCode().toString()) }
+): LabeledGraph =
+  fold(first().first.toVertex().graph) { acc, (s, t) ->
+    val (v, w) = s.toVertex() to t.toVertex()
+    acc + LabeledGraph { v - w; w - v }
   }

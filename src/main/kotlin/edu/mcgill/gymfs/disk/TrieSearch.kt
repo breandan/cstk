@@ -44,9 +44,6 @@ class TrieSearch: CliktCommand() {
       println("\nFound ${res.size} results in $time")
     }
   }
-
-  private fun previewResult(query: String, loc: Location) =
-    "[?=$query] ${loc.getContext(0).preview(query)}\t($loc)"
 }
 
 @OptIn(ExperimentalPathApi::class)

@@ -46,11 +46,7 @@ private fun plot(
     ggsize(300, 250) + geom_point(size = 6) +
     ggtitle("Lines by Structural Similarity") +
     theme().axisLine_blank().axisTitle_blank().axisTicks_blank().axisText_blank()
-//  plot = names.foldIndexed(plot) { i, plt, f -> plt +
-//    geom_text(x = embeddings[i][0] + 5, y = embeddings[i][1] + 5, label = f, color= BLACK)
-//  }
   return PlotSvgExport.buildSvgImageFromRawSpecs(
     plotSpec = plot.toSpec(), plotSize = DoubleVector(1000.0, 500.0)
   )
-//  return PlotHtmlExport.buildHtmlFromRawSpecs(plot.toSpec())
 }

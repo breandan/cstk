@@ -123,37 +123,37 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
   \centering
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Levenshtein, ylabel=Euclidean]
-      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {levenshtein.csv};
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {data/levenshtein.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {levenshtein.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {levenshtein.csv};
-      \addplot [fill=red!10] fill between[of=upper and lower];
-    \end{axis}
-  \end{tikzpicture}
-  \begin{tikzpicture}[width]
-    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=MetricLCS]
-      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {metriclcs.csv};
-
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {metriclcs.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {metriclcs.csv};
-      \addplot [fill=red!10] fill between[of=upper and lower];
-    \end{axis}
-  \end{tikzpicture}
-  \begin{tikzpicture}[width]
-    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Jaccard]
-      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {jaccard.csv};
-
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {jaccard.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {jaccard.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data/levenshtein.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data/levenshtein.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Damerau]
-      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {damerau.csv};
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {data/damerau.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {damerau.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {damerau.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data/damerau.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data/damerau.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}[width]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=MetricLCS]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {data/metriclcs.csv};
+
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data/metriclcs.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data/metriclcs.csv};
+      \addplot [fill=red!10] fill between[of=upper and lower];
+    \end{axis}
+  \end{tikzpicture}
+  \begin{tikzpicture}[width]
+    \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Jaccard]
+      \addplot table [mark=none,x=strdist, y=euclidist, var=var, col sep=comma] {data/jaccard.csv};
+
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}+\thisrow{var}, col sep=comma] {data/jaccard.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=euclidist,var=var, y expr=\thisrow{euclidist}-\thisrow{var}, col sep=comma] {data/jaccard.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
@@ -174,10 +174,10 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 \resizebox{.2\textwidth}{!}{\includedot{query5}}
 \resizebox{.2\textwidth}{!}{\includedot{query6}}
 \resizebox{.2\textwidth}{!}{\includedot{query7}}
-\resizebox{.2\textwidth}{!}{\includegraphics{context4}}
-\resizebox{.2\textwidth}{!}{\includegraphics{context5}}
-\resizebox{.2\textwidth}{!}{\includegraphics{context6}}
-\resizebox{.2\textwidth}{!}{\includegraphics{context7}}
+\resizebox{.2\textwidth}{!}{\includegraphics{data/context4}}
+\resizebox{.2\textwidth}{!}{\includegraphics{data/context5}}
+\resizebox{.2\textwidth}{!}{\includegraphics{data/context6}}
+\resizebox{.2\textwidth}{!}{\includegraphics{data/context7}}
 \caption{Example graphs sampled by beam search with $d=10, w=5$.}
 \label{fig:graphs}
 \end{figure}
@@ -187,5 +187,4 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 %  \pagebreak
 %  \appendix
 %  \section{Appendix}
-
 \end{document}

@@ -48,6 +48,9 @@ fun String.extractConcordances(query: String) =
     substring(matchStart, matchEnd) to matchStart
   }.toList()
 
+fun previewResult(query: String, loc: Location) =
+  "[?=$query] ${loc.getContext(0).preview(query)}\t($loc)"
+
 fun String.preview(query: String, window: Int = 10) =
   extractConcordances(query).map { (q, b) ->
     val range = 0..length
