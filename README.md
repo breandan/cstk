@@ -133,3 +133,9 @@ python codebert_server.py
 * [BERT-kNN: Adding a kNN Search Component to Pretrained Language Models for Better QA](https://arxiv.org/pdf/2005.00766.pdf), Kassner & Schutze (2020)
 * [AutoKG: Constructing Virtual Knowledge Graphs from Unstructured Documents for Question Answering](https://arxiv.org/pdf/2008.08995.pdf), Yu et al. (2021)
 * [Graph Optimal Transport for Cross-Domain Alignment](http://proceedings.mlr.press/v119/chen20e/chen20e.pdf), Chen et al. (2021)
+
+# Benchmarking
+
+* [CodeSearchNet](https://github.com/github/CodeSearchNet)
+* [OpenMatch](https://github.com/thunlp/OpenMatch)
+* [Steps for Evaluating Search Algorithms](https://shopify.engineering/evaluating-search-algorithms) (e.g. MAP, DCG)

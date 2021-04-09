@@ -108,6 +108,15 @@ In our third and final set of experiments, we compare performance across hyperpa
 
 If our hypothesis is correct, the virtual knowledge graph will span both natural language and source code artifacts. If so, this would provide evidence to support the broader hypothesis~\cite{guo2017semantically} that documentation is a useful source of information. In addition to being useful for the prediction task itself, we anticipate our model could also be used for knowledge graph extraction and suggest semantically relevant code snippets to developers.
 
+\section{Evaluation}
+
+We evaluate on the following loss function, adapted from ~\cite{husain2019codesearchnet}. Given a set of code and context pairs, $\mathbf{F} = (\mathbf{c}_i, \mathbf{d}_i)_{i = 1}^N$, where $\mathbf S \sim_{i.i.d.} \mathbf R_{d}$:
+
+\begin{align}
+  \mathcal{L} = \frac{1}{N}\sum_i^N \text{log}\left(\frac{\left<\varphi(\mathbf{c}_i), \varphi(\mathbf{d}_i)\right>}{\sum_{j \neq i}^N \left<\varphi(\mathbf{c}_j), \varphi(\mathbf{d}_i)\right>}\right)
+\end{align}
+
+In other words, we minimize the distance between true code and context pairs, while maximizing the distance between distractors $(\mathbf c_j, \mathbf d_i)_{i \neq j}$.
 
 %\section{Next steps}
 %
@@ -170,10 +179,10 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 
 \begin{figure}[H]
   \centering
-\resizebox{.2\textwidth}{!}{\includedot{query4}}
-\resizebox{.2\textwidth}{!}{\includedot{query5}}
-\resizebox{.2\textwidth}{!}{\includedot{query6}}
-\resizebox{.2\textwidth}{!}{\includedot{query7}}
+\resizebox{.2\textwidth}{!}{\includedot{data/query4}}
+\resizebox{.2\textwidth}{!}{\includedot{data/query5}}
+\resizebox{.2\textwidth}{!}{\includedot{data/query6}}
+\resizebox{.2\textwidth}{!}{\includedot{data/query7}}
 \resizebox{.2\textwidth}{!}{\includegraphics{data/context4}}
 \resizebox{.2\textwidth}{!}{\includegraphics{data/context5}}
 \resizebox{.2\textwidth}{!}{\includegraphics{data/context6}}

@@ -3,7 +3,7 @@ package edu.mcgill.gymfs.experiments
 import edu.mcgill.gymfs.disk.*
 import java.io.File
 
-fun fetchOrLoadData(sampleSize: Int = 1000) =
+fun fetchOrLoadSampleData(sampleSize: Int = 1000) =
   (File("sample$sampleSize.data")
     .let { if (it.exists()) it else null }
     ?.deserialize() as? Pair<List<String>, Array<DoubleArray>>

@@ -4,12 +4,11 @@ import edu.mcgill.gymfs.disk.*
 import info.debatty.java.stringsimilarity.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.nield.kotlinstatistics.variance
-import java.io.File
 import kotlin.math.*
 
 // Does edit distance correlate with embedding distance?
 fun main() {
-  val data = fetchOrLoadData().let { (l, v) -> l.zip(v) }
+  val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }
   println("strdist,euclidist,var")
   println(compareDistanceMetrics(data, Damerau())
     .joinToString("\n") { "" + it.first + "," + it.second + "," + it.third })

@@ -2,11 +2,11 @@ package edu.mcgill.gymfs.disk
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
+import com.github.jelmerk.knn.*
+import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_EUCLIDEAN_DISTANCE
 import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_INNER_PRODUCT
-import com.github.jelmerk.knn.DistanceFunctions.FLOAT_INNER_PRODUCT
-import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
-import edu.mcgill.gymfs.experiments.fetchOrLoadData
+import edu.mcgill.gymfs.experiments.fetchOrLoadSampleData
 import edu.mcgill.kaliningraph.show
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
@@ -45,15 +45,6 @@ class KNNSearch: CliktCommand() {
   fun approxKNNSearch(query: String, vq: DoubleArray = vectorize(query)) =
     knnIndex.findNearest(vq, 1000).map { it.item().loc.getContext(0) }
 
-  // Expensive, need to compute pairwise distances with all items in the index
-  fun exactKNNSearch(query: String, vq: DoubleArray = vectorize(query)) =
-    knnIndex.items().mapIndexed { i, it ->
-      if (i % 100 == 0) println("Vectorized $i out of ${knnIndex.items().size}")
-      it to vectorize(it.loc.getContext(0))
-    }.sortedBy { (_, vx) ->
-      vq.zip(vx).sumOf { (x, y) -> x * x - y * y }.pow(0.5)
-    }.map { it.first.loc.getContext(0) }
-
   @OptIn(ExperimentalTime::class)
   override fun run() {
     printQuery()
@@ -62,7 +53,7 @@ class KNNSearch: CliktCommand() {
 
   private fun generateGraphs(total: Int) {
     println("Regenerating $total graphs...")
-    fetchOrLoadData().first.take(total).forEach { query ->
+    fetchOrLoadSampleData().first.take(total).forEach { query ->
         val id = query.hashCode().toString()
         edges(query)
           .toLabeledGraph()
@@ -130,7 +121,7 @@ class KNNSearch: CliktCommand() {
   // Compare various distance functions
   @OptIn(ExperimentalTime::class)
   fun rebuildIndex(): VecIndex =
-    HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, DOUBLE_INNER_PRODUCT, 1000000)
+    HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, DOUBLE_EUCLIDEAN_DISTANCE, 1000000)
       .withM(100).withEf(500).withEfConstruction(500)
       .build<Location, Fragment>().also { idx ->
         println("Rebuilt index in " + measureTime {
@@ -144,6 +135,10 @@ fun main(args: Array<String>) = KNNSearch().main(args)
 
 typealias VecIndex = HnswIndex<Location, DoubleArray, Fragment, Double>
 
+// Expensive, need to compute pairwise distances with all items in the index
+fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) =
+  asExactIndex().findNearest(vq, nearestNeighbors)
+
 data class Fragment(val loc: Location, val embedding: DoubleArray):
   Item<Location, DoubleArray> {
   override fun id(): Location = loc
@@ -151,4 +146,6 @@ data class Fragment(val loc: Location, val embedding: DoubleArray):
   override fun vector(): DoubleArray = embedding
 
   override fun dimensions(): Int = embedding.size
+
+  override fun toString() = loc.getContext(0)
 }

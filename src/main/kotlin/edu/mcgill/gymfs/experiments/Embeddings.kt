@@ -3,7 +3,6 @@ package edu.mcgill.gymfs.experiments
 import com.jujutsu.tsne.TSne
 import com.jujutsu.tsne.barneshut.ParallelBHTsne
 import com.jujutsu.utils.TSneUtils
-import edu.mcgill.gymfs.disk.*
 import edu.mcgill.kaliningraph.show
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.*
@@ -12,10 +11,9 @@ import jetbrains.letsPlot.geom.geom_point
 import jetbrains.letsPlot.intern.*
 import jetbrains.letsPlot.label.ggtitle
 import java.io.File
-import java.nio.file.Path
 
 fun main() {
-  val (labels, vectors) = fetchOrLoadData()
+  val (labels, vectors) = fetchOrLoadSampleData()
 
   val d2vecs = vectors.reduceDim()
 
