@@ -71,39 +71,166 @@ Nearest neighbor search:
 For example:
 
 ```
-./gradlew -q knnSearch --args='--query="const val MAX_VOCAB = 35000"'
+./gradlew -q knnSearch --args='--query="const val MAX_GPUS = 1"'
 
-Searching KNN index of size 887 for [?]=[const val MAX_VOCAB = 35000]…
+Searching KNN index of size 981 for [?]=[const val MAX_GPUS = 1]…
 
-0.) val trie: ConcurrentSuffixTree<Queue<Location>>
-1.) File("vocab.txt").let {
-2.) }
-3.) TrainBertOnCode.runExample()
-4.) import ai.djl.training.loss.Loss
-5.) 
-6.) .let { (dirs, files) ->
-7.) println("Loading index from ${index.absolutePath}")
-8.) Files.copy(src, imfs.getPath(path))
-9.) instances: List<MaskedInstance>,
+0.) const val MAX_GPUS = 1
+1.) const val MAX_BATCH = 50
+2.) const val MAX_VOCAB = 35000
+3.) const val EPOCHS = 100000
+4.) const val BATCH_SIZE = 24
+5.) const val MAX_SEQUENCE_LENGTH = 128
+6.) const val CLS = "<cls>"
+7.) dataSize.toLong()
+8.) const val BERT_EMBEDDING_SIZE = 768
+9.) const val UNK = "<unk>"
 
-Fetched nearest neighbors in 1.135012ms
+Fetched nearest neighbors in 1.48674ms
 
 |-----> Original index before reranking by MetricLCS
 |    |-----> Current index after reranking by MetricLCS
 |    |
-315->0.) const val MAX_VOCAB = 35000
-163->1.) const val MAX_BATCH = 50
-311->2.) const val EPOCHS = 100000
-321->3.) const val MAX_GPUS = 1
-322->4.) const val BATCH_SIZE = 24
-140->5.) const val FILE_EXT = "*.kt"
-309->6.) const val CLS = "<cls>"
-343->7.) const val MSK = "<msk>"
-353->8.) const val MAX_SEQUENCE_LENGTH = 128
-348->9.) const val MAX_MASKING_PER_INSTANCE = 20
+  0->0.) const val MAX_GPUS = 1
+  1->1.) const val MAX_BATCH = 50
+ 14->2.) const val MSK = "<msk>"
+  3->3.) const val EPOCHS = 100000
+  4->4.) const val BATCH_SIZE = 24
+  2->5.) const val MAX_VOCAB = 35000
+363->6.) ).default("const val MAX_GPUS = 1")
+  6->7.) const val CLS = "<cls>"
+  9->8.) const val UNK = "<unk>"
+ 16->9.) const val SEP = "<sep>"
 
-Reranked nearest neighbors in 1.739602ms
+Reranked nearest neighbors in 1.412775ms
 ```
+
+# Semantic Similarity
+
+What does semantic similarity look like?
+
+<details>
+
+```
+Nearest nearest neighbors by cumulative similarity
+
+0.] .toLabeledGraph()
+	0.0.] .toTypedArray()
+	0.1.] .toList()
+	0.2.] .asSequence()
+	0.3.] .allCodeFragments()
+	0.4.] .renderVKG()
+	0.5.] .shuffled()
+	0.6.] .distinct()
+	0.7.] dataSize.toLong()
+	0.8.] .readText().lines()
+	0.9.] PolynomialDecayTracker.builder()
+
+
+1.] const val MAX_BATCH = 50
+	1.0.] const val MAX_VOCAB = 35000
+	1.1.] const val MAX_GPUS = 1
+	1.2.] const val EPOCHS = 100000
+	1.3.] const val MAX_SEQUENCE_LENGTH = 128
+	1.4.] const val BATCH_SIZE = 24
+	1.5.] const val CLS = "<cls>"
+	1.6.] const val UNK = "<unk>"
+	1.7.] const val BERT_EMBEDDING_SIZE = 768
+	1.8.] dataSize.toLong()
+	1.9.] val targetEmbedding =
+
+
+2.] const val MAX_VOCAB = 35000
+	2.0.] const val MAX_BATCH = 50
+	2.1.] const val EPOCHS = 100000
+	2.2.] const val MAX_GPUS = 1
+	2.3.] const val MAX_SEQUENCE_LENGTH = 128
+	2.4.] const val CLS = "<cls>"
+	2.5.] const val BATCH_SIZE = 24
+	2.6.] const val UNK = "<unk>"
+	2.7.] const val MSK = "<msk>"
+	2.8.] const val BERT_EMBEDDING_SIZE = 768
+	2.9.] dataSize.toLong()
+
+
+3.] .toTypedArray()
+	3.0.] .toLabeledGraph()
+	3.1.] .toList()
+	3.2.] .asSequence()
+	3.3.] .shuffled()
+	3.4.] .allCodeFragments()
+	3.5.] dataSize.toLong()
+	3.6.] .distinct()
+	3.7.] .renderVKG()
+	3.8.] WarmUpTracker.builder()
+	3.9.] PolynomialDecayTracker.builder()
+
+
+4.] const val EPOCHS = 100000
+	4.0.] const val MAX_VOCAB = 35000
+	4.1.] const val MAX_BATCH = 50
+	4.2.] const val MAX_GPUS = 1
+	4.3.] const val MAX_SEQUENCE_LENGTH = 128
+	4.4.] const val CLS = "<cls>"
+	4.5.] const val BATCH_SIZE = 24
+	4.6.] const val UNK = "<unk>"
+	4.7.] const val MSK = "<msk>"
+	4.8.] const val SEP = "<sep>"
+	4.9.] const val BERT_EMBEDDING_SIZE = 768
+
+
+5.] .toList()
+	5.0.] .toTypedArray()
+	5.1.] .toLabeledGraph()
+	5.2.] .distinct()
+	5.3.] .asSequence()
+	5.4.] .shuffled()
+	5.5.] .readText().lines()
+	5.6.] .allCodeFragments()
+	5.7.] .show()
+	5.8.] .allFilesRecursively()
+	5.9.] dataSize.toLong()
+
+
+6.] .shuffled()
+	6.0.] .distinct()
+	6.1.] .renderVKG()
+	6.2.] .toLabeledGraph()
+	6.3.] .show()
+	6.4.] .toTypedArray()
+	6.5.] .toList()
+	6.6.] .asSequence()
+	6.7.] .allCodeFragments()
+	6.8.] .build()
+	6.9.] dataSize.toLong()
+
+
+7.] const val MAX_GPUS = 1
+	7.0.] const val MAX_BATCH = 50
+	7.1.] const val MAX_VOCAB = 35000
+	7.2.] const val EPOCHS = 100000
+	7.3.] const val BATCH_SIZE = 24
+	7.4.] const val MAX_SEQUENCE_LENGTH = 128
+	7.5.] const val CLS = "<cls>"
+	7.6.] dataSize.toLong()
+	7.7.] const val BERT_EMBEDDING_SIZE = 768
+	7.8.] const val UNK = "<unk>"
+	7.9.] const val CODEBERT_CLS_TOKEN = "<s>"
+
+
+8.] PolynomialDecayTracker.builder()
+	8.0.] WarmUpTracker.builder()
+	8.1.] PaddingStackBatchifier.builder()
+	8.2.] dataSize.toLong()
+	8.3.] TrainBertOnCode.runExample()
+	8.4.] executorService.shutdownNow()
+	8.5.] trainer.metrics = Metrics()
+	8.6.] .shuffled()
+	8.7.] .toLabeledGraph()
+	8.8.] .toTypedArray()
+	8.9.] .distinct()
+```
+</details>
 
 # Deployment
 

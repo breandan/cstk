@@ -9,8 +9,8 @@ import kotlin.math.*
 // Does edit distance correlate with embedding distance?
 fun main() {
   val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }
-  println("strdist,euclidist,var")
-  println(compareDistanceMetrics(data, Damerau())
+  println("strdist,dist,var")
+  println(compareDistanceMetrics(data, MetricLCS())
     .joinToString("\n") { "" + it.first + "," + it.second + "," + it.third })
 }
 

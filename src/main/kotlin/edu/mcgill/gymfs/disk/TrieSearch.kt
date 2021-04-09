@@ -47,7 +47,7 @@ class TrieSearch: CliktCommand() {
 }
 
 @OptIn(ExperimentalPathApi::class)
-data class Location(val file: URI, val line: Int): Serializable {
+data class Location constructor(val file: URI, val line: Int): Serializable {
   fun getContext(surroundingLines: Int) =
     Files.newBufferedReader(file.toPath()).use {
       it.lineSequence()
