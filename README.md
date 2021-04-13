@@ -1032,7 +1032,7 @@ Angle brackets enclose longest common substring up to current result
 	19.16] import guru.nidi.graphviz.*
 	19.17] import kotlin.math.pow
 	19.18] import kotlin.system.measureTimeMillis
-	19.19] import org.slf4j.LoggerFactoryy
+	19.19] import org.slf4j.LoggerFactory
 ```
 </details>
 
@@ -1064,6 +1064,7 @@ python codebert_server.py
 * [BERT-kNN: Adding a kNN Search Component to Pretrained Language Models for Better QA](https://arxiv.org/pdf/2005.00766.pdf), Kassner & Schutze (2020)
 * [AutoKG: Constructing Virtual Knowledge Graphs from Unstructured Documents for Question Answering](https://arxiv.org/pdf/2008.08995.pdf), Yu et al. (2021)
 * [Graph Optimal Transport for Cross-Domain Alignment](http://proceedings.mlr.press/v119/chen20e/chen20e.pdf), Chen et al. (2021)
+* [TextRank: Bringing Order into Texts](https://www.aclweb.org/anthology/W04-3252.pdf), Mihalcea and Tarau (2004)
 
 # Benchmarking
 
