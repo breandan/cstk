@@ -1,4 +1,5 @@
 import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -93,7 +94,10 @@ tasks {
     manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.BertTrainerKt"
 
     from(configurations.compileClasspath.get().files
+      .filter { it.extension != "pom" }
       .map { if (it.isDirectory) it else zipTree(it) })
+
+    duplicatesStrategy = EXCLUDE
     archiveBaseName.set("${project.name}-fat")
   }
 }
