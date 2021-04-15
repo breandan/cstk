@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  val kotlinVersion = "1.5.0-M2"
+  val kotlinVersion = "1.5.0-RC"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.38.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -14,7 +14,6 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   maven("https://jitpack.io")
-  maven("https://dl.bintray.com/kotlin/kotlin-datascience")
   maven("https://jetbrains.bintray.com/lets-plot-maven")
 }
 
@@ -86,15 +85,13 @@ tasks {
     classpath = sourceSets["main"].runtimeClasspath
   }
 
-  withType<KotlinCompile> {
+  compileKotlin {
     kotlinOptions {
-      languageVersion = "1.5"
-      apiVersion = "1.5"
       jvmTarget = VERSION_11.toString()
     }
   }
 
-  withType<Jar> {
+  jar {
     manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.BertTrainerKt"
 
     from(configurations.compileClasspath.get().files
