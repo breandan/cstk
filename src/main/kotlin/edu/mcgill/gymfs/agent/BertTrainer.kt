@@ -59,11 +59,16 @@ private fun createTrainingConfig(): TrainingConfig {
   return DefaultTrainingConfig(BertPretrainingLoss())
     .optOptimizer(optimizer)
     .optDevices(Device.getDevices(MAX_GPUS))
-    .addTrainingListeners(*TrainingListener.Defaults.logging(),
-      object: EpochTrainingListener() {
-        override fun onEpoch(trainer: Trainer?) =
-          println(trainer?.loss?.getAccumulator(TRAIN_ALL))
+    .addTrainingListeners(
+      *TrainingListener.Defaults.logging(),
+      object: DivergenceCheckTrainingListener() {
+        var batch = 0
+        override fun onTrainingBatch(
+          trainer: Trainer?,
+          batchData: TrainingListener.BatchData?
+        ) = trainer?.loss?.getAccumulator(TRAIN_ALL)
+          .let { if (batch++ % 200 == 0) println(it) }
       },
       SaveModelTrainingListener("", "codebert", 20),
-  )
+    )
 }
