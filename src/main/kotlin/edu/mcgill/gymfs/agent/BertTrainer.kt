@@ -5,6 +5,7 @@ import ai.djl.ndarray.types.Shape
 import ai.djl.nn.transformer.*
 import ai.djl.training.*
 import ai.djl.training.listener.*
+import ai.djl.training.listener.EvaluatorTrainingListener.TRAIN_ALL
 import ai.djl.training.optimizer.*
 import ai.djl.training.tracker.*
 import edu.mcgill.gymfs.disk.*
@@ -59,7 +60,10 @@ private fun createTrainingConfig(): TrainingConfig {
     .optOptimizer(optimizer)
     .optDevices(Device.getDevices(MAX_GPUS))
     .addTrainingListeners(*TrainingListener.Defaults.logging(),
-      LoggingTrainingListener(1),
+      object: EpochTrainingListener() {
+        override fun onEpoch(trainer: Trainer?) =
+          println(trainer?.loss?.getAccumulator(TRAIN_ALL))
+      },
       SaveModelTrainingListener("", "codebert", 20),
   )
 }
