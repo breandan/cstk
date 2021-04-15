@@ -98,6 +98,9 @@ tasks {
       .map { if (it.isDirectory) it else zipTree(it) })
 
     duplicatesStrategy = EXCLUDE
+    exclude("META-INF/*.DSA")
+    exclude("META-INF/*.RSA")
+    exclude("META-INF/*.SF")
     archiveBaseName.set("${project.name}-fat")
   }
 }
