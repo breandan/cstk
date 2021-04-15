@@ -86,9 +86,7 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions {
-      jvmTarget = VERSION_11.toString()
-    }
+    kotlinOptions.jvmTarget = VERSION_11.toString()
   }
 
   jar {

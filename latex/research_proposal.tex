@@ -110,10 +110,10 @@ If our hypothesis is correct, the virtual knowledge graph will span both natural
 
 \section{Evaluation}
 
-We evaluate on the following loss function, adapted from ~\cite{husain2019codesearchnet}. Given a set of code and context pairs, $\mathbf{F} = (\mathbf{c}_i, \mathbf{d}_i)_{i = 1}^N$, where $\mathbf S \sim_{i.i.d.} \mathbf R_{d}$:
+We evaluate on the following loss function, adapted from~\cite{husain2019codesearchnet}. Given a set of code and context pairs, $\mathbf{F} = (\mathbf{c}_i, \mathbf{d}_i)_{i = 1}^N$, where $\mathbf S \sim_{i.i.d.} \mathbf R_{d}$:
 
 \begin{align}
-  \mathcal{L} = \frac{1}{N}\sum_i^N \text{log}\left(\frac{\left<\varphi(\mathbf{c}_i), \varphi(\mathbf{d}_i)\right>}{\sum_{j \neq i}^N \left<\varphi(\mathbf{c}_j), \varphi(\mathbf{d}_i)\right>}\right)
+  \mathcal{L} = \frac{1}{N}\sum_i^N \log\left(\frac{\left<\varphi(\mathbf{c}_i), \varphi(\mathbf{d}_i)\right>}{\sum_{j \neq i}^N \left<\varphi(\mathbf{c}_j), \varphi(\mathbf{d}_i)\right>}\right)
 \end{align}
 
 In other words, we minimize the distance between true code and context pairs, while maximizing the distance between distractors $(\mathbf c_j, \mathbf d_i)_{i \neq j}$.

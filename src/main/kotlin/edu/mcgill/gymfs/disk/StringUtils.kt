@@ -13,6 +13,7 @@ data class QIC(
   val offset: Int
 )
 
+// Searches through all files in the path for the query
 fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
   allFilesRecursively(glob).mapNotNull { path ->
     path.read()?.let { contents ->
@@ -21,28 +22,31 @@ fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
     }
   }.flatten()
 
+// Returns all files in the path matching the extension
 fun Path.allFilesRecursively(glob: String = FILE_EXT): List<Path> =
   (Files.newDirectoryStream(this).filter { it.toFile().isDirectory } +
-    Files.newDirectoryStream(this, glob))
-    .partition { Files.isDirectory(it) }
+    Files.newDirectoryStream(this, glob)).partition { Files.isDirectory(it) }
     .let { (dirs, files) ->
       files + dirs.map { it.allFilesRecursively(glob) }.flatten()
     }
 
 @OptIn(ExperimentalPathApi::class)
-fun List<Path>.allCodeFragments() = map { path ->
-  path.readText().lines()
-    .mapIndexed { lineNum, line -> lineNum to line }
-    .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
-    .map { (ln, l) -> Location(path.toUri(), ln) to l.trim() }
+// Returns a list of all code fragments in all paths and their locations
+fun List<Path>.allCodeFragments(): List<Pair<Location, String>> =
+  map { path ->
+    path.readText().lines()
+      .mapIndexed { lineNum, line -> lineNum to line }
+      .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
+      .map { (ln, l) -> Location(path.toUri(), ln) to l.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
-}.flatten()
+  }.flatten()
 
-fun Path.read(start: Int = 0, end: Int = -1) =
+fun Path.read(start: Int = 0, end: Int = -1): String? =
   try { Files.readString(this) } catch (e: Exception) { null }
     ?.let { it.substring(start, if (end < 0) it.length else end) }
 
-fun String.extractConcordances(query: String) =
+// Returns all substrings matching the query and their immediate context
+fun String.extractConcordances(query: String): List<Pair<String, Int>> =
   Regex(query).findAll(this).map {
     val range = 0..length
     val (matchStart, matchEnd) =
