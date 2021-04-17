@@ -23,7 +23,7 @@ fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
   }.flatten()
 
 // Returns all files in the path matching the extension
-fun Path.allFilesRecursively(glob: String = FILE_EXT): List<Path> =
+fun Path.allFilesRecursively(glob: String = "*.$FILE_EXT"): List<Path> =
   (Files.newDirectoryStream(this).filter { it.toFile().isDirectory } +
     Files.newDirectoryStream(this, glob)).partition { Files.isDirectory(it) }
     .let { (dirs, files) ->

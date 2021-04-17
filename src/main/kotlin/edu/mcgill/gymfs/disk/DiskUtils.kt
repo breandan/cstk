@@ -9,7 +9,7 @@ import kotlin.io.path.*
 @ExperimentalPathApi
 private fun Path.mirrorHDFS(imfs: FileSystem): Path {
   val jfsRoot = imfs.getPath(toString()).also { Files.createDirectories(it) }
-  allFilesRecursively().parallelStream().filter { it.extension == "kt" }
+  allFilesRecursively().parallelStream().filter { it.extension == "java" }
     .forEach { src ->
       try {
         val path = src.toAbsolutePath().toString()

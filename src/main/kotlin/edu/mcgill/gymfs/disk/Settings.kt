@@ -5,7 +5,7 @@ import ai.djl.nn.transformer.BertBlock
 import java.io.File
 import kotlin.random.Random
 
-const val FILE_EXT = "*.kt"
+const val FILE_EXT = "java"
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
 val SERVER_ADDRESS = "http://localhost:8000/?vectorize="

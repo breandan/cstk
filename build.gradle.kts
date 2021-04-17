@@ -51,6 +51,8 @@ dependencies {
 
   implementation("com.robrua.nlp:easy-bert:1.0.3")
 
+  implementation("org.kohsuke:github-api:1.127")
+
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
@@ -63,27 +65,26 @@ dependencies {
   implementation("org.nield:kotlin-statistics:1.2.1")
 
   implementation("com.github.breandan:kotlingrad:0.4.2")
+
+  // For retrieving dataset from GitHub
+  implementation("org.kohsuke:github-api:1.127")
+
+  implementation("org.apache.commons:commons-compress:1.20")
+  implementation("org.apache.commons:commons-vfs2:2.7.0")
 }
 
 tasks {
-  register("trieSearch", JavaExec::class) {
-    main = "edu.mcgill.gymfs.disk.TrieSearchKt"
-    classpath = sourceSets["main"].runtimeClasspath
-  }
-
-  register("knnSearch", JavaExec::class) {
-    main = "edu.mcgill.gymfs.disk.KNNSearchKt"
-    classpath = sourceSets["main"].runtimeClasspath
-  }
-
-  register("trainBert", JavaExec::class) {
-    main = "edu.mcgill.gymfs.agent.BertTrainerKt"
-    classpath = sourceSets["main"].runtimeClasspath
-  }
-
-  register("trainBird", JavaExec::class) {
-    main = "com.kingyu.rlbird.ai.agent.TrainBirdKt"
-    classpath = sourceSets["main"].runtimeClasspath
+  mapOf(
+    "trieSearch" to "edu.mcgill.gymfs.disk.TrieSearchKt",
+    "knnSearch" to "edu.mcgill.gymfs.disk.KNNSearchKt",
+    "cloneRepos" to "edu.mcgill.gymfs.github.CloneReposKt",
+    "filterRepos" to "edu.mcgill.gymfs.github.FilterReposKt",
+    "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt"
+  ).forEach { (cmd,mainClass) ->
+    register(cmd, JavaExec::class) {
+      main = mainClass
+      classpath = sourceSets["main"].runtimeClasspath
+    }
   }
 
   compileKotlin {
