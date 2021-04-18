@@ -1051,7 +1051,7 @@ To reindex, first start CodeBERT server, to vectorize the code fragments:
 python codebert_server.py
 ```
 
-# Resources
+# Libraries
 
 * [Concurrent Trees](https://github.com/npgall/concurrent-trees) - For fast indexing and retrieval.
 * [Jimfs](https://github.com/google/jimfs) - An in-memory file system for dynamic document parsing.
@@ -1065,6 +1065,10 @@ python codebert_server.py
 * [AutoKG: Constructing Virtual Knowledge Graphs from Unstructured Documents for Question Answering](https://arxiv.org/pdf/2008.08995.pdf), Yu et al. (2021)
 * [Graph Optimal Transport for Cross-Domain Alignment](http://proceedings.mlr.press/v119/chen20e/chen20e.pdf), Chen et al. (2021)
 * [TextRank: Bringing Order into Texts](https://www.aclweb.org/anthology/W04-3252.pdf), Mihalcea and Tarau (2004)
+
+# Resources
+
+* [Query Refinement / Relevance models](https://chauff.github.io/documents/ir2017/Query-Refinement-Lecture.pdf#page=24)
 
 # Benchmarking
 
