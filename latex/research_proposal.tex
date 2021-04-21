@@ -40,24 +40,23 @@
 
 % Document
 
-\title{Learning to navigate, read and apply\\software documentation like a human}
+\title{Learning to search for software artifacts}
 \author{Breandan Considine, Xujie Si, Jin Guo}
 \begin{document}
 \maketitle
 
 \section{Introduction}
 
-Humans are adept information foraging agents. We can quickly find relevant information in a large corpus by recognizing and following textual landmarks. Software projects are composed of a variety of semi-structured documents containing many clues where relevant information may be found. In this work, we train a model to navigate and read software artifacts like source code and documentation, in order to facilitate common programming tasks such as code completion or defect prediction.
+Humans are adept information foraging agents. We can quickly find relevant information in a large corpus by recognizing and following textual landmarks. Software projects are composed of a variety of semi-structured documents containing many clues where relevant information may be found. In this work, we train a model to navigate and read software artifacts like source code and documentation, in order to facilitate common programming tasks such as code search, completion, or defect prediction.
 
 %Our work broadly falls under the umbrella of text-based reinforcement learning. Prior literature falls under two categories: natural or formal language. Reinforcement learning (RL) in the natural domain typically focuses on question answering~\citep{buck2017ask, chen2019reinforcement}, or interactive text games~\citep{he2015deep,ammanabrolu2018playing,narasimhan2015language,guo2020interactive,ammanabrolu2020graph}. RL techniques have begun to show promising results for program synthesis~\citep{ellis2019write, johnson2020learning, chen2020program}. Our work falls at the intersection of these two domains.
 
-Early work in program learning realized the importance of graph-based representations~\citep{allamanis2017learning}, however explicit graph construction requires extensive feature-engineering. More recent work in program synthesis has explored incorporating a terminal~\citep{ellis2019write}, graphical~\citep{walke2020learning} or other user interface to explore the space of valid programs, however do not consider the scope or variety of artifacts in a software project. Others have shown the feasibility of learning a local graph~\citep{johnson2020learning} from source code, but still require an explicit parser to form the initial graph and adapting to settings where style, terminology and document structure vary remains a challenge.
+Early work in program learning realized the importance of graph-based representations~\citep{allamanis2017learning}, however explicit graph construction requires extensive feature-engineering. More recent work in program synthesis has explored incorporating a terminal~\citep{ellis2019write}, graphical~\citep{walke2020learning} or other user interface to explore the space of valid programs, however do not consider the scope or variety of artifacts in a software project. Others have shown the feasibility of learning a local graph~\citep{johnson2020learning} from source code, but still require an explicit parser to form the initial graph and adaption in settings where style, terminology and document structure vary remains a challenge.
 
-%Unlike prior work, we consider the whole project and related artifacts. Instead of parsing their contents explicitly, which may be computationally expensive or too large to fit in memory, we allow the agent to construct the graph organically by exploring the filesystem, which can later be used to predict a label or sequence at inference time, depending on the task.
 
 Imagine a newly-hired developer, who has programming experience, but no prior knowledge about a closed-source project. She receives access to the team's Git repository and is assigned her first ticket: Fix test broken by \texttt{0fb98be}. After locating the commit and becoming familiar with the code, she queries StackOverflow, discovers a relevant solution, copies the code into the project, makes a few edits, presses run, and the test passes.
 
-In order to accomplish a similar task, an information-seeking agent must be able to explore a database. Similar to a human developer, it might traverse the project to gather information, such as searching for text and copying tokens from relevant documents and source code artifacts. As it traverses the project, the model constructs a project-specific knowledge graph.
+In order to accomplish a similar task, an information-seeking agent must be able to explore a local database for information, construct a query, and search a remote database. Similar to a human developer, it might traverse the project to gather information, taking note of various keywords, APIs and design patterns. While traversing the project, the model constructs a project-specific knowledge graph, which it uses to locate other relevant artifacts written by authors who solved the same problem.
 
 %\begin{figure*}
 %  \centering
@@ -92,11 +91,9 @@ Prior work in the code search literature explores the text-to-code~\citep{husain
 \end{table}
 }
 
-Although we draw some inspiration from the duplicate detection literature, their work presumes the code was intentionally duplicated or modified but is essential identical in form or function. We do not consider this line work, as our work seeks to help users discover usage examples and relevant results for as-yet-incomplete code. By aligning salient features from the surrounding document and project graph, we approximate the notion of semantic similarity, without requring a domain-specific processing pipeline.
+Although we draw some inspiration from the duplicate detection literature, their work presumes the code was intentionally duplicated or modified but is essentially identical in form or function. In contrast, our work seeks to help users discover artifacts which predictive of as-yet-incomplete code. By aligning salient features from the surrounding document and project graph, we approximate the notion of semantic similarity, without requring a language-specific parser like some methods~\citep{cambronero2019deep} do, and can more easily adapt to settings where the language and project structure varies.
 
-%\section{Evaluation}
-%
-%Due to the lack of available user data in our setting, in order to evaluate our method, we generate queries by identifying type-3 and lower code clones. This co
+Furthermore, unlike prior work, our work considers the surrounding project and related artifacts. Instead of parsing their contents explicitly, which may be computationally intractable, we allow the agent to construct the graph organically by exploring the filesystem, then extract a query.
 
 \section{Method}
 
