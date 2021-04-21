@@ -19,7 +19,7 @@ fun main() {
       repo.owner.type == "Organization" &&
       try {
         (repo.description + repo.readme.content)
-          .none { c -> c.toInt() in 19968..40869 }
+          .none { c -> c.code in 19968..40869 }
       } catch (e: Exception) { false }
     }
     .collect(Collectors.toList())
