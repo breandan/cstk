@@ -1,6 +1,6 @@
 # gym-fs
 
-A fast, RL environment for the filesystem.
+A fast environment for the filesystem.
 
 Stores BPE-compressed files in memory.
 
@@ -1051,12 +1051,24 @@ To reindex, first start CodeBERT server, to vectorize the code fragments:
 python codebert_server.py
 ```
 
+# Research Questions
+
+* Can we learn a highly compressed index of all artifacts on GitHub for fast offline lookups with just-in-time retrieval?
+* What if when we allow the user to adjust the search settings?
+  * Clone type (I/II/III/IV)
+  * File extension filter
+  * Source code context
+  * Edge construction
+  * Ranking metric
+* How do we clearly communicate search result alignment? Concordance++
+
 # Libraries
 
 * [Concurrent Trees](https://github.com/npgall/concurrent-trees) - For fast indexing and retrieval.
 * [Jimfs](https://github.com/google/jimfs) - An in-memory file system for dynamic document parsing.
 * [HNSW](https://github.com/jelmerk/hnswlib) - Java library for approximate nearest neighbors search using Hierarchical Navigable Small World graphs
 * [java-string-similarity](https://github.com/tdebatty/java-string-similarity) - Implementation of various string similarity and distance algorithms
+* [Commons VFS](https://commons.apache.org/proper/commons-vfs/) - Virtual file system for compressed files
 
 # Papers
 

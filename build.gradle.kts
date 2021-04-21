@@ -70,7 +70,7 @@ dependencies {
   implementation("org.kohsuke:github-api:1.127")
 
   implementation("org.apache.commons:commons-compress:1.20")
-  implementation("org.apache.commons:commons-vfs2:2.7.0")
+  implementation("org.apache.commons:commons-vfs2:2.8.0")
 }
 
 tasks {

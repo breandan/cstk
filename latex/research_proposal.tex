@@ -69,7 +69,7 @@ In order to accomplish a similar task, an information-seeking agent must be able
 
 \section{Prior literature}
 
-Prior literature in the code search domain attempts compares precision and recall in the text-to-code~\citep{husain2019codesearchnet} and code-to-code~\citep{kim2018facoy} setting. Although some~\citep{asyrofi2020ausearch} do consider features from the document, they do not consider the entity graph in the surrounding project. Although there is a lot of work in code clone detection, we do not consider this work, as we want to help users to find relevant code snippets for as-yet-incomplete code. None of these however, consider the query as an artifact in the context of a broader project. This, we argue, is essential to retrieving semantically relevant search results.
+Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, where queries are typically considered to be a short sequence composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query might be generated. Model performance typically evaluated using mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, none however, consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
 
 { % begin box to localize effect of arraystretch change
 \renewcommand{\arraystretch}{1.5}
@@ -78,7 +78,7 @@ Prior literature in the code search domain attempts compares precision and recal
   \begin{tabular}{lllc}
     Name & Type & Key contribution & Evaluation method \\
     \hline
-    \href{https://github.com/breandan/gym-fs}{\textsc{Our Work}}~\citep{kim2018facoy} & Project-to-code & Graph search & TBD \\
+    \href{https://github.com/breandan/gym-fs}{\textsc{Our Work}} & Project-to-code & Graph search & TBD \\
     \href{https://core.ac.uk/download/pdf/162022846.pdf#page=7}{\textsc{FaCoY}}~\citep{kim2018facoy} & Code-to-code & Similarity search & MRR \\
     \href{http://www.jameskoppel.com/files/papers/yogo-preprint.pdf#page=11}{\textsc{Yogo}}~\cite{premtoon2020semantic}     & Code-to-code & Equational reasoning & Case study \\
     \href{https://arxiv.org/pdf/1909.09436.pdf#page=5}{\textsc{CSNet}}~\citep{husain2019codesearchnet}     & Text-to-code & Big code benchmark & MRR \\
@@ -86,15 +86,21 @@ Prior literature in the code search domain attempts compares precision and recal
     \href{https://raw.githubusercontent.com/mhilmiasyrofi/AUSearch/master/SANER_2020_AUSearch.pdf}{\textsc{AUSearch}}~\citep{asyrofi2020ausearch}     & Code-to-code & Type resolver & Highlight accuracy \\
 
     \href{https://arxiv.org/pdf/1905.03813.pdf#section.4}{\textsc{Cambronero}}~\citep{cambronero2019deep}     & Text-to-code & Semantics & Answered@N \\
-    \href{https://guxd.github.io/papers/deepcs.pdf#section.5}{\textsc{DeepCS}}~\citep{gu2018deep}     & Text-to-code & Deep learning & FRank, *@k, MRR \\
+    \href{https://guxd.github.io/papers/deepcs.pdf#section.5}{\textsc{DeepCS}}~\citep{gu2018deep}     & Text-to-code & Deep learning & FRank, *@N, MRR \\
   \end{tabular}
   \caption{\label{tab:ad_comparison} Comparison of existing code search tools.}
 \end{table}
 }
 
+Although we draw some inspiration from the duplicate detection literature, their work presumes the code was intentionally duplicated or modified but is essential identical in form or function. We do not consider this line work, as our work seeks to help users discover usage examples and relevant results for as-yet-incomplete code. By aligning salient features from the surrounding document and project graph, we approximate the notion of semantic similarity, without requring a domain-specific processing pipeline.
+
+%\section{Evaluation}
+%
+%Due to the lack of available user data in our setting, in order to evaluate our method, we generate queries by identifying type-3 and lower code clones. This co
+
 \section{Method}
 
-We fetch a dataset of repositories sampled from popular Java repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs. We also encode CodeBERT~\citep{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\citep{malkov2018efficient} (HNSWG).
+We fetch a dataset of repositories sampled repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs. We also encode CodeBERT~\citep{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\citep{malkov2018efficient} (HNSWG).
 
 
 \begin{figure}[H]
