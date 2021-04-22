@@ -14,11 +14,11 @@ class TrieSearch: CliktCommand() {
 
   val query by option("--query", help = "Query to find").default("match")
 
-  val index by option("--index", help = "Prebuilt index file").default("")
+  val index by option("--index", help = "Prebuilt index file").default("keyword.idx")
 
   // Suffix trie multimap for (file, offset) pairs of matching prefixes
   val trie: ConcurrentSuffixTree<Queue<Location>>
-    by lazy { buildOrLoadIndex(File(index), Path.of(path)) }
+    by lazy { buildOrLoadKWIndex(File(index), Path.of(path)) }
 
   fun search(query: String): List<Location> =
     trie.getValuesForKeysContaining(query).flatten()
@@ -44,4 +44,9 @@ class TrieSearch: CliktCommand() {
 
 //fun main(args: Array<String>) = TrieSearch().main(args)
 fun main() =
-  TrieSearch().main(arrayOf("--query=test", "--index=github.idx", "--path=data"))
+  TrieSearch().main(
+    arrayOf(
+      "--query=test", "--index=github.idx",
+      "--path=/home/breandan/IdeaProjects/gym-fs"
+    )
+  )

@@ -28,7 +28,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
   override fun prepare(progress: Progress?) {
     // get all applicable files
     parsedFiles = ROOT_DIR.allFilesRecursively()
-      .filter { it.extension == "kt" }
+      .filter { it.extension == FILE_EXT }
       // read & tokenize them
       .map { parseFile(it) }
     // determine dictionary

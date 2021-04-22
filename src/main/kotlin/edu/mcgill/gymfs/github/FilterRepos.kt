@@ -4,7 +4,7 @@ import org.kohsuke.github.*
 import java.io.File
 import java.util.stream.Collectors
 
-fun main() {
+fun main() =
   GitHubBuilder()
     .withJwtToken(File(".ghtoken").readText())
     .build().searchRepositories()
@@ -32,4 +32,3 @@ fun main() {
           it.httpTransportUrl
       )
     }
-}

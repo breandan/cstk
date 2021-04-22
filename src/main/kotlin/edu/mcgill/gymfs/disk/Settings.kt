@@ -6,7 +6,7 @@ import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import kotlin.random.Random
 
-const val FILE_EXT = "java"
+const val FILE_EXT = "kt"
 val VFS_SELECTOR = FileExtensionSelector(setOf(FILE_EXT))
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 

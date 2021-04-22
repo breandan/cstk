@@ -4,6 +4,7 @@ import com.github.jelmerk.knn.SearchResult
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNodeFactory
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.indices.*
 import java.io.File
 
 fun main() {

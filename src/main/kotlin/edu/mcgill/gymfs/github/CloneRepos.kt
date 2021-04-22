@@ -10,10 +10,10 @@ fun main() {
     val repo = it.substringAfter("https://github.com/").substringBefore(".git")
     print("Downloading $repo ")
     try {
-      val file = File("data/" + repo.replace("/", "_"))
+      val file = File("data/" + repo.replace("/", "_") + ".tgz")
       val data = URL("https://api.github.com/repos/$repo/tarball").readBytes()
       file.writeBytes(data)
-      print(" to ${file.path}")
+      println(" to ${file.path}")
     } catch (e: Exception) {}
   }
 }
