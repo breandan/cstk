@@ -1,6 +1,9 @@
 package edu.mcgill.gymfs.disk
 
+import org.apache.commons.vfs2.VFS
 import java.io.*
+import java.net.URI
+import java.nio.charset.Charset
 import java.nio.file.*
 import java.util.zip.*
 import kotlin.io.path.*
@@ -29,3 +32,10 @@ fun Any?.serialize(path: File) =
 fun File.deserialize(): Any =
   ObjectInputStream(GZIPInputStream(FileInputStream(this)))
     .use { it.readObject() }
+
+@OptIn(ExperimentalPathApi::class)
+fun URI.allLines() =
+  if (scheme == "file")
+    Files.newBufferedReader(toPath()).lineSequence()
+  else VFS.getManager().resolveFile(this).content
+    .getString(Charset.defaultCharset()).lineSequence()

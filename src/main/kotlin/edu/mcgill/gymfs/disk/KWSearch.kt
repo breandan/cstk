@@ -10,7 +10,7 @@ import kotlin.time.*
 
 class TrieSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
-    .default(Paths.get("").toAbsolutePath().toString())
+    .default(Paths.get("src").toAbsolutePath().toString())
 
   val query by option("--query", help = "Query to find").default("match")
 
@@ -42,11 +42,11 @@ class TrieSearch: CliktCommand() {
   }
 }
 
-//fun main(args: Array<String>) = TrieSearch().main(args)
-fun main() =
-  TrieSearch().main(
-    arrayOf(
-      "--query=test", "--index=github.idx",
-      "--path=/home/breandan/IdeaProjects/gym-fs"
-    )
-  )
+fun main(args: Array<String>) = TrieSearch().main(args)
+//fun main() =
+//  TrieSearch().main(
+//    arrayOf(
+//      "--query=test", "--index=mini_github.idx",
+//      "--path=/home/breandan/IdeaProjects/gym-fs"
+//    )
+//  )

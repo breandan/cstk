@@ -12,12 +12,12 @@ import kotlin.io.path.*
 import kotlin.time.*
 
 fun buildOrLoadKWIndex(index: File, rootDir: Path): KWIndex =
-  if (!index.exists()) buildKWIndex(rootDir).also {
-    println("Serializing to $index")
-    it.serialize(index)
-  } else index.also {
-    println("Loading index from ${it.absolutePath}")
-  }.deserialize() as KWIndex
+  if (!index.exists())
+    buildKWIndex(rootDir).apply {
+      println("Serializing to $index")
+      serialize(index)
+    }
+  else index.apply { println("Loading $absolutePath") }.deserialize() as KWIndex
 
 // Indexes all lines in all files in the path
 

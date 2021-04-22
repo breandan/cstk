@@ -1,17 +1,11 @@
 package edu.mcgill.gymfs.disk
 
-import org.apache.commons.vfs2.VFS
 import java.io.Serializable
 import java.net.URI
-import java.nio.charset.Charset
-import kotlin.io.path.ExperimentalPathApi
 
-data class Location constructor(val file: URI, val line: Int): Serializable {
-  @OptIn(ExperimentalPathApi::class)
+data class Location constructor(val uri: URI, val line: Int): Serializable {
   fun getContext(surroundingLines: Int) =
-    VFS.getManager().resolveFile(file).content
-      .getString(Charset.defaultCharset()).lines()
-      .drop((line - surroundingLines).coerceAtLeast(0))
+    uri.allLines().drop((line - surroundingLines).coerceAtLeast(0))
       .take(surroundingLines + 1).joinToString("\n") { it.trim() }
 
   /*
@@ -48,5 +42,5 @@ data class Location constructor(val file: URI, val line: Int): Serializable {
           .take(5).map { kw to it }
       }.flatten()
 
-  override fun toString() = "…${file.path.substringAfterLast('/')}:L${line + 1}"
+  override fun toString() = "…${uri.toString().substringAfterLast("/")}:L${line + 1}"
 }
