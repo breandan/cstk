@@ -2,17 +2,12 @@ package edu.mcgill.gymfs.disk
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
-import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
-import java.io.*
-import java.net.URI
+import java.io.File
 import java.nio.file.*
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.io.path.*
 import kotlin.time.*
 
-@OptIn(ExperimentalTime::class)
 class TrieSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
     .default(Paths.get("").toAbsolutePath().toString())
@@ -28,6 +23,7 @@ class TrieSearch: CliktCommand() {
   fun search(query: String): List<Location> =
     trie.getValuesForKeysContaining(query).flatten()
 
+  @OptIn(ExperimentalTime::class)
   override fun run() {
     println("\nSearching index of size ${trie.size()} for [?]=[$query]…\n")
 
@@ -46,83 +42,6 @@ class TrieSearch: CliktCommand() {
   }
 }
 
-@OptIn(ExperimentalPathApi::class)
-data class Location constructor(val file: URI, val line: Int): Serializable {
-  fun getContext(surroundingLines: Int) =
-    Files.newBufferedReader(file.toPath()).use {
-      it.lineSequence()
-        .drop((line - surroundingLines).coerceAtLeast(0))
-        .take(surroundingLines + 1).joinToString("\n") { it.trim() }
-    }
-
-  /*
-   * Fetches the most salient keywords from the context
-   */
-
-  private fun topKeywordsFromContext(
-    mostKeywordsToTake: Int = 5,
-    score: (String) -> Double
-  ): List<Pair<String, Double>> =
-    getContext(3).split(Regex("[^\\w']+"))
-    .asSequence()
-    .filter(String::isNotEmpty)
-    .distinct()
-    .map { it to score(it) }
-    .filter { (_, score) -> 1.0 != score } // Score of 1.0 is the current loc
-    .sortedBy { it.second }
-    .take(mostKeywordsToTake)
-    .toList()
-
-  /*
-   * Expand keywords by least common first. Common keywords are
-   * unlikely to contain any useful information.
-   *
-   * TODO: Reweight score by other metrics?
-   */
-
-  fun expand(grepper: TrieSearch): List<Pair<String, Location>> =
-    topKeywordsFromContext { grepper.search(it).size.toDouble() }
-      .also { println("Salient keywords: $it") }
-      .map { (kw, _) ->
-        grepper.search(kw)
-          .filter { it != this }
-          .take(5).map { kw to it }
-      }.flatten()
-
-  override fun toString() = "…${file.path.substringAfterLast('/')}:L${line + 1}"
-}
-
-@OptIn(ExperimentalTime::class)
-fun buildOrLoadIndex(
-  index: File,
-  rootDir: Path
-): ConcurrentSuffixTree<Queue<Location>> =
-  if (!index.exists())
-    measureTimedValue { indexPath(rootDir.also { println("Indexing $it") }) }
-      .let { (trie, time) ->
-        val file = if (index.name.isEmpty()) File("keyword.idx") else index
-        trie.also { it.serialize(file); println("Indexed in $time to: $file") }
-      }
-  else {
-    println("Loading index from ${index.absolutePath}")
-    index.deserialize() as ConcurrentSuffixTree<Queue<Location>>
-  }
-
-// Indexes all lines in all files in the path
-fun indexPath(rootDir: Path): ConcurrentSuffixTree<Queue<Location>> =
-  ConcurrentSuffixTree<Queue<Location>>(DefaultCharArrayNodeFactory())
-    .also { trie ->
-      rootDir.allFilesRecursively().parallelStream().forEach { src ->
-        try {
-          Files.readAllLines(src).forEachIndexed { lineIndex, line ->
-            if (line.length < 500)
-              ConcurrentLinkedQueue(listOf(Location(src.toUri(), lineIndex)))
-                .let { trie.putIfAbsent(line, it)?.offer(it.first()) }
-          }
-        } catch (e: Exception) {
-//        System.err.println("Unreadable …${src.fileName} due to ${e.message}")
-        }
-      }
-    }
-
-fun main(args: Array<String>) = TrieSearch().main(args)
+//fun main(args: Array<String>) = TrieSearch().main(args)
+fun main() =
+  TrieSearch().main(arrayOf("--query=test", "--index=github.idx", "--path=data"))

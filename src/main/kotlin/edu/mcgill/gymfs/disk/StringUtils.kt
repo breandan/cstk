@@ -30,8 +30,8 @@ fun Path.allFilesRecursively(glob: String = "*.$FILE_EXT"): List<Path> =
       files + dirs.map { it.allFilesRecursively(glob) }.flatten()
     }
 
-@OptIn(ExperimentalPathApi::class)
 // Returns a list of all code fragments in all paths and their locations
+@OptIn(ExperimentalPathApi::class)
 fun List<Path>.allCodeFragments(): List<Pair<Location, String>> =
   map { path ->
     path.readText().lines()

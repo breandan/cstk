@@ -2,10 +2,12 @@ package edu.mcgill.gymfs.disk
 
 import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
+import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import kotlin.random.Random
 
 const val FILE_EXT = "java"
+val VFS_SELECTOR = FileExtensionSelector(setOf(FILE_EXT))
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
 val SERVER_ADDRESS = "http://localhost:8000/?vectorize="

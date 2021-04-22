@@ -51,7 +51,7 @@ dependencies {
 
   implementation("com.robrua.nlp:easy-bert:1.0.3")
 
-  implementation("org.kohsuke:github-api:1.127")
+  implementation("org.kohsuke:github-api:1.128")
 
   implementation("info.debatty:java-string-similarity:2.0.0")
 
@@ -89,6 +89,7 @@ tasks {
 
   compileKotlin {
     kotlinOptions.jvmTarget = VERSION_11.toString()
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 
   jar {
