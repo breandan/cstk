@@ -1,18 +1,18 @@
 package edu.mcgill.gymfs.disk
 
+import org.apache.commons.vfs2.VFS
 import java.io.Serializable
 import java.net.URI
-import java.nio.file.Files
-import kotlin.io.path.*
+import java.nio.charset.Charset
+import kotlin.io.path.ExperimentalPathApi
 
 data class Location constructor(val file: URI, val line: Int): Serializable {
   @OptIn(ExperimentalPathApi::class)
   fun getContext(surroundingLines: Int) =
-    Files.newBufferedReader(file.toPath()).use {
-      it.lineSequence()
-        .drop((line - surroundingLines).coerceAtLeast(0))
-        .take(surroundingLines + 1).joinToString("\n") { it.trim() }
-    }
+    VFS.getManager().resolveFile(file).content
+      .getString(Charset.defaultCharset()).lines()
+      .drop((line - surroundingLines).coerceAtLeast(0))
+      .take(surroundingLines + 1).joinToString("\n") { it.trim() }
 
   /*
    * Fetches the most salient keywords from the context
