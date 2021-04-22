@@ -48,7 +48,7 @@ fun KWIndex.indexCompressedFile(src: Path) =
     findFiles(VFS_SELECTOR).toList().forEach { file ->
       file.content.getString(Charset.defaultCharset())
         .lines().forEachIndexed { lineIndex, line ->
-          indexLine(line, Location(src.toUri(), lineIndex))
+          indexLine(line, Location(file.uri, lineIndex))
         }
     }
   }.also { println("Indexed $src") }
