@@ -6,6 +6,7 @@ import com.googlecode.concurrenttrees.solver.LCSubstringSolver
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 import java.io.File
+import kotlin.io.path.*
 
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData()
@@ -16,7 +17,6 @@ fun main() {
 //  knnIndex.exactKNNSearch(vectorize(query), 10)
 //    .forEach { println("${it.distance()}:${it.item().loc} / ${it.item()}\n\n") }
 
-  val topK = 100
   val mostSimilar = labels.zip(vectors).map { (l, v) ->
     Neighborhood(l, knnIndex.nearestNonEmptyNeighbors(v, 20))
   }.sortedBy { it.totalDistance }
@@ -36,14 +36,15 @@ fun main() {
     }
 }
 
+@OptIn(ExperimentalPathApi::class)
 private fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
-  findNearest(v, i)
+  findNearest(v, i + 10)
     .filter { !it.item().embedding.contentEquals(v) }
-    .distinctBy { it.item().toString() }.take(20)
+    .distinctBy { it.item().toString() }.take(i)
 
 data class Neighborhood(
   val origin: String,
-  val nearestNeighbors: List<SearchResult<Fragment, Double>>,
+  val nearestNeighbors: List<SearchResult<CodeEmbedding, Double>>,
 ) {
   val totalDistance by lazy { nearestNeighbors.sumOf { it.distance() } }
 

@@ -62,7 +62,7 @@ class KNNSearch: CliktCommand() {
 
     println("\nFetched nearest neighbors in " + measureTime {
       nearestNeighbors.take(10).forEachIndexed { i, s -> println("$i.) $s") }
-    }.inMilliseconds + "ms")
+    }.inWholeMilliseconds + "ms")
 
     val (metric, metricName) = MetricLCS().let { it to it::class.simpleName }
     val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)
@@ -80,7 +80,7 @@ class KNNSearch: CliktCommand() {
         val originalIndex = nearestNeighbors.indexOf(s).toString().padStart(3)
         println("${originalIndex}->$currentIndex.) $s")
       }
-    }.inMilliseconds + "ms")
+    }.inWholeMilliseconds + "ms")
   }
 
 }

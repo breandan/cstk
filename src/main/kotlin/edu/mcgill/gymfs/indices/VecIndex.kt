@@ -48,18 +48,18 @@ fun rebuildIndex(indexFile: File, path: Path): VecIndex =
     BERT_EMBEDDING_SIZE,
     DOUBLE_EUCLIDEAN_DISTANCE, 1000000
   ).withM(100).withEf(500).withEfConstruction(500)
-    .build<Location, Fragment>().also { idx ->
+    .build<Location, CodeEmbedding>().also { idx ->
       println("Rebuilding index...")
       println("Rebuilt index in " + measureTime {
         path.allFilesRecursively()
           .filter { it.extension == FILE_EXT }
           .allCodeFragments()
-          .map { (loc, text) -> Fragment(loc, vectorize(text)) }
+          .map { (loc, text) -> CodeEmbedding(loc, vectorize(text)) }
           .forEach { idx.add(it) }
-      }.inMinutes + " minutes")
+      }.inWholeMinutes + " minutes")
     }.also { it.serialize(indexFile) }
 
-typealias VecIndex = HnswIndex<Location, DoubleArray, Fragment, Double>
+typealias VecIndex = HnswIndex<Location, DoubleArray, CodeEmbedding, Double>
 
 val VecIndex.defaultFilename: String by lazy { "vector.idx" }
 
@@ -67,7 +67,7 @@ val VecIndex.defaultFilename: String by lazy { "vector.idx" }
 fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) =
   asExactIndex().findNearest(vq, nearestNeighbors)
 
-data class Fragment(val loc: Location, val embedding: DoubleArray):
+data class CodeEmbedding(val loc: Location, val embedding: DoubleArray):
   Item<Location, DoubleArray> {
   override fun id(): Location = loc
 
@@ -81,6 +81,6 @@ data class Fragment(val loc: Location, val embedding: DoubleArray):
 fun main(args: Array<String>) {
   buildOrLoadVecIndex(
     index = File(DEFAULT_KNNINDEX_FILENAME),
-    rootDir = Path.of("data")
+    rootDir = Path.of("src")
   )
 }

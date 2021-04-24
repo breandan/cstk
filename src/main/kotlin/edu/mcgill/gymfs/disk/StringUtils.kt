@@ -24,8 +24,11 @@ fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
   }.flatten()
 
 // Returns all files in the path matching the extension
-fun Path.allFilesRecursively(glob: String = "*"): Sequence<Path> =
-  toFile().walkTopDown().filter { it.extension == glob }.map { it.toPath() }
+fun Path.allFilesRecursively(extension: String? = null): Sequence<Path> =
+  toFile().walkTopDown()
+    .let { files ->
+      extension?.let { ext -> files.filter { it.extension == ext } } ?: files
+    }.map { it.toPath() }
 
 // Returns a list of all code fragments in all paths and their locations
 @OptIn(ExperimentalPathApi::class)

@@ -19,7 +19,8 @@ repositories {
 }
 
 dependencies {
-  implementation(kotlin("stdlib"))
+  implementation(kotlin("stdlib-jdk8"))
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0-RC")
 //  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
   implementation(libs.jimfs)
   implementation(libs.cct)
@@ -66,6 +67,7 @@ dependencies {
 
   implementation("com.github.breandan:kotlingrad:0.4.2")
 
+
   // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.127")
 
@@ -81,7 +83,9 @@ tasks {
     "filterRepos" to "edu.mcgill.gymfs.github.FilterReposKt",
     "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
-    "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt"
+    "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
+    "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
+    "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
   ).forEach { (cmd,mainClass) ->
     register(cmd, JavaExec::class) {
       main = mainClass
