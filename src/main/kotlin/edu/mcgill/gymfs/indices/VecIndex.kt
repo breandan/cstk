@@ -61,6 +61,8 @@ fun rebuildIndex(indexFile: File, path: Path): VecIndex =
 
 typealias VecIndex = HnswIndex<Location, DoubleArray, Fragment, Double>
 
+val VecIndex.defaultFilename: String by lazy { "vector.idx" }
+
 // Expensive, need to compute pairwise distances with all items in the index
 fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) =
   asExactIndex().findNearest(vq, nearestNeighbors)
@@ -74,4 +76,11 @@ data class Fragment(val loc: Location, val embedding: DoubleArray):
   override fun dimensions(): Int = embedding.size
 
   override fun toString() = loc.getContext(0)
+}
+
+fun main(args: Array<String>) {
+  buildOrLoadVecIndex(
+    index = File(DEFAULT_KNNINDEX_FILENAME),
+    rootDir = Path.of("data")
+  )
 }

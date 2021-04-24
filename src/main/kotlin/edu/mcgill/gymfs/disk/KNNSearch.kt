@@ -25,10 +25,8 @@ class KNNSearch: CliktCommand() {
     help = "Code fragment"
   ).default("const val MAX_GPUS = 1")
 
-  val index by option(
-    "--index",
-    help = "Prebuilt index file"
-  ).default("vector.idx")
+  val index by option( "--index", help = "Prebuilt index file" )
+    .default(DEFAULT_KNNINDEX_FILENAME)
 
   val graphs by option("--graphs", help = "Visualize graphs").default("")
 

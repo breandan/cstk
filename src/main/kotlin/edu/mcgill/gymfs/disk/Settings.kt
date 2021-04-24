@@ -37,5 +37,7 @@ val BERT_BUILDER = BertBlock.builder().micro()
 val ROOT_DIR = File("data").toPath()
 val DATA_DIR = File("data").toPath()
 val TEST_DIR = File("src").toPath()
+val DEFAULT_KNNINDEX_FILENAME = "vector.idx"
+val DEFAULT_KWINDEX_FILENAME = "keyword.idx"
 val TOKENIZER = BertTokenizer()
 val rand = Random(1)

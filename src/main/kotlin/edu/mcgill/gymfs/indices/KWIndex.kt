@@ -1,7 +1,8 @@
-package edu.mcgill.gymfs.disk
+package edu.mcgill.gymfs.indices
 
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
+import edu.mcgill.gymfs.disk.*
 import org.apache.commons.vfs2.VFS
 import java.io.File
 import java.nio.file.Path
@@ -26,11 +27,11 @@ fun buildKWIndex(rootDir: Path): KWIndex =
     KWIndex(DefaultCharArrayNodeFactory()).apply {
       rootDir.allFilesRecursively().toList()
         .parallelStream().forEach { src ->
-        when (src.extension) {
-          "tgz" -> indexCompressedFile(src)
-          FILE_EXT -> indexUncompressedFile(src)
+          when (src.extension) {
+            "tgz" -> indexCompressedFile(src)
+            FILE_EXT -> indexUncompressedFile(src)
+          }
         }
-      }
     }
   }.let { println("Built keyword index in ${it.duration}"); it.value }
 
@@ -50,8 +51,17 @@ fun KWIndex.indexCompressedFile(src: Path) =
 
 typealias KWIndex = ConcurrentSuffixTree<Queue<Location>>
 
+val KWIndex.defaultFilename: String by lazy { "keyword.idx" }
+
 fun KWIndex.indexLine(line: String, location: Location) {
   if (line.length < 500)
     ConcurrentLinkedQueue(listOf(location))
       .let { putIfAbsent(line, it)?.offer(it.first()) }
+}
+
+fun main(args: Array<String>) {
+  buildOrLoadKWIndex(
+    index = File(DEFAULT_KWINDEX_FILENAME),
+    rootDir = Path.of("data")
+  )
 }

@@ -3,6 +3,7 @@ package edu.mcgill.gymfs.disk
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
+import edu.mcgill.gymfs.indices.buildOrLoadKWIndex
 import java.io.File
 import java.nio.file.*
 import java.util.*
@@ -14,7 +15,8 @@ class TrieSearch: CliktCommand() {
 
   val query by option("--query", help = "Query to find").default("match")
 
-  val index by option("--index", help = "Prebuilt index file").default("keyword.idx")
+  val index by option("--index", help = "Prebuilt index file")
+    .default(DEFAULT_KWINDEX_FILENAME)
 
   // Suffix trie multimap for (file, offset) pairs of matching prefixes
   val trie: ConcurrentSuffixTree<Queue<Location>>

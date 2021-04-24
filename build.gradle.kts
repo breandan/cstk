@@ -75,11 +75,13 @@ dependencies {
 
 tasks {
   mapOf(
-    "trieSearch" to "edu.mcgill.gymfs.disk.TrieSearchKt",
+    "trieSearch" to "edu.mcgill.gymfs.disk.KWSearchKt",
     "knnSearch" to "edu.mcgill.gymfs.disk.KNNSearchKt",
     "cloneRepos" to "edu.mcgill.gymfs.github.CloneReposKt",
     "filterRepos" to "edu.mcgill.gymfs.github.FilterReposKt",
-    "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt"
+    "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
+    "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
+    "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt"
   ).forEach { (cmd,mainClass) ->
     register(cmd, JavaExec::class) {
       main = mainClass
