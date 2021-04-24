@@ -4,7 +4,6 @@ import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFa
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import org.apache.commons.vfs2.VFS
 import java.io.File
-import java.nio.charset.Charset
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -36,21 +35,16 @@ fun buildKWIndex(rootDir: Path): KWIndex =
 
 @OptIn(ExperimentalPathApi::class)
 fun KWIndex.indexUncompressedFile(src: Path) = try {
-  src.readLines().forEachIndexed { lineIndex, line ->
-    indexLine(line, Location(src.toUri(), lineIndex))
-  }
+  sequenceOf(src).allCodeFragments()
+    .forEach { (location, line) -> indexLine(line, location) }
 } catch (e: Exception) {
   System.err.println("Unreadable …${src.fileName} due to ${e.message}")
 }
 
 fun KWIndex.indexCompressedFile(src: Path) =
   VFS.getManager().resolveFile("tgz:$src").runCatching {
-    findFiles(VFS_SELECTOR).toList().forEach { file ->
-      file.content.getString(Charset.defaultCharset())
-        .lines().forEachIndexed { lineIndex, line ->
-          indexLine(line, Location(file.uri, lineIndex))
-        }
-    }
+    findFiles(VFS_SELECTOR).asSequence().map { it.path }.allCodeFragments()
+      .forEach { (location, line) -> indexLine(line, location) }
   }.also { println("Indexed $src") }
 
 typealias KWIndex = ConcurrentSuffixTree<Queue<Location>>

@@ -11,6 +11,7 @@ fun fetchOrLoadSampleData(sampleSize: Int = 1000) =
     ?.deserialize() as? Pair<List<String>, Array<DoubleArray>>
     ?: ROOT_DIR
       .allFilesRecursively()
+      .asSequence()
       .filter { it.extension == FILE_EXT }
       .allCodeFragments()
       .shuffled()

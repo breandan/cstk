@@ -49,8 +49,9 @@ fun rebuildIndex(index: File, path: Path): VecIndex =
     DOUBLE_EUCLIDEAN_DISTANCE, 1000000
   ).withM(100).withEf(500).withEfConstruction(500)
     .build<Location, Fragment>().also { idx ->
+      println("Rebuilding index...")
       println("Rebuilt index in " + measureTime {
-        path.allFilesRecursively()
+        path.allFilesRecursively().asSequence()
           .filter { it.extension == FILE_EXT }
           .allCodeFragments()
           .forEach { (loc, text) -> idx.add(Fragment(loc, vectorize(text))) }

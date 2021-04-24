@@ -17,11 +17,14 @@ fun main() {
 
   val d2vecs = vectors.reduceDim()
 
-  labels.forEachIndexed { i, l -> println("${l.length},${d2vecs[i][0]},${d2vecs[i][1]}") }
+  labels.forEachIndexed { i, l ->
+    println("${l.length},${d2vecs[i][0]},${d2vecs[i][1]}")
+  }
 
   val plot = plot(d2vecs, labels.map { it.length.toString() } )
 
-  File.createTempFile("clusters", ".html").apply { writeText("<html>$plot</html>") }.show()
+  File.createTempFile("clusters", ".html")
+    .apply { writeText("<html>$plot</html>") }.show()
 }
 
 private fun Array<DoubleArray>.reduceDim(
@@ -43,7 +46,8 @@ private fun plot(
   val plot = lets_plot(data) { x = "x"; y = "y"; color = "labels" } +
     ggsize(300, 250) + geom_point(size = 6) +
     ggtitle("Lines by Structural Similarity") +
-    theme().axisLine_blank().axisTitle_blank().axisTicks_blank().axisText_blank()
+    theme().axisLine_blank().axisTitle_blank()
+      .axisTicks_blank().axisText_blank()
   return PlotSvgExport.buildSvgImageFromRawSpecs(
     plotSpec = plot.toSpec(), plotSize = DoubleVector(1000.0, 500.0)
   )

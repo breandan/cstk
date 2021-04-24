@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.disk
 
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
+import org.apache.commons.vfs2.VFS
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -32,7 +33,7 @@ fun Path.allFilesRecursively(glob: String = "*"): List<Path> =
 
 // Returns a list of all code fragments in all paths and their locations
 @OptIn(ExperimentalPathApi::class)
-fun List<Path>.allCodeFragments(): List<Pair<Location, String>> =
+fun Sequence<Path>.allCodeFragments(): Sequence<Pair<Location, String>> =
   map { path ->
     path.readText().lines()
       .mapIndexed { lineNum, line -> lineNum to line }

@@ -20,8 +20,7 @@ fun main() {
   val mostSimilar = labels.zip(vectors).map { (l, v) ->
     val knn = knnIndex.findNearest(v, topK)
       .filter { it.item().toString() != l }
-      .distinctBy { it.item().toString() }
-      .take(20)
+      .distinctBy { it.item().toString() }.take(20)
     Neighborhood(l, knn)
   }.sortedBy { it.totalDistance }
 
@@ -29,8 +28,7 @@ fun main() {
   println("Angle brackets enclose longest common substring up to current result\n")
 
   mostSimilar.distinct()
-    .filter { "import" !in it.origin }
-    .take(20)
+    .filter { "import" !in it.origin }.take(20)
     .forEachIndexed { i, neighborhood ->
       println("$i.] ${neighborhood.origin}")
       neighborhood.prettyPrinted.forEachIndexed { j, it ->

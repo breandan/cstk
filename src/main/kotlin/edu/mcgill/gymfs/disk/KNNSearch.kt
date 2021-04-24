@@ -18,7 +18,7 @@ import kotlin.time.*
 
 class KNNSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
-    .default(ROOT_DIR.toAbsolutePath().toString())
+    .default(TEST_DIR.toAbsolutePath().toString())
 
   val query by option(
     "--query",
@@ -28,7 +28,7 @@ class KNNSearch: CliktCommand() {
   val index by option(
     "--index",
     help = "Prebuilt index file"
-  ).default("knnindex.idx")
+  ).default("vector.idx")
 
   val graphs by option("--graphs", help = "Visualize graphs").default("")
 

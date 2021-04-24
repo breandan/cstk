@@ -10,7 +10,7 @@ import kotlin.time.*
 
 class TrieSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
-    .default(Paths.get("src").toAbsolutePath().toString())
+    .default(TEST_DIR.toAbsolutePath().toString())
 
   val query by option("--query", help = "Query to find").default("match")
 
