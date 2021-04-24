@@ -24,7 +24,8 @@ fun buildOrLoadKWIndex(index: File, rootDir: Path): KWIndex =
 fun buildKWIndex(rootDir: Path): KWIndex =
   measureTimedValue {
     KWIndex(DefaultCharArrayNodeFactory()).apply {
-      rootDir.allFilesRecursively().parallelStream().forEach { src ->
+      rootDir.allFilesRecursively().toList()
+        .parallelStream().forEach { src ->
         when (src.extension) {
           "tgz" -> indexCompressedFile(src)
           FILE_EXT -> indexUncompressedFile(src)

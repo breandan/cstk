@@ -10,7 +10,7 @@ import java.io.File
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData()
 
-  val knnIndex = File("knnindex.idx").deserialize() as VecIndex
+  val knnIndex = File("vector.idx").deserialize() as VecIndex
 
 //  val query = "private fun compareDistanceMetrics("
 //  knnIndex.exactKNNSearch(vectorize(query), 10)
@@ -18,10 +18,7 @@ fun main() {
 
   val topK = 100
   val mostSimilar = labels.zip(vectors).map { (l, v) ->
-    val knn = knnIndex.findNearest(v, topK)
-      .filter { it.item().toString() != l }
-      .distinctBy { it.item().toString() }.take(20)
-    Neighborhood(l, knn)
+    Neighborhood(l, knnIndex.nearestNonEmptyNeighbors(v, 20))
   }.sortedBy { it.totalDistance }
 
   println("Nearest nearest neighbors by cumulative similarity")
@@ -39,11 +36,16 @@ fun main() {
     }
 }
 
+private fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
+  findNearest(v, i)
+    .filter { !it.item().embedding.contentEquals(v) }
+    .distinctBy { it.item().toString() }.take(20)
+
 data class Neighborhood(
   val origin: String,
   val nearestNeighbors: List<SearchResult<Fragment, Double>>,
 ) {
-  val totalDistance by lazy { nearestNeighbors.sumByDouble { it.distance() } }
+  val totalDistance by lazy { nearestNeighbors.sumOf { it.distance() } }
 
   val longestCommonSubstringSoFar by lazy {
     nearestNeighbors.mapIndexed { i, _ ->
@@ -51,7 +53,7 @@ data class Neighborhood(
     }.map { allResultsUpToCurrent ->
       if (allResultsUpToCurrent.size < 2) ""
       else LCSubstringSolver(DefaultCharSequenceNodeFactory())
-        .apply { allResultsUpToCurrent.forEach { add(it) } }
+        .apply { allResultsUpToCurrent.forEach { if(it.isNotBlank()) add(it) } }
         .longestCommonSubstring.toString()
     }
   }

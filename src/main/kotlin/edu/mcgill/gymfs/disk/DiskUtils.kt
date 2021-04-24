@@ -12,7 +12,8 @@ import kotlin.io.path.*
 @OptIn(ExperimentalPathApi::class)
 private fun Path.mirrorHDFS(imfs: FileSystem): Path {
   val jfsRoot = imfs.getPath(toString()).also { Files.createDirectories(it) }
-  allFilesRecursively().parallelStream().filter { it.extension == FILE_EXT }
+  allFilesRecursively().toList().parallelStream()
+    .filter { it.extension == FILE_EXT }
     .forEach { src ->
       try {
         val path = src.toAbsolutePath().toString()

@@ -43,7 +43,7 @@ tailrec fun VecIndex.edges(
 
 // Compare various distance functions
 @OptIn(ExperimentalTime::class, kotlin.io.path.ExperimentalPathApi::class)
-fun rebuildIndex(index: File, path: Path): VecIndex =
+fun rebuildIndex(indexFile: File, path: Path): VecIndex =
   HnswIndex.newBuilder(
     BERT_EMBEDDING_SIZE,
     DOUBLE_EUCLIDEAN_DISTANCE, 1000000
@@ -51,12 +51,13 @@ fun rebuildIndex(index: File, path: Path): VecIndex =
     .build<Location, Fragment>().also { idx ->
       println("Rebuilding index...")
       println("Rebuilt index in " + measureTime {
-        path.allFilesRecursively().asSequence()
+        path.allFilesRecursively()
           .filter { it.extension == FILE_EXT }
           .allCodeFragments()
-          .forEach { (loc, text) -> idx.add(Fragment(loc, vectorize(text))) }
+          .map { (loc, text) -> Fragment(loc, vectorize(text)) }
+          .forEach { idx.add(it) }
       }.inMinutes + " minutes")
-    }.also { it.serialize(index) }
+    }.also { it.serialize(indexFile) }
 
 typealias VecIndex = HnswIndex<Location, DoubleArray, Fragment, Double>
 

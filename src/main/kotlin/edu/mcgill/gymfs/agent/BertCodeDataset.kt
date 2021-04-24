@@ -17,7 +17,7 @@ import kotlin.streams.toList
 
 
 class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
-  var parsedFiles: List<ParsedFile>? = null
+  var parsedFiles: Sequence<ParsedFile>? = null
   var dictionary: Dictionary? = null
   var rand: Random = Random(89724308)
   var manager: NDManager = NDManager.newBaseManager()
@@ -27,7 +27,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
   @OptIn(ExperimentalPathApi::class)
   override fun prepare(progress: Progress?) {
     // get all applicable files
-    parsedFiles = ROOT_DIR.allFilesRecursively()
+    parsedFiles = DATA_DIR.allFilesRecursively()
       .filter { it.extension == FILE_EXT }
       // read & tokenize them
       .map { parseFile(it) }
@@ -314,7 +314,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
       return result
     }
 
-    private fun countTokens(parsedFiles: List<ParsedFile>?): Map<String, Long> {
+    private fun countTokens(parsedFiles: Sequence<ParsedFile>?): Map<String, Long> {
       val result: MutableMap<String, Long> = ConcurrentHashMap(50000)
       parsedFiles!!.forEach { parsedFile: ParsedFile ->
         parsedFile.tokenizedLines.forEach { tokens: List<String> ->

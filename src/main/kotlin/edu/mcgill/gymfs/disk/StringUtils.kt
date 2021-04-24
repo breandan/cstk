@@ -15,7 +15,7 @@ data class QIC(
 )
 
 // Searches through all files in the path for the query
-fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
+fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
   allFilesRecursively(glob).mapNotNull { path ->
     path.read()?.let { contents ->
       contents.extractConcordances(".*$query.*")
@@ -24,12 +24,8 @@ fun Path.slowGrep(query: String, glob: String = "*"): List<QIC> =
   }.flatten()
 
 // Returns all files in the path matching the extension
-fun Path.allFilesRecursively(glob: String = "*"): List<Path> =
-  (Files.newDirectoryStream(this).filter { it.toFile().isDirectory } +
-    Files.newDirectoryStream(this, glob)).partition { Files.isDirectory(it) }
-    .let { (dirs, files) ->
-      files + dirs.map { it.allFilesRecursively(glob) }.flatten()
-    }
+fun Path.allFilesRecursively(glob: String = "*"): Sequence<Path> =
+  toFile().walkTopDown().filter { it.extension == glob }.map { it.toPath() }
 
 // Returns a list of all code fragments in all paths and their locations
 @OptIn(ExperimentalPathApi::class)
@@ -47,13 +43,13 @@ fun Path.read(start: Int = 0, end: Int = -1): String? =
     ?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
-fun String.extractConcordances(query: String): List<Pair<String, Int>> =
+fun String.extractConcordances(query: String): Sequence<Pair<String, Int>> =
   Regex(query).findAll(this).map {
     val range = 0..length
     val (matchStart, matchEnd) =
       it.range.first.coerceIn(range) to (it.range.last + 1).coerceIn(range)
     substring(matchStart, matchEnd) to matchStart
-  }.toList()
+  }
 
 fun previewResult(query: String, loc: Location) =
   "[?=$query] ${loc.getContext(0).preview(query)}\t($loc)"
