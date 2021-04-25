@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.disk
 
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
-import org.apache.commons.vfs2.VFS
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -43,12 +42,12 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Location, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
-fun Path.allLines(): List<String> =
-  when (extension) {
-    "tgz" -> VFS.getManager().resolveFile("tgz:${absolutePathString()}")
-      .runCatching { readLines() }.getOrDefault(emptyList())
-    FILE_EXT -> readLines()
-    else -> emptyList()
+fun URI.allLines(): Sequence<String> =
+  when (scheme) {
+    TGZ_SCHEME -> vfsManager.resolveFile(this)
+      .content.getString(Charsets.UTF_8).lineSequence()
+    FILE_SCHEME -> toPath().readText().lineSequence()
+    else -> emptySequence()
   }
 
 fun Path.read(start: Int = 0, end: Int = -1): String? =

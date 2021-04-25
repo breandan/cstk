@@ -9,7 +9,8 @@ import java.nio.file.Path
 import kotlin.time.*
 
 
-fun buildOrLoadVecIndex(index: File, rootDir: Path): VecIndex =
+fun buildOrLoadVecIndex(index: File = File(DEFAULT_KNNINDEX_FILENAME),
+                        rootDir: Path = TEST_DIR): VecIndex =
   if (!index.exists()) rebuildIndex(index, rootDir).also { it.serializeTo(index) }
   else index.also { println("Loading index from ${it.absolutePath}") }
     .deserializeFrom()
@@ -50,11 +51,10 @@ fun rebuildIndex(indexFile: File, path: Path): VecIndex =
     .build<Location, CodeEmbedding>().also { idx ->
       println("Rebuilding index...")
       println("Rebuilt index in " + measureTime {
-        path.allFilesRecursively(FILE_EXT).forEach { src ->
+        path.allFilesRecursively().forEach { src ->
           indexURI(src) { line, loc ->
             idx.add(CodeEmbedding(loc, vectorize(line)))
           }
-          println("Indexed $src")
         }
       }.inWholeMinutes + " minutes")
     }.also { it.serializeTo(indexFile) }
@@ -79,8 +79,5 @@ data class CodeEmbedding(val loc: Location, val embedding: DoubleArray):
 }
 
 fun main() {
-  buildOrLoadVecIndex(
-    index = File(DEFAULT_KNNINDEX_FILENAME),
-    rootDir = Path.of("src")
-  )
+  buildOrLoadVecIndex()
 }

@@ -11,7 +11,7 @@ import kotlin.io.path.*
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData()
 
-  val knnIndex = File("vector.idx").deserializeFrom() as VecIndex
+  val knnIndex = buildOrLoadVecIndex()
 
 //  val query = "private fun compareDistanceMetrics("
 //  knnIndex.exactKNNSearch(vectorize(query), 10)

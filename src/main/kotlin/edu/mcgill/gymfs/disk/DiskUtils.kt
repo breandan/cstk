@@ -1,11 +1,8 @@
 package edu.mcgill.gymfs.disk
 
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.io.*
 import org.apache.commons.vfs2.VFS
 import java.io.*
 import java.net.URI
-import java.nio.charset.Charset
 import java.nio.file.*
 import java.util.zip.*
 import kotlin.io.path.*
@@ -38,16 +35,9 @@ ObjectInputStream(GZIPInputStream(FileInputStream(this)))
 .use { it.readObject() } as T
 
 @OptIn(ExperimentalPathApi::class)
-fun URI.allLines() =
-  if (scheme == "file")
-    Files.newBufferedReader(toPath()).lineSequence()
-  else VFS.getManager().resolveFile(this).content
-    .getString(Charset.defaultCharset()).lineSequence()
-
-@OptIn(ExperimentalPathApi::class)
 fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
-  when (src.toString().substringAfterLast('.')) {
-    "tgz" -> VFS.getManager()
+  when (src.scheme) {
+    TGZ_SCHEME -> vfsManager
       .resolveFile("tgz:${src.path}")
       .runCatching {
         findFiles(VFS_SELECTOR).asSequence()
@@ -60,11 +50,14 @@ fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
           else "Failed to index $src due to ${it.exceptionOrNull()}"
         )
       }
-    FILE_EXT -> try {
+    FILE_SCHEME -> try {
       sequenceOf(src).allCodeFragments()
         .forEach { (location, line) -> indexFn(line, location) }
+      println("Indexed $src")
     } catch (e: Exception) {
       System.err.println("Unreadable …$src due to ${e.message}")
     }
     else -> Unit
   }
+
+val vfsManager = VFS.getManager()
