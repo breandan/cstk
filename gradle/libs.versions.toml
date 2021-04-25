@@ -1,7 +1,6 @@
 [libraries]
 cct = "com.googlecode.concurrent-trees:concurrent-trees:2.6.1"
 djl = "ai.djl:api:0.10.0"
-jimfs = "com.google.jimfs:jimfs:1.2"
 slf4j = "org.slf4j:slf4j-simple:1.7.30"
 
 sentencepiece = "ai.djl.sentencepiece:sentencepiece:0.10.0"

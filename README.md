@@ -1065,7 +1065,6 @@ python codebert_server.py
 # Libraries
 
 * [Concurrent Trees](https://github.com/npgall/concurrent-trees) - For fast indexing and retrieval.
-* [Jimfs](https://github.com/google/jimfs) - An in-memory file system for dynamic document parsing.
 * [HNSW](https://github.com/jelmerk/hnswlib) - Java library for approximate nearest neighbors search using Hierarchical Navigable Small World graphs
 * [java-string-similarity](https://github.com/tdebatty/java-string-similarity) - Implementation of various string similarity and distance algorithms
 * [Commons VFS](https://commons.apache.org/proper/commons-vfs/) - Virtual file system for compressed files

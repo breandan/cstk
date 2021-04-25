@@ -22,7 +22,6 @@ dependencies {
   implementation(kotlin("stdlib-jdk8"))
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0-RC")
 //  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
-  implementation(libs.jimfs)
   implementation(libs.cct)
 
   implementation(libs.djl)
@@ -34,7 +33,6 @@ dependencies {
 //  implementation(libs.djltfn)
 //  implementation("ai.djl:examples:0.6.0")
 
-  implementation(libs.jimfs)
   implementation(libs.slf4j)
   implementation(libs.sentencepiece)
   implementation(libs.fasttext)
@@ -73,6 +71,8 @@ dependencies {
 
   implementation("org.apache.commons:commons-compress:1.20")
   implementation("org.apache.commons:commons-vfs2:2.8.0")
+
+  implementation("com.esotericsoftware:kryo:5.1.0")
 }
 
 tasks {

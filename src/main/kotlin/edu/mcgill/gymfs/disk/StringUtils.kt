@@ -16,7 +16,8 @@ data class QIC(
 
 // Searches through all files in the path for the query
 fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
-  allFilesRecursively(glob).mapNotNull { path ->
+  allFilesRecursively().map { it.toPath() }
+    .mapNotNull { path ->
     path.read()?.let { contents ->
       contents.extractConcordances(".*$query.*")
         .map { (cxt, idx) -> QIC(query, path, cxt, idx) }
@@ -24,22 +25,31 @@ fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
   }.flatten()
 
 // Returns all files in the path matching the extension
-fun Path.allFilesRecursively(extension: String? = null): Sequence<Path> =
+fun Path.allFilesRecursively(ext: String? = null): Sequence<URI> =
   toFile().walkTopDown()
     .let { files ->
-      extension?.let { ext -> files.filter { it.extension == ext } } ?: files
-    }.map { it.toPath() }
+      ext?.let { ext -> files.filter { it.extension == ext } } ?: files
+    }.map { it.toURI() }
+//      toFile().walkTopDown().filter { it.extension == ext }.map { it.toURI() }
 
 // Returns a list of all code fragments in all paths and their locations
 @OptIn(ExperimentalPathApi::class)
-fun Sequence<Path>.allCodeFragments(): Sequence<Pair<Location, String>> =
+fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Location, String>> =
   map { path ->
-    path.readText().lines()
+    path.allLines()
       .mapIndexed { lineNum, line -> lineNum to line }
       .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
-      .map { (ln, l) -> Location(path.toUri(), ln) to l.trim() }
+      .map { (ln, l) -> Location(path, ln) to l.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
+
+fun Path.allLines(): List<String> =
+  when (extension) {
+    "tgz" -> VFS.getManager().resolveFile("tgz:${absolutePathString()}")
+      .runCatching { readLines() }.getOrDefault(emptyList())
+    FILE_EXT -> readLines()
+    else -> emptyList()
+  }
 
 fun Path.read(start: Int = 0, end: Int = -1): String? =
   try { Files.readString(this) } catch (e: Exception) { null }

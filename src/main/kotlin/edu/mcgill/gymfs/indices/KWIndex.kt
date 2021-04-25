@@ -3,7 +3,6 @@ package edu.mcgill.gymfs.indices
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import edu.mcgill.gymfs.disk.*
-import org.apache.commons.vfs2.VFS
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -15,9 +14,9 @@ fun buildOrLoadKWIndex(index: File, rootDir: Path): KWIndex =
   if (!index.exists())
     buildKWIndex(rootDir).apply {
       println("Serializing to $index")
-      serialize(index)
+      serializeTo(index)
     }
-  else index.apply { println("Loading $absolutePath") }.deserialize() as KWIndex
+  else index.apply { println("Loading $absolutePath") }.deserializeFrom()
 
 // Indexes all lines in all files in the path
 
@@ -27,27 +26,10 @@ fun buildKWIndex(rootDir: Path): KWIndex =
     KWIndex(DefaultCharArrayNodeFactory()).apply {
       rootDir.allFilesRecursively().toList()
         .parallelStream().forEach { src ->
-          when (src.extension) {
-            "tgz" -> indexCompressedFile(src)
-            FILE_EXT -> indexUncompressedFile(src)
-          }
+          indexURI(src) { line, location -> indexLine(line, location) }
         }
     }
   }.let { println("Built keyword index in ${it.duration}"); it.value }
-
-@OptIn(ExperimentalPathApi::class)
-fun KWIndex.indexUncompressedFile(src: Path) = try {
-  sequenceOf(src).allCodeFragments()
-    .forEach { (location, line) -> indexLine(line, location) }
-} catch (e: Exception) {
-  System.err.println("Unreadable …${src.fileName} due to ${e.message}")
-}
-
-fun KWIndex.indexCompressedFile(src: Path) =
-  VFS.getManager().resolveFile("tgz:$src").runCatching {
-    findFiles(VFS_SELECTOR).asSequence().map { it.path }.allCodeFragments()
-      .forEach { (location, line) -> indexLine(line, location) }
-  }.also { println("Indexed $src") }
 
 typealias KWIndex = ConcurrentSuffixTree<Queue<Location>>
 
@@ -59,9 +41,9 @@ fun KWIndex.indexLine(line: String, location: Location) {
       .let { putIfAbsent(line, it)?.offer(it.first()) }
 }
 
-fun main(args: Array<String>) {
+fun main() {
   buildOrLoadKWIndex(
     index = File(DEFAULT_KWINDEX_FILENAME),
-    rootDir = Path.of("data")
+    rootDir = Path.of("src")
   )
 }

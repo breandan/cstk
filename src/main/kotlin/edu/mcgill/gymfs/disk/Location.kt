@@ -3,6 +3,7 @@ package edu.mcgill.gymfs.disk
 import java.io.Serializable
 import java.net.URI
 
+// TODO: Serialization too expensive, figure out a more efficient serialization
 data class Location constructor(val uri: URI, val line: Int): Serializable {
   fun getContext(surroundingLines: Int) =
     uri.allLines().drop((line - surroundingLines).coerceAtLeast(0))

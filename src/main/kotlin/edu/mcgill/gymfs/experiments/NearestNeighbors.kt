@@ -11,7 +11,7 @@ import kotlin.io.path.*
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData()
 
-  val knnIndex = File("vector.idx").deserialize() as VecIndex
+  val knnIndex = File("vector.idx").deserializeFrom() as VecIndex
 
 //  val query = "private fun compareDistanceMetrics("
 //  knnIndex.exactKNNSearch(vectorize(query), 10)
@@ -25,7 +25,7 @@ fun main() {
   println("Angle brackets enclose longest common substring up to current result\n")
 
   mostSimilar.distinct()
-    .filter { "import" !in it.origin }.take(20)
+    .filter { "import" !in it.origin && "package" !in it.origin }.take(20)
     .forEachIndexed { i, neighborhood ->
       println("$i.] ${neighborhood.origin}")
       neighborhood.prettyPrinted.forEachIndexed { j, it ->

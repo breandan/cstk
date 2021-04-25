@@ -6,14 +6,13 @@ import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.gymfs.disk.*
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.extension
 import kotlin.time.*
 
 
 fun buildOrLoadVecIndex(index: File, rootDir: Path): VecIndex =
-  if (!index.exists()) rebuildIndex(index, rootDir).also { it.serialize(index) }
+  if (!index.exists()) rebuildIndex(index, rootDir).also { it.serializeTo(index) }
   else index.also { println("Loading index from ${it.absolutePath}") }
-    .deserialize() as VecIndex
+    .deserializeFrom()
 
 tailrec fun VecIndex.edges(
   seed: String? = null,
@@ -51,13 +50,14 @@ fun rebuildIndex(indexFile: File, path: Path): VecIndex =
     .build<Location, CodeEmbedding>().also { idx ->
       println("Rebuilding index...")
       println("Rebuilt index in " + measureTime {
-        path.allFilesRecursively()
-          .filter { it.extension == FILE_EXT }
-          .allCodeFragments()
-          .map { (loc, text) -> CodeEmbedding(loc, vectorize(text)) }
-          .forEach { idx.add(it) }
+        path.allFilesRecursively(FILE_EXT).forEach { src ->
+          indexURI(src) { line, loc ->
+            idx.add(CodeEmbedding(loc, vectorize(line)))
+          }
+          println("Indexed $src")
+        }
       }.inWholeMinutes + " minutes")
-    }.also { it.serialize(indexFile) }
+    }.also { it.serializeTo(indexFile) }
 
 typealias VecIndex = HnswIndex<Location, DoubleArray, CodeEmbedding, Double>
 
@@ -78,7 +78,7 @@ data class CodeEmbedding(val loc: Location, val embedding: DoubleArray):
   override fun toString() = loc.getContext(0)
 }
 
-fun main(args: Array<String>) {
+fun main() {
   buildOrLoadVecIndex(
     index = File(DEFAULT_KNNINDEX_FILENAME),
     rootDir = Path.of("src")
