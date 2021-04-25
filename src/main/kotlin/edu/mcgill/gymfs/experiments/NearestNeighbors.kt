@@ -36,7 +36,6 @@ fun main() {
     }
 }
 
-@OptIn(ExperimentalPathApi::class)
 private fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
   findNearest(v, i + 10)
     .filter { !it.item().embedding.contentEquals(v) }

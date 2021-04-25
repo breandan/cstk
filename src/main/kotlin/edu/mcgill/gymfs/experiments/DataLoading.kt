@@ -4,7 +4,6 @@ import edu.mcgill.gymfs.disk.*
 import java.io.File
 import kotlin.io.path.*
 
-@OptIn(ExperimentalPathApi::class)
 fun fetchOrLoadSampleData(sampleSize: Int = 1000):
   Pair<List<String>, Array<DoubleArray>> =
   (File("sample$sampleSize.data")

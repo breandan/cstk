@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.disk
 
+import org.apache.commons.io.FileUtils.toFile
 import org.apache.commons.vfs2.VFS
 import java.io.*
 import java.net.URI
@@ -8,8 +9,7 @@ import java.util.zip.*
 import kotlin.io.path.*
 
 // Creates a mirror image of the HD path in memory
-@OptIn(ExperimentalPathApi::class)
-private fun Path.mirrorHDFS(imfs: FileSystem): Path {
+private fun URI.mirrorHDFS(imfs: FileSystem): Path {
   val jfsRoot = imfs.getPath(toString()).also { Files.createDirectories(it) }
   allFilesRecursively(FILE_EXT).map { it.toPath() }.toList().parallelStream()
     .forEach { src ->
@@ -34,9 +34,18 @@ inline fun <reified T> File.deserializeFrom(): T =
 ObjectInputStream(GZIPInputStream(FileInputStream(this)))
 .use { it.readObject() } as T
 
-@OptIn(ExperimentalPathApi::class)
+// Returns all files in the path matching the extension
+fun URI.allFilesRecursively(ext: String? = null): Sequence<URI> =
+  toPath().toFile().walkTopDown()
+    .filter { it.isFile }
+    .let { files ->
+      ext?.let { ext -> files.filter { it.extension == ext } } ?: files
+    }.map { it.toURI() }
+//      toFile().walkTopDown().filter { it.extension == ext }.map { it.toURI() }
+
 fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
   when (src.scheme) {
+    // TODO: HTTP_SCHEME?
     TGZ_SCHEME -> vfsManager
       .resolveFile("tgz:${src.path}")
       .runCatching {
@@ -51,11 +60,14 @@ fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
         )
       }
     FILE_SCHEME -> try {
-      sequenceOf(src).allCodeFragments()
+      (if (src.toPath().isDirectory())
+        src.allFilesRecursively()
+      else sequenceOf(src))
+        .allCodeFragments()
         .forEach { (location, line) -> indexFn(line, location) }
       println("Indexed $src")
     } catch (e: Exception) {
-      System.err.println("Unreadable …$src due to ${e.message}")
+      System.err.println("Unreadable …$src due to ${e.apply {printStackTrace() }.message}")
     }
     else -> Unit
   }

@@ -4,15 +4,30 @@ import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
 import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
+import java.net.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.random.Random
 
 const val FILE_EXT = "kt"
 const val FILE_SCHEME = "file"
 const val TGZ_SCHEME = "tgz"
+const val HTTP_SCHEME = "http"
 val VFS_SELECTOR = FileExtensionSelector(setOf(FILE_EXT))
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
-val SERVER_ADDRESS = "http://localhost:8000/?vectorize="
+val SERVER_ADDRESS by lazy {
+  ProcessBuilder("python", "codebert_server.py").start()
+
+  val addr = "http://localhost:8000/?vectorize="
+  while (true) try {
+    if (URL(addr + "test").readText().isNotEmpty()) break
+  } catch (exception: Exception) {}
+
+  println("Started embeddings server at $addr")
+
+  addr
+}
 const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
@@ -36,9 +51,9 @@ val CLS_ID = RESERVED_TOKENS.indexOf(CLS)
 val SEP_ID = RESERVED_TOKENS.indexOf(SEP)
 val MSK_ID = RESERVED_TOKENS.indexOf(MSK)
 val BERT_BUILDER = BertBlock.builder().micro()
-val ROOT_DIR = File(".").toPath()
-val DATA_DIR = File("data").toPath()
-val TEST_DIR = File("src").toPath()
+val ROOT_DIR = File(".").absoluteFile.toURI()
+val DATA_DIR = File("data").absoluteFile.toURI()
+val TEST_DIR = File("src").absoluteFile.toURI()
 val DEFAULT_KNNINDEX_FILENAME = "vector.idx"
 val DEFAULT_KWINDEX_FILENAME = "keyword.idx"
 val TOKENIZER = BertTokenizer()

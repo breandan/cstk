@@ -7,6 +7,7 @@ import edu.mcgill.gymfs.indices.*
 import edu.mcgill.kaliningraph.show
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
+import java.net.URI
 import java.nio.file.Path
 import kotlin.time.*
 
@@ -18,7 +19,7 @@ import kotlin.time.*
 
 class KNNSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
-    .default(TEST_DIR.toAbsolutePath().toString())
+    .default(TEST_DIR.toString())
 
   val query by option(
     "--query",
@@ -30,13 +31,12 @@ class KNNSearch: CliktCommand() {
 
   val graphs by option("--graphs", help = "Visualize graphs").default("")
 
-  val knnIndex: VecIndex by lazy { buildOrLoadVecIndex(File(index), Path.of(path)) }
+  val knnIndex: VecIndex by lazy { buildOrLoadVecIndex(File(index), URI(path)) }
 
   // Cheap index lookup using HNSW index
   fun approxKNNSearch(query: String, vq: DoubleArray = vectorize(query)) =
     knnIndex.findNearest(vq, 1000).map { it.item().loc.getContext(0) }
 
-  @OptIn(ExperimentalTime::class)
   override fun run() {
     printQuery()
     graphs.toIntOrNull()?.let { generateGraphs(it) }

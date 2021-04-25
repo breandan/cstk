@@ -5,13 +5,14 @@ import com.github.ajalt.clikt.parameters.options.*
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import edu.mcgill.gymfs.indices.buildOrLoadKWIndex
 import java.io.File
+import java.net.URI
 import java.nio.file.*
 import java.util.*
 import kotlin.time.*
 
 class TrieSearch: CliktCommand() {
   val path by option("--path", help = "Root directory")
-    .default(TEST_DIR.toAbsolutePath().toString())
+    .default(TEST_DIR.toString())
 
   val query by option("--query", help = "Query to find").default("match")
 
@@ -20,7 +21,7 @@ class TrieSearch: CliktCommand() {
 
   // Suffix trie multimap for (file, offset) pairs of matching prefixes
   val trie: ConcurrentSuffixTree<Queue<Location>>
-    by lazy { buildOrLoadKWIndex(File(index), Path.of(path)) }
+    by lazy { buildOrLoadKWIndex(File(index), URI(path)) }
 
   fun search(query: String): List<Location> =
     trie.getValuesForKeysContaining(query).flatten()

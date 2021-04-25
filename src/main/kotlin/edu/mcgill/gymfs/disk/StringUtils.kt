@@ -4,6 +4,7 @@ import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
+import kotlin.text.Charsets.UTF_8
 
 // Query in context
 data class QIC(
@@ -14,7 +15,7 @@ data class QIC(
 )
 
 // Searches through all files in the path for the query
-fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
+fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
   allFilesRecursively().map { it.toPath() }
     .mapNotNull { path ->
     path.read()?.let { contents ->
@@ -23,16 +24,7 @@ fun Path.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
     }
   }.flatten()
 
-// Returns all files in the path matching the extension
-fun Path.allFilesRecursively(ext: String? = null): Sequence<URI> =
-  toFile().walkTopDown()
-    .let { files ->
-      ext?.let { ext -> files.filter { it.extension == ext } } ?: files
-    }.map { it.toURI() }
-//      toFile().walkTopDown().filter { it.extension == ext }.map { it.toURI() }
-
 // Returns a list of all code fragments in all paths and their locations
-@OptIn(ExperimentalPathApi::class)
 fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Location, String>> =
   map { path ->
     path.allLines()
@@ -45,8 +37,12 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Location, String>> =
 fun URI.allLines(): Sequence<String> =
   when (scheme) {
     TGZ_SCHEME -> vfsManager.resolveFile(this)
-      .content.getString(Charsets.UTF_8).lineSequence()
-    FILE_SCHEME -> toPath().readText().lineSequence()
+      .content.getString(UTF_8).lineSequence()
+    FILE_SCHEME -> toPath().let {
+      if (it.extension == FILE_EXT)
+        it.readText().lineSequence()
+      else emptySequence()
+    }
     else -> emptySequence()
   }
 

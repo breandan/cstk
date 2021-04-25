@@ -5,13 +5,15 @@ import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_EUCLIDEAN_DISTANCE
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.gymfs.disk.*
 import java.io.File
-import java.nio.file.Path
+import java.net.URI
 import kotlin.time.*
 
 
-fun buildOrLoadVecIndex(index: File = File(DEFAULT_KNNINDEX_FILENAME),
-                        rootDir: Path = TEST_DIR): VecIndex =
-  if (!index.exists()) rebuildIndex(index, rootDir).also { it.serializeTo(index) }
+fun buildOrLoadVecIndex(
+  index: File = File(DEFAULT_KNNINDEX_FILENAME),
+  rootDir: URI = TEST_DIR
+): VecIndex =
+  if (!index.exists()) rebuildVecIndex(index, rootDir)
   else index.also { println("Loading index from ${it.absolutePath}") }
     .deserializeFrom()
 
@@ -42,21 +44,21 @@ tailrec fun VecIndex.edges(
   }
 
 // Compare various distance functions
-@OptIn(ExperimentalTime::class, kotlin.io.path.ExperimentalPathApi::class)
-fun rebuildIndex(indexFile: File, path: Path): VecIndex =
+@OptIn(ExperimentalTime::class)
+fun rebuildVecIndex(indexFile: File, origin: URI): VecIndex =
   HnswIndex.newBuilder(
     BERT_EMBEDDING_SIZE,
     DOUBLE_EUCLIDEAN_DISTANCE, 1000000
   ).withM(100).withEf(500).withEfConstruction(500)
     .build<Location, CodeEmbedding>().also { idx ->
-      println("Rebuilding index...")
-      println("Rebuilt index in " + measureTime {
-        path.allFilesRecursively().forEach { src ->
-          indexURI(src) { line, loc ->
+      println("Rebuilding vector index...")
+      measureTimedValue {
+        indexURI(origin) { line, loc ->
+          try {
             idx.add(CodeEmbedding(loc, vectorize(line)))
-          }
+          } catch (exception: Exception) {}
         }
-      }.inWholeMinutes + " minutes")
+      }.let { println("Rebuilt vector index in ${it.duration.inWholeMinutes} minutes") }
     }.also { it.serializeTo(indexFile) }
 
 typealias VecIndex = HnswIndex<Location, DoubleArray, CodeEmbedding, Double>

@@ -1044,11 +1044,11 @@ Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reaso
 ./gradlew jar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
 ```
 
-To reindex, first start CodeBERT server, to vectorize the code fragments:
+To start, must have Java and Python with PyTorch and HuggingFace:
 
 ```bash
-# Serves vectorized code fragments at http://localhost:8000/?<QUERY>
-python codebert_server.py
+module load java
+java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 ```
 
 # Research Questions

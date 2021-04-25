@@ -24,7 +24,6 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
 
   override fun getData(manager: NDManager): Iterable<Batch> = EpochIterable()
 
-  @OptIn(ExperimentalPathApi::class)
   override fun prepare(progress: Progress?) {
     // get all applicable files
     parsedFiles = DATA_DIR.allFilesRecursively(FILE_EXT)
