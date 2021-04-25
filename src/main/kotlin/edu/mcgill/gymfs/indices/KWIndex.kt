@@ -5,19 +5,14 @@ import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import edu.mcgill.gymfs.disk.*
 import java.io.File
 import java.net.URI
-import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.io.path.*
 import kotlin.time.*
 
-fun buildOrLoadKWIndex(index: File, rootDir: URI): KWIndex =
-  if (!index.exists())
-    rebuildKWIndex(rootDir).apply {
-      println("Serializing to $index")
-      serializeTo(index)
-    }
-  else index.apply { println("Loading $absolutePath") }.deserializeFrom()
+fun buildOrLoadKWIndex(indexFile: File, rootDir: URI): KWIndex =
+  if (!indexFile.exists())
+    rebuildKWIndex(rootDir).apply { serializeTo(indexFile) }
+  else indexFile.deserializeFrom()
 
 // Indexes all lines in all files in the path
 
@@ -37,14 +32,13 @@ typealias KWIndex = ConcurrentSuffixTree<Queue<Location>>
 val KWIndex.defaultFilename: String by lazy { "keyword.idx" }
 
 fun KWIndex.indexLine(line: String, location: Location) {
-  if (line.length < 500)
     ConcurrentLinkedQueue(listOf(location))
-      .let { putIfAbsent(line, it)?.offer(it.first()) }
+      .let { putIfAbsent(line.take(500), it)?.offer(it.first()) }
 }
 
 fun main() {
   buildOrLoadKWIndex(
-    index = File(DEFAULT_KWINDEX_FILENAME),
+    indexFile = File(DEFAULT_KWINDEX_FILENAME),
     rootDir = File("src").toURI()
   )
 }

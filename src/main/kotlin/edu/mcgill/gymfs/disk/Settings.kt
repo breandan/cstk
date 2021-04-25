@@ -20,6 +20,7 @@ val SERVER_ADDRESS by lazy {
   ProcessBuilder("python", "codebert_server.py").start()
 
   val addr = "http://localhost:8000/?vectorize="
+  // Spinlock until service is available
   while (true) try {
     if (URL(addr + "test").readText().isNotEmpty()) break
   } catch (exception: Exception) {}
@@ -51,7 +52,7 @@ val CLS_ID = RESERVED_TOKENS.indexOf(CLS)
 val SEP_ID = RESERVED_TOKENS.indexOf(SEP)
 val MSK_ID = RESERVED_TOKENS.indexOf(MSK)
 val BERT_BUILDER = BertBlock.builder().micro()
-val ROOT_DIR = File(".").absoluteFile.toURI()
+val ROOT_DIR = File("").absoluteFile.toURI()
 val DATA_DIR = File("data").absoluteFile.toURI()
 val TEST_DIR = File("src").absoluteFile.toURI()
 val DEFAULT_KNNINDEX_FILENAME = "vector.idx"

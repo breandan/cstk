@@ -69,7 +69,7 @@ val VecIndex.defaultFilename: String by lazy { "vector.idx" }
 fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) =
   asExactIndex().findNearest(vq, nearestNeighbors)
 
-data class CodeEmbedding(val loc: Location, val embedding: DoubleArray):
+data class CodeEmbedding constructor(val loc: Location, val embedding: DoubleArray):
   Item<Location, DoubleArray> {
   override fun id(): Location = loc
 

@@ -7,6 +7,8 @@ import java.net.URI
 import java.nio.file.*
 import java.util.zip.*
 import kotlin.io.path.*
+import kotlin.system.measureTimeMillis
+import kotlin.time.*
 
 // Creates a mirror image of the HD path in memory
 private fun URI.mirrorHDFS(imfs: FileSystem): Path {
@@ -24,24 +26,46 @@ private fun URI.mirrorHDFS(imfs: FileSystem): Path {
   return jfsRoot
 }
 
-inline fun <reified T> T.serializeTo(path: File) =
+@OptIn(ExperimentalTime::class)
+inline fun <reified T> T.serializeTo(path: File) = measureTimedValue {
 //  Kryo().writeObject(Output(FileOutputStream(path)), this)
-ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
-.use { it.writeObject(this) }
+  println("Writing ${T::class.java.simpleName} to $path...")
+  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
+    .use { it.writeObject(this) }
+}.let {
+  println("Wrote $path in ${it.duration}")
+}
 
-inline fun <reified T> File.deserializeFrom(): T =
+@OptIn(ExperimentalTime::class)
+inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
 //  Kryo().readObject(Input(FileInputStream(this)), T::class.java)
-ObjectInputStream(GZIPInputStream(FileInputStream(this)))
-.use { it.readObject() } as T
+  println("Reading ${T::class.java.simpleName} from $path...")
+  ObjectInputStream(GZIPInputStream(FileInputStream(this)))
+    .use { it.readObject() } as T
+}.let {
+  println("Read ${T::class.java.simpleName} in ${it.duration}")
+  it.value
+}
 
-// Returns all files in the path matching the extension
-fun URI.allFilesRecursively(ext: String? = null): Sequence<URI> =
+// Returns all files in the URI matching the extension
+fun URI.allFilesRecursively(
+  ext: String? = null,
+  walkIntoCompressedFiles: Boolean = false
+): Sequence<URI> =
   toPath().toFile().walkTopDown()
     .filter { it.isFile }
-    .let { files ->
-      ext?.let { ext -> files.filter { it.extension == ext } } ?: files
-    }.map { it.toURI() }
-//      toFile().walkTopDown().filter { it.extension == ext }.map { it.toURI() }
+    .map { it.toURI() }
+    .map {
+      if (walkIntoCompressedFiles && it.extension() == TGZ_SCHEME)
+        vfsManager.resolveFile("tgz:${it.path}").runCatching {
+          findFiles(VFS_SELECTOR).asSequence().map { it.uri }
+        }.getOrDefault(sequenceOf())
+      else sequenceOf(it)
+    }.flatten()
+    .filter { ext == null || it.extension() == ext }
+
+fun URI.extension() = toString().substringAfterLast('.')
+fun URI.suffix() = toString().substringAfterLast('/')
 
 fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
   when (src.scheme) {
@@ -54,7 +78,7 @@ fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
           .forEach { (location, line) -> indexFn(line, location) }
       }.let {
         println(
-          if (it.isSuccess) "Indexed ${"$src".substringAfterLast('/')} " +
+          if (it.isSuccess) "Indexed ${src.suffix()} " +
             "(${src.toPath().fileSize() / 1000}kb)"
           else "Failed to index $src due to ${it.exceptionOrNull()}"
         )
@@ -65,9 +89,8 @@ fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
       else sequenceOf(src))
         .allCodeFragments()
         .forEach { (location, line) -> indexFn(line, location) }
-      println("Indexed $src")
     } catch (e: Exception) {
-      System.err.println("Unreadable …$src due to ${e.apply {printStackTrace() }.message}")
+      System.err.println("Unreadable …$src due to ${e.message}")
     }
     else -> Unit
   }
