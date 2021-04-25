@@ -9,7 +9,10 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.*
 
-fun buildOrLoadKWIndex(indexFile: File, rootDir: URI): KWIndex =
+fun buildOrLoadKWIndex(
+  indexFile: File = File(DEFAULT_KNNINDEX_FILENAME),
+  rootDir: URI = TEST_DIR
+): KWIndex =
   if (!indexFile.exists())
     rebuildKWIndex(rootDir).apply { serializeTo(indexFile) }
   else indexFile.deserializeFrom()
@@ -23,22 +26,25 @@ fun rebuildKWIndex(rootDir: URI): KWIndex =
     KWIndex(DefaultCharArrayNodeFactory()).apply {
       rootDir.allFilesRecursively().toList().parallelStream().forEach { src ->
         indexURI(src) { line, location -> indexLine(line, location) }
+        println("Finished indexing $src")
       }
     }
   }.let { println("Built keyword index in ${it.duration}"); it.value }
 
-typealias KWIndex = ConcurrentSuffixTree<Queue<Location>>
+typealias KWIndex = ConcurrentSuffixTree<Queue<Concordance>>
 
 val KWIndex.defaultFilename: String by lazy { "keyword.idx" }
 
-fun KWIndex.indexLine(line: String, location: Location) {
-    ConcurrentLinkedQueue(listOf(location))
-      .let { putIfAbsent(line.take(500), it)?.offer(it.first()) }
+fun KWIndex.indexLine(line: String, location: Concordance) {
+    ConcurrentLinkedQueue(listOf(location)).let {
+      line.split(DELIMITER).filter { it.isNotBlank() }
+        .forEach { token -> putIfAbsent(token, it)?.offer(it.first()) }
+    }
 }
 
 fun main() {
   buildOrLoadKWIndex(
     indexFile = File(DEFAULT_KWINDEX_FILENAME),
-    rootDir = File("src").toURI()
+    rootDir = File("data").toURI()
   )
 }

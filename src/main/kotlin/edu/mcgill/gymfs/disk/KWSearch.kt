@@ -6,7 +6,6 @@ import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import edu.mcgill.gymfs.indices.buildOrLoadKWIndex
 import java.io.File
 import java.net.URI
-import java.nio.file.*
 import java.util.*
 import kotlin.time.*
 
@@ -20,10 +19,10 @@ class TrieSearch: CliktCommand() {
     .default(DEFAULT_KWINDEX_FILENAME)
 
   // Suffix trie multimap for (file, offset) pairs of matching prefixes
-  val trie: ConcurrentSuffixTree<Queue<Location>>
+  val trie: ConcurrentSuffixTree<Queue<Concordance>>
     by lazy { buildOrLoadKWIndex(File(index), URI(path)) }
 
-  fun search(query: String): List<Location> =
+  fun search(query: String): List<Concordance> =
     trie.getValuesForKeysContaining(query).flatten()
 
   @OptIn(ExperimentalTime::class)

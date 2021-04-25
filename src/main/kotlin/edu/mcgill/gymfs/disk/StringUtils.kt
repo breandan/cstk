@@ -25,12 +25,12 @@ fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
   }.flatten()
 
 // Returns a list of all code fragments in all paths and their locations
-fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Location, String>> =
+fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
   map { path ->
     path.allLines()
       .mapIndexed { lineNum, line -> lineNum to line }
       .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
-      .map { (ln, l) -> Location(path, ln) to l.trim() }
+      .map { (ln, l) -> Concordance(path, ln) to l.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
@@ -59,7 +59,7 @@ fun String.extractConcordances(query: String): Sequence<Pair<String, Int>> =
     substring(matchStart, matchEnd) to matchStart
   }
 
-fun previewResult(query: String, loc: Location) =
+fun previewResult(query: String, loc: Concordance) =
   "[?=$query] ${loc.getContext(0).preview(query)}\t($loc)"
 
 fun String.preview(query: String, window: Int = 10) =

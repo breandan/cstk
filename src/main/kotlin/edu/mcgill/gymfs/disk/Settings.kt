@@ -16,6 +16,8 @@ const val HTTP_SCHEME = "http"
 val VFS_SELECTOR = FileExtensionSelector(setOf(FILE_EXT))
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
+val DELIMITER = Regex("\\W")
+
 val SERVER_ADDRESS by lazy {
   ProcessBuilder("python", "codebert_server.py").start()
 

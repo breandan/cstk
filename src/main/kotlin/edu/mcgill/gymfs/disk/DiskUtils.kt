@@ -1,13 +1,11 @@
 package edu.mcgill.gymfs.disk
 
-import org.apache.commons.io.FileUtils.toFile
 import org.apache.commons.vfs2.VFS
 import java.io.*
 import java.net.URI
 import java.nio.file.*
 import java.util.zip.*
 import kotlin.io.path.*
-import kotlin.system.measureTimeMillis
 import kotlin.time.*
 
 // Creates a mirror image of the HD path in memory
@@ -67,12 +65,13 @@ fun URI.allFilesRecursively(
 fun URI.extension() = toString().substringAfterLast('.')
 fun URI.suffix() = toString().substringAfterLast('/')
 
-fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
-  when (src.scheme) {
+fun indexURI(src: URI, indexFn: (String, Concordance) -> Unit): Unit =
+  when {
     // TODO: HTTP_SCHEME?
-    TGZ_SCHEME -> vfsManager
+    src.scheme == TGZ_SCHEME || src.extension() == TGZ_SCHEME -> vfsManager
       .resolveFile("tgz:${src.path}")
       .runCatching {
+        println("Indexing $name")
         findFiles(VFS_SELECTOR).asSequence()
           .map { it.uri }.allCodeFragments()
           .forEach { (location, line) -> indexFn(line, location) }
@@ -83,11 +82,12 @@ fun indexURI(src: URI, indexFn: (String, Location) -> Unit): Unit =
           else "Failed to index $src due to ${it.exceptionOrNull()}"
         )
       }
-    FILE_SCHEME -> try {
-      (if (src.toPath().isDirectory())
-        src.allFilesRecursively()
-      else sequenceOf(src))
-        .allCodeFragments()
+    src.scheme == FILE_SCHEME -> try {
+      (if (src.toPath().isDirectory()) src.allFilesRecursively()
+      else {
+        println("Indexing $src")
+        sequenceOf(src)
+      }).allCodeFragments()
         .forEach { (location, line) -> indexFn(line, location) }
     } catch (e: Exception) {
       System.err.println("Unreadable …$src due to ${e.message}")

@@ -10,11 +10,11 @@ import kotlin.time.*
 
 
 fun buildOrLoadVecIndex(
-  index: File = File(DEFAULT_KNNINDEX_FILENAME),
-  rootDir: URI = TEST_DIR
+  indexFile: File = File(DEFAULT_KNNINDEX_FILENAME),
+  rootDir: URI = DATA_DIR
 ): VecIndex =
-  if (!index.exists()) rebuildVecIndex(index, rootDir)
-  else index.also { println("Loading index from ${it.absolutePath}") }
+  if (!indexFile.exists()) rebuildVecIndex(indexFile, rootDir)
+  else indexFile.also { println("Loading index from ${it.absolutePath}") }
     .deserializeFrom()
 
 tailrec fun VecIndex.edges(
@@ -50,18 +50,25 @@ fun rebuildVecIndex(indexFile: File, origin: URI): VecIndex =
     BERT_EMBEDDING_SIZE,
     DOUBLE_EUCLIDEAN_DISTANCE, 1000000
   ).withM(100).withEf(500).withEfConstruction(500)
-    .build<Location, CodeEmbedding>().also { idx ->
+    .build<Concordance, CodeEmbedding>().also { idx ->
       println("Rebuilding vector index...")
       measureTimedValue {
-        indexURI(origin) { line, loc ->
-          try {
-            idx.add(CodeEmbedding(loc, vectorize(line)))
-          } catch (exception: Exception) {}
+        // TODO: Does parallelization really help on single-GPU machine?
+        origin.allFilesRecursively().toList().parallelStream().forEach { src ->
+          var last = ""
+          indexURI(src) { line, loc ->
+            try {
+              if (loc.uri.suffix() != last)
+                last = loc.uri.suffix().also { println(loc.fileSummary()) }
+              idx.add(CodeEmbedding(loc, vectorize(line)))
+            } catch (exception: Exception) {
+            }
+          }
         }
       }.let { println("Rebuilt vector index in ${it.duration.inWholeMinutes} minutes") }
     }.also { it.serializeTo(indexFile) }
 
-typealias VecIndex = HnswIndex<Location, DoubleArray, CodeEmbedding, Double>
+typealias VecIndex = HnswIndex<Concordance, DoubleArray, CodeEmbedding, Double>
 
 val VecIndex.defaultFilename: String by lazy { "vector.idx" }
 
@@ -69,9 +76,9 @@ val VecIndex.defaultFilename: String by lazy { "vector.idx" }
 fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) =
   asExactIndex().findNearest(vq, nearestNeighbors)
 
-data class CodeEmbedding constructor(val loc: Location, val embedding: DoubleArray):
-  Item<Location, DoubleArray> {
-  override fun id(): Location = loc
+data class CodeEmbedding constructor(val loc: Concordance, val embedding: DoubleArray):
+  Item<Concordance, DoubleArray> {
+  override fun id(): Concordance = loc
 
   override fun vector(): DoubleArray = embedding
 

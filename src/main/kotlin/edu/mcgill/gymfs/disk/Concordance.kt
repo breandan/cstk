@@ -3,8 +3,8 @@ package edu.mcgill.gymfs.disk
 import java.io.Serializable
 import java.net.URI
 
-// TODO: Serialization too expensive, figure out a more efficient serialization
-data class Location constructor(val uri: URI, val line: Int): Serializable {
+// https://en.wikipedia.org/wiki/Concordance_(publishing)
+data class Concordance constructor(val uri: URI, val line: Int): Serializable {
   fun getContext(surroundingLines: Int) =
     uri.allLines().drop((line - surroundingLines).coerceAtLeast(0))
       .take(surroundingLines + 1).joinToString("\n") { it.trim() }
@@ -34,7 +34,7 @@ data class Location constructor(val uri: URI, val line: Int): Serializable {
    * TODO: Reweight score by other metrics?
    */
 
-  fun expand(grepper: TrieSearch): List<Pair<String, Location>> =
+  fun expand(grepper: TrieSearch): List<Pair<String, Concordance>> =
     topKeywordsFromContext { grepper.search(it).size.toDouble() }
       .also { println("Salient keywords: $it") }
       .map { (kw, _) ->
@@ -43,5 +43,10 @@ data class Location constructor(val uri: URI, val line: Int): Serializable {
           .take(5).map { kw to it }
       }.flatten()
 
-  override fun toString() = "…${uri.toString().substringAfterLast("/")}:L${line + 1}"
+  override fun toString() =
+    uri.toString().substringBefore(".tgz").substringAfterLast('/') +
+      "/…/" + uri.toString().substringAfterLast("/") + ":L${line + 1}"
+
+  fun fileSummary() =
+    toString().substringBeforeLast(':')
 }
