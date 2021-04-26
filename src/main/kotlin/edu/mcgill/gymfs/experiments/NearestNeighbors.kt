@@ -3,13 +3,10 @@ package edu.mcgill.gymfs.experiments
 import com.github.jelmerk.knn.SearchResult
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNodeFactory
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
-import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
-import java.io.File
-import kotlin.io.path.*
 
 fun main() {
-  val (labels, vectors) = fetchOrLoadSampleData()
+  val (labels, vectors) = fetchOrLoadSampleData(100)
 
   val knnIndex = buildOrLoadVecIndex()
 
@@ -17,7 +14,7 @@ fun main() {
 //  knnIndex.exactKNNSearch(vectorize(query), 10)
 //    .forEach { println("${it.distance()}:${it.item().loc} / ${it.item()}\n\n") }
 
-  val mostSimilar = labels.zip(vectors).map { (l, v) ->
+  val mostSimilar = labels.zip(vectors).mapIndexed { i, (l, v) ->
     Neighborhood(l, knnIndex.nearestNonEmptyNeighbors(v, 20))
   }.sortedBy { it.totalDistance }
 

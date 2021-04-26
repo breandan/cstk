@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.github
 
+import edu.mcgill.gymfs.disk.MINIGITHUB_REPOS_FILE
 import org.kohsuke.github.*
 import java.io.File
 import java.util.stream.Collectors
@@ -25,7 +26,7 @@ fun main() =
     .collect(Collectors.toList())
     .sortedBy { -it.openIssueCount }
     .forEach {
-      File("repositories.txt").appendText(it.httpTransportUrl + "\n")
+      File(MINIGITHUB_REPOS_FILE).appendText(it.httpTransportUrl + "\n")
       println(
         it.openIssueCount.toString().padEnd(6) +
           it.stargazersCount.toString().padEnd(9) +
