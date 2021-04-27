@@ -3,7 +3,7 @@ import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  val kotlinVersion = "1.5.0-RC"
+  val kotlinVersion = "1.5.0"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.38.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
   implementation(kotlin("stdlib-jdk8"))
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0-RC")
+  implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0")
 //  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
   implementation(libs.cct)
 
@@ -63,7 +63,7 @@ dependencies {
 
   implementation("org.nield:kotlin-statistics:1.2.1")
 
-  implementation("com.github.breandan:kotlingrad:0.4.2")
+  implementation("com.github.breandan:kotlingrad:0.4.5")
 
 
   // For retrieving dataset from GitHub
