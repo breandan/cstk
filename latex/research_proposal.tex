@@ -73,11 +73,11 @@ Prior work in the code search literature explores the text-to-code~\citep{husain
 { % begin box to localize effect of arraystretch change
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[H]
-  \small
+  \tiny
   \begin{tabular}{lllc}
     Name & Type & Key contribution & Evaluation method \\
     \hline
-    \href{https://github.com/breandan/gym-fs}{\textsc{Our Work}} & Project-to-code & Graph search & TBD \\
+    \href{https://github.com/breandan/gym-fs}{\textsc{Our Work}} & Either-to-Either & Learning to search & Sequence prediction \\
     \href{https://core.ac.uk/download/pdf/162022846.pdf#page=7}{\textsc{FaCoY}}~\citep{kim2018facoy} & Code-to-code & Similarity search & MRR \\
     \href{http://www.jameskoppel.com/files/papers/yogo-preprint.pdf#page=11}{\textsc{Yogo}}~\cite{premtoon2020semantic}     & Code-to-code & Equational reasoning & Case study \\
     \href{https://arxiv.org/pdf/1909.09436.pdf#page=5}{\textsc{CSNet}}~\citep{husain2019codesearchnet}     & Text-to-code & Big code benchmark & MRR \\
@@ -122,6 +122,15 @@ For a given query and context, we first compute the context embedding and using 
   \includegraphics[width=1.05\textwidth]{architecture}
   \caption{Unlike language models which directly learn the data distribution, our model is designed to query an unseen database only available at test time. The model scores and selectively expands a subset of promising results within the database using a beam search heuristic, then runs message passing over the resulting graph to obtain the final task prediction.}
   \label{fig:architecture}
+\end{figure}
+
+Consider the depth-1 beam search procedure (Fig. ~\ref{fig:pipeline}): We can use either vector search or keyword search to perform the context expansion, although vector search has the disadvantage of needing to rebuild the vector embedding index at each step during training. Keyword search is comparatively cheaper, as it only needs to build once for each repo on MiniGithub.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{knn_vs_vec}
+  \caption{In the vector search procedure, we compute an embedding for the masked source context, then retrieve the k-nearest sequence embeddings in our database. In the keyword search, we compute an n-hot vector to select the keywords, and retrieve the nearest matching sequences in our index. In both cases, we embed the results, feed them into a transformer, compute a loss between the predicted output and the masked token, and backpropagate.}
+  \label{fig:pipeline}
 \end{figure}
 
 Once the beam search procedure is complete, we have a graph representing the neighborhood of the nearest neighboring code fragments in the parent project. This forms a so-called \textit{virtual knowledge graph}, with nodes decorated by the CodeBERT sequence embeddings and edges decorated with the direction vector between documents. We then run $p$ rounds of message passing to obtain graph embedding or \textit{neighborhood summary vector} (Fig.~\ref{fig:architecture}).
