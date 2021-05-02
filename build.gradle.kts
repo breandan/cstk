@@ -15,6 +15,7 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   maven("https://jitpack.io")
+//  maven("https://clojars.org/repo")
   maven("https://jetbrains.bintray.com/lets-plot-maven")
 }
 
@@ -65,6 +66,9 @@ dependencies {
 
   implementation("com.github.breandan:kotlingrad:0.4.5")
 
+//  implementation("frak:frak:0.1.9")
+//  https://github.com/gleenn/regex_compressor
+  implementation("com.github.gleenn:regex_compressor:-SNAPSHOT")
 
   // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.127")

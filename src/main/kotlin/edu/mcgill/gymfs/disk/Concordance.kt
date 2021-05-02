@@ -27,6 +27,8 @@ data class Concordance constructor(val uri: URI, val line: Int): Serializable {
       .take(mostKeywordsToTake)
       .toList()
 
+  fun matchesRegex(regex: Regex) = getContext(0).matches(regex)
+
   /*
    * Expand keywords by least common first. Common keywords are
    * unlikely to contain any useful information.
@@ -47,6 +49,5 @@ data class Concordance constructor(val uri: URI, val line: Int): Serializable {
     uri.toString().substringBefore(".tgz").substringAfterLast('/') +
       "/…/" + uri.toString().substringAfterLast("/") + ":L${line + 1}"
 
-  fun fileSummary() =
-    toString().substringBeforeLast(':')
+  fun fileSummary() = toString().substringBeforeLast(':')
 }
