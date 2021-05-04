@@ -5,3 +5,4 @@
 *.idx
 *.json
 .ghtoken
+grex*

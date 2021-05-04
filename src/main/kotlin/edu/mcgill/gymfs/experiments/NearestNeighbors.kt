@@ -3,12 +3,13 @@ package edu.mcgill.gymfs.experiments
 import com.github.jelmerk.knn.SearchResult
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNodeFactory
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
+import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 
 fun main() {
-  val (labels, vectors) = fetchOrLoadSampleData(100)
+  val (labels, vectors) = fetchOrLoadSampleData(1000)
 
-  val knnIndex = buildOrLoadVecIndex()
+  val knnIndex = buildOrLoadVecIndex(rootDir = TEST_DIR)
 
 //  val query = "private fun compareDistanceMetrics("
 //  knnIndex.exactKNNSearch(vectorize(query), 10)
@@ -44,14 +45,22 @@ data class Neighborhood(
 ) {
   val totalDistance by lazy { nearestNeighbors.sumOf { it.distance() } }
 
-  val longestCommonSubstringSoFar by lazy {
+  val resultsSoFar by lazy {
     nearestNeighbors.mapIndexed { i, _ ->
       nearestNeighbors.subList(0, i + 1).map { it.item().toString() }
-    }.map { allResultsUpToCurrent ->
-      if (allResultsUpToCurrent.size < 2) ""
-      else LCSubstringSolver(DefaultCharSequenceNodeFactory())
+    }
+  }
+  val longestCommonSubstringSoFar by lazy {
+    resultsSoFar.map { allResultsUpToCurrent ->
+      LCSubstringSolver(DefaultCharSequenceNodeFactory())
         .apply { allResultsUpToCurrent.forEach { if(it.isNotBlank()) add(it) } }
         .longestCommonSubstring.toString()
+    }
+  }
+
+  val regexSoFar by lazy {
+    resultsSoFar.map { allResultsUpToCurrent ->
+      synthesizeRegex(*allResultsUpToCurrent.toTypedArray())
     }
   }
 
@@ -59,6 +68,7 @@ data class Neighborhood(
     nearestNeighbors.zip(longestCommonSubstringSoFar).map { (result, substring) ->
       if(substring.length < 2) result.item().toString()
       else result.item().toString().replace(substring, "《$substring》")
+//      + "// Regex: $regexSoFar"
     }
   }
 }

@@ -82,3 +82,8 @@ fun tokenize(query: String) =
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
+
+fun synthesizeRegex(vararg strings: String) =
+  ProcessBuilder("./grex", *strings).start()
+    .inputStream.reader(UTF_8)
+    .use { Regex(it.readText()) }

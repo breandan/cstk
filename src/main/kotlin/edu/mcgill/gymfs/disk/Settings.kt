@@ -23,6 +23,10 @@ val SERVER_ADDRESS by lazy {
 
   val addr = "http://localhost:8000/?vectorize="
   // Spinlock until service is available
+  val startTime = System.currentTimeMillis()
+
+  println("Starting embeddings server...")
+
   while (true) try {
     if (URL(addr + "test").readText().isNotEmpty()) break
   } catch (exception: Exception) {}
