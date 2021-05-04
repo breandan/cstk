@@ -1,12 +1,13 @@
+import de.undercouch.gradle.tasks.download.Download
 import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   val kotlinVersion = "1.5.0"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.38.0"
 //  kotlin("plugin.serialization") version kotlinVersion
+  id("de.undercouch.download") version "4.1.1"
 }
 
 group = "com.github.breandan"
@@ -80,6 +81,20 @@ dependencies {
 }
 
 tasks {
+  register("getGrex", Download::class) {
+    val url = "https://github.com/pemistahl/grex/releases/download/v1.2.0/grex-v1.2.0-x86_64-unknown-linux-musl.tar.gz"
+    val dest = "grex.tar.gz"
+
+    src(url)
+    dest(File(dest))
+    doLast {
+      copy {
+        from(tarTree(resources.gzip("grex.tar.gz")))
+        into(projectDir)
+      }
+    }
+  }
+
   mapOf(
     "trieSearch" to "edu.mcgill.gymfs.disk.KWSearchKt",
     "knnSearch" to "edu.mcgill.gymfs.disk.KNNSearchKt",
