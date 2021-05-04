@@ -82,14 +82,15 @@ dependencies {
 
 tasks {
   register("getGrex", Download::class) {
-    val url = "https://github.com/pemistahl/grex/releases/download/v1.2.0/grex-v1.2.0-x86_64-unknown-linux-musl.tar.gz"
-    val dest = "grex.tar.gz"
+    onlyIf { !File("grex").exists() }
+    val name = "grex-v1.2.0-x86_64-unknown-linux-musl.tar.gz"
+    src("https://github.com/pemistahl/grex/releases/download/v1.2.0/$name")
+    dest(File(name))
+    overwrite(false)
 
-    src(url)
-    dest(File(dest))
     doLast {
       copy {
-        from(tarTree(resources.gzip("grex.tar.gz")))
+        from(tarTree(resources.gzip(name)))
         into(projectDir)
       }
     }
@@ -105,7 +106,7 @@ tasks {
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
-  ).forEach { (cmd,mainClass) ->
+  ).forEach { (cmd, mainClass) ->
     register(cmd, JavaExec::class) {
       main = mainClass
       classpath = sourceSets["main"].runtimeClasspath
