@@ -69,7 +69,7 @@ dependencies {
 
 //  implementation("frak:frak:0.1.9")
 //  https://github.com/gleenn/regex_compressor
-  implementation("com.github.gleenn:regex_compressor:-SNAPSHOT")
+//  implementation("com.github.gleenn:regex_compressor:-SNAPSHOT")
 
   // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.127")

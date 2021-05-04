@@ -1,7 +1,10 @@
 package edu.mcgill.gymfs.experiments
 
-import com.gleenn.regex_compressor.RegexCompressor
-
 fun main() {
-  println(RegexCompressor.pattern(listOf("asdf", "testasdf")))
+  println(synthesizeRegex("asdf", "testasdf"))
 }
+
+fun synthesizeRegex(vararg strings: String) =
+  ProcessBuilder("./grex", *strings).start()
+    .inputStream.reader(Charsets.UTF_8)
+    .use { Regex(it.readText()) }
