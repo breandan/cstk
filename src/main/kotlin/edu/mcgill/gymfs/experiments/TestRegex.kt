@@ -1,11 +1,13 @@
 package edu.mcgill.gymfs.experiments
 
+import edu.mcgill.gymfs.disk.synthesizeRegex
 import net.automatalib.automata.fsa.impl.compact.CompactDFA
 import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.words.impl.Alphabets
 
+// TODO: DFA/RegEx or BoW query?
 fun main() {
-//  println(synthesizeRegex("asdf", "testasdf"))
+  // https://github.com/LearnLib/learnlib/blob/master/test-support/learning-examples/src/main/java/de/learnlib/examples/dfa/ExampleAngluin.java
   val dfa: CompactDFA<Char> =
     AutomatonBuilders.forDFA(CompactDFA(Alphabets.characters('a', 'z')))
     .withInitial("q0")
@@ -22,4 +24,5 @@ fun main() {
     .create()
 
   println(dfa.accepts("abababa".toCharArray().toList()))
+  println(synthesizeRegex("asdf", "testasdf"))
 }

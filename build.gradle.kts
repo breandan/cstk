@@ -22,7 +22,6 @@ repositories {
 dependencies {
   implementation(kotlin("stdlib-jdk8"))
   implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0")
-//  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
   implementation(libs.cct)
 
   implementation(libs.djl)
@@ -58,19 +57,18 @@ dependencies {
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
 
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
+
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
   implementation("org.nield:kotlin-statistics:1.2.1")
 
   implementation("com.github.breandan:kaliningraph:0.1.6")
 
-//  implementation("frak:frak:0.1.9")
-//  https://github.com/gleenn/regex_compressor
-//  implementation("com.github.gleenn:regex_compressor:-SNAPSHOT")
+  // https://github.com/LearnLib/automatalib
   implementation("net.automatalib.distribution:automata-distribution:0.10.0")
 
   // For retrieving dataset from GitHub
-  implementation("org.kohsuke:github-api:1.127")
+  implementation("org.kohsuke:github-api:1.128")
 
   implementation("org.apache.commons:commons-compress:1.20")
   implementation("org.apache.commons:commons-vfs2:2.8.0")
@@ -100,6 +98,7 @@ tasks {
     "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
+    "testRegex" to "edu.mcgill.gymfs.experiments.TestRegexKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
   ).forEach { (cmd, mainClass) ->
