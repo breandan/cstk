@@ -26,7 +26,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
 
   override fun prepare(progress: Progress?) {
     // get all applicable files
-    parsedFiles = DATA_DIR.allFilesRecursively(FILE_EXT)
+    parsedFiles = TEST_DIR.allFilesRecursively(FILE_EXT)
       .map { it.toPath() }
       // read & tokenize them
       .map { parseFile(it) }

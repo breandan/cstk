@@ -16,7 +16,6 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   maven("https://jitpack.io")
-//  maven("https://clojars.org/repo")
   maven("https://jetbrains.bintray.com/lets-plot-maven")
 }
 
@@ -40,7 +39,7 @@ dependencies {
   implementation(libs.fasttext)
   implementation(libs.modelzoo)
 
-  implementation("ai.djl.mxnet:mxnet-model-zoo:0.10.0")
+  implementation("ai.djl.mxnet:mxnet-model-zoo:0.11.0")
 
   val hnswlibVersion = "0.0.46"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
@@ -57,28 +56,24 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   implementation("com.github.ajalt.clikt:clikt:3.1.0")
-  implementation("org.deeplearning4j:deeplearning4j:1.0.0-beta7")
-  implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-beta7")
 
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
   implementation("org.nield:kotlin-statistics:1.2.1")
 
-  implementation("com.github.breandan:kotlingrad:0.4.5")
+  implementation("com.github.breandan:kaliningraph:0.1.6")
 
 //  implementation("frak:frak:0.1.9")
 //  https://github.com/gleenn/regex_compressor
 //  implementation("com.github.gleenn:regex_compressor:-SNAPSHOT")
-  implementation("de.learnlib:learnlib-parent:0.16.0")
+  implementation("net.automatalib.distribution:automata-distribution:0.10.0")
 
   // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.127")
 
   implementation("org.apache.commons:commons-compress:1.20")
   implementation("org.apache.commons:commons-vfs2:2.8.0")
-
-  implementation("com.esotericsoftware:kryo:5.1.0")
 }
 
 tasks {

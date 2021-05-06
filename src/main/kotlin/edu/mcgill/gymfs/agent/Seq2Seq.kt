@@ -143,7 +143,6 @@ object TrainSeq2Seq {
           .build()
       )
       .optUsage(usage)
-      .optExecutor(executorService, 8)
       .optLimit(100)
     val sourceConfig = TextData.Configuration()
       .setTextProcessors(
