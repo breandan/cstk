@@ -64,8 +64,12 @@ dependencies {
 
   implementation("com.github.breandan:kaliningraph:0.1.6")
 
+  // https://github.com/LearnLib/learnlib
+  implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
   // https://github.com/LearnLib/automatalib
   implementation("net.automatalib.distribution:automata-distribution:0.10.0")
+  // https://github.com/cs-au-dk/dk.brics.automaton
+  implementation("dk.brics:automaton:1.12-1")
 
   // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.128")

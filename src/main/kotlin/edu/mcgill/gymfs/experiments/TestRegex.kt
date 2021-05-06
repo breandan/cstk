@@ -6,8 +6,14 @@ import net.automatalib.util.automata.builders.AutomatonBuilders
 import net.automatalib.words.impl.Alphabets
 
 // TODO: DFA/RegEx or BoW query?
+
+// https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example1.java
+// https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example2.java
+// https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example3.java
+// Passive: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/passive/Example1.java
+
 fun main() {
-  // https://github.com/LearnLib/learnlib/blob/master/test-support/learning-examples/src/main/java/de/learnlib/examples/dfa/ExampleAngluin.java
+//  https://github.com/LearnLib/learnlib/blob/develop/test-support/learning-examples/src/main/java/de/learnlib/examples/dfa/ExampleAngluin.java
   val dfa: CompactDFA<Char> =
     AutomatonBuilders.forDFA(CompactDFA(Alphabets.characters('a', 'z')))
     .withInitial("q0")
