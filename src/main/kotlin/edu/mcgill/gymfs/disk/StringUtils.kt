@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.disk
 
+import edu.mcgill.gymfs.math.kantorovich
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import java.net.*
 import java.nio.file.*
@@ -39,7 +40,7 @@ fun URI.allLines(): Sequence<String> =
     TGZ_SCHEME -> vfsManager.resolveFile(this)
       .content.getString(UTF_8).lineSequence()
     FILE_SCHEME -> toPath().let {
-      if (it.extension == FILE_EXT)
+      if (it.extension == FILE_EXT && it.exists())
         it.readText().lineSequence()
       else emptySequence()
     }
@@ -77,6 +78,17 @@ fun vectorize(query: String): DoubleArray =
     .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
     .first().toDoubleArray()
 
+// Sentence embedding
+fun matrixize(query: String): Array<DoubleArray> =
+  URL(
+    SERVER_ADDRESS +
+      URLEncoder.encode("$CODEBERT_BOS_TOKEN$query$CODEBERT_EOS_TOKEN", "utf-8")
+  ).readText().lines()
+    .map { it.trim().replace("[", "").replace("]", "") }
+    .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
+    .map { it.toDoubleArray() }
+    .toTypedArray()
+
 fun tokenize(query: String) =
   URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")
 
@@ -87,3 +99,8 @@ fun synthesizeRegex(vararg strings: String) =
   ProcessBuilder("./grex", *strings).start()
     .inputStream.reader(UTF_8)
     .use { Regex(it.readText()) }
+
+fun main() {
+  println(kantorovich(matrixize("test  a ing 123"), matrixize("{}{{}{{{}}}{asdf g")))
+  println(kantorovich(matrixize("test  a ing 123"), matrixize("open ing 222")))
+}

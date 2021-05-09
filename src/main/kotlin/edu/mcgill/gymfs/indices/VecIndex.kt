@@ -1,9 +1,9 @@
 package edu.mcgill.gymfs.indices
 
 import com.github.jelmerk.knn.*
-import com.github.jelmerk.knn.DistanceFunctions.DOUBLE_EUCLIDEAN_DISTANCE
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.math.EMD
 import java.io.File
 import java.net.URI
 import kotlin.time.*
@@ -48,7 +48,8 @@ tailrec fun VecIndex.edges(
 fun rebuildVecIndex(indexFile: File, origin: URI): VecIndex =
   HnswIndex.newBuilder(
     BERT_EMBEDDING_SIZE,
-    DOUBLE_EUCLIDEAN_DISTANCE, 1000000
+//    DOUBLE_EUCLIDEAN_DISTANCE,
+    EMD, 1000000
   ).withM(100).withEf(500).withEfConstruction(500)
     .build<Concordance, CodeEmbedding>().also { idx ->
       println("Rebuilding vector index...")

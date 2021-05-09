@@ -5,6 +5,7 @@ import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNod
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
+import edu.mcgill.gymfs.math.kantorovich
 
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData(1000)
@@ -16,7 +17,7 @@ fun main() {
 //    .forEach { println("${it.distance()}:${it.item().loc} / ${it.item()}\n\n") }
 
   val mostSimilar = labels.zip(vectors).mapIndexed { i, (l, v) ->
-    Neighborhood(l, knnIndex.nearestNonEmptyNeighbors(v, 20))
+    Neighborhood(l, v, knnIndex.nearestNonEmptyNeighbors(v, 20))
   }.sortedBy { it.totalDistance }
 
   println("Nearest nearest neighbors by cumulative similarity")
@@ -34,13 +35,14 @@ fun main() {
     }
 }
 
-private fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
+fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
   findNearest(v, i + 10)
     .filter { !it.item().embedding.contentEquals(v) }
     .distinctBy { it.item().toString() }.take(i)
 
 data class Neighborhood(
   val origin: String,
+  val vector: DoubleArray, 
   val nearestNeighbors: List<SearchResult<CodeEmbedding, Double>>,
 ) {
   val totalDistance by lazy { nearestNeighbors.sumOf { it.distance() } }

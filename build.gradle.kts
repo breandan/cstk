@@ -76,6 +76,10 @@ dependencies {
 
   implementation("org.apache.commons:commons-compress:1.20")
   implementation("org.apache.commons:commons-vfs2:2.8.0")
+
+  val ortoolsVersion = "9.0.9048"
+  implementation("com.google.ortools:ortools-java:$ortoolsVersion")
+  implementation("com.google.ortools:ortools-linux-x86-64:$ortoolsVersion")
 }
 
 tasks {
@@ -102,7 +106,7 @@ tasks {
     "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
-    "testRegex" to "edu.mcgill.gymfs.experiments.TestRegexKt",
+    "querySynth" to "edu.mcgill.gymfs.experiments.DFASynthesizerKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
   ).forEach { (cmd, mainClass) ->

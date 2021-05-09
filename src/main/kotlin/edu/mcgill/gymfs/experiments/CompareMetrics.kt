@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.math.*
 import info.debatty.java.stringsimilarity.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.nield.kotlinstatistics.variance
@@ -27,9 +28,3 @@ private fun compareDistanceMetrics(
       .let { it.average() to it.variance() }
   }.toSortedMap()
   .map { (key, value) -> Triple(key, value.first, value.second) }
-
-fun <T, U> cartProd(c1: Collection<T>, c2: Collection<U>): List<Pair<T, U>> =
-  c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
-
-fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
-  sqrt(f1.mapIndexed { i, f -> (f - f2[i]).pow(2) }.sum())
