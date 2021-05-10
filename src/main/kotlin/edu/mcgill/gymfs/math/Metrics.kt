@@ -16,8 +16,11 @@ fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
 val t = Loader.loadNativeLibraries()
 
 // https://github.com/stephenhky/PyWMD/blob/master/WordMoverDistanceDemo.ipynb
+// http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3
 // https://www.youtube.com/watch?v=CDiol4LG2Ao
 fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>) =
+// https://developers.google.com/optimization/introduction/java#complete-program
+// https://developers.google.com/optimization/lp/glop#entire_program
   MPSolver.createSolver("GLOP").run {
     val (vars, dists) = cartProd(p1.indices, p2.indices)
       .mapIndexed { i, (j, k) ->

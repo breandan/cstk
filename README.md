@@ -1,4 +1,22 @@
-# gym-fs
+# Code Search Tools
+
+Tools and experiments for information retrieval on code. Provides:
+
+* Indices for keyword and vector embedding
+* Learning to search & grammar induction
+    * Passive DFA learning from membership
+    * Keyword/BOW-based query synthesis
+* Semantic graph construction
+    * Keyword-matching edge construction
+    * Proximity-based graph embedding
+* Metrics for string, vector and distribution matching
+    * Kantorovich metric on code embeddings
+    * String distance metrics
+* Evaluation criteria: NDCG, MAP@K, MRR
+* Datamining and dataloading tools
+* "MiniGithub" mock training interface
+
+# Indexing
 
 A fast environment for the filesystem.
 
@@ -1068,7 +1086,8 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 * [HNSW](https://github.com/jelmerk/hnswlib) - Java library for approximate nearest neighbors search using Hierarchical Navigable Small World graphs
 * [java-string-similarity](https://github.com/tdebatty/java-string-similarity) - Implementation of various string similarity and distance algorithms
 * [Commons VFS](https://commons.apache.org/proper/commons-vfs/) - Virtual file system for compressed files
-* [LearnLib](https://github.com/LearnLib/learnlib) -  Java library for automata learning algorithms
+* [LearnLib](https://github.com/LearnLib/learnlib) - Java library for automata learning algorithms
+* [OR-Tools](https://developers.google.com/optimization/introduction/overview) - Software suite for combinatorial optimization
 
 # Papers
 
@@ -1077,6 +1096,12 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 * [AutoKG: Constructing Virtual Knowledge Graphs from Unstructured Documents for Question Answering](https://arxiv.org/pdf/2008.08995.pdf), Yu et al. (2021)
 * [Graph Optimal Transport for Cross-Domain Alignment](http://proceedings.mlr.press/v119/chen20e/chen20e.pdf), Chen et al. (2021)
 * [TextRank: Bringing Order into Texts](https://www.aclweb.org/anthology/W04-3252.pdf), Mihalcea and Tarau (2004)
+* [From word embeddings to document distances (WMD)](http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3), Kusner et al. (2015)
+
+# Learning to Rank
+
+* [Learning to Rank with Nonsmooth Cost Functions](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/lambdarank.pdf), Burges et al. (2018)
+* [Learning to rank papers](https://en.wikipedia.org/wiki/Learning_to_rank#List_of_methods)
 
 # Resources
 
