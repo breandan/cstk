@@ -17,15 +17,14 @@ val t = Loader.loadNativeLibraries()
 
 // https://github.com/stephenhky/PyWMD/blob/master/WordMoverDistanceDemo.ipynb
 // https://www.youtube.com/watch?v=CDiol4LG2Ao
-fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double {
+fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>) =
   MPSolver.createSolver("GLOP").run {
-    val obj = objective()
-
     val (vars, dists) = cartProd(p1.indices, p2.indices)
       .mapIndexed { i, (j, k) ->
         makeNumVar(0.0, 1.0, "x$i") to euclidDist(p1[j], p2[k])
       }.unzip()
 
+    val obj = objective()
     for (i in vars.indices) obj.setCoefficient(vars[i], dists[i])
     obj.setMinimization()
 
@@ -45,7 +44,7 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double {
           .forEach { setCoefficient(it, 1.0) }
     }
 
-    // Ensure positive transport
+    // Ensure nonnegative transport
     vars.forEach {
       makeConstraint(0.0, MPSolver.infinity())
         .apply { setCoefficient(it, 1.0) }
@@ -53,9 +52,8 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double {
 
     solve()
 
-    return obj.value()
+    obj.value()
   }
-}
 
 object EMD: DistanceFunction<DoubleArray, Double> {
   override fun distance(u: DoubleArray, v: DoubleArray) =

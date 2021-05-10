@@ -4,7 +4,6 @@ import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.*
 import info.debatty.java.stringsimilarity.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
-import org.nield.kotlinstatistics.variance
 import kotlin.math.*
 
 // Does edit distance correlate with embedding distance?
