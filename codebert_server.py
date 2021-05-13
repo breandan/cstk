@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 tokenizer = AutoTokenizer.from_pretrained("microsoft/codebert-base")
 model = AutoModel.from_pretrained("microsoft/codebert-base")
 
+
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def tokenize(self, query):
         # tic = time.perf_counter()
@@ -20,8 +21,11 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         return tokens
 
     def vectorize(self, query):
-        tokens_ids = tokenizer.convert_tokens_to_ids(self.tokenize(query))
-        npy = model(torch.tensor(tokens_ids)[None, :])[0].detach().numpy()
+        input_sequence = tokenizer.convert_tokens_to_ids(self.tokenize(query))
+        # This should always be called with the beginning of sequence token <s>
+        # https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
+        # TODO: Should we return the entire vector or just the first?
+        npy = model(torch.tensor(input_sequence)[None, :])[0].detach().numpy()
         return npy
 
     def log_message(self, format, *args):
@@ -46,13 +50,14 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         if 'vectorize' in query_components:
             query = urllib.parse.unquote_plus(query_components["vectorize"][0])
             array = self.vectorize(query)
-            html = np.array2string(a = array,
+            html = np.array2string(a=array,
                                    threshold=sys.maxsize,
                                    max_line_width=sys.maxsize)
 
         self.wfile.write(bytes(html, "utf8"))
 
         return
+
 
 my_server = HTTPServer(('', 8000), EmbeddingServer)
 # Star the server

@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.disk
 
 import ai.djl.modality.nlp.SimpleVocabulary
-import com.robrua.nlp.bert.FullTokenizer
 import java.io.File
 import java.net.URL
 
@@ -25,9 +24,4 @@ fun main() {
           .joinToString("\n")
       )
   }
-
-  val tok = FullTokenizer(File("vocab.txt"))
-  val tokens = tok.tokenize("for i in t doSomething")
-  println(tokens.joinToString(", "))
-//  println(tok.convert(tokens))
 }

@@ -35,8 +35,9 @@ fun main() {
     }
 }
 
-fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int) =
-  findNearest(v, i + 10)
+fun VecIndex.nearestNonEmptyNeighbors(v: DoubleArray, i: Int, exact: Boolean = false) =
+  if(exact) exactKNNSearch(v, i + 10)
+  else findNearest(v, i + 10)
     .filter { !it.item().embedding.contentEquals(v) }
     .distinctBy { it.item().toString() }.take(i)
 

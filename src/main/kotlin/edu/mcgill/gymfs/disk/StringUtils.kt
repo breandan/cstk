@@ -2,6 +2,7 @@ package edu.mcgill.gymfs.disk
 
 import edu.mcgill.gymfs.math.kantorovich
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
+import net.automatalib.automata.fsa.DFA
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -69,6 +70,14 @@ fun String.preview(query: String, window: Int = 10) =
     substring((b - window).coerceIn(range), b) + "[?]" +
       substring(b + q.length, (b + q.length + window).coerceIn(range))
   }.joinToString("…", "…", "…") { it.trim() }
+
+fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
+  try {
+    dfa.accepts(it.toCharArray().toList())
+  } catch (exception: Exception) {
+    false
+  }
+}
 
 //https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
 fun vectorize(query: String): DoubleArray =

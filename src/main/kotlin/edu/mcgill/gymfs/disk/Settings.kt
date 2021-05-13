@@ -23,7 +23,6 @@ val SERVER_ADDRESS by lazy {
 
   val addr = "http://localhost:8000/?vectorize="
   // Spinlock until service is available
-  val startTime = System.currentTimeMillis()
 
   println("Starting embeddings server...")
 
@@ -41,6 +40,7 @@ const val SEP = "<sep>"
 const val MSK = "<msk>"
 
 const val BERT_EMBEDDING_SIZE = 768
+//https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
 //https://huggingface.co/microsoft/codebert-base/blob/main/special_tokens_map.json
 const val CODEBERT_CLS_TOKEN = "<s>"
 const val CODEBERT_BOS_TOKEN = "<s>"

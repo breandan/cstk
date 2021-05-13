@@ -1,8 +1,8 @@
 package edu.mcgill.gymfs.experiments
 
 import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
-import edu.mcgill.gymfs.disk.TEST_DIR
-import edu.mcgill.gymfs.indices.buildOrLoadVecIndex
+import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.indices.*
 import edu.mcgill.gymfs.math.euclidDist
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets
@@ -10,31 +10,37 @@ import kotlin.time.*
 
 // TODO: DFA/RegEx or BoW query?
 
-// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example1.java
-// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example2.java
-// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example3.java
-// Passive: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/passive/Example1.java
-
-val alphabet: Alphabet<Char> =
-  (' '..'~').toList().let { Alphabets.fromCollection(it) }
 
 @OptIn(ExperimentalTime::class)
 fun main() {
-  val (labels, vectors) = fetchOrLoadSampleData(1000)
+  val (strings, vectors) = fetchOrLoadSampleData(1000)
+  val vecMap = strings.zip(vectors).toMap()
 
   val knnIndex = buildOrLoadVecIndex(rootDir = TEST_DIR)
 
-  val mostSimilarSamples = measureTimedValue {
-    labels.zip(vectors).take(1).mapIndexed { i, (l, v) ->
-      Neighborhood(l, v, knnIndex.nearestNonEmptyNeighbors(v, 100000))
-    }.sortedBy { it.totalDistance }
-  }.let { println("Built KNN in:" + it.duration); it.value }
+  val (precisions, recalls) =
+    vecMap.entries.take(100)
+    .map { (s, v) -> calculuatePrecisionAndRecall(s, v, strings, knnIndex, vecMap) }
+    .unzip()
 
-  val query = mostSimilarSamples.first()
-  println("\nQuery:\n======\n${query.origin}")
+  println("Mean precision: ${precisions.average()}")
+  println("Mean recall:    ${recalls.average()}")
+}
 
-  val nearestNeighbors = query.nearestNeighbors.take(10)
-  val furthestNeighbors = query.nearestNeighbors.reversed().take(100)
+private fun calculuatePrecisionAndRecall(
+  query: String,
+  vector: DoubleArray,
+  strings: List<String>,
+  knnIndex: VecIndex,
+  vecMap: Map<String, DoubleArray>
+): Pair<Double, Double> {
+  val neighbors = knnIndex.nearestNonEmptyNeighbors(vector, 100000)
+  val neighborhood = Neighborhood(query, vector, neighbors)
+  println("\nQuery:\n======\n${neighborhood.origin}")
+
+  val numNearestNeighbors = 100
+  val nearestNeighbors = neighborhood.nearestNeighbors.take(numNearestNeighbors)
+  val furthestNeighbors = neighborhood.nearestNeighbors.reversed().take(100)
 
   val positiveExamples = nearestNeighbors.map { it.item().loc.getContext(0) }
     .filter { it.isNotBlank() }
@@ -43,22 +49,33 @@ fun main() {
   val negativeExamples = furthestNeighbors.map { it.item().loc.getContext(0) }
     .alsoSummarize("Negative examples (furthest neighbors)")
 
-  val synthesizedDFA =
-    computeModel(alphabet, positiveExamples, negativeExamples)
+  val dfa = synthesizeDFA(positiveExamples, negativeExamples)
 
 //  Visualization.visualize(secondModel, alphabet)
 
-  val resultsOfDFAQuery = labels.zip(vectors)
-    .filter { (l, _) ->
-      try {
-        synthesizedDFA.accepts(l.toCharArray().toList())
-      } catch (exception: Exception) {
-        false
-      }
-    }.sortedBy { (_, v) -> euclidDist(query.vector, v) }
-    .map { it.first }
+  val resultsOfDFAQuery = strings.filterByDFA(dfa)
+    .sortedBy { euclidDist(neighborhood.vector, vecMap[it]!!) }
 
-  resultsOfDFAQuery.alsoSummarize("Synthesized query results:")
+  resultsOfDFAQuery.alsoSummarize("Results of synthetic query:")
+
+  // How many nearest neighbors not in the positive examples were retrieved?
+
+  val testSetSize = 100
+  val (truePositives, falseNegatives) =
+    neighborhood.nearestNeighbors.drop(numNearestNeighbors).take(testSetSize)
+      .map { it.item().loc.getContext(0) }.partition { it in resultsOfDFAQuery }
+
+  // https://upload.wikimedia.org/wikipedia/commons/2/26/Precisionrecall.svg
+
+  truePositives.alsoSummarize("True positives")
+  falseNegatives.alsoSummarize("False negatives")
+
+  println()
+  val precision = truePositives.size.toDouble() / resultsOfDFAQuery.size
+  val recall = truePositives.size.toDouble() / testSetSize
+  println("Precision: ${truePositives.size}/${resultsOfDFAQuery.size} = $precision")
+  println("Recall:    ${truePositives.size}/$testSetSize = $recall")
+  return Pair(precision, recall)
 }
 
 fun List<String>.alsoSummarize(title: String) = also {
@@ -69,15 +86,22 @@ fun List<String>.alsoSummarize(title: String) = also {
   }
 }
 
-fun computeModel(
-  alphabet: Alphabet<Char>,
+// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example1.java
+// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example2.java
+// Active: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/Example3.java
+// Passive: https://github.com/LearnLib/learnlib/blob/develop/examples/src/main/java/de/learnlib/examples/passive/Example1.java
+
+val DEFAULT_ALPHABET: Alphabet<Char> =
+  (' '..'~').toList().let { Alphabets.fromCollection(it) }
+fun synthesizeDFA(
   positiveSamples: List<String> = emptyList(),
-  negativeSamples: List<String> = emptyList()
+  negativeSamples: List<String> = emptyList(),
+  alphabet: Alphabet<Char> = DEFAULT_ALPHABET,
 ) =
 //  https://www.ibisc.univ-evry.fr/~janodet/pub/tjs04.pdf
   BlueFringeRPNIDFA(alphabet).apply {
-    addPositiveSamples(*positiveSamples.toWords())
-    addNegativeSamples(*negativeSamples.toWords())
+    addPositiveSamples(*positiveSamples.filter { it.all { DEFAULT_ALPHABET.containsSymbol(it) } }.toWords())
+    addNegativeSamples(*negativeSamples.filter { it.all { DEFAULT_ALPHABET.containsSymbol(it) } }.toWords())
   }.computeModel()
 
 fun List<String>.toWords() = map { Word.fromCharSequence(it) }.toTypedArray()

@@ -11,7 +11,7 @@ fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
   c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
 
 fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
-  sqrt(f1.mapIndexed { i, f -> (f - f2[i]).pow(2) }.sum())
+  sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
 
 val t = Loader.loadNativeLibraries()
 
@@ -19,9 +19,10 @@ val t = Loader.loadNativeLibraries()
 // http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3
 // https://www.youtube.com/watch?v=CDiol4LG2Ao
 fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>) =
+  if (p1.size == 1 && p2.size == 1) euclidDist(p1.first(), p2.first())
 // https://developers.google.com/optimization/introduction/java#complete-program
 // https://developers.google.com/optimization/lp/glop#entire_program
-  MPSolver.createSolver("GLOP").run {
+  else MPSolver.createSolver("GLOP").run {
     val (vars, dists) = cartProd(p1.indices, p2.indices)
       .mapIndexed { i, (j, k) ->
         makeNumVar(0.0, 1.0, "x$i") to euclidDist(p1[j], p2[k])

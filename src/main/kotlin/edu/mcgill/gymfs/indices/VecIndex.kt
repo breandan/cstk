@@ -46,11 +46,8 @@ tailrec fun VecIndex.edges(
 // Compare various distance functions
 @OptIn(ExperimentalTime::class)
 fun rebuildVecIndex(indexFile: File, origin: URI): VecIndex =
-  HnswIndex.newBuilder(
-    BERT_EMBEDDING_SIZE,
-//    DOUBLE_EUCLIDEAN_DISTANCE,
-    EMD, 1000000
-  ).withM(100).withEf(500).withEfConstruction(500)
+  HnswIndex.newBuilder(BERT_EMBEDDING_SIZE, EMD, 1000000)
+    .withM(100).withEf(500).withEfConstruction(500)
     .build<Concordance, CodeEmbedding>().also { idx ->
       println("Rebuilding vector index...")
       measureTimedValue {
