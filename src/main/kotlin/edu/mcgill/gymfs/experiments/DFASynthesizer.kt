@@ -23,6 +23,7 @@ fun main() {
     .map { (s, v) -> calculuatePrecisionAndRecall(s, v, strings, knnIndex, vecMap) }
     .unzip()
 
+  println()
   println("Mean precision: ${precisions.average()}")
   println("Mean recall:    ${recalls.average()}")
 }
@@ -38,16 +39,17 @@ private fun calculuatePrecisionAndRecall(
   val neighborhood = Neighborhood(query, vector, neighbors)
   println("\nQuery:\n======\n${neighborhood.origin}")
 
-  val numNearestNeighbors = 100
+  val numNearestNeighbors = 30
+  val numFurthestNeighbors = 1000
   val nearestNeighbors = neighborhood.nearestNeighbors.take(numNearestNeighbors)
-  val furthestNeighbors = neighborhood.nearestNeighbors.reversed().take(100)
+  val furthestNeighbors = neighborhood.nearestNeighbors.reversed().take(numFurthestNeighbors)
 
   val positiveExamples = nearestNeighbors.map { it.item().loc.getContext(0) }
     .filter { it.isNotBlank() }
-    .alsoSummarize("Positive examples (nearest neighbors)")
+//    .alsoSummarize("Positive examples (nearest neighbors)")
 
   val negativeExamples = furthestNeighbors.map { it.item().loc.getContext(0) }
-    .alsoSummarize("Negative examples (furthest neighbors)")
+//    .alsoSummarize("Negative examples (furthest neighbors)")
 
   val dfa = synthesizeDFA(positiveExamples, negativeExamples)
 
@@ -55,8 +57,7 @@ private fun calculuatePrecisionAndRecall(
 
   val resultsOfDFAQuery = strings.filterByDFA(dfa)
     .sortedBy { euclidDist(neighborhood.vector, vecMap[it]!!) }
-
-  resultsOfDFAQuery.alsoSummarize("Results of synthetic query:")
+//    .alsoSummarize("Results of synthetic query:")
 
   // How many nearest neighbors not in the positive examples were retrieved?
 
@@ -67,14 +68,14 @@ private fun calculuatePrecisionAndRecall(
 
   // https://upload.wikimedia.org/wikipedia/commons/2/26/Precisionrecall.svg
 
-  truePositives.alsoSummarize("True positives")
-  falseNegatives.alsoSummarize("False negatives")
+//  truePositives.alsoSummarize("True positives")
+//  falseNegatives.alsoSummarize("False negatives")
 
   println()
   val precision = truePositives.size.toDouble() / resultsOfDFAQuery.size
   val recall = truePositives.size.toDouble() / testSetSize
-  println("Precision: ${truePositives.size}/${resultsOfDFAQuery.size} = $precision")
-  println("Recall:    ${truePositives.size}/$testSetSize = $recall")
+  println("DFA-kNN Precision: ${truePositives.size}/${resultsOfDFAQuery.size} = $precision")
+  println("DFA-kNN Recall:    ${truePositives.size}/$testSetSize = $recall")
   return Pair(precision, recall)
 }
 
