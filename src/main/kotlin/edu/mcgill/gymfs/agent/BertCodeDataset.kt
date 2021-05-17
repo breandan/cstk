@@ -16,13 +16,51 @@ import kotlin.io.path.*
 import kotlin.streams.toList
 
 
-class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
+class BertCodeDataset(
+  var batchSize: Int = BATCH_SIZE,
+  var epochLimit: Long = 1000L
+): Dataset {
   var parsedFiles: Sequence<ParsedFile>? = null
   var dictionary: Dictionary? = null
   var rand: Random = Random(89724308)
   var manager: NDManager = NDManager.newBaseManager()
 
-  override fun getData(manager: NDManager): Iterable<Batch> = EpochIterable()
+  override fun getData(manager: NDManager): Iterable<Batch> =
+    object: Iterable<Batch>, Iterator<Batch> {
+      var maskedInstances: List<MaskedInstance> = createEpochData()
+      var idx: Int = batchSize
+
+      private fun createEpochData(): List<MaskedInstance> {
+        // turn data into sentence pairs containing consecutive lines
+        val sentencePairs = ArrayList<SentencePair?>()
+        parsedFiles!!.forEach { parsedFile: ParsedFile ->
+          parsedFile.addToSentencePairs(sentencePairs)
+        }
+        sentencePairs.shuffle(rand)
+        // swap sentences with 50% probability for next sentence task
+        var idx = 1
+        while (idx < sentencePairs.size) {
+          sentencePairs[idx - 1]!!.maybeSwap(rand, sentencePairs[idx])
+          idx += 2
+        }
+        // Create masked instances for training
+        return sentencePairs
+          .take(epochLimit.toInt())
+          .map { MaskedInstance(rand, dictionary!!, it!!) }
+      }
+
+      override fun iterator(): Iterator<Batch> = this
+
+      override fun hasNext(): Boolean = idx < maskedInstances.size
+
+      override fun next(): Batch {
+        val ndManager = manager.newSubManager()
+        val batchData = maskedInstances.subList(idx - batchSize, idx)
+        val batch = createBatch(ndManager, batchData, idx, maskedInstances.size)
+        idx++
+        return batch
+      }
+    }
 
   override fun prepare(progress: Progress?) {
     // get all applicable files
@@ -35,46 +73,6 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
   }
 
   fun getDictionarySize(): Int = dictionary!!.tokens.size
-
-  private fun createEpochData(): List<MaskedInstance> {
-    // turn data into sentence pairs containing consecutive lines
-    val sentencePairs: MutableList<SentencePair?> = ArrayList()
-    parsedFiles!!.forEach { parsedFile: ParsedFile ->
-      parsedFile.addToSentencePairs(sentencePairs)
-    }
-    sentencePairs.shuffle(rand)
-    // swap sentences with 50% probability for next sentence task
-    var idx = 1
-    while (idx < sentencePairs.size) {
-      sentencePairs[idx - 1]!!.maybeSwap(rand, sentencePairs[idx])
-      idx += 2
-    }
-    // Create masked instances for training
-    return sentencePairs
-      .take(epochLimit.toInt())
-      .map { MaskedInstance(rand, dictionary!!, it!!) }
-  }
-
-  private inner class EpochIterable: Iterable<Batch>,
-    Iterator<Batch> {
-    var maskedInstances: List<MaskedInstance> = createEpochData()
-    var idx: Int = batchSize
-
-    /** {@inheritDoc}  */
-    override fun iterator(): Iterator<Batch> = this
-
-    /** {@inheritDoc}  */
-    override fun hasNext(): Boolean = idx < maskedInstances.size
-
-    /** {@inheritDoc}  */
-    override fun next(): Batch {
-      val ndManager = manager.newSubManager()
-      val batchData = maskedInstances.subList(idx - batchSize, idx)
-      val batch = createBatch(ndManager, batchData, idx, maskedInstances.size)
-      idx++
-      return batch
-    }
-  }
 
   class ParsedFile constructor(val tokenizedLines: List<List<String>>) {
     fun addToSentencePairs(sentencePairs: MutableList<SentencePair?>) {
@@ -107,8 +105,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
       }
     }
 
-    val totalLength: Int
-      get() = sentenceA.size + sentenceB.size
+    val totalLength: Int get() = sentenceA.size + sentenceB.size
 
     fun truncateToTotalLength(totalLength: Int) {
       var count = 0
@@ -129,20 +126,19 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
     val dictionary: Dictionary,
     val originalSentencePair: SentencePair,
   ) {
-    val label: ArrayList<String> =
-      ArrayList<String>(originalSentencePair.totalLength + 3).apply {
-        add(CLS)
-        addAll(originalSentencePair.sentenceA)
-        add(SEP)
-        addAll(originalSentencePair.sentenceB)
-        add(SEP)
-      }
+    val label = arrayOf(
+      CLS,
+      *originalSentencePair.sentenceA.toTypedArray(),
+      SEP,
+      *originalSentencePair.sentenceB.toTypedArray(),
+      SEP,
+    )
 
     // Randomly pick 20% of indices to mask
     val maskedIndices = label.indices.shuffled(rand)
       .take((label.size / 5).coerceAtMost(MAX_MASKING_PER_INSTANCE)).sorted()
 
-    val masked = ArrayList(label).also { masked ->
+    val masked = label.copyOf().also { masked ->
       // Perform masking of these indices
       maskedIndices.forEach {
         val r = rand.nextFloat()
@@ -154,31 +150,27 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
       }
     }
 
-    // create type tokens (0 = sentence a, 1, sentence b)
-    val typeIds: ArrayList<Int> = ArrayList<Int>(label.size).also { typeIds ->
-      var typeId = 0
-      for (idx in label.indices) {
-        typeIds.add(typeId)
-        if (label[idx] === SEP) typeId++
-      }
+    // create type tokens (0 = sentence a, 1 = sentence b)
+    val typeIds = IntArray(MAX_SEQUENCE_LENGTH) {
+      val startIdx = originalSentencePair.sentenceA.size + 2
+      val endIdx = startIdx + originalSentencePair.sentenceB.size
+      if(it in startIdx..endIdx) 1 else 0
     }
 
     val tokenIds = IntArray(MAX_SEQUENCE_LENGTH)
       .apply { masked.forEachIndexed { i, it -> this[i] = dictionary[it] } }
 
-    fun getTypeIds() = IntArray(MAX_SEQUENCE_LENGTH)
-      .apply { typeIds.forEachIndexed { i, it -> this[i] = it } }
-
     val inputMask = IntArray(MAX_SEQUENCE_LENGTH)
-      .apply { fill(1, toIndex = typeIds.size - 1) }
+      .apply { fill(1, toIndex = label.size - 1) }
 
     val maskedPositions = IntArray(MAX_MASKING_PER_INSTANCE)
       .apply { maskedIndices.forEachIndexed { i, it -> this[i] = it } }
 
     val nextSentenceLabel = if (originalSentencePair.consecutive) 1 else 0
 
-    val maskedIds: IntArray = IntArray(MAX_MASKING_PER_INSTANCE)
-      .apply { maskedIndices.forEachIndexed { i, it -> this[i] = dictionary[label[it]] } }
+    val maskedIds: IntArray = IntArray(MAX_MASKING_PER_INSTANCE).apply {
+      maskedIndices.forEachIndexed { i, it -> this[i] = dictionary[label[it]] }
+    }
 
     val labelMask: IntArray = IntArray(MAX_MASKING_PER_INSTANCE)
       .apply { fill(1, toIndex = maskedIndices.size - 1) }
@@ -214,27 +206,15 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
       dataSize: Int
     ): Batch {
       val inputs = NDList(
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.tokenIds },
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.getTypeIds() },
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.inputMask },
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.maskedPositions }
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.tokenIds },
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.typeIds },
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.inputMask },
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.maskedPositions }
       )
       val labels = NDList(
         nextSentenceLabelsFromList(ndManager, instances),
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.maskedIds },
-        batchFromList(
-          ndManager, instances
-        ) { obj: MaskedInstance -> obj.labelMask }
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.maskedIds },
+        batchFromList(ndManager, instances) { obj: MaskedInstance -> obj.labelMask }
       )
       return Batch(
         ndManager,
@@ -339,9 +319,7 @@ class BertCodeDataset(var batchSize: Int, var epochLimit: Long): Dataset {
     ): Dictionary {
       if (maxSize < RESERVED_TOKENS.size)
         throw IllegalArgumentException(
-          "Dictionary needs at least size "
-            + RESERVED_TOKENS.size
-            + " to account for reserved tokens."
+          "Dictionary must be at least ${RESERVED_TOKENS.size} long."
         )
 
       val result = ArrayList<String>(maxSize)

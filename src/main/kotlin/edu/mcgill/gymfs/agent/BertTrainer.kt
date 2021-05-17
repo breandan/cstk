@@ -12,10 +12,9 @@ import edu.mcgill.gymfs.disk.*
 
 
 fun main() {
-  val dataset = BertCodeDataset(BATCH_SIZE, 1000L).apply { prepare() }
+  val dataset = BertCodeDataset().apply { prepare() }
   createBertPretrainingModel(dataset.getDictionarySize()).use { model ->
-    val config = createTrainingConfig()
-    model.newTrainer(config).use { trainer ->
+    model.newTrainer(createTrainingConfig()).use { trainer ->
       // Initialize training
       val inputShape = Shape(MAX_SEQUENCE_LENGTH.toLong(), 512)
       trainer.initialize(inputShape, inputShape, inputShape, inputShape)
@@ -25,18 +24,12 @@ fun main() {
   }
 }
 
-private fun createBertPretrainingModel(dictionarySize: Int): Model {
-  val block = BertPretrainingBlock(
-    BertBlock.builder().micro().setTokenDictionarySize(dictionarySize)
-  )
-//  block.setInitializer(
-//    TruncatedNormalInitializer(0.02f),
-//
-//  )
-  val model = Model.newInstance("Bert Pretraining")
-  model.block = block
-  return model
-}
+private fun createBertPretrainingModel(dictionarySize: Int) =
+  Model.newInstance("Bert Pretraining").apply {
+    block = BertPretrainingBlock(
+      BertBlock.builder().micro().setTokenDictionarySize(dictionarySize)
+    )
+  }
 
 private fun createTrainingConfig(): TrainingConfig {
   val learningRateTracker: Tracker = WarmUpTracker.builder()
@@ -52,23 +45,27 @@ private fun createTrainingConfig(): TrainingConfig {
         .build()
     )
     .build()
-  val optimizer: Optimizer = Adam.builder()
+
+  val optimizer = Adam.builder()
     .optEpsilon(1e-5f)
     .optLearningRateTracker(learningRateTracker)
     .build()
+
+  val lossListener = object: DivergenceCheckTrainingListener() {
+    var batch = 0
+    override fun onTrainingBatch(
+      trainer: Trainer?,
+      batchData: TrainingListener.BatchData?
+    ) = trainer?.loss?.getAccumulator(TRAIN_ALL)
+      .let { if (batch++ % 200 == 0) println(it) }
+  }
+
   return DefaultTrainingConfig(BertPretrainingLoss())
     .optOptimizer(optimizer)
     .optDevices(Device.getDevices(MAX_GPUS))
     .addTrainingListeners(
       *TrainingListener.Defaults.logging(),
-      object: DivergenceCheckTrainingListener() {
-        var batch = 0
-        override fun onTrainingBatch(
-          trainer: Trainer?,
-          batchData: TrainingListener.BatchData?
-        ) = trainer?.loss?.getAccumulator(TRAIN_ALL)
-          .let { if (batch++ % 200 == 0) println(it) }
-      },
+      lossListener,
       SaveModelTrainingListener("", "codebert", 20),
     )
 }
