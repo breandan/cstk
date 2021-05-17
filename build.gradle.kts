@@ -53,7 +53,7 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.1.0")
+  implementation("com.github.ajalt.clikt:clikt:3.2.0")
 
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
@@ -69,8 +69,6 @@ dependencies {
   implementation("dk.brics:automaton:1.12-1")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.128")
-  // For retrieving dataset from GitHub
   implementation("org.kohsuke:github-api:1.128")
 
   // Read compressed repositories downloaded from GitHub

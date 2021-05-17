@@ -1088,6 +1088,7 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 * [Commons VFS](https://commons.apache.org/proper/commons-vfs/) - Virtual file system for compressed files
 * [LearnLib](https://github.com/LearnLib/learnlib) - Java library for automata learning algorithms
 * [OR-Tools](https://developers.google.com/optimization/introduction/overview) - Software suite for combinatorial optimization
+* [KeyBERT](https://github.com/MaartenGr/KeyBERT) - Minimal keyword extraction using BERT
 
 # Papers
 
@@ -1097,6 +1098,26 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 * [Graph Optimal Transport for Cross-Domain Alignment](http://proceedings.mlr.press/v119/chen20e/chen20e.pdf), Chen et al. (2021)
 * [TextRank: Bringing Order into Texts](https://www.aclweb.org/anthology/W04-3252.pdf), Mihalcea and Tarau (2004)
 * [From word embeddings to document distances (WMD)](http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3), Kusner et al. (2015)
+
+# Grammar Induction
+
+* [Learning Regular Sets from Queries and Counterexamples](https://omereingold.files.wordpress.com/2017/06/angluin87.pdf), Angluin (1987)
+* [Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples](https://arxiv.org/pdf/1711.09576.pdf), Weiss et al. (2018)
+* [Enumerating Regular Expressions and Their Languages](https://cs.uwaterloo.ca/~shallit/Papers/ciaa-04.pdf), Lee & Shallit (2004)
+* [BLUE*: a Blue-Fringe Procedure for Learning DFA with Noisy Data](https://www.ibisc.univ-evry.fr/~janodet/pub/tjs04.pdf), Sebban et al. (2004)
+
+## Automata-based
+
+* [BRICS](https://github.com/cs-au-dk/dk.brics.automaton)
+* [LearnLib](https://github.com/Learnlib/learnlib)
+* [JFLAP](https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java)
+
+## RE-based
+
+* [frak](https://github.com/noprompt/frak)
+* [rgxg](https://github.com/rgxg/rgxg)
+* [Grex](https://github.com/pemistahl/grex)
+* [RegexGenerator](https://github.com/MaLeLabTs/RegexGenerator)
 
 # Learning to Rank
 
