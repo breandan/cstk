@@ -5,29 +5,30 @@ Tools and experiments for information retrieval on code. Provides:
 * Indices for keyword and vector embedding
 * Learning to search & grammar induction
     * Passive DFA learning from membership
-    * Keyword/BOW-based query synthesis
+    * Keyword/BoW-based query synthesis
 * Semantic graph construction
     * Keyword-matching edge construction
     * Proximity-based graph embedding
 * Metrics for string, vector and distribution matching
     * Kantorovich metric on code embeddings
-    * String distance metrics
+    * Various string distance metrics
 * Evaluation criteria: NDCG, MAP@K, MRR
 * Datamining and dataloading tools
 * "MiniGithub" mock training interface
 
 # Indexing
 
-A fast environment for the filesystem.
+Provides a mock API for filesystem interactions.
 
 Stores BPE-compressed files in memory.
 
-Gives an agent the ability to selectively read files.
+Gives an agent the ability to selectively read and query files.
 
 Interface:
 
 * `Path.read(start, end)` - Returns file chunk at offset.
 * `Path.grep(query)` - Returns offsets matching query.
+* `Path.knn(code)` - Fetches similar code snippets to the query.
 
 # Usage
 
@@ -1071,14 +1072,17 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 
 # Research Questions
 
+* Can we learn to synthesize a search query which is likely to retrieve results containing relevant information to the local context
+* Do good queries contain keywords from the surrounding context? What information sources are the most salient?
 * Can we learn a highly compressed index of all artifacts on GitHub for fast offline lookups with just-in-time retrieval?
-* What if when we allow the user to adjust the search settings?
+* What if when we allowed the user to configure the search settings?
   * Clone type (I/II/III/IV)
   * File extension filter
   * Source code context
   * Edge construction
   * Ranking metric
 * How do we clearly communicate search result alignment? Concordance++
+* What information can be extracted from the search results? Can we adapt information from results into the local context, to suggest e.g. naming, code fixes?
 
 # Libraries
 
@@ -1110,7 +1114,7 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 
 * [BRICS](https://github.com/cs-au-dk/dk.brics.automaton)
 * [LearnLib](https://github.com/Learnlib/learnlib)
-* [JFLAP](https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java)
+* [JFLAP](http://www.jflap.org/)
 
 ## RE-based
 

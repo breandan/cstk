@@ -83,6 +83,7 @@ dependencies {
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
   // http://www.jflap.org/modules/ConvertedFiles/DFA%20to%20Regular%20Expression%20Conversion%20Module.pdf
+  // https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java
   implementation("com.github.citiususc:jflap-lib:1.3")
 }
 
