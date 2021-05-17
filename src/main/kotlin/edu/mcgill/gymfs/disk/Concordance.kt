@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.disk
 
+import edu.mcgill.gymfs.indices.KWIndex
 import java.io.Serializable
 import java.net.URI
 
@@ -36,7 +37,7 @@ data class Concordance constructor(val uri: URI, val line: Int): Serializable {
    * TODO: Reweight score by other metrics?
    */
 
-  fun expand(grepper: TrieSearch): List<Pair<String, Concordance>> =
+  fun expand(grepper: KWIndex): List<Pair<String, Concordance>> =
     topKeywordsFromContext { grepper.search(it).size.toDouble() }
       .also { println("Salient keywords: $it") }
       .map { (kw, _) ->

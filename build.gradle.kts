@@ -20,8 +20,9 @@ repositories {
 }
 
 dependencies {
+  implementation(platform(kotlin("bom")))
   implementation(kotlin("stdlib-jdk8"))
-  implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0")
+  implementation(kotlin("reflect"))
 
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
@@ -84,7 +85,7 @@ dependencies {
   // https://github.com/LearnLib/learnlib/issues/75
   // http://www.jflap.org/modules/ConvertedFiles/DFA%20to%20Regular%20Expression%20Conversion%20Module.pdf
   // https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java
-  implementation("com.github.citiususc:jflap-lib:1.3")
+  // implementation("com.github.citiususc:jflap-lib:1.3")
 }
 
 tasks {

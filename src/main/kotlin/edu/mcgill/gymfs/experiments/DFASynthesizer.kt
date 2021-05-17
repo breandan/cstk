@@ -35,7 +35,7 @@ private fun calculuatePrecisionAndRecall(
   knnIndex: VecIndex,
   vecMap: Map<String, DoubleArray>
 ): Pair<Double, Double> {
-  val neighbors = knnIndex.nearestNonEmptyNeighbors(vector, 100000)
+  val neighbors = knnIndex.knn(vector, 100000)
   val neighborhood = Neighborhood(query, vector, neighbors)
   println("\nQuery:\n======\n${neighborhood.origin}")
 
