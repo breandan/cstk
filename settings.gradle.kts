@@ -1,3 +1,7 @@
 rootProject.name = "gym-fs"
-enableFeaturePreview("VERSION_CATALOGS")
 
+includeBuild("markovian") {
+  dependencySubstitution {
+    substitute(module("com.github.breandan:markovian")).with(project(":"))
+  }
+}

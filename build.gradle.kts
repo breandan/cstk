@@ -17,6 +17,7 @@ repositories {
   mavenCentral()
   maven("https://jitpack.io")
   maven("https://jetbrains.bintray.com/lets-plot-maven")
+  maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 dependencies {
@@ -59,11 +60,18 @@ dependencies {
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
   implementation("com.github.breandan:kaliningraph:0.1.6")
+  implementation("com.github.breandan:markovian:-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
   // https://github.com/LearnLib/automatalib
   implementation("net.automatalib.distribution:automata-distribution:0.10.0")
+
+  // https://github.com/lorisdanto/symbolicautomata
+  implementation("com.github.lorisdanto.symbolicautomata:0da3f79677")
+
+  // https://github.com/tech-srl/prime
+  implementation("com.github.tech-srl:prime:5fae8f3")
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
@@ -80,6 +88,8 @@ dependencies {
   val ortoolsVersion = "9.0.9048"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   implementation("com.google.ortools:ortools-linux-x86-64:$ortoolsVersion")
+
+
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
@@ -127,17 +137,18 @@ tasks {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 
-  jar {
-    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.BertTrainerKt"
-
-    from(configurations.compileClasspath.get().files
-      .filter { it.extension != "pom" }
-      .map { if (it.isDirectory) it else zipTree(it) })
-
-    duplicatesStrategy = EXCLUDE
-    exclude("META-INF/*.DSA")
-    exclude("META-INF/*.RSA")
-    exclude("META-INF/*.SF")
-    archiveBaseName.set("${project.name}-fat")
-  }
+// Compile fatjar for Compute Canada, doesn't like Gradle
+//  jar {
+//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.BertTrainerKt"
+//
+//    from(configurations.compileClasspath.get().files
+//      .filter { it.extension != "pom" }
+//      .map { if (it.isDirectory) it else zipTree(it) })
+//
+//    duplicatesStrategy = EXCLUDE
+//    exclude("META-INF/*.DSA")
+//    exclude("META-INF/*.RSA")
+//    exclude("META-INF/*.SF")
+//    archiveBaseName.set("${project.name}-fat")
+//  }
 }

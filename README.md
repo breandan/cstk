@@ -1103,18 +1103,31 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 * [TextRank: Bringing Order into Texts](https://www.aclweb.org/anthology/W04-3252.pdf), Mihalcea and Tarau (2004)
 * [From word embeddings to document distances (WMD)](http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3), Kusner et al. (2015)
 
+# Example-centric programming
+
+* [Example-Centric Programming: Integrating Web Search
+into the Development Environment](https://hci.stanford.edu/publications/2009/blueprintTR/brandt_blueprint_techreport.pdf), Brandt et al. (2009)
+* [Exemplar: A source code search engine for finding highly relevant applications](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=5989838), McMillan et al. (2012)
+
+# Symbolic automata
+
+* [Symbolic Automata for Static Specification Mining](https://cseweb.ucsd.edu/~hpeleg/sas2013.pdf) [[slides](https://cseweb.ucsd.edu/~hpeleg/sa_for_msr.pdf)], Peleg et al. (2013)
+* [Symbolic Automata](https://pages.cs.wisc.edu/~loris/symbolicautomata.html), D'Antoni et al.
+
 # Grammar Induction
 
-* [Learning Regular Sets from Queries and Counterexamples](https://omereingold.files.wordpress.com/2017/06/angluin87.pdf), Angluin (1987)
 * [Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples](https://arxiv.org/pdf/1711.09576.pdf), Weiss et al. (2018)
 * [Enumerating Regular Expressions and Their Languages](https://cs.uwaterloo.ca/~shallit/Papers/ciaa-04.pdf), Lee & Shallit (2004)
 * [BLUE*: a Blue-Fringe Procedure for Learning DFA with Noisy Data](https://www.ibisc.univ-evry.fr/~janodet/pub/tjs04.pdf), Sebban et al. (2004)
+* [Learning Regular Sets from Queries and Counterexamples](https://omereingold.files.wordpress.com/2017/06/angluin87.pdf), Angluin (1987)
 
 ## Automata-based
 
 * [BRICS](https://github.com/cs-au-dk/dk.brics.automaton)
 * [LearnLib](https://github.com/Learnlib/learnlib)
 * [JFLAP](http://www.jflap.org/)
+* [Symbolic automata](https://github.com/lorisdanto/symbolicautomata)
+* [SymLearn](https://github.com/PhillipVH/symlearn)
 
 ## RE-based
 
