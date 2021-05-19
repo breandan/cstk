@@ -9,8 +9,10 @@ import kotlin.time.*
 fun main() {
   val mc = measureTimedValue {
     val data = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
-      .take(100).toList().map { it.allLines().joinToString("\n") }
-      .joinToString("\n")
+      .take(100).toList()
+      .map { it.allLines().joinToString("\n")
+//        .replace(Regex("[a-zA-Z0-9_]*"), "w")
+      }.joinToString("\n")
       .asSequence()
 
     // TODO: translate identifiers to placeholders for symbolic automata

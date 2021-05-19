@@ -4,6 +4,7 @@ import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 import edu.mcgill.gymfs.math.euclidDist
+import net.automatalib.visualization.Visualization
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets
 import kotlin.time.*
@@ -53,7 +54,7 @@ private fun calculuatePrecisionAndRecall(
 
   val dfa = synthesizeDFA(positiveExamples, negativeExamples)
 
-//  Visualization.visualize(secondModel, alphabet)
+//  Visualization.visualize(dfa, DEFAULT_ALPHABET)
 
   val resultsOfDFAQuery = strings.filterByDFA(dfa)
     .sortedBy { euclidDist(neighborhood.vector, vecMap[it]!!) }

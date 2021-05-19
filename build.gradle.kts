@@ -67,11 +67,11 @@ dependencies {
   // https://github.com/LearnLib/automatalib
   implementation("net.automatalib.distribution:automata-distribution:0.10.0")
 
-  // https://github.com/lorisdanto/symbolicautomata
-  implementation("com.github.lorisdanto.symbolicautomata:0da3f79677")
+//  https://github.com/lorisdanto/symbolicautomata
+//  implementation("com.github.lorisdanto.symbolicautomata:0da3f79677")
 
-  // https://github.com/tech-srl/prime
-  implementation("com.github.tech-srl:prime:5fae8f3")
+//  https://github.com/tech-srl/prime
+//  implementation("com.github.tech-srl:prime:5fae8f309f")
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
@@ -88,8 +88,6 @@ dependencies {
   val ortoolsVersion = "9.0.9048"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   implementation("com.google.ortools:ortools-linux-x86-64:$ortoolsVersion")
-
-
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
