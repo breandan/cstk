@@ -1,21 +1,30 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import edu.mcgill.markovian.mcmc.toMarkovChain
+import edu.mcgill.gymfs.indices.CodeEmbedding
+import edu.mcgill.markovian.mcmc.*
 import java.io.File
+import kotlin.streams.toList
 import kotlin.time.*
 
 @ExperimentalTime
 fun main() {
   val mc = measureTimedValue {
-    val data = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
-      .take(100).toList().joinToString("\n") {
-        it.allLines().joinToString("\n")
-//        .replace(Regex("[a-zA-Z0-9_]*"), "w")
-      }.asSequence()
-
+    DATA_DIR.allFilesRecursively().toList().parallelStream().map { src ->
+      vfsManager.resolveFile("tgz:${src.path}").run {
+        println("Indexing $name")
+        findFiles(VFS_SELECTOR).asSequence().mapNotNull {
+            try {
+              val text = it.uri.allLines().joinToString("\n")
+              if (text.isEmpty()) null
+              else text.asSequence().toMarkovChain(3)
+            } catch (e: Exception) {
+              null
+            }
+          }.toList()
+      }
+    }.toList().flatten().reduce { a, b -> a + b }
     // TODO: translate identifiers to placeholders for symbolic automata
-    data.toMarkovChain(memory = 3)
   }.also { println("Training time: ${it.duration}") }.value
 
   println("Tokens: " + mc.size)
