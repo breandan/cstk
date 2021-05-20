@@ -60,7 +60,7 @@ dependencies {
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
   implementation("com.github.breandan:kaliningraph:0.1.6")
-  implementation("com.github.breandan:markovian:-SNAPSHOT")
+  implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
@@ -123,6 +123,7 @@ tasks {
     "querySynth" to "edu.mcgill.gymfs.experiments.DFASynthesizerKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
+    "markovChain" to "edu.mcgill.gymfs.experiments.MarkovChainKt",
   ).forEach { (cmd, mainClass) ->
     register(cmd, JavaExec::class) {
       main = mainClass

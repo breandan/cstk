@@ -1,9 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import edu.mcgill.gymfs.indices.CodeEmbedding
-import edu.mcgill.markovian.mcmc.*
-import java.io.File
+import edu.mcgill.markovian.mcmc.toMarkovChain
 import kotlin.streams.toList
 import kotlin.time.*
 
@@ -13,14 +11,13 @@ fun main() {
     DATA_DIR.allFilesRecursively().toList().parallelStream().map { src ->
       vfsManager.resolveFile("tgz:${src.path}").run {
         println("Indexing $name")
-        findFiles(VFS_SELECTOR).asSequence().mapNotNull {
+        findFiles(VFS_SELECTOR).mapNotNull {
             try {
+//              println(it.uri)
               val text = it.uri.allLines().joinToString("\n")
               if (text.isEmpty()) null
               else text.asSequence().toMarkovChain(3)
-            } catch (e: Exception) {
-              null
-            }
+            } catch (e: Exception) { null }
           }.toList()
       }
     }.toList().flatten().reduce { a, b -> a + b }
