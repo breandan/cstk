@@ -9,11 +9,10 @@ import kotlin.time.*
 fun main() {
   val mc = measureTimedValue {
     val data = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
-      .take(100).toList()
-      .map { it.allLines().joinToString("\n")
+      .take(100).toList().joinToString("\n") {
+        it.allLines().joinToString("\n")
 //        .replace(Regex("[a-zA-Z0-9_]*"), "w")
-      }.joinToString("\n")
-      .asSequence()
+      }.asSequence()
 
     // TODO: translate identifiers to placeholders for symbolic automata
     data.toMarkovChain(memory = 3)
@@ -24,8 +23,7 @@ fun main() {
 //    println("Ergodic:" + mc.isErgodic())
 //  }.also { println("Ergodicity time: ${it.duration}") }
 
-  measureTimedValue {
-    mc.sample().take(200).flatten().toList()
+  measureTimedValue { mc.sample().take(200).flatten().toList()
   }.also {
     println("Sample: " + it.value.joinToString(""))
     println("Sampling time: ${it.duration}")
