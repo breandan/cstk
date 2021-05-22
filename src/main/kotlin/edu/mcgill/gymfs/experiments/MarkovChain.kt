@@ -16,7 +16,7 @@ fun main() {
 //              println(it.uri)
               val text = it.uri.allLines().joinToString("\n")
               if (text.isEmpty()) null
-              else text.asSequence().toMarkovChain(3)
+              else text.asSequence().toMarkovChain()
             } catch (e: Exception) { null }
           }.toList()
       }
