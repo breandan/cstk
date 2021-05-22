@@ -29,7 +29,7 @@ fun main() {
 //    println("Ergodic:" + mc.isErgodic())
 //  }.also { println("Ergodicity time: ${it.duration}") }
 
-  measureTimedValue { mc.sample().take(200).flatten().toList()
+  measureTimedValue { mc.sample().take(200)
   }.also {
     println("Sample: " + it.value.joinToString(""))
     println("Sampling time: ${it.duration}")
