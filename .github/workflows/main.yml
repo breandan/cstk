@@ -19,5 +19,5 @@ jobs:
           java-version: 11
       - name: Build with Gradle
         run: |
-        git submodule update --init --recursive
-        ./gradlew trieSearch --args='--query=match'
+          git submodule update --init --recursive
+          ./gradlew trieSearch --args='--query=match'
