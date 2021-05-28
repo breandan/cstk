@@ -38,6 +38,8 @@ Keyword search:
 
 For example:
 
+<details>
+
 ```
 $ ./gradlew -q trieSearch
 Indexing /home/breandan/IdeaProjects/gym-fs
@@ -83,11 +85,15 @@ Next locations:
 Found 4 results in 2.82ms
 ```
 
+</details>
+
 Nearest neighbor search:
 
 `./gradlew -q knnSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>] [--graphs=10]'`
 
 For example:
+
+<details>
 
 ```
 ./gradlew -q knnSearch --args='--query="const val MAX_GPUS = 1"'
@@ -123,6 +129,80 @@ Fetched nearest neighbors in 1.48674ms
 
 Reranked nearest neighbors in 1.412775ms
 ```
+</details>
+
+The following command will run the code synthesis demo:
+
+```
+./gradlew codeSynth -P train=[PATH_TO_TRAINING_DATA]
+```
+
+This should produce something like the following text:
+
+<details>
+
+3 symbols / symbol:
+
+```kotlin
+fun test = projection be
+       val private fun checkbox(): String {
+                  }
+
+    fun box(): String {
+         as String {
+      return "test org.rust
+       fun String {
+       s
+                       }
+           va     val box(): String {
+                     }
+```
+
+3 symbols / symbol:
+
+```python
+class Detection_instring else class_componse_source)
+           first_list_end]
+
+                           PVOID),
+    exception must in not instarted the commension.
+
+                 tokens = 0
+            error:
+             
+       def __name:  line, untile_path)
+           no blockThreader sys.get_paracter)
+        @rtype:  breated line_filenance',
+            if isinstack if not sequeue_size = node):
+```
+
+3 symbols / symbol, memory = 2:
+
+```kotlin
+val ritingConfig.indefaultResponseExtractory.persDsl {
+        */
+     * @see [hasNextContentType) }
+		fun true): UsertionInjectionInterFunctionse {
+
+    fun result() {
+		action that matcher example.order = ReactiveEntityList() {}
+
+	 * @see Request
+	inline fun values() = Selections.assure()
+
+             * This bean defining ther the ream()`.
+    * @see [list)
+		}
+	}
+
+    fun val set
+    
+       @Generate lastImperateBridge
+ * @see String, get method instance fun <reified contain await()
+      * @params: Map`() {
+		val mockRequest = Mocked().buil
+```
+</details>
 
 # Semantic Similarity
 
