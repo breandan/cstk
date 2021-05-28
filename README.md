@@ -32,17 +32,15 @@ Interface:
 
 # Usage
 
-### Keyword search:
+### Keyword search
 
 How quickly can we search for substrings? Useful for learning to search.
 
-```
-bash./gradlew -q trieSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'
+```bash
+./gradlew -q trieSearch --args='--query=<QUERY> [--path=<PATH_TO_INDEX>] [--index=<INDEX_FILE>]'
 ```
 
 <details>
-
-For example:
 
 ```
 $ ./gradlew -q trieSearch
@@ -101,10 +99,8 @@ What do k-nearest neighbors look like?
 
 <details>
 
-For example:
-
 ```
-./gradlew -q knnSearch --args='--query="const val MAX_GPUS = 1"'
+$ ./gradlew -q knnSearch --args='--query="const val MAX_GPUS = 1"'
 
 Searching KNN index of size 981 for [?]=[const val MAX_GPUS = 1]…
 
@@ -150,7 +146,7 @@ What do nearest neighbors share in common?
 <details>
 
 ```
-./gradlew nearestNeighbors
+$ ./gradlew nearestNeighbors
 
 Angle brackets enclose longest common substring up to current result
 

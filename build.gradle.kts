@@ -123,7 +123,7 @@ tasks {
     "querySynth" to "edu.mcgill.gymfs.experiments.DFASynthesizerKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
-    "markovChain" to "edu.mcgill.gymfs.experiments.MarkovChainKt",
+    "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
   ).forEach { (cmd, mainClass) ->
     register(cmd, JavaExec::class) {
       main = mainClass
