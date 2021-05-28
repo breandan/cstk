@@ -5,7 +5,7 @@ import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 plugins {
   val kotlinVersion = "1.5.20-M1"
   kotlin("jvm") version kotlinVersion
-  id("com.github.ben-manes.versions") version "0.38.0"
+  id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.1"
 }
@@ -78,7 +78,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-1")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.128")
+  implementation("org.kohsuke:github-api:1.129")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.20")
