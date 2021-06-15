@@ -53,10 +53,9 @@ Humans are adept information foraging agents. We can quickly find relevant infor
 
 Early work in program learning realized the importance of graph-based representations~\citep{allamanis2017learning}, however explicit graph construction requires extensive feature-engineering. More recent work in program synthesis has explored incorporating a terminal~\citep{ellis2019write}, graphical~\citep{walke2020learning} or other user interface to explore the space of valid programs, however do not consider the scope or variety of artifacts in a software project. Others have shown the feasibility of learning a local graph~\citep{johnson2020learning} from source code, but still require an explicit parser to form the initial graph and adaption in settings where style, terminology and document structure vary remains a challenge.
 
+Imagine a newly-hired developer with no prior knowledge about a closed-source project. She receives access to the team's Git repository and is assigned her first ticket: ``Fix test broken by \texttt{0fb98be}''. After locating the commit and familiarizing herself with the code, she writes a query to StackOverflow, finds a relevant solution, copies the code into the project, makes a few changes, presses run, and the test passes.
 
-Imagine a newly-hired developer, who has programming experience, but no prior knowledge about a closed-source project. She receives access to the team's Git repository and is assigned her first ticket: Fix test broken by \texttt{0fb98be}. After locating the commit and becoming familiar with the code, she queries StackOverflow, discovers a relevant solution, copies the code into the project, makes a few edits, presses run, and the test passes.
-
-In order to accomplish a similar task, an information-seeking agent must be able to explore a local database for information, construct a query, and search a remote database. Similar to a human developer, it might traverse the project to gather information, taking note of various keywords, APIs and design patterns. While traversing the project, the model constructs a project-specific knowledge graph, which it uses to locate other relevant artifacts written by authors who solved the same problem.
+In order to achieve a similar task, an information-seeking agent first must explore a local database for information, construct a query, and search a remote database. Similar to a human developer, it might traverse the project to gather information, taking note of various keywords, APIs and design patterns. While traversing the project, the model constructs a project-specific knowledge graph, which it uses to locate other relevant artifacts written by authors who have solved the same problem.
 
 %\begin{figure*}
 %  \centering
@@ -68,7 +67,7 @@ In order to accomplish a similar task, an information-seeking agent must be able
 
 \section{Prior literature}
 
-Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, where queries are typically considered to be a short sequence composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query might be generated. Model performance typically evaluated using mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, none however, consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
+Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, in which queries are typically plaintext strings composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query might be a synthetic string or vector. Searches are typically compared using using, e.g., mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, prior work does not consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
 
 { % begin box to localize effect of arraystretch change
 \renewcommand{\arraystretch}{1.5}
@@ -83,7 +82,6 @@ Prior work in the code search literature explores the text-to-code~\citep{husain
     \href{https://arxiv.org/pdf/1909.09436.pdf#page=5}{\textsc{CSNet}}~\citep{husain2019codesearchnet}     & Text-to-code & Big code benchmark & MRR \\
     \href{https://arxiv.org/pdf/1812.01158.pdf#section.5}{\textsc{Aroma}}~\citep{luan2019aroma}     & Code-to-code & Structural Search& Recall@N \\
     \href{https://raw.githubusercontent.com/mhilmiasyrofi/AUSearch/master/SANER_2020_AUSearch.pdf}{\textsc{AUSearch}}~\citep{asyrofi2020ausearch}     & Code-to-code & Type resolver & Highlight accuracy \\
-
     \href{https://arxiv.org/pdf/1905.03813.pdf#section.4}{\textsc{Cambronero}}~\citep{cambronero2019deep}     & Text-to-code & Semantics & Answered@N \\
     \href{https://guxd.github.io/papers/deepcs.pdf#section.5}{\textsc{DeepCS}}~\citep{gu2018deep}     & Text-to-code & Deep learning & FRank, *@N, MRR \\
     \href{https://www.cs.sjtu.edu.cn/~zhonghao/paper/Lancer.pdf}{\textsc{Lancer}}~\citep{zhou2019lancer}     & Code-to-code & BERT embedding & HitRate@k, MRR \\
@@ -92,13 +90,11 @@ Prior work in the code search literature explores the text-to-code~\citep{husain
 \end{table}
 }
 
-Although we draw some inspiration from the duplicate detection literature, their work presumes the code was intentionally duplicated or modified but is essentially identical in form or function. In contrast, our work seeks to help users discover artifacts which predictive of as-yet-incomplete code. By aligning salient features from the surrounding document and project graph, we approximate the notion of semantic similarity, without requring a language-specific parser like some methods~\citep{cambronero2019deep} do, and can more easily adapt to settings where the language and project structure varies.
+Our work seeks to help users discover software artifacts sharing common features with the surrounding context by automatically constructing a search query and ranking results by contextual similarity. Unlike prior literature which requires a language-specific parser~\citep{cambronero2019deep}, by aligning learned features from the surrounding document, we can more easily adapt to unconstrained settings such as work-in-progress code and freeform Q\&A text, which may contain incomplete or syntactically invalid text at the time of query construction. While partly inspired by research on duplicate detection, we make no assumptions about provenance or user intent.
 
-Furthermore, unlike prior work, our work considers the surrounding project and related artifacts. Instead of parsing their contents explicitly, which may be computationally intractable, we allow the agent to construct the graph organically by exploring the filesystem, then extract a query.
+\section{Method}\label{sec:method}
 
-\section{Method}
-
-We fetch a dataset of repositories sampled repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs. We also encode CodeBERT~\citep{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\citep{malkov2018efficient} (HNSWG).
+We fetch a dataset of repositories sampled repositories on GitHub, containing a mixture of filetypes representing source code and natural language artifacts. From each repository, we index all substrings of every line in every file using a variable-height radix tree producing a multimap of $\texttt{kwdIndex: String -> List<Location<F, O>>}$ of $\texttt{String}$  queries to file-offset pairs. We also encode CodeBERT~\citep{feng2020codebert} sequence embeddings to substrings $\texttt{knnIndex: Vector -> Location<F, O>}$ using a Hierarchial Navigavble Small World Graph~\citep{malkov2018efficient} (HNSWG).
 
 \begin{figure}[H]
   \centering
@@ -107,7 +103,7 @@ We fetch a dataset of repositories sampled repositories on GitHub, containing a 
   \label{fig:bert}
 \end{figure}
 
-For each token in a string, CodeBERT emits a length-768 vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{768 \times (n + 1)}$, the first column of which contains the final hidden layer activations. We concatenate the CodeBERT sequence `\texttt{<s>}' and using the source tokens, encode and vectorize the encoded sequence using the vocabulary, then take the first row as our sequence embedding as depicted in Fig.~\ref{fig:bert}. In \S~\ref{sec:results}, we compare various distance-metrics to fetch the nearest sequence embeddings in our database and compare precision and recall across various types of distance metrics.
+For each token in a string, CodeBERT emits a length-768 vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{768 \times (n + 1)}$, the first column of which contains the final hidden layer activations. We concatenate the CodeBERT sequence `\texttt{<s>}', encode the source tokens and vectorize the encoded sequence using the vocabulary, then take the first row as our sequence embedding as depicted in Fig.~\ref{fig:bert}. In \S~\ref{sec:results}, we compare various distance metrics to fetch the nearest sequence embeddings in our database and compare precision and recall across various metrics.
 
 \begin{figure}[H]
   \centering
@@ -125,7 +121,7 @@ For a given query and context, we first compute the context embedding and using 
   \label{fig:architecture}
 \end{figure}
 
-Consider the depth-1 beam search procedure (Fig. ~\ref{fig:pipeline}): We can use either vector search or keyword search to perform the context expansion, although vector search has the disadvantage of needing to rebuild the vector embedding index at each step during training. Keyword search is comparatively cheaper, as it only needs to build once for each repo on MiniGithub.
+Consider the depth-1 beam search procedure (Fig. ~\ref{fig:pipeline}): We can use either vector search or keyword search to perform the context expansion, although vector search has the disadvantage of needing to rebuild the vector embedding index at each step during training. Keyword search is comparatively cheaper, as the index only needs to be built once for each repo on MiniGithub.
 
 \begin{figure}[H]
   \centering
@@ -134,7 +130,7 @@ Consider the depth-1 beam search procedure (Fig. ~\ref{fig:pipeline}): We can us
   \label{fig:pipeline}
 \end{figure}
 
-Once the beam search procedure is complete, we have a graph representing the neighborhood of the nearest neighboring code fragments in the parent project. This forms a so-called \textit{virtual knowledge graph}, with nodes decorated by the CodeBERT sequence embeddings and edges decorated with the direction vector between documents. We then run $p$ rounds of message passing to obtain graph embedding or \textit{neighborhood summary vector} (Fig.~\ref{fig:architecture}).
+Once the beam search procedure is complete, we have a graph representing the neighborhood of the nearest neighboring code fragments in the parent project. This forms a so-called \textit{virtual knowledge graph}, with nodes decorated by the CodeBERT sequence embeddings and edges decorated with the direction vector between documents. We then run $p$ rounds of message passing to obtain our graph embedding or \textit{neighborhood summary vector} (Fig.~\ref{fig:architecture}).
 
 % We initialize the policy network using a pretrained language model. Starting at the site of the prediction task and conditioning on its local context, the policy network draws K queries from its latent state, which are fed into the index to produce a set of matching locations. The model scores and selectively expands a subset of those locations, and the process is repeated using finite-horizon MCTS or similar beam search procedure to retrieve a set of contextually relevant locations within the parent project.
 %
@@ -146,11 +142,12 @@ In this work, we attempt to understand the relationship between entities in a so
 
 \begin{enumerate}
   \item Which contexts in a software project share mutual information?
-  \item To what degree can we claim the model has learned to:\begin{enumerate}
-  \item Locate contextually relevant artifacts within a software project?
-  \item Comprehend the semantic content of the artifacts traversed?
-  \item Apply the knowledge gathered to perform the assigned task?
-  \end{enumerate}
+  \item To what degree can we claim the model has learned to:
+    \begin{enumerate}
+      \item Locate contextually relevant artifacts within a software project?
+      \item Comprehend the semantic content of the artifacts traversed?
+      \item Apply the knowledge gathered to perform the assigned task?
+    \end{enumerate}
 \end{enumerate}
 
 In contrast with classical code completion models which only require a file-local context, our method is designed to navigate an entire project. In the following experiments, we compare completion accuracy with a vanilla sequence prediction model, as well as an AST-structured sequence prediction model trained from a corpus of Java projects on the same task.
