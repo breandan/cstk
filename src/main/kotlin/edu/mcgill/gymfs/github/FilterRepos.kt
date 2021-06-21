@@ -9,9 +9,9 @@ fun main() =
   GitHubBuilder()
     .withJwtToken(File(".ghtoken").readText())
     .build().searchRepositories()
-    .language("java")
+    .language("kotlin")
     .forks(">=100")
-    .size(">=10000")
+    .size("1000..10000")
     .sort(GHRepositorySearchBuilder.Sort.STARS)
     .list()
     .take(2000)
@@ -19,7 +19,7 @@ fun main() =
     .filter { repo ->
       repo.owner.type == "Organization" &&
       try {
-        (repo.description + repo.readme.content)
+        (repo.description + repo.readme.read().toString())
           .none { c -> c.code in 19968..40869 }
       } catch (e: Exception) { false }
     }
@@ -30,6 +30,7 @@ fun main() =
       println(
         it.openIssueCount.toString().padEnd(6) +
           it.stargazersCount.toString().padEnd(9) +
+          it.size.toString().padEnd(9) +
           it.httpTransportUrl
       )
     }
