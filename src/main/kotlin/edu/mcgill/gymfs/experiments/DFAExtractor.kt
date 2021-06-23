@@ -4,25 +4,28 @@ import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 import edu.mcgill.gymfs.math.euclidDist
-import net.automatalib.visualization.Visualization
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets
-import kotlin.time.*
+import kotlin.time.ExperimentalTime
 
 // TODO: DFA/RegEx or BoW query?
-
 
 @OptIn(ExperimentalTime::class)
 fun main() {
   val (strings, vectors) = fetchOrLoadSampleData(1000)
-  val vecMap = strings.zip(vectors).toMap()
+  val stringToVecMap = strings.zip(vectors).toMap()
 
   val knnIndex = buildOrLoadVecIndex(rootDir = TEST_DIR)
 
   val (precisions, recalls) =
-    vecMap.entries.take(100)
-    .map { (s, v) -> calculuatePrecisionAndRecall(s, v, strings, knnIndex, vecMap) }
-    .unzip()
+    stringToVecMap.entries.take(100).mapNotNull { (s, v) ->
+      try {
+        calculuatePrecisionAndRecall(s, v, strings, knnIndex, stringToVecMap)
+      } catch (e: Exception) {
+        println("exception occured")
+        null
+      }
+    }.unzip()
 
   println()
   println("Mean precision: ${precisions.average()}")
@@ -41,7 +44,7 @@ private fun calculuatePrecisionAndRecall(
   println("\nQuery:\n======\n${neighborhood.origin}")
 
   val numNearestNeighbors = 30
-  val numFurthestNeighbors = 1000
+  val numFurthestNeighbors = 100
   val nearestNeighbors = neighborhood.nearestNeighbors.take(numNearestNeighbors)
   val furthestNeighbors = neighborhood.nearestNeighbors.reversed().take(numFurthestNeighbors)
 
@@ -95,6 +98,7 @@ fun List<String>.alsoSummarize(title: String) = also {
 
 val DEFAULT_ALPHABET: Alphabet<Char> =
   (' '..'~').toList().let { Alphabets.fromCollection(it) }
+
 fun synthesizeDFA(
   positiveSamples: List<String> = emptyList(),
   negativeSamples: List<String> = emptyList(),

@@ -73,6 +73,9 @@ dependencies {
 //  https://github.com/tech-srl/prime
 //  implementation("com.github.tech-srl:prime:5fae8f309f")
 
+  // Clustering for automata extraction
+  implementation("org.tribuo:tribuo-clustering-kmeans:4.1.0")
+
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
   implementation("dk.brics:automaton:1.12-1")
@@ -120,7 +123,7 @@ tasks {
     "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
-    "querySynth" to "edu.mcgill.gymfs.experiments.DFASynthesizerKt",
+    "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractorKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
