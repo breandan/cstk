@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
-  val kotlinVersion = "1.5.20-RC"
+  val kotlinVersion = "1.5.20"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
