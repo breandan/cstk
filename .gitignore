@@ -9,3 +9,5 @@ grex*
 *.data
 *.txt
 *.params
+*.log
+/out/

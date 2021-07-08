@@ -45,7 +45,7 @@
 \begin{document}
 \maketitle
 
-\section{Introduction}
+\section{Introduction}\label{sec:introduction}
 
 Humans are adept information foraging agents. We can quickly find relevant information in a large corpus by recognizing and following textual landmarks. Software projects are composed of a variety of semi-structured documents containing many clues where relevant information may be found. In this work, we train a model to navigate and read software artifacts like source code and documentation, in order to facilitate common programming tasks such as code search, completion, or defect prediction.
 
@@ -65,7 +65,7 @@ In order to achieve a similar task, an information-seeking agent first must expl
 
 %During evaluation, we measure task performance across search strategies. Depending on the task in question, various loss functions are possible, from a simple string distance metric over a masked code fragment, to more complex properties (e.g. the presence or absence of errors, or some internal state of the REPL) that must be satisfied by interacting with the runtime environment. Many program analysis and repair tasks are also possible, such as defect, duplicate or vulnerability detection and correction.
 
-\section{Prior literature}
+\section{Prior literature}\label{sec:prior-literature}
 
 Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, in which queries are typically plaintext strings composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query might be a synthetic string or vector. Searches are typically compared using using, e.g., mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, prior work does not consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
 
@@ -99,7 +99,7 @@ We fetch a dataset of repositories sampled repositories on GitHub, containing a 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\textwidth]{bert_embedding}
+  \includegraphics[width=0.85\textwidth]{figs/bert_embedding}
   \caption{CodeBERT takes a unicode sequence and emits a vector sequence, which we accumulate into a single vector.}
   \label{fig:bert}
 \end{figure}
@@ -108,7 +108,7 @@ For each token in a string, CodeBERT emits a length-768 vector, so a line with $
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{latent_kg}
+  \includegraphics[width=\textwidth]{figs/latent_kg}
   \caption{To compute our query neighborhood, we traverse the HNSWG up to max depth $d$, i.e. $d=1$ fetches the neighbors, $d=2$ fetches the neighbors-of-neighbors, and $d=3$ fetches the neighbors-of-neighbors-of-neighbors.}
   \label{fig:de2kg}
 \end{figure}
@@ -117,7 +117,7 @@ For a given query and context, we first compute the context embedding and using 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=1.05\textwidth]{architecture}
+  \includegraphics[width=1.05\textwidth]{figs/architecture}
   \caption{Unlike language models which directly learn the data distribution, our model is designed to query an unseen database only available at test time. The model scores and selectively expands a subset of promising results within the database using a beam search heuristic, then runs message passing over the resulting graph to obtain the final task prediction.}
   \label{fig:architecture}
 \end{figure}
@@ -126,7 +126,7 @@ Consider the depth-1 beam search procedure (Fig. ~\ref{fig:pipeline}): We can us
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{knn_vs_vec}
+  \includegraphics[width=\textwidth]{figs/knn_vs_vec}
   \caption{In the vector search procedure, we compute an embedding for the masked source context, then retrieve the k-nearest sequence embeddings in our database. In the keyword search, we compute an n-hot vector to select the keywords, and retrieve the nearest matching sequences in our index. In both cases, we embed the results, feed them into a transformer, compute a loss between the predicted output and the masked token, and backpropagate.}
   \label{fig:pipeline}
 \end{figure}
@@ -137,7 +137,7 @@ Once the beam search procedure is complete, we have a graph representing the nei
 %
 %The rollout traces form a graph of related locations inside each project and their corresponding context embeddings, which together form the GNN node features. Once the rollout ends, we run message passing on the resulting GNN for a fixed numbers of steps and decode the graph embedding to obtain a task prediction. The decoder, GNN parameters, and policy network are all trained end-to-end on the downstream task, e.g. code completion, defect detection or correction. After convergence, we compare the results across horizon size and analyze the queries and filetypes which are selected.
 
-\section{Experiments}
+\section{Experiments}\label{sec:experiments}
 
 In this work, we attempt to understand the relationship between entities in a software project. Our research seeks to answer the following questions:
 
@@ -165,7 +165,7 @@ In our third and final set of experiments, we compare performance across hyperpa
 
 If our hypothesis is correct, the virtual knowledge graph will span both natural language and source code artifacts. If so, this would provide evidence to support the broader hypothesis~\citep{guo2017semantically} that documentation is a useful source of information. In addition to being useful for the prediction task itself, we anticipate our model could also be used for knowledge graph extraction and suggest semantically relevant code snippets to developers.
 
-\section{Evaluation}
+\section{Evaluation}\label{sec:evaluation}
 
 We evaluate on the following loss function, adapted from~\citep{husain2019codesearchnet}. Given a set of code and context pairs, $\mathbf{F} = (\mathbf{c}_i, \mathbf{d}_i)_{i = 1}^N$, where $\mathbf S \sim_{i.i.d.} \mathbf R_{d}$:
 
@@ -189,37 +189,37 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
   \centering
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Levenshtein, ylabel=Euclidean]
-      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {data/levenshtein.csv};
+      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {../data/levenshtein.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/levenshtein.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/levenshtein.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {../data/levenshtein.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {../data/levenshtein.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xticklabels={0,,,40,,80}, xlabel=MetricCSNF]
-      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {data/metriccsnf.csv};
+      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {../data/metriccsnf.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/metriccsnf.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/metriccsnf.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {../data/metriccsnf.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {../data/metriccsnf.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=MetricLCS]
-      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {data/metriclcs.csv};
+      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {../data/metriclcs.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/metriclcs.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/metriclcs.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {../data/metriclcs.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {../data/metriclcs.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
   \begin{tikzpicture}[width]
     \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, xlabel=Jaccard]
-      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {data/jaccard.csv};
+      \addplot table [mark=none,x=strdist, y=embdist, var=var, col sep=comma] {../data/jaccard.csv};
 
-      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/jaccard.csv};
-      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/jaccard.csv};
+      \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {../data/jaccard.csv};
+      \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,var=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {../data/jaccard.csv};
       \addplot [fill=red!10] fill between[of=upper and lower];
     \end{axis}
   \end{tikzpicture}
@@ -229,21 +229,21 @@ Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}),
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.4\textwidth]{embeddings}
+  \includegraphics[width=0.4\textwidth]{figs/embeddings}
   \caption{Reduced dimensionality TNSE embeddings colored by line length.}
   \label{fig:embedding}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-\resizebox{.2\textwidth}{!}{\includedot{data/query4}}
-\resizebox{.2\textwidth}{!}{\includedot{data/query5}}
-\resizebox{.2\textwidth}{!}{\includedot{data/query6}}
-\resizebox{.2\textwidth}{!}{\includedot{data/query7}}
-\resizebox{.2\textwidth}{!}{\includegraphics{data/context4}}
-\resizebox{.2\textwidth}{!}{\includegraphics{data/context5}}
-\resizebox{.2\textwidth}{!}{\includegraphics{data/context6}}
-\resizebox{.2\textwidth}{!}{\includegraphics{data/context7}}
+\resizebox{.2\textwidth}{!}{\includedot{../data/query4}}
+\resizebox{.2\textwidth}{!}{\includedot{../data/query5}}
+\resizebox{.2\textwidth}{!}{\includedot{../data/query6}}
+\resizebox{.2\textwidth}{!}{\includedot{../data/query7}}
+\resizebox{.2\textwidth}{!}{\includegraphics{../data/context4}}
+\resizebox{.2\textwidth}{!}{\includegraphics{../data/context5}}
+\resizebox{.2\textwidth}{!}{\includegraphics{../data/context6}}
+\resizebox{.2\textwidth}{!}{\includegraphics{../data/context7}}
 \caption{Example graphs sampled by beam search with $d=10, w=5$.}
 \label{fig:graphs}
 \end{figure}
