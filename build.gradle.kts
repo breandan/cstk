@@ -7,7 +7,7 @@ plugins {
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
-  id("de.undercouch.download") version "4.1.1"
+  id("de.undercouch.download") version "4.1.2"
 }
 
 group = "com.github.breandan"
@@ -30,17 +30,18 @@ dependencies {
 
   implementation("org.slf4j:slf4j-simple:1.7.30")
 
-//  implementation("ai.djl.tensorflow:tensorflow-engine:0.11.0")
+//  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  implementation("ai.djl:api:0.11.0")
-  implementation("ai.djl.mxnet:mxnet-engine:0.11.0")
+  val djlVersion = "0.12.0"
+  implementation("ai.djl:api:$djlVersion")
+  implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
-  implementation("ai.djl.fasttext:fasttext-engine:0.11.0")
-  implementation("ai.djl.sentencepiece:sentencepiece:0.11.0")
-  implementation("ai.djl.mxnet:mxnet-model-zoo:0.11.0")
-  implementation("ai.djl:model-zoo:0.11.0")
+  implementation("ai.djl.fasttext:fasttext-engine:$djlVersion")
+  implementation("ai.djl.sentencepiece:sentencepiece:$djlVersion")
+  implementation("ai.djl.mxnet:mxnet-model-zoo:$djlVersion")
+  implementation("ai.djl:model-zoo:$djlVersion")
 
   // Vector embedding index
   val hnswlibVersion = "0.0.46"
@@ -81,7 +82,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-1")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.130")
+  implementation("org.kohsuke:github-api:1.131")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.20")
