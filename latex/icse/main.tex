@@ -189,9 +189,9 @@ Early work in program learning realized the importance of graph-based representa
 %During evaluation, we measure task performance across search strategies. Depending on the task in question, various loss functions are possible, from a simple string distance metric over a masked code fragment, to more complex properties (e.g. the presence or absence of errors, or some internal state of the REPL) that must be satisfied by interacting with the runtime environment. Many program analysis and repair tasks are also possible, such as defect, duplicate or vulnerability detection and correction.
 
 
-  \section{Prior literature}\label{sec:prior-literature}
-
-  Prior studies of natural langauge in source code have been undertaken ~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating}, which characterize the families of computational languages that neural langauge models can recognize in practice. Our work builds on this literature from a software engineering standpoint: what kinds of idioms
+%  \section{Prior literature}\label{sec:prior-literature}
+%
+%  Prior studies of natural langauge in source code have been undertaken ~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating}, which characterize the families of computational languages that neural langauge models can recognize in practice. Our work builds on this literature from a software engineering standpoint: what kinds of idioms
 
 %  Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, where queries are typically considered to be a short sequence composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query takes the form of a code snippet. Model performance typically evaluated using mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, none however, consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
 
@@ -223,7 +223,18 @@ Early work in program learning realized the importance of graph-based representa
 
   \section{Method}\label{sec:method}
 
-  Do language models learn to recognize patterns in source code? If so, what kinds? A longstanding research area in software engineering tries to extract idioms from large software repositories. Likewise, a longstanding goal of neural program synthesis is compositional generalization. Both currently require designing a feature representation that “selects” for a specific kind of invariance — for example, structural similarity measures naming-invariance, and program understanding requires an intermediate representation.
+  Do language models learn to recognize patterns in source code? If so, what kinds? A longstanding research area in software engineering tries to extract idioms from large software repositories. Likewise, a longstanding goal of neural program synthesis is compositional generalization. Both currently require designing a feature representation that “selects” for a specific kind of invariance — for example, structural similarity selects for name-invariance, and semantic similarity captures structural invariance.
+
+  Our goal then, is to identify equivariant representations captured by the langauge model (LM). To do so, we generate program transformations (PTs) and measure vectorial equivariance in terms of four rewriting categories:
+
+  \begin{enumerate}
+    \item Syntactic - can the LM detect syntactically invalid PTs? (e.g. syntax corruption, imbalanced parenthesis)
+    \item Structural - can the LM detect syntactically valid, but structurally altered PTs? (e.g. use before declaration, permuted argument order)
+    \item Semantic - can the LM detect structurally valid, but semantically altered PTs? (e.g. constant modification, operator substitution and order of operations)
+    \item Equivalence - can the LM detect semantically valid but rewritten PTs? (e.g. semantically valid rewrites)
+  \end{enumerate}
+
+  To generate these SCTs, we implement a simple mutation testing tool that generates source transformations from each of these three categories.
 
 % For example, suppose we are given a string of text in a foreign language:
 
