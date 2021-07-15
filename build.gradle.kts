@@ -58,6 +58,9 @@ dependencies {
   // CLI parser
   implementation("com.github.ajalt.clikt:clikt:3.2.0")
 
+  // Source code transformation
+  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-17")
+
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
   implementation("com.github.breandan:kaliningraph:0.1.7")
