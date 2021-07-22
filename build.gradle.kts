@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
-  val kotlinVersion = "1.5.20"
+  val kotlinVersion = "1.5.30-M1"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -59,12 +59,13 @@ dependencies {
   implementation("com.github.ajalt.clikt:clikt:3.2.0")
 
   // Source code transformation
-  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-17")
+  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-18")
+  implementation("org.openrewrite:rewrite-java:7.9.0")
 
   implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
   implementation("com.github.breandan:kaliningraph:0.1.7")
-  implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
+  implementation("com.github.breandan:markovian:master-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
@@ -88,8 +89,8 @@ dependencies {
   implementation("org.kohsuke:github-api:1.131")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.20")
-  implementation("org.apache.commons:commons-vfs2:2.8.0")
+  implementation("org.apache.commons:commons-compress:1.21")
+  implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
   val ortoolsVersion = "9.0.9048"
