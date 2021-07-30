@@ -4,9 +4,7 @@ import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
 import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
-import java.net.*
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.SECONDS
+import java.net.URL
 import kotlin.random.Random
 
 const val FILE_EXT = "kt"
@@ -18,8 +16,18 @@ val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
 val DELIMITER = Regex("\\W")
 
+// https://huggingface.co/microsoft
+val MODEL =
+//"codeGPT-small-java"
+//"CodeGPT-small-java-adaptedGPT2"
+//"CodeGPT-small-py"
+//"CodeGPT-small-py-adaptedGPT2"
+"graphcodebert-base"
+//"codebert-base"
+//"codebert-base-mlm"
+
 val SERVER_ADDRESS by lazy {
-  ProcessBuilder("python", "codebert_server.py").start()
+  ProcessBuilder("python", "embedding_server.py", MODEL).run { inheritIO() }.start()
 
   val addr = "http://localhost:8000/?vectorize="
   // Spinlock until service is available

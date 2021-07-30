@@ -130,11 +130,12 @@ tasks {
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
     "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractorKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
+    "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CompareCodeTransformationsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
-  ).forEach { (cmd, mainClass) ->
+  ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
-      main = mainClass
+      mainClass.set(main)
       classpath = sourceSets["main"].runtimeClasspath
     }
   }

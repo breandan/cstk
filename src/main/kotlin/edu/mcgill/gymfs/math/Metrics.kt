@@ -18,7 +18,7 @@ val t = Loader.loadNativeLibraries()
 // https://github.com/stephenhky/PyWMD/blob/master/WordMoverDistanceDemo.ipynb
 // http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3
 // https://www.youtube.com/watch?v=CDiol4LG2Ao
-fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>) =
+fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double =
   if (p1.size == 1 && p2.size == 1) euclidDist(p1.first(), p2.first())
 // https://developers.google.com/optimization/introduction/java#complete-program
 // https://developers.google.com/optimization/lp/glop#entire_program

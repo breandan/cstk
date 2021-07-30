@@ -9,8 +9,10 @@ from transformers import AutoTokenizer, AutoModel
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
 
-tokenizer = AutoTokenizer.from_pretrained("microsoft/codebert-base")
-model = AutoModel.from_pretrained("microsoft/codebert-base")
+model = sys.argv[1]
+print(f'Model: {model}')
+tokenizer = AutoTokenizer.from_pretrained(f'microsoft/{model}')
+model = AutoModel.from_pretrained(f'microsoft/{model}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
