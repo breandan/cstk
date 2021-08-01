@@ -5,7 +5,6 @@ import ai.djl.nn.transformer.BertBlock
 import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import java.net.URL
-import kotlin.random.Random
 
 const val FILE_EXT = "kt"
 const val FILE_SCHEME = "file"
@@ -27,7 +26,9 @@ val MODEL =
 //"codebert-base-mlm"
 
 val SERVER_ADDRESS by lazy {
-  ProcessBuilder("python", "embedding_server.py", MODEL).run { inheritIO() }.start()
+  ProcessBuilder("python", "embedding_server.py", MODEL)
+//    .run { inheritIO() }
+    .start()
 
   val addr = "http://localhost:8000/?vectorize="
   // Spinlock until service is available
@@ -76,4 +77,3 @@ val DEFAULT_KWINDEX_FILENAME = "keyword.idx"
 val MINIGITHUB_REPOS_FILE = "repositories.txt"
 val MINIGITHUB_SIZE = 100
 val TOKENIZER = BertTokenizer()
-val rand = Random(1)

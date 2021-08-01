@@ -7,7 +7,7 @@ import edu.mcgill.kaliningraph.show
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.*
 import jetbrains.letsPlot.*
-import jetbrains.letsPlot.geom.geom_point
+import jetbrains.letsPlot.geom.*
 import jetbrains.letsPlot.intern.*
 import jetbrains.letsPlot.label.ggtitle
 import java.io.File
@@ -43,11 +43,11 @@ private fun plot(
     "x" to embeddings.map { it[0] },
     "y" to embeddings.map { it[1] }
   )
-  val plot = lets_plot(data) { x = "x"; y = "y"; color = "labels" } +
-    ggsize(300, 250) + geom_point(size = 6) +
+  val plot = letsPlot(data) { x = "x"; y = "y"; color = "labels" } +
+    ggsize(300, 250) + geomPoint(size = 6) +
     ggtitle("Lines by Structural Similarity") +
-    theme().axisLine_blank().axisTitle_blank()
-      .axisTicks_blank().axisText_blank()
+    theme().axisLineBlank().axisTitleBlank()
+      .axisTicksBlank().axisTextBlank()
   return PlotSvgExport.buildSvgImageFromRawSpecs(
     plotSpec = plot.toSpec(), plotSize = DoubleVector(1000.0, 500.0)
   )

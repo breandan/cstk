@@ -59,11 +59,14 @@ dependencies {
   implementation("com.github.ajalt.clikt:clikt:3.2.0")
 
   // Source code transformation
-  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-18")
-  implementation("org.openrewrite:rewrite-java:7.9.0")
+  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
+  implementation("org.openrewrite:rewrite-java:7.10.0")
 
-  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin-api:1.3.0")
+  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
+
+//  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
+
   implementation("com.github.breandan:kaliningraph:0.1.7")
   implementation("com.github.breandan:markovian:master-SNAPSHOT")
 
@@ -86,7 +89,9 @@ dependencies {
   implementation("dk.brics:automaton:1.12-1")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.131")
+  implementation("org.kohsuke:github-api:1.132")
+
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.1")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.21")

@@ -1,8 +1,5 @@
 package edu.mcgill.gymfs.experiments
 
-import org.apache.commons.lang3.StringUtils
-import kotlin.text.RegexOption.MULTILINE
-
 fun main() {
   val codeSnippet = """
     static void main(String[] args) {
@@ -18,10 +15,10 @@ fun main() {
 
   println("====SYNTAX MUTATION========")
   println(codeSnippet.mutateSyntax())
-  println("====STRUCTURE MUTATION=====")
-  println(codeSnippet.mutateStructure())
-  println("====SEMANTICS MUTATION=====")
-  println(codeSnippet.mutateSemantics())
+  println("====SHUFFLE LINES MUTATION=====")
+  println(codeSnippet.shuffleLines())
+  println("====SWAP +/- MUTATION=====")
+  println(codeSnippet.swapPlusMinus())
 
   // Semantics-preserving mutations
   println("====RENAMING MUTATION======")
@@ -44,9 +41,9 @@ fun String.mutateSyntax() =
       ('!'..'~').random() else it
   }.joinToString("")
 
-fun String.mutateStructure() = lines().shuffled().joinToString("\n")
+fun String.shuffleLines() = lines().shuffled().joinToString("\n")
 
-fun String.mutateSemantics() =
+fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
 
 fun String.renameTokens(): String {
@@ -68,19 +65,20 @@ fun String.fuzzLoopBoundaries(): String =
   }
 
 fun String.swapMultilineNoDeps(): String =
-  lines().zipWithNext().map { (a, b) ->
-    //Same indentation
-    if(a.trim().length - a.length != b.trim().length - b.length)// Same indent
-      return@map a to b
+  lines().chunked(2).map { lines ->
+    if (lines.size != 2) return@map lines
+    val (a, b) = lines.first() to lines.last()
+    // Same indentation
+    if (a.trim().length - a.length != b.trim().length - b.length)
+      return@map listOf(a, b)
 
     // Only swap if no dataflow deps are present
-    val noIdsInCommon = a.split(Regex("[^A-Za-z]")).toSet()
+    val hasIdsInCommon = a.split(Regex("[^A-Za-z]")).toSet()
       .intersect(b.split(Regex("[^A-Za-z]")))
-      .filter { it.all { it.isJavaIdentifierPart() } }
-      .isEmpty()
+      .any { it.isNotEmpty() && it.all(Char::isJavaIdentifierPart) }
 
-    if (noIdsInCommon) b to a else a to b
-  }.unzip().first.joinToString("\n")
+    if (hasIdsInCommon) listOf(a, b) else listOf(b, a)
+  }.flatten().joinToString("\n")
 
 fun String.addDeadCode(): String =
   lines().joinToString("\n") {
