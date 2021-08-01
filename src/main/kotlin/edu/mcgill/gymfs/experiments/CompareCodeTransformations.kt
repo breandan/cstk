@@ -13,10 +13,18 @@ fun main() {
   val semanticsAlteringTxs =
     listOf(String::permuteArgumentOrder, String::fuzzLoopBoundaries, String::swapPlusMinus)
 
-  TEST_DIR.allFilesRecursively().allCodeFragments().forEach { (c, s) ->
-    semanticsPreservingTxs.forEach { tx ->
+  // Measure average distributional shift introduced by each code transformation
+  // as measured by wordmover distance metric. https://proceedings.mlr.press/v37/kusnerb15.pdf
+
+  TEST_DIR.allFilesRecursively().allCodeFragments().map { (c, s) ->
+    semanticsPreservingTxs.mapNotNull { tx ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
-      println(kantorovich(matrixize(original), matrixize(transformed)))
+      if (original == transformed) return@mapNotNull null
+      val distance = kantorovich(matrixize(original), matrixize(transformed))
+      println("${tx.name}:".padEnd(20, ' ') + distance)
+      tx to distance
     }
-  }
+  }.flatten().groupBy { it.first }
+    // Average embedding distance across code transformation
+    .mapValues { (_, v) -> v.map { it.second }.average() }
 }
