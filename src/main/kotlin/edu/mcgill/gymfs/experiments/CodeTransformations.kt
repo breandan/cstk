@@ -13,12 +13,11 @@ fun main() {
     }
   """.trimIndent()
 
+  // Syntax-destroying mutations
   println("====SYNTAX MUTATION========")
   println(codeSnippet.mutateSyntax())
   println("====SHUFFLE LINES MUTATION=====")
   println(codeSnippet.shuffleLines())
-  println("====SWAP +/- MUTATION=====")
-  println(codeSnippet.swapPlusMinus())
 
   // Semantics-preserving mutations
   println("====RENAMING MUTATION======")
@@ -33,6 +32,8 @@ fun main() {
   println(codeSnippet.permuteArgumentOrder())
   println("====FUZZING LOOP BOUNDS====")
   println(codeSnippet.fuzzLoopBoundaries())
+  println("====SWAP +/- MUTATION=====")
+  println(codeSnippet.swapPlusMinus())
 }
 
 fun String.mutateSyntax() =
