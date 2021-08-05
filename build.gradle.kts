@@ -136,6 +136,7 @@ tasks {
     "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractorKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CompareCodeTransformationsKt",
+    "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTransformationsKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
   ).forEach { (cmd, main) ->

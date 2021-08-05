@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.disk
 
 import edu.mcgill.gymfs.math.kantorovich
-import edu.mcgill.kaliningraph.circuits.*
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
@@ -10,6 +9,7 @@ import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
 import kotlin.text.Charsets.UTF_8
+
 
 // Query in context
 data class QIC(
@@ -87,26 +87,17 @@ fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
 }
 
 //https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
-fun vectorize(query: String): DoubleArray =
-  URL(SERVER_ADDRESS + URLEncoder.encode("$CODEBERT_CLS_TOKEN$query", "utf-8"))
-    .readText().lines()
-    .map { it.trim().replace("[", "").replace("]", "") }
-    .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
-    .first().toDoubleArray()
+// Short sequence embedding: line-level
+fun vectorize(query: String) = matrixize(query).first()
 
-// Sentence embedding
-fun matrixize(query: String): Array<DoubleArray> =
-  URL(
-    SERVER_ADDRESS +
-      URLEncoder.encode("$CODEBERT_BOS_TOKEN$query$CODEBERT_EOS_TOKEN", "utf-8")
-  ).readText().lines()
-    .map { it.trim().replace("[", "").replace("]", "") }
-    .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
-    .map { it.toDoubleArray() }
-    .toTypedArray()
-
-fun tokenize(query: String) =
-  URL(SERVER_ADDRESS + URLEncoder.encode(query, "utf-8")).readText().split(" ")
+// Long sequence embedding: method level
+fun matrixize(
+  query: String,
+  urlEncoded: String = URLEncoder.encode(query, "utf-8")
+): Array<DoubleArray> = URL(EMBEDDING_SERVER + urlEncoded).readText().lines()
+  .map { it.trim().replace("[", "").replace("]", "") }
+  .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
+  .map { it.toDoubleArray() }.toTypedArray()
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
@@ -116,7 +107,7 @@ fun synthesizeRegex(vararg strings: String) =
     .inputStream.reader(UTF_8)
     .use { Regex(it.readText()) }
 
-object MetricCSNF : MetricStringDistance {
+object MetricCSNF: MetricStringDistance {
   /**
    * NF1, NF2 := CSNF(S1 + S2)
    * CSNFΔ(SN1, SN2) := LEVΔ(NF1, NF2)

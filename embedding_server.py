@@ -1,40 +1,55 @@
 import http.server
-import numpy as np
 import sys
 import time
-import torch
 import urllib
 from http.server import HTTPServer
-from transformers import AutoTokenizer, AutoModel
+from itertools import islice
+from typing import List, Generator, TypeVar
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
 
-model = sys.argv[1]
-print(f'Model: {model}')
-tokenizer = AutoTokenizer.from_pretrained(f'microsoft/{model}')
-model = AutoModel.from_pretrained(f'microsoft/{model}')
+import numpy as np
+import torch
+from torch import tensor, Tensor
+from transformers import AutoTokenizer, AutoModel, \
+    PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM
+
+model_name = sys.argv[1]
+print(f'Model: {model_name}')
+tokenizer: PTT = AutoTokenizer.from_pretrained(f'microsoft/{model_name}')
+model: PTM = AutoModel.from_pretrained(f'microsoft/{model_name}')
+attention_width = 760
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
-    def tokenize(self, query):
+    def tokenize(self, query: str) -> List[int]:
+        padded_query = f'{tokenizer.bos_token}{query}{tokenizer.eos_token}'
         # tic = time.perf_counter()
-        tokens = tokenizer.tokenize(query)
+        tokens = tokenizer.tokenize(padded_query)
         # toc = time.perf_counter()
         # print(f"Tokenized in {toc - tic:0.4f} seconds")
-        return tokens
+        return tokenizer.convert_tokens_to_ids(tokens)
 
-    def vectorize(self, query):
-        input_sequence = tokenizer.convert_tokens_to_ids(self.tokenize(query))
-        # This should always be called with the beginning of sequence token <s>
-        # https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
-        # TODO: Should we return the entire vector or just the first?
-        npy = model(torch.tensor(input_sequence)[None, :])[0].detach().numpy()
-        return npy
+    def embed_sequence(self, query: str) -> np.ndarray:
+        """
+        Returns a sequence-embedded array. If smaller than attention_width, this
+        will return a vector. Otherwise, this will return a matrix of sliding
+        windows over the input sequence, arranged in rows.
+        """
+        sequence: Tensor = torch.tensor(self.tokenize(query))
+        chunked = sequence[None, :] if len(sequence) < attention_width else \
+            sequence.unfold(0, attention_width, int(attention_width/2))
+        #                        kernel size        kernel overlap
+
+        # print(chunked)
+        array = np.array([model(i[None, :])[0].detach().numpy() for i in chunked])
+        # print(array)
+        return array
 
     def log_message(self, format, *args):
         pass
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
@@ -42,22 +57,16 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
-        # print("QUERY: %s" % query)
-        html = ''
 
-        if 'tokenize' in query_components:
-            query = urllib.parse.unquote_plus(query_components["tokenize"][0])
-            tokens = self.tokenize(query)
-            html = " ".join(str(x) for x in tokens)
+        if 'query' in query_components:
+            query = urllib.parse.unquote_plus(query_components["query"][0])
+            # print("QUERY: %s" % query)
+            array = self.embed_sequence(query)
 
-        if 'vectorize' in query_components:
-            query = urllib.parse.unquote_plus(query_components["vectorize"][0])
-            array = self.vectorize(query)
             html = np.array2string(a=array,
                                    threshold=sys.maxsize,
                                    max_line_width=sys.maxsize)
-
-        self.wfile.write(bytes(html, "utf8"))
+            self.wfile.write(bytes(html, "utf8"))
 
         return
 

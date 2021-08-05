@@ -25,16 +25,17 @@ val MODEL =
 //"codebert-base"
 //"codebert-base-mlm"
 
-val SERVER_ADDRESS by lazy {
+val EMBEDDING_SERVER by lazy {
+  val addr = "http://localhost:8000/?query="
+
+  if (URL(addr + "test").readText().isNotEmpty()) return@lazy addr
+
   ProcessBuilder("python", "embedding_server.py", MODEL)
 //    .run { inheritIO() }
     .start()
 
-  val addr = "http://localhost:8000/?vectorize="
-  // Spinlock until service is available
-
   println("Starting embeddings server...")
-
+  // Spinlock until service is available
   while (true) try {
     if (URL(addr + "test").readText().isNotEmpty()) break
   } catch (exception: Exception) {}
@@ -43,17 +44,13 @@ val SERVER_ADDRESS by lazy {
 
   addr
 }
+
 const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
 const val MSK = "<msk>"
 
 const val BERT_EMBEDDING_SIZE = 768
-//https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
-//https://huggingface.co/microsoft/codebert-base/blob/main/special_tokens_map.json
-const val CODEBERT_CLS_TOKEN = "<s>"
-const val CODEBERT_BOS_TOKEN = "<s>"
-const val CODEBERT_EOS_TOKEN = "</s>"
 
 const val MAX_SEQUENCE_LENGTH = 128
 const val MAX_MASKING_PER_INSTANCE = 20
