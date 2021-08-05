@@ -1,5 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
+import org.openrewrite.java.*
+
 fun main() {
   val codeSnippet = """
     static void main(String[] args) {

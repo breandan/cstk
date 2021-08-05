@@ -59,10 +59,10 @@ dependencies {
   implementation("com.github.ajalt.clikt:clikt:3.2.0")
 
   // Source code transformation
-  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
+//  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
+//  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
   implementation("org.openrewrite:rewrite-java:7.10.0")
-
-  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
+  runtimeOnly("org.openrewrite:rewrite-java-11:7.10.0")
 
 //  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
