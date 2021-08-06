@@ -5,6 +5,7 @@ import edu.mcgill.markovian.pmap
 import edu.mcgill.gymfs.math.*
 import edu.mcgill.kaliningraph.show
 import java.io.File
+import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1
 
 fun main() {
@@ -18,10 +19,21 @@ fun main() {
     listOf(String::permuteArgumentOrder, String::fuzzLoopBoundaries, String::swapPlusMinus)
 
   //  compareDistributionalShift(semanticsPreservingTxs)
-  compareTsneEmbeddings(String::swapMultilineNoDeps)
-  compareTsneEmbeddings(String::addDeadCode)
-  compareTsneEmbeddings(String::renameTokens)
+//  compareTsneEmbeddings(String::swapMultilineNoDeps)
+//  compareTsneEmbeddings(String::addDeadCode)
+//  compareTsneEmbeddings(String::renameTokens)
+
+  analyzeDimensionalShift(String::swapMultilineNoDeps).let { println(it.joinToString(",")) }
+  analyzeDimensionalShift(String::addDeadCode).let { println(it.joinToString(",")) }
+  analyzeDimensionalShift(String::renameTokens).let { println(it.joinToString(",")) }
 }
+
+private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
+    TEST_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
+      val (original, transformed) = c.getContext(4).let { it to tx(it) }
+      matrixize(original).average().zip(matrixize(transformed).average())
+        .map { (a, b) -> (a - b).absoluteValue }.toDoubleArray()
+    }.toList().toTypedArray().average().normalize()
 
 private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =

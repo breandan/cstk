@@ -19,6 +19,8 @@ fun Array<DoubleArray>.average(): DoubleArray =
     a.zip(b).map { (i, j) -> i + j }.toDoubleArray()
   }.map { it / size }.toDoubleArray()
 
+fun DoubleArray.normalize() = sum().let { sum -> map { it / sum }.toDoubleArray() }
+
 //val t = Loader.loadNativeLibraries()
 
 // https://github.com/stephenhky/PyWMD/blob/master/WordMoverDistanceDemo.ipynb
