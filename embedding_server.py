@@ -1,16 +1,14 @@
 import http.server
 import sys
-import time
 import urllib
 from http.server import HTTPServer
-from itertools import islice
-from typing import List, Generator, TypeVar
+from typing import List
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
 
 import numpy as np
 import torch
-from torch import tensor, Tensor
+from torch import Tensor
 from transformers import AutoTokenizer, AutoModel, \
     PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM
 

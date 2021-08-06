@@ -21,20 +21,20 @@ fun main() {
     println("${l.length},${d2vecs[i][0]},${d2vecs[i][1]}")
   }
 
-  val plot = plot(d2vecs, labels.map { it.length.toString() } )
+  val plot = plotTsneEmbeddingsWithLabels(d2vecs, labels.map { it.length.toString() } )
 
   File.createTempFile("clusters", ".html")
     .apply { writeText("<html>$plot</html>") }.show()
 }
 
-private fun Array<DoubleArray>.reduceDim(
+fun Array<DoubleArray>.reduceDim(
   outputDims: Int = 2,
   perplexity: Double = 10.0,
   tSne: TSne = ParallelBHTsne()
 ): Array<out DoubleArray> =
   tSne.tsne(TSneUtils.buildConfig(this, outputDims, size - 1, perplexity, 99999))
 
-private fun plot(
+fun plotTsneEmbeddingsWithLabels(
   embeddings: Array<out DoubleArray>,
   labels: List<String>
 ): String {

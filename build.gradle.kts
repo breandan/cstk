@@ -16,7 +16,6 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   maven("https://jitpack.io")
-  maven("https://jetbrains.bintray.com/lets-plot-maven")
   maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
@@ -100,6 +99,8 @@ dependencies {
   // Constraint minimization for Kantorovich-Rubenstein distance
   val ortoolsVersion = "9.0.9048"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
+  // AArch64 support? https://github.com/google/or-tools/issues/716
+  // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
   implementation("com.google.ortools:ortools-linux-x86-64:$ortoolsVersion")
 
   // DFA to RegEx conversion
@@ -153,7 +154,7 @@ tasks {
 
 // Compile fatjar for Compute Canada, doesn't like Gradle
 //  jar {
-//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.agent.BertTrainerKt"
+//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.VisualizeTSNEKt"
 //
 //    from(configurations.compileClasspath.get().files
 //      .filter { it.extension != "pom" }

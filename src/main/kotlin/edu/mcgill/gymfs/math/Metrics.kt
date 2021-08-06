@@ -13,7 +13,13 @@ fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
 fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
   sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
 
-val t = Loader.loadNativeLibraries()
+// Computes elementwise means on a list of lists
+fun Array<DoubleArray>.average(): DoubleArray =
+  fold(DoubleArray(first().size)) { a, b ->
+    a.zip(b).map { (i, j) -> i + j }.toDoubleArray()
+  }.map { it / size }.toDoubleArray()
+
+//val t = Loader.loadNativeLibraries()
 
 // https://github.com/stephenhky/PyWMD/blob/master/WordMoverDistanceDemo.ipynb
 // http://proceedings.mlr.press/v37/kusnerb15.pdf#page=3

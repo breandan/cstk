@@ -2,7 +2,6 @@ package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.MetricCSNF
 import edu.mcgill.gymfs.math.*
-import edu.mcgill.markovian.pmap
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
 
@@ -11,7 +10,7 @@ fun main() {
   val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }.take(100)
   // Compare correlation between string metrics and learned metric along individual dimensions
   println("dim,correlation")
-  (0 until data.first().second.size - 1).pmap { i ->
+  (0 until data.first().second.size - 1).map { i ->
     compareDistanceMetricsOnDim(data, (i..i + 1).toList())
   }.sortedBy { it.second }
     .forEach { println("${it.first.first()},${it.second}") }
