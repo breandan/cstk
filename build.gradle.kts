@@ -111,21 +111,6 @@ dependencies {
 }
 
 tasks {
-  register("getGrex", Download::class) {
-    onlyIf { !File("grex").exists() }
-    val name = "grex-v1.2.0-x86_64-unknown-linux-musl.tar.gz"
-    src("https://github.com/pemistahl/grex/releases/download/v1.2.0/$name")
-    dest(File(name))
-    overwrite(false)
-
-    doLast {
-      copy {
-        from(tarTree(resources.gzip(name)))
-        into(projectDir)
-      }
-    }
-  }
-
   mapOf(
     "trieSearch" to "edu.mcgill.gymfs.disk.KWSearchKt",
     "knnSearch" to "edu.mcgill.gymfs.disk.KNNSearchKt",

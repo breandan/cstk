@@ -4,6 +4,7 @@ import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 import edu.mcgill.gymfs.math.euclidDist
+import net.automatalib.automata.fsa.DFA
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets
 import kotlin.time.ExperimentalTime
@@ -103,7 +104,7 @@ fun synthesizeDFA(
   positiveSamples: List<String> = emptyList(),
   negativeSamples: List<String> = emptyList(),
   alphabet: Alphabet<Char> = DEFAULT_ALPHABET,
-) =
+): DFA<*, Char> =
 //  https://www.ibisc.univ-evry.fr/~janodet/pub/tjs04.pdf
   BlueFringeRPNIDFA(alphabet).apply {
     addPositiveSamples(*positiveSamples.filter { it.all { DEFAULT_ALPHABET.containsSymbol(it) } }.toWords())

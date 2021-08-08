@@ -54,17 +54,11 @@ data class Neighborhood(
     }
   }
 
-  val regexSoFar by lazy {
-    resultsSoFar.map { allResultsUpToCurrent ->
-      synthesizeRegex(*allResultsUpToCurrent.toTypedArray())
-    }
-  }
-
   val prettyPrinted by lazy {
     nearestNeighbors.zip(longestCommonSubstringSoFar).map { (result, substring) ->
       if(substring.length < 2) result.item().toString()
       else result.item().toString()
-        .replace(substring, "《$substring》") //+ "// Regex: $regexSoFar"
+        .replace(substring, "《$substring》")
     }
   }
 }

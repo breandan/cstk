@@ -102,11 +102,6 @@ fun matrixize(
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
 
-fun synthesizeRegex(vararg strings: String) =
-  ProcessBuilder("./grex", *strings).start()
-    .inputStream.reader(UTF_8)
-    .use { Regex(it.readText()) }
-
 object MetricCSNF: MetricStringDistance {
   /**
    * NF1, NF2 := CSNF(S1 + S2)
