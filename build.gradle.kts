@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
-  val kotlinVersion = "1.5.30-M1"
+  val kotlinVersion = "1.5.30-RC"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -27,7 +27,7 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:1.7.30")
+  implementation("org.slf4j:slf4j-simple:1.7.32")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
@@ -60,8 +60,9 @@ dependencies {
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  implementation("org.openrewrite:rewrite-java:7.10.0")
-  runtimeOnly("org.openrewrite:rewrite-java-11:7.10.0")
+  val openrwVersion = "7.11.1"
+  implementation("org.openrewrite:rewrite-java:$openrwVersion")
+  runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
 //  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
@@ -85,12 +86,12 @@ dependencies {
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
-  implementation("dk.brics:automaton:1.12-1")
+  implementation("dk.brics:automaton:1.12-3")
 
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.132")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.1")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.2")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.21")
