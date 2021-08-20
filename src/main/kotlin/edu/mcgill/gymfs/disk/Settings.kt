@@ -27,8 +27,13 @@ val MODEL =
 
 val EMBEDDING_SERVER by lazy {
   val addr = "http://localhost:8000/?query="
+  val test = addr + "test"
 
-  if (URL(addr + "test").readText().isNotEmpty()) return@lazy addr
+  URL(test).run {
+    try {
+      if (readText().isNotEmpty()) return@lazy addr
+    } catch (ex: Exception) {}
+  }
 
   ProcessBuilder("python", "embedding_server.py", MODEL)
 //    .run { inheritIO() }
@@ -37,7 +42,7 @@ val EMBEDDING_SERVER by lazy {
   println("Starting embeddings server...")
   // Spinlock until service is available
   while (true) try {
-    if (URL(addr + "test").readText().isNotEmpty()) break
+    if (URL(test).readText().isNotEmpty()) break
   } catch (exception: Exception) {}
 
   println("Started embeddings server at $addr")
@@ -48,7 +53,7 @@ val EMBEDDING_SERVER by lazy {
 const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
-const val MSK = "<msk>"
+const val MSK = "<mask>"
 
 const val BERT_EMBEDDING_SIZE = 768
 

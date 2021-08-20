@@ -1,6 +1,4 @@
-import de.undercouch.gradle.tasks.download.Download
 import org.gradle.api.JavaVersion.VERSION_11
-import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
   val kotlinVersion = "1.5.30-RC"
@@ -122,10 +120,11 @@ tasks {
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
     "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractorKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
-    "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CompareCodeTransformationsKt",
-    "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTransformationsKt",
+    "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxComparisonKt",
+    "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxTestKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
+    "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)

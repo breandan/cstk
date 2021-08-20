@@ -91,13 +91,18 @@ fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
 fun vectorize(query: String) = matrixize(query).first()
 
 // Long sequence embedding: method level
-fun matrixize(
-  query: String,
-  urlEncoded: String = URLEncoder.encode(query, "utf-8")
-): Array<DoubleArray> = URL(EMBEDDING_SERVER + urlEncoded).readText().lines()
+fun matrixize(query: String): Array<DoubleArray> = query(query).lines()
   .map { it.trim().replace("[", "").replace("]", "") }
   .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
+
+tailrec fun complete(
+  query: String, tokens: Int = 1,
+  reply: String = query("$query<mask>")
+): String = if (tokens == 1) reply else complete(query = reply, tokens = tokens - 1)
+
+fun query(query: String = ""): String =
+  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

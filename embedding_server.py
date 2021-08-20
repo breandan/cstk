@@ -10,12 +10,13 @@ import numpy as np
 import torch
 from torch import Tensor
 from transformers import AutoTokenizer, AutoModel, \
-    PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM
+    PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, \
+    RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
 model_name = sys.argv[1]
 print(f'Model: {model_name}')
-tokenizer: PTT = AutoTokenizer.from_pretrained(f'microsoft/{model_name}')
-model: PTM = AutoModel.from_pretrained(f'microsoft/{model_name}')
+tokenizer: PTT = RobertaTokenizer.from_pretrained(f'microsoft/{model_name}')
+model: PTM = RobertaForMaskedLM.from_pretrained(f'microsoft/{model_name}')
 attention_width = 760
 
 
@@ -58,13 +59,20 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
         if 'query' in query_components:
             query = urllib.parse.unquote_plus(query_components["query"][0])
-            # print("QUERY: %s" % query)
-            array = self.embed_sequence(query)
+            if '<mask>' in query:
+                pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
+                outputs = pred(query)
+                # Greedy decoding
+                max_output = max(outputs, key=lambda s: float(s['score']))
+                self.wfile.write(bytes(max_output['sequence'], encoding='utf8'))
+            else:
+                # print("QUERY: %s" % query)
+                array = self.embed_sequence(query)
 
-            html = np.array2string(a=array,
-                                   threshold=sys.maxsize,
-                                   max_line_width=sys.maxsize)
-            self.wfile.write(bytes(html, "utf8"))
+                html = np.array2string(a=array,
+                                       threshold=sys.maxsize,
+                                       max_line_width=sys.maxsize)
+                self.wfile.write(bytes(html, "utf8"))
 
         return
 
