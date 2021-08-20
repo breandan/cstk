@@ -98,8 +98,8 @@ fun matrixize(query: String): Array<DoubleArray> = query(query).lines()
 
 tailrec fun complete(
   query: String, tokens: Int = 1,
-  reply: String = query("$query<mask>")
-): String = if (tokens == 1) reply else complete(query = reply, tokens = tokens - 1)
+  reply: String = query(query)
+): String = if (tokens == 1) reply else complete(query = reply + MSK, tokens = tokens - 1)
 
 fun query(query: String = ""): String =
   URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
