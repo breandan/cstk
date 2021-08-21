@@ -21,9 +21,9 @@ val MODEL =
 //"CodeGPT-small-java-adaptedGPT2"
 //"CodeGPT-small-py"
 //"CodeGPT-small-py-adaptedGPT2"
-"graphcodebert-base"
+//"graphcodebert-base"
 //"codebert-base"
-//"codebert-base-mlm"
+"codebert-base-mlm"
 
 val EMBEDDING_SERVER by lazy {
   val addr = "http://localhost:8000/?query="

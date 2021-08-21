@@ -50,8 +50,8 @@ fun String.swapPlusMinus() =
 fun String.renameTokens(): String {
   val toReplace = split(Regex("[^\\w']+"))
     .filter { it.length > 5 && it.all { it.isJavaIdentifierPart() } }
-    .groupingBy { it }.eachCount().maxByOrNull { it.value }!!.key
-  return replace(toReplace, "X")
+    .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
+  return replace(toReplace, "xx")
 }
 
 fun String.permuteArgumentOrder(): String =
