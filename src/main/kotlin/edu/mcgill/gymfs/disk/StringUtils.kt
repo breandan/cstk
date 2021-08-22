@@ -41,6 +41,30 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
+val funKeywords = listOf("public ", "private ", "void ", "static ", "fun ")
+val openParens = listOf('(', '{', '[')
+val closeParens = listOf(')', '}', ']')
+
+// Slices files into method-level chunks using a Dyck-1 language
+fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
+  path.allLines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
+    if (dyckSum < 0 && funKeywords.any { it in line } && "(" in line) {
+      line.computeParenthesesBalance() to methods + line
+    } else if (dyckSum == 0) {
+      if(line.isBlank()) -1 to methods else 0 to methods.appendToLast(line)
+    } else if (dyckSum > 0) {
+      dyckSum + line.computeParenthesesBalance() to methods.appendToLast(line)
+    } else {
+      -1 to methods
+    }
+  }.second
+}.flatten()
+
+fun List<String>.appendToLast(line: String) = dropLast(1) + (last() +"\n"+ line)
+
+fun String.computeParenthesesBalance(): Int =
+  fold(0) { s, c -> if (c in openParens) s + 1 else if (c in closeParens) s - 1 else s }
+
 fun URI.allLines(): Sequence<String> =
   when (scheme) {
     TGZ_SCHEME -> vfsManager.resolveFile(this)

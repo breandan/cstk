@@ -6,16 +6,15 @@ import kotlin.math.abs
 import kotlin.streams.toList
 
 fun main() {
-//  val query = "System.out.$MSK"
-//  println("Query: $query")
-//  println("Completion: " + complete(query, 3))
+  val query = "System.out.$MSK"
+  println("Query: $query")
+  println("Completion: " + complete(query, 3))
 
-  val validationSet = TEST_DIR.allFilesRecursively().allCodeFragments().take(99)
-    .toList().parallelStream().map {
-      val snippet = it.first.getContext(3)
-      val (variant, masked) = snippet.renameTokensAndMask()
-      if (variant == snippet) null
-      else Triple(snippet, variant, masked)
+  val validationSet = TEST_DIR.allFilesRecursively().allMethods().take(20)
+    .toList().parallelStream().map { method ->
+      val (variant, masked) = method.renameTokensAndMask()
+      if (variant == method) null
+      else Triple(method, variant, masked)
     }.toList().mapNotNull { it }
 
   val accuracy = validationSet.map { (original, refactored, masked) ->
