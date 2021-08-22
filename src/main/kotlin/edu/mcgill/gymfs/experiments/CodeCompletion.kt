@@ -1,6 +1,8 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import info.debatty.java.stringsimilarity.Levenshtein
+import kotlin.math.abs
 import kotlin.streams.toList
 
 fun main() {
@@ -17,10 +19,9 @@ fun main() {
     }.toList().mapNotNull { it }
 
   val accuracy = validationSet.map { (original, refactored, masked) ->
-    // TODO: multitoken decoding?
     val completion = complete(masked)
-    // TODO: score soft matching?
-    if (completion == refactored) 1.0 else 0.0
+    if (Levenshtein().distance(completion, refactored).toInt() ==
+      abs(completion.length - refactored.length)) 1.0 else 0.0
   }.average()
 
   println("Accuracy: $accuracy")
