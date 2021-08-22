@@ -4,6 +4,8 @@ import edu.mcgill.gymfs.math.kantorovich
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
+import net.sf.extjwnl.data.PointerUtils
+import net.sf.extjwnl.dictionary.Dictionary
 import org.apache.commons.lang3.StringUtils
 import java.net.*
 import java.nio.file.*
@@ -104,11 +106,16 @@ tailrec fun complete(
 fun query(query: String = ""): String =
   URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
 
+val dict = Dictionary.getDefaultResourceInstance();
+
 // Returns single-word synonyms
 fun synonyms(word: String): Set<String> =
-  URL(SYNONYM_SERVER + URLEncoder.encode(word, "utf-8")).readText()
-    .removePrefix("{").removeSuffix("}").replace("'", "").split(", ")
-    .filter { !it.contains(" ") }.toSet()
+  dict.lookupAllIndexWords(word).indexWordArray.map {
+    it.senses.map { sense ->
+      PointerUtils.getDirectHypernyms(sense).map { it.synset.words }
+    }
+  }.flatten().flatten().flatten()
+    .mapNotNull { it.lemma }.filter { !it.contains(" ") }.toSet()
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

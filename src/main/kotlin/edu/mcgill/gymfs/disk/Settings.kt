@@ -25,10 +25,6 @@ val MODEL =
 //"codebert-base"
 "codebert-base-mlm"
 
-val SYNONYM_SERVER: String by lazy {
-  EMBEDDING_SERVER.replace("query", "synonym")
-}
-
 val EMBEDDING_SERVER: String by lazy {
   val addr = "http://localhost:8000/?query="
   val test = addr + "test"

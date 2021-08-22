@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import kotlin.streams.toList
 
 fun main() {
 //  val query = "System.out.$MSK"
@@ -8,12 +9,12 @@ fun main() {
 //  println("Completion: " + complete(query, 3))
 
   val validationSet = TEST_DIR.allFilesRecursively().allCodeFragments().take(99)
-    .mapNotNull {
+    .toList().parallelStream().map {
       val snippet = it.first.getContext(3)
-      val variant = snippet.renameTokens().addDeadCode()
+      val variant = snippet.renameTokens()
       if (variant == snippet) null
-      else Triple(snippet, variant, variant.maskLastToken("xx"))
-    }
+      else Triple(snippet, variant, snippet.renameTokensAndMask())
+    }.toList().mapNotNull { it }
 
   val accuracy = validationSet.map { (original, refactored, masked) ->
     val completion = complete(masked)
@@ -24,7 +25,7 @@ fun main() {
 }
 
 fun String.maskLastToken(token: String) =
-  reversed().replaceFirst(token, MSK.reversed()).reversed()
+  reversed().replaceFirst(token.reversed(), MSK.reversed()).reversed()
 
 fun String.histogram(): Map<String, Int> =
   split(Regex("[^A-Za-z]")).filter { it.length > 2 }.groupingBy { it }.eachCount()

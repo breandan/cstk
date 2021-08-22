@@ -54,12 +54,21 @@ fun String.renameTokens(): String {
   val toReplace = split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  return replace(toReplace, randomSynonym(toReplace))
+  val synonym = randomSynonym(toReplace)
+  return replace(toReplace, synonym)
+}
+
+fun String.renameTokensAndMask(): String {
+  val toReplace = split(Regex("[^\\w']+")).filter {
+    it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
+  }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
+  val synonym = randomSynonym(toReplace)
+  return replace(toReplace, synonym).maskLastToken(synonym)
 }
 
 fun randomSynonym(toReplace: String) =
   StringUtils.splitByCharacterTypeCamelCase(toReplace).joinToString("") {
-    synonyms(toReplace).random().let { new ->
+    (synonyms(toReplace) + toReplace).random().let { new ->
       if (toReplace.first().isLowerCase()) new
       else "" + new[0].uppercaseChar() + new.drop(1)
     }
