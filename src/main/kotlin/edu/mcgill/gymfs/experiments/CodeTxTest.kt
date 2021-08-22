@@ -58,12 +58,12 @@ fun String.renameTokens(): String {
   return replace(toReplace, synonym)
 }
 
-fun String.renameTokensAndMask(): String {
+fun String.renameTokensAndMask(): Pair<String, String> {
   val toReplace = split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
   val synonym = randomSynonym(toReplace)
-  return replace(toReplace, synonym).maskLastToken(synonym)
+  return replace(toReplace, synonym).let { it to it.maskLastToken(synonym) }
 }
 
 fun randomSynonym(toReplace: String) =
