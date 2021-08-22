@@ -25,7 +25,11 @@ val MODEL =
 //"codebert-base"
 "codebert-base-mlm"
 
-val EMBEDDING_SERVER by lazy {
+val SYNONYM_SERVER: String by lazy {
+  EMBEDDING_SERVER.replace("query", "synonym")
+}
+
+val EMBEDDING_SERVER: String by lazy {
   val addr = "http://localhost:8000/?query="
   val test = addr + "test"
 
@@ -37,7 +41,7 @@ val EMBEDDING_SERVER by lazy {
 
   ProcessBuilder("python", "embedding_server.py", MODEL)
 //    .run { inheritIO() }
-    .start()
+    .start().run { Runtime.getRuntime().addShutdownHook(Thread { destroy() }) }
 
   println("Starting embeddings server...")
   // Spinlock until service is available

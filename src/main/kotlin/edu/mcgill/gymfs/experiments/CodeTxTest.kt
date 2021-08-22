@@ -1,13 +1,16 @@
 package edu.mcgill.gymfs.experiments
 
+import edu.mcgill.gymfs.disk.*
+import org.apache.commons.lang3.StringUtils
+
 fun main() {
   val codeSnippet = """
     static void main(String[] args) {
      Scanner in = new Scanner(System.in);
-     int N = in.nextInt();
+     int amount = in.nextInt();
      for (int i = 1; i<=10; i++) {
-       int sum = N * i;
-       println(N + " x " + i + " = " + sum);
+       int sum = amount * i;
+       println(amount + " x " + i + " = " + sum);
        test(1, 2, 3, 4, 5)
      }
     }
@@ -48,11 +51,19 @@ fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
 
 fun String.renameTokens(): String {
-  val toReplace = split(Regex("[^\\w']+"))
-    .filter { it.length > 5 && it.all { it.isJavaIdentifierPart() } }
-    .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  return replace(toReplace, "xx")
+  val toReplace = split(Regex("[^\\w']+")).filter {
+    it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
+  }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
+  return replace(toReplace, randomSynonym(toReplace))
 }
+
+fun randomSynonym(toReplace: String) =
+  StringUtils.splitByCharacterTypeCamelCase(toReplace).joinToString("") {
+    synonyms(toReplace).random().let { new ->
+      if (toReplace.first().isLowerCase()) new
+      else "" + new[0].uppercaseChar() + new.drop(1)
+    }
+  }
 
 fun String.permuteArgumentOrder(): String =
   replace(Regex("\\((.*,.*)\\)")) { match ->

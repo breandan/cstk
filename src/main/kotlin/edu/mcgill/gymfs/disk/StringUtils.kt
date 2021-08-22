@@ -104,6 +104,12 @@ tailrec fun complete(
 fun query(query: String = ""): String =
   URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
 
+// Returns single-word synonyms
+fun synonyms(word: String): Set<String> =
+  URL(SYNONYM_SERVER + URLEncoder.encode(word, "utf-8")).readText()
+    .removePrefix("{").removeSuffix("}").replace("'", "").split(", ")
+    .filter { !it.contains(" ") }.toSet()
+
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
 
@@ -122,6 +128,32 @@ object MetricCSNF: MetricStringDistance {
       c.map { vocab[it] }.joinToString("") to d.map { vocab[it] }.joinToString("")
     }
 }
+
+val reservedWords = setOf(
+  // Java
+  "abstract", "assert", "boolean", "break", "byte", "case",
+  "catch", "char", "class", "const", "continue", "default",
+  "double", "do", "else", "enum", "extends", "false",
+  "final", "finally", "float", "for", "goto", "if",
+  "implements", "import", "instanceof", "int", "interface", "long",
+  "native", "new", "null", "package", "private", "protected",
+  "public", "return", "short", "static", "strictfp", "super",
+  "switch", "synchronized", "this", "throw", "throws", "transient",
+  "true", "try", "void", "volatile", "while",
+  // Kotlin
+  "as", "is", "as", "break", "class", "continue", "do", "else", "false", "for",
+  "fun", "if", "in", "null", "object", "package", "return", "super", "this",
+  "throw", "true", "try", "typealias", "typeof", "val",
+  "var", "when", "while", "by", "delegates",
+  "catch", "constructor", "delegate", "dynamic", "field", "file", "finally",
+  "get", "import", "init", "param", "property",
+  "receiver", "set", "is", "setparam", "value", "where", "actual", "abstract",
+  "annotation", "companion", "const", "crossinline",
+  "data", "enum", "expect", "external", "final", "infix", "inline", "inner",
+  "internal", "lateinit", "noinline", "open", "operator",
+  "out", "override", "private", "protected", "public", "reified", "sealed",
+  "suspend", "tailrec", "vararg", "field", "it"
+)
 
 fun main() {
   println(kantorovich(matrixize("test  a ing 123"), matrixize("{}{{}{{{}}}{asdf g")))

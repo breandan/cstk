@@ -1,6 +1,7 @@
 import http.server
 import sys
 import urllib
+import wn
 from http.server import HTTPServer
 from typing import List
 from urllib.parse import parse_qs
@@ -57,24 +58,39 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         # print(query_components)
         # print("PATH: %s" % self.path)
 
+        reply = ''
         if 'query' in query_components:
             query = urllib.parse.unquote_plus(query_components["query"][0])
-            if '<mask>' in query:
-                pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
-                outputs = pred(query)
-                # Greedy decoding
-                max_output = max(outputs, key=lambda s: float(s['score']))
-                self.wfile.write(bytes(max_output['sequence'], encoding='utf8'))
-            else:
-                # print("QUERY: %s" % query)
-                array = self.embed_sequence(query)
+            print("QUERY: %s" % query)
+            reply = self.handle_query(query)
+        elif 'synonym' in query_components:
+            word = urllib.parse.unquote_plus(query_components["synonym"][0])
+            print("WORD:  %s" % word)
+            reply = self.handle_synonym(word)
 
-                html = np.array2string(a=array,
-                                       threshold=sys.maxsize,
-                                       max_line_width=sys.maxsize)
-                self.wfile.write(bytes(html, "utf8"))
-
+        self.wfile.write(bytes(reply, encoding='utf8'))
         return
+
+    def handle_synonym(self, query):
+        return str(set([wd
+                        for ss in wn.synsets(query)
+                        for hn in ss.hypernyms()
+                        for wd in hn.lemmas()]))
+
+    def handle_query(self, query):
+        if '<mask>' in query:
+            pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
+            outputs = pred(query)
+            # Greedy decoding
+            max_output = max(outputs, key=lambda s: float(s['score']))
+            return max_output['sequence']
+        else:
+            array = self.embed_sequence(query)
+
+            html = np.array2string(a=array,
+                                   threshold=sys.maxsize,
+                                   max_line_width=sys.maxsize)
+            return html
 
 
 my_server = HTTPServer(('', 8000), EmbeddingServer)
