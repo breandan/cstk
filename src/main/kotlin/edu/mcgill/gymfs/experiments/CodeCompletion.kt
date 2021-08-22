@@ -17,15 +17,11 @@ fun main() {
     }.toList().mapNotNull { it }
 
   val accuracy = validationSet.map { (original, refactored, masked) ->
+    // TODO: multitoken decoding?
     val completion = complete(masked)
+    // TODO: score soft matching?
     if (completion == refactored) 1.0 else 0.0
   }.average()
 
   println("Accuracy: $accuracy")
 }
-
-fun String.maskLastToken(token: String) =
-  reversed().replaceFirst(token.reversed(), MSK.reversed()).reversed()
-
-fun String.histogram(): Map<String, Int> =
-  split(Regex("[^A-Za-z]")).filter { it.length > 2 }.groupingBy { it }.eachCount()

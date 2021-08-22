@@ -54,7 +54,7 @@ fun String.renameTokens(): String {
   val toReplace = split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  val synonym = randomSynonym(toReplace)
+  val synonym = randomSynonym(toReplace) // Can be a fixed token, e.g. "tt"
   return replace(toReplace, synonym)
 }
 
@@ -62,9 +62,12 @@ fun String.renameTokensAndMask(): Pair<String, String> {
   val toReplace = split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  val synonym = randomSynonym(toReplace)
+  val synonym = randomSynonym(toReplace) // Can be a fixed token, e.g. "tt"
   return replace(toReplace, synonym).let { it to it.maskLastToken(synonym) }
 }
+
+fun String.maskLastToken(token: String) =
+  reversed().replaceFirst(token.reversed(), MSK.reversed()).reversed()
 
 fun randomSynonym(toReplace: String) =
   StringUtils.splitByCharacterTypeCamelCase(toReplace).joinToString("") {
