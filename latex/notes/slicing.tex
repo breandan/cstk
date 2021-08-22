@@ -1,0 +1,71 @@
+%! Author = breandanconsidine
+%! Date = 8/22/21
+
+% Preamble
+\documentclass[12pt]{article}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{fontspec}
+\usepackage{xcolor}
+
+\setmonofont{JetBrains Mono}[
+  Contextuals=Alternate  % Activate the calt feature
+]
+
+\makeatletter
+\def\verbatim@nolig@list{}
+\makeatother
+
+\lstdefinelanguage{kotlin}{
+  comment=[l]{//},
+  commentstyle={\color{gray}\ttfamily},
+  emph={delegate, filter, firstOrNull, forEach, it, lazy, mapNotNull, println, repeat, assert, with, head, tail, len, return@},
+  numberstyle=\noncopyable,
+  emphstyle={\color{OrangeRed}},
+  identifierstyle=\color{black},
+  keywords={abstract, actual, as, as?, break, by, class, companion, continue, data, do, dynamic, else, enum, expect, false, final, for, fun, get, if, import, in, infix, interface, internal, is, null, object, open, operator, override, package, private, public, return, sealed, set, super, suspend, this, throw, true, try, catch, typealias, val, var, vararg, when, where, while, tailrec, reified},
+  keywordstyle={\color{NavyBlue}\bfseries},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]",
+  morestring=[s]{"""*}{*"""},
+  ndkeywords={@Deprecated, @JvmField, @JvmName, @JvmOverloads, @JvmStatic, @JvmSynthetic, Array, Byte, Double, Float, Boolean, Int, Integer, Iterable, Long, Runnable, Short, String},
+  ndkeywordstyle={\color{BurntOrange}\bfseries},
+  sensitive=true,
+  stringstyle={\color{ForestGreen}\ttfamily},
+  literate={`}{{\char0}}1
+}
+
+\title{A Simple Yet Effective Method Slicer}
+\author{Breandan Considine}
+% Document
+\begin{document}
+  \maketitle
+We describe a simple heuristic for extracting method-level slices in well-formed source code using a Dyck counter.~\footnote{\url{https://en.wikipedia.org/wiki/Dyck\_language}} It is common convention in many programming languages to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. Thus, we aggregate lines until brackets are balanced and a blank line is encountered, then reset. Though inexhaustive, we observe this approach works in practice on a variety of langauges. An implementation is given below in Kotlin:
+
+  \vspace{5pt}
+
+  \begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
+val funKeywords = listOf("def ", "function ", "fun ", "void ")
+val (lbs, rbs) = listOf('(', '{', '[') to listOf(')', '}', ']')
+
+fun String.sliceIntoMethods(): List<String> =
+  lines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
+    if (dyckSum < 0 && funKeywords.any { it in line }) {
+      line.countBalancedBrackets() to (methods + line)
+    } else if (dyckSum == 0) {
+      if (line.isBlank()) -1 to methods else 0 to methods.put(line)
+    } else if (dyckSum > 0) {
+      dyckSum + line.countBalancedBrackets() to methods.put(line)
+    } else -1 to methods
+  }.second
+
+fun List<String>.put(s: String) = dropLast(1) + (last() + "\n$s")
+
+fun String.countBalancedBrackets(): Int = fold(0) { s, c ->
+  if (c in lbs) s + 1 else if (c in rbs) s - 1 else s
+}
+  \end{lstlisting}
+
+\end{document}

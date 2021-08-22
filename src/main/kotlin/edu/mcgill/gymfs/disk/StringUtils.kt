@@ -49,20 +49,20 @@ val closeParens = listOf(')', '}', ']')
 fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
   path.allLines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
     if (dyckSum < 0 && funKeywords.any { it in line } && "(" in line) {
-      line.computeParenthesesBalance() to methods + line
+      line.countBalancedBrackets() to methods + line
     } else if (dyckSum == 0) {
-      if(line.isBlank()) -1 to methods else 0 to methods.appendToLast(line)
+      if(line.isBlank()) -1 to methods else 0 to methods.put(line)
     } else if (dyckSum > 0) {
-      dyckSum + line.computeParenthesesBalance() to methods.appendToLast(line)
+      dyckSum + line.countBalancedBrackets() to methods.put(line)
     } else {
       -1 to methods
     }
   }.second
 }.flatten()
 
-fun List<String>.appendToLast(line: String) = dropLast(1) + (last() +"\n"+ line)
+fun List<String>.put(line: String) = dropLast(1) + (last() +"\n"+ line)
 
-fun String.computeParenthesesBalance(): Int =
+fun String.countBalancedBrackets(): Int =
   fold(0) { s, c -> if (c in openParens) s + 1 else if (c in closeParens) s - 1 else s }
 
 fun URI.allLines(): Sequence<String> =
