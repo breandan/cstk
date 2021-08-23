@@ -41,9 +41,9 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
-val funKeywords = listOf("public ", "private ", "void ", "static ", "fun ")
-val openParens = listOf('(', '{', '[')
-val closeParens = listOf(')', '}', ']')
+val funKeywords = setOf("public ", "private ", "void ", "static ", "fun ")
+val openParens = setOf('(', '{', '[')
+val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
 fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->

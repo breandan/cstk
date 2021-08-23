@@ -42,30 +42,31 @@
 % Document
 \begin{document}
   \maketitle
-We describe a simple heuristic for extracting method-level slices in well-formed source code using a Dyck counter.~\footnote{\url{https://en.wikipedia.org/wiki/Dyck\_language}} It is common convention in many programming languages to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. Thus, we aggregate lines until brackets are balanced and a blank line is encountered, then reset. Though inexhaustive, we observe this approach works in practice on a variety of langauges. An implementation is given below in Kotlin:
+We describe a simple heuristic for extracting method slices in well-formed source code using a Dyck counter.~\footnote{\url{https://en.wikipedia.org/wiki/Dyck\_language}} It is common convention in many languages to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. Thus, we accumulate lines until brackets are balanced and a blank line is encountered, then reset. We observe this approach works on a variety of langauges. An implementation in Kotlin is given below, which will output the following source code when run on itself:
 
-  \vspace{5pt}
+  \vspace{11pt}
 
   \begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
-val funKeywords = listOf("def ", "function ", "fun ", "void ")
-val (lbs, rbs) = listOf('(', '{', '[') to listOf(')', '}', ']')
-
-fun String.sliceIntoMethods(): List<String> =
-  lines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
-    if (dyckSum < 0 && funKeywords.any { it in line }) {
-      line.countBalancedBrackets() to (methods + line)
-    } else if (dyckSum == 0) {
-      if (line.isBlank()) -1 to methods else 0 to methods.put(line)
-    } else if (dyckSum > 0) {
-      dyckSum + line.countBalancedBrackets() to methods.put(line)
+fun String.sliceIntoMethods(kwds: Set<String> = setOf("fun ")) =
+  lines().fold(-1 to List<String>(0)) { (dyckCtr, methods), ln ->
+    if (dyckCtr < 0 && kwds.any { it in ln }) {
+      ln.countBalancedBrackets() to (methods + ln)
+    } else if (dyckCtr == 0) {
+      if (ln.isBlank()) -1 to methods else 0 to methods.put(ln)
+    } else if (dyckCtr > 0) {
+      dyckCtr + ln.countBalancedBrackets() to methods.put(ln)
     } else -1 to methods
   }.second
 
 fun List<String>.put(s: String) = dropLast(1) + (last() + "\n$s")
 
-fun String.countBalancedBrackets(): Int = fold(0) { s, c ->
+fun String.countBalancedBrackets() = fold(0) { s, c ->
+  val (lbs, rbs) = setOf('(', '{', '[') to setOf(')', '}', ']')
   if (c in lbs) s + 1 else if (c in rbs) s - 1 else s
 }
+
+fun main(args: Array<String>) =
+  println(args[0].sliceIntoMethods().joinToString("\n\n"))
   \end{lstlisting}
 
 \end{document}

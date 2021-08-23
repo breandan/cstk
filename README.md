@@ -1,6 +1,6 @@
-# Code Search Tools
+# CSTK: Code Search Toolkit
 
-Tools and experiments for information retrieval on code. Provides:
+Tools and experiments for code search. Provides:
 
 * Indices for keyword and vector embedding
 * Learning to search & grammar induction
@@ -14,7 +14,9 @@ Tools and experiments for information retrieval on code. Provides:
     * Various string distance metrics
 * Evaluation criteria: NDCG, MAP@K, MRR
 * Datamining and dataloading tools
-* "MiniGithub" mock training interface
+* "MiniGitHub" mock training interface
+* Probing tools for neural language models
+* 
 
 # Indexing
 
