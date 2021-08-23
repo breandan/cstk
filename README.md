@@ -11,12 +11,22 @@ Tools and experiments for code search. Provides:
     * Proximity-based graph embedding
 * Metrics for string, vector and distribution matching
     * Kantorovich metric on code embeddings
+    * Code-snippet normal form
     * Various string distance metrics
-* Evaluation criteria: NDCG, MAP@K, MRR
+* TSNE visualization of code embeddings
+* Ranking metrics: NDCG, MAP@K, MRR
 * Datamining and dataloading tools
 * "MiniGitHub" mock training interface
-* Probing tools for neural language models
-* 
+* Probabilistic code synthesis with Markov tensors
+* Probing tools for pretrained neural language models
+* Autoregressive code completion with masked LMs
+* Synthetic source code transformations
+    * Synonym variable renaming
+    * Dead code introduction
+    * Loop bounds alteration
+    * Argument order swapping
+    * Line order swapping
+* [Method slicing](latex/notes/slicing.pdf)
 
 # Indexing
 
