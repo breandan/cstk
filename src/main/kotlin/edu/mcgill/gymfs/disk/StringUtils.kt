@@ -171,6 +171,7 @@ val reservedWords = setOf(
   "public", "return", "short", "static", "strictfp", "super",
   "switch", "synchronized", "this", "throw", "throws", "transient",
   "true", "try", "void", "volatile", "while",
+
   // Kotlin
   "as", "is", "as", "break", "class", "continue", "do", "else", "false", "for",
   "fun", "if", "in", "null", "object", "package", "return", "super", "this",

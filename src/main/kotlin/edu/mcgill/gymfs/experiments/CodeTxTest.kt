@@ -54,25 +54,27 @@ fun String.renameTokens(): String {
   val toReplace = split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  val synonym = randomSynonym(toReplace) // Can be a fixed token, e.g. "tt"
+  val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"
   return replace(toReplace, synonym)
 }
 
 fun String.renameTokensAndMask(): Pair<String, String> {
   val toReplace = split(Regex("[^\\w']+")).filter {
-    it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
+    it.length > 4 && it !in reservedWords &&
+      it.all(Char::isJavaIdentifierPart) && it.first().isLowerCase()
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  val synonym = randomSynonym(toReplace) // Can be a fixed token, e.g. "tt"
-  return replace(toReplace, synonym).let { it to it.maskLastToken(synonym) }
+  val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"
+  return if (toReplace.isBlank() || synonym.isBlank()) this to this
+  else replace(toReplace, synonym).let { it to it.maskLastToken(synonym) }
 }
 
 fun String.maskLastToken(token: String) =
   reversed().replaceFirst(token.reversed(), MSK.reversed()).reversed()
 
-fun randomSynonym(toReplace: String) =
-  StringUtils.splitByCharacterTypeCamelCase(toReplace).joinToString("") {
-    (synonyms(toReplace) + toReplace).random().let { new ->
-      if (toReplace.first().isLowerCase()) new
+fun synonymize(token: String): String =
+  StringUtils.splitByCharacterTypeCamelCase(token).joinToString("") { old ->
+    (synonyms(old) + old).random().let { new ->
+      if (old.first().isLowerCase()) new
       else "" + new[0].uppercaseChar() + new.drop(1)
     }
   }
