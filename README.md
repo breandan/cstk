@@ -705,6 +705,9 @@ val ritingConfig.indefaultResponseExtractory.persDsl {
 Synonym renaming is supported by extJWNL. Examples shown below:
 
 <details>
+
+Left column is the original, right column is synonymized:
+
 ```
 fun VecIndex.knn(v: DoubleArray, i: Int, exact: Boolean = false) =    |    fun VecIndex.knn(v: DoubleArray, i: Int, involve: Boolean = false) =
   if(exact) exactKNNSearch(v, i + 10)                                 |      if(involve) involveKNNSearch(v, i + 10)
