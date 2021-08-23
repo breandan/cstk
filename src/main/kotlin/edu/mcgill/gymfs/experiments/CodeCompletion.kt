@@ -25,22 +25,3 @@ fun main() {
 
   println("Accuracy: $accuracy")
 }
-
-fun printOriginalVsTransformed(methodPairs: List<Triple<String, String, String>>) =
-  methodPairs.forEach { (original, variant, _) ->
-    if(original != variant) {
-      val maxLen = 70
-      val maxLines = 10
-      val methodLines = original.lines()
-      val variantLines = variant.lines()
-      if(methodLines.all { it.length < maxLen } && methodLines.size < maxLines) {
-        methodLines.forEachIndexed { i, l ->
-          println(
-            l.padEnd(maxLen, ' ') + "|    " +
-              variantLines[i].padEnd(maxLen, ' ')
-          )
-        }
-        println(List(maxLen * 2){'='}.joinToString(""))
-      }
-    }
-  }

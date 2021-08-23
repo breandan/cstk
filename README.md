@@ -698,11 +698,17 @@ val ritingConfig.indefaultResponseExtractory.persDsl {
 ```
 </details>
 
-# Source Code Transformations
+### Source Code Transformations
 
-## Synonym renaming
+CSTK supports a number of source code transformations for studying the effect on neural langauge models. Some examples are given below.
 
-Synonym renaming is supported by extJWNL. Examples shown below:
+#### Synonym renaming
+
+Synonym renaming is provided by [extJWNL](https://github.com/extjwnl/extjwnl). Run the following command:
+
+```bash
+./gradlew synonymize
+```
 
 <details>
 
