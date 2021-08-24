@@ -106,6 +106,9 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl:2.0.3")
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
+  // String diffs
+  implementation("io.github.java-diff-utils:java-diff-utils:4.10")
+
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
   // http://www.jflap.org/modules/ConvertedFiles/DFA%20to%20Regular%20Expression%20Conversion%20Module.pdf

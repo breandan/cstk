@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.experiments
 
+import com.github.difflib.DiffUtils
 import edu.mcgill.gymfs.disk.*
 import info.debatty.java.stringsimilarity.Levenshtein
 import kotlin.math.abs
@@ -13,15 +14,43 @@ fun main() {
     .map { method ->
       val variant = method.renameTokens()
       val masked = variant.maskRandomIdentifier()
-      if (variant == method) null else Triple(method, variant, masked)
-    }.toList().mapNotNull { it }
+      Triple(method, variant, masked)
+    }.toList().map { it }
 //    .also { printOriginalVsTransformed(it) }
 
-  val accuracy = validationSet.map { (original, refactored, masked) ->
+  val accuracy = validationSet.mapNotNull { (original, refactored, masked) ->
     val completion = complete(masked)
+    val completionLines = completion.lines()
+    val refactoredLines = refactored.lines()
+    val originalLines = original.lines()
+    val maskedLines = masked.lines()
+
+    // TODO: sometimes masking modifies other lines, why?
+    if (completionLines.size != maskedLines.size ||
+      maskedLines.size != refactoredLines.size ||
+      refactoredLines.size != originalLines.size
+    ) return@mapNotNull null
+
     // TODO: better heuristic for correct selection
-    if (Levenshtein().distance(completion, refactored).toInt() ==
-      abs(completion.length - refactored.length)) 1.0 else 0.0
+    // TODO: instead of just one, mask multiple tokens method and compare
+    // only compare line of masked token
+    val maskedLineNo = masked.lines().indexOfFirst { "<mask>" in it }
+    val maskedLine = maskedLines[maskedLineNo]
+    val unmaskedLine = refactoredLines[maskedLineNo]
+    val predictedLine = completionLines[maskedLineNo]
+
+    val leven = Levenshtein().distance(predictedLine, unmaskedLine).toInt()
+    val abs = abs(maskedLine.length - unmaskedLine.length)
+
+    // Show some examples
+    if(refactoredLines.all { it.length < 80 } && maskedLines.size in 3..10){
+    printSideBySide(original, refactored, leftHeading = "original", rightHeading = "synthetic variant")
+    printSideBySide(refactored, masked, leftHeading = "synthetic variant", rightHeading = "masked")
+    printSideBySide(unmaskedLine, predictedLine, leftHeading = "ground truth", rightHeading = "predicted line")
+    println("".padEnd(167, '=') + "\n\n")
+    }
+
+    if (leven == abs) 1.0 else 0.0
   }.average()
 
   println("Accuracy: $accuracy")
@@ -35,6 +64,6 @@ fun String.maskRandomIdentifier(): String =
 //  }
   split(Regex("((?<=[^\\w])|(?=[^\\w]))")).let {
     val indexToMask = it.mapIndexed { index, s -> index to s }
-      .filter { it.second.length > 1 && it.second.all { it.isJavaIdentifierPart() } }.random().also { println(it.second) }.first
+      .filter { it.second.length > 1 && it.second.all { it.isJavaIdentifierPart() } }.random().first
     it.foldIndexed("") { i, acc, tok -> acc + if(i == indexToMask) "<mask>" else tok }
   }

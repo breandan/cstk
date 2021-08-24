@@ -10,8 +10,9 @@ fun main() {
     .map { method ->
       val variant = method.renameTokens()
       if (variant == method) null else method to variant
-    }.toList().mapNotNull { it }
-    .let { printOriginalVsTransformed(it) }
+    }.toList().mapNotNull { it }.forEach { (original, variant) ->
+      if (original != variant) printSideBySide(original, variant)
+    }
 }
 
 fun synonymize(token: String): String =
@@ -36,22 +37,3 @@ fun synonyms(
         .flatten().mapNotNull { it.lemma }
     }.flatten()
   }.flatten().filter { " " !in it }.toSet()
-
-fun printOriginalVsTransformed(methodPairs: List<Pair<String, String>>) =
-  methodPairs.forEach { (original, variant) ->
-    if (original != variant) {
-      val maxLen = 70
-      val maxLines = 10
-      val methodLines = original.lines()
-      val variantLines = variant.lines()
-      if (methodLines.all { it.length < maxLen } && methodLines.size < maxLines) {
-        methodLines.forEachIndexed { i, l ->
-          println(
-            l.padEnd(maxLen, ' ') + "|    " +
-              variantLines[i].padEnd(maxLen, ' ')
-          )
-        }
-        println(List(maxLen * 2) { '=' }.joinToString(""))
-      }
-    }
-  }

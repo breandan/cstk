@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.disk
 
+import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.gymfs.math.kantorovich
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
@@ -148,6 +149,39 @@ object MetricCSNF: MetricStringDistance {
       val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s to i }.toMap()
       c.map { vocab[it] }.joinToString("") to d.map { vocab[it] }.joinToString("")
     }
+}
+
+fun printSideBySide(
+  left: String, right: String,
+  leftHeading: String = "original", rightHeading: String = "new",
+  maxLen: Int = 80, maxLines: Int = 20
+) {
+  val (leftLines, rightLines) = left.lines() to right.lines()
+  if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
+    val rows = DiffRowGenerator.create()
+      .showInlineDiffs(true)
+      .ignoreWhiteSpaces(true)
+      .inlineDiffByWord(true)
+      .lineNormalizer { it }
+      .oldTag { _ -> "~" }
+      .newTag { _ -> "**" }
+      .build()
+      .generateDiffRows(leftLines, rightLines)
+
+    println(
+      "| $leftHeading".padEnd(maxLen + 3, ' ') +
+        "| $rightHeading".padEnd(maxLen + 3, ' ') + "|"
+    )
+    val sep = "|".padEnd(maxLen + 3, '-')
+    println("$sep$sep|")
+    rows.forEach { row ->
+      println(
+        "| " + row.oldLine.padEnd(maxLen, ' ') + " | " +
+          row.newLine.padEnd(maxLen, ' ') + " |"
+      )
+    }
+    println("\n")
+  }
 }
 
 val reservedWords = setOf(

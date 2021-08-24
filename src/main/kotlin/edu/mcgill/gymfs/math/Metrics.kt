@@ -79,4 +79,4 @@ fun main() {
 }
 
 fun randomMatrix(n: Int, m: Int) =
-  Array(n) { i -> DoubleArray(m) { j -> Random.nextDouble() } }
+  Array(n) { DoubleArray(m) { Random.nextDouble() } }
