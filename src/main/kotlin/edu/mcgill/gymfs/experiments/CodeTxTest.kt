@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import org.apache.commons.lang3.StringUtils
 
 fun main() {
   val codeSnippet = """
@@ -51,33 +50,17 @@ fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
 
 fun String.renameTokens(): String {
-  val toReplace = split(Regex("[^\\w']+")).filter {
-    it.length > 4 && it !in reservedWords && it.all(Char::isJavaIdentifierPart)
-  }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
+  val toReplace = mostFrequentIdentifier()
   val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"
-  return replace(toReplace, synonym)
+  return if (toReplace.isBlank() || synonym.isBlank()) this
+  else replace(toReplace, synonym)
 }
 
-fun String.renameTokensAndMask(): Pair<String, String> {
-  val toReplace = split(Regex("[^\\w']+")).filter {
+fun String.mostFrequentIdentifier(): String =
+  split(Regex("[^\\w']+")).filter {
     it.length > 4 && it !in reservedWords &&
       it.all(Char::isJavaIdentifierPart) && it.first().isLowerCase()
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-  val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"
-  return if (toReplace.isBlank() || synonym.isBlank()) this to this
-  else replace(toReplace, synonym).let { it to it.maskLastToken(synonym) }
-}
-
-fun String.maskLastToken(token: String) =
-  reversed().replaceFirst(token.reversed(), MSK.reversed()).reversed()
-
-fun synonymize(token: String): String =
-  StringUtils.splitByCharacterTypeCamelCase(token).joinToString("") { old ->
-    (synonyms(old) + old).random().let { new ->
-      if (old.first().isLowerCase()) new
-      else "" + new[0].uppercaseChar() + new.drop(1)
-    }
-  }
 
 fun String.permuteArgumentOrder(): String =
   replace(Regex("\\((.*,.*)\\)")) { match ->

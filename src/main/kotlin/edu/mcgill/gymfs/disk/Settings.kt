@@ -25,6 +25,21 @@ val MODEL =
 //"codebert-base"
 "codebert-base-mlm"
 
+val VOCAB_URL = "https://huggingface.co/microsoft/$MODEL/resolve/main/vocab.json"
+
+val MODEL_DICT: Map<String, Int> by lazy {
+  val vocabFile = File("model_$MODEL.json")
+  val json = if(vocabFile.exists()) vocabFile.readText()
+  else URL(VOCAB_URL).readText().also{vocabFile.writeText(it)}
+
+  json.removePrefix("{\"")
+    .substringBeforeLast("\"")
+    .split(Regex(", \""))
+//    .replace("Ġ", " ") //https://github.com/huggingface/transformers/issues/3867#issuecomment-616956437
+    .mapNotNull { it.split("\": ").let { if(it.size == 2) it[0] to it[1].toInt() else null } }
+    .toMap()
+}
+
 val EMBEDDING_SERVER: String by lazy {
   val addr = "http://localhost:8000/?query="
   val test = addr + "test"

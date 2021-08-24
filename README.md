@@ -16,12 +16,12 @@ Tools and experiments for code search. Provides:
 * TSNE visualization of code embeddings
 * Ranking metrics: NDCG, MAP@K, MRR
 * Datamining and dataloading tools
-* "MiniGitHub" mock training interface
-* Probabilistic code synthesis with Markov tensors
+* ["MiniGitHub" mock training interface](#minigithub-construction)
+* [Probabilistic code synthesis with Markov tensors](#probabilistic-code-synthesis)
 * Probing tools for pretrained neural language models
 * Autoregressive code completion with masked LMs
 * Synthetic source code transformations
-    * Synonym variable renaming
+    * [Synonym variable renaming](#synonym-renaming)
     * Dead code introduction
     * Loop bounds alteration
     * Argument order swapping
@@ -43,6 +43,14 @@ Interface:
 * `Path.knn(code)` - Fetches similar code snippets to the query.
 
 # Usage
+
+### MiniGitHub construction
+
+Fetches a bunch of smallish repos on GitHub for evaluation:
+
+```bash
+./gradlew cloneRepos
+```
 
 ### Keyword search
 
@@ -623,7 +631,7 @@ Angle brackets enclose longest common substring up to current result
 ```
 </details>
 
-### Code synthesis
+### Probabilistic Code synthesis
 
 The following command will run the code synthesis demo:
 
@@ -698,9 +706,17 @@ val ritingConfig.indefaultResponseExtractory.persDsl {
 ```
 </details>
 
+### Masked code completion
+
+The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/gymfs/experiments/CodeCompletion.kt) demo:
+
+```bash
+./gradlew completeCode
+```
+
 ### Source Code Transformations
 
-CSTK supports a number of source code transformations for studying the effect on neural langauge models. Some examples are given below.
+CSTK supports a number of source code transformations for studying the effect on neural language models. Some examples are given below.
 
 #### Synonym renaming
 
