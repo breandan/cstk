@@ -60,7 +60,7 @@ fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
       -1 to methods
     }
   }.second
-}.flatten()
+}.flatten().map { it.trimIndent() }
 
 fun List<String>.put(line: String) = dropLast(1) + (last() +"\n"+ line)
 

@@ -63,7 +63,7 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         return
 
     def handle_query(self, query):
-        if '<mask>' in query:
+        if tokenizer.mask_token in query:
             pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
             outputs = pred(query)
             # Greedy decoding

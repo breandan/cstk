@@ -41,7 +41,8 @@ fun main() {
 fun String.mutateSyntax() =
   map {
     if (!it.isWhitespace() && Math.random() < 0.3)
-      ('!'..'~').random() else it
+      ('!'..'~').random()
+    else it
   }.joinToString("")
 
 fun String.shuffleLines() = lines().shuffled().joinToString("\n")

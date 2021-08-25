@@ -1,6 +1,5 @@
 package edu.mcgill.gymfs.experiments
 
-import com.github.difflib.DiffUtils
 import edu.mcgill.gymfs.disk.*
 import info.debatty.java.stringsimilarity.Levenshtein
 import kotlin.math.abs
@@ -10,15 +9,18 @@ fun main() {
 //  println("Query: $query")
 //  println("Completion: " + complete(query, 3))
 
-  val validationSet = TEST_DIR.allFilesRecursively().allMethods().take(1000)
-    .map { method ->
-      val variant = method.renameTokens()
-      val masked = variant.maskRandomIdentifier()
-      Triple(method, variant, masked)
-    }.toList().map { it }
+  val tokenizer = FullTokenizer()
+
+  val validationSet = TEST_DIR.allFilesRecursively().allMethods()
+    // Ensure tokenized method fits within attention
+    .filter { tokenizer.tokenize(it).size < 750 }.take(1000)
+    .map { method -> method to method.renameTokens() }
+    .toList().map { it }
 //    .also { printOriginalVsTransformed(it) }
 
-  val accuracy = validationSet.mapNotNull { (original, refactored, masked) ->
+  val accuracy = validationSet.mapNotNull { (original, refactored) ->
+    refactored.maskIdentifiers().map { masked ->
+
     val completion = complete(masked)
     val completionLines = completion.lines()
     val refactoredLines = refactored.lines()
@@ -51,19 +53,20 @@ fun main() {
     }
 
     if (leven == abs) 1.0 else 0.0
-  }.average()
+  }
 
+  }.flatten().average() // average across all mask positions for each code snippet
   println("Accuracy: $accuracy")
 }
 
 val defaultTokenizer = BasicTokenizer(false)
-fun String.maskRandomIdentifier(): String =
-//  defaultTokenizer.tokenize(this).let {
-//    val rand = it.indices.random()
-//    it.foldIndexed("") { i, acc, tok -> acc + if(i == rand) "<mask>" else tok }
-//  }
+fun String.maskIdentifiers(): List<String> =
   split(Regex("((?<=[^\\w])|(?=[^\\w]))")).let {
-    val indexToMask = it.mapIndexed { index, s -> index to s }
-      .filter { it.second.length > 1 && it.second.all { it.isJavaIdentifierPart() } }.random().first
-    it.foldIndexed("") { i, acc, tok -> acc + if(i == indexToMask) "<mask>" else tok }
+    it.mapIndexed { index, s -> index to s }
+      .filter { it.second.length > 1 && it.second.all { it.isJavaIdentifierPart() } }
+      .map { maskIndex ->
+        it.foldIndexed("") { i, acc, tok ->
+          acc + if (i == maskIndex.first) "<mask>" else tok
+        }
+      }
   }
