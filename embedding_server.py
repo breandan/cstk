@@ -14,10 +14,11 @@ from transformers import AutoTokenizer, AutoModel, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
 model_name = sys.argv[1]
-print(f'Model: {model_name}')
-tokenizer: PTT = RobertaTokenizer.from_pretrained(f'microsoft/{model_name}')
-model: PTM = RobertaForMaskedLM.from_pretrained(f'microsoft/{model_name}')
+tokenizer: PTT = RobertaTokenizer.from_pretrained(f'microsoft/{model_name}', local_files_only=True)
+model: PTM = RobertaForMaskedLM.from_pretrained(f'microsoft/{model_name}', local_files_only=True)
 attention_width = 760
+
+print(f'Loaded model: {model_name}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
