@@ -25,9 +25,11 @@ fun evaluateTransformation(
         variant.maskIdentifiers().shuffled().take(3).map { masked ->
           scoreCompletion(variant, masked) ?: return@mapNotNull null
         }
-      }.flatten().toList() // average across all mask positions for each method
-
-    println("${codeTx.name}-accuracy (of ${scores.size}): ${scores.average()}")
+      }.fold(0.0 to 0.0) { (total, sum), mtdScores ->
+        (total + mtdScores.size to sum + mtdScores.sum()).also { (total, sum) ->
+          println("Running accuracy of $MODEL with ${codeTx.name} ($total samples): ${sum / total}")
+        }
+      }.toList() // average across all mask positions for each method
   }
 
 fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
@@ -39,10 +41,10 @@ fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
   // TODO: sometimes masking modifies other lines, why?
   if (completionLines.size != maskedLines.size ||
     maskedLines.size != groundTruthLines.size) {
-    System.err.println("\n\nError!\n\n"); return null
+    System.err.println("\n\nError: mismatched lines!\n\n")
+    return null
   }
 
-  // TODO: better heuristic for correct selection
   // TODO: instead of just one, mask multiple tokens method and compare
   // only compare line of masked token
   val maskedLineNo = maskedSeqeunce.lines().indexOfFirst { "<mask>" in it }
@@ -70,6 +72,7 @@ fun String.maskIdentifiers(): List<String> =
         token.length > 1
           && token.all(Char::isJavaIdentifierPart)
           && token !in reservedWords
+          && 1 < split(token).size - 1
       }.map { maskIndex ->
         it.foldIndexed("") { i, acc, tok ->
           acc + if (i == maskIndex.first) "<mask>" else tok
