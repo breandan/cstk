@@ -50,6 +50,8 @@ fun String.shuffleLines() = lines().shuffled().joinToString("\n")
 fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
 
+fun String.same() = this
+
 fun String.renameTokens(): String {
   val toReplace = mostFrequentIdentifier()
   val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"

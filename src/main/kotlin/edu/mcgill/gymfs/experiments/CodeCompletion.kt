@@ -11,7 +11,7 @@ fun main() {
     .filter { defaultTokenizer.tokenize(it).size < 750 }.take(1000)
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformation(validationSet, String::renameTokens)
+  evaluateTransformation(validationSet, String::same, String::renameTokens)
 }
 
 val defaultTokenizer = BasicTokenizer(false)
@@ -20,14 +20,14 @@ fun evaluateTransformation(
   vararg codeTxs: KFunction1<String, String>
 ) =
   codeTxs.forEach { codeTx ->
-    val accuracy = validationSet.map { method -> method to codeTx(method) }
+    val scores = validationSet.map { method -> method to codeTx(method) }
       .mapNotNull { (original, variant) ->
         variant.maskIdentifiers().shuffled().take(3).map { masked ->
           scoreCompletion(variant, masked) ?: return@mapNotNull null
         }
-      }.flatten().average() // average across all mask positions for each method
+      }.flatten().toList() // average across all mask positions for each method
 
-    println("Accuracy of [${codeTx.name}]: $accuracy")
+    println("${codeTx.name}-accuracy (of ${scores.size}): ${scores.average()}")
   }
 
 fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
