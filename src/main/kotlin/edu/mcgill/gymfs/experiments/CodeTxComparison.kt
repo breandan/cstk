@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import edu.mcgill.markovian.pmap
 import edu.mcgill.gymfs.math.*
 import edu.mcgill.kaliningraph.show
 import java.io.File
