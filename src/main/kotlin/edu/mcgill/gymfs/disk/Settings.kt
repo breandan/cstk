@@ -6,7 +6,7 @@ import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import java.net.URL
 
-const val FILE_EXT = "kt"
+const val FILE_EXT = "java"
 const val FILE_SCHEME = "file"
 const val TGZ_SCHEME = "tgz"
 const val HTTP_SCHEME = "http"

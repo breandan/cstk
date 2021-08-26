@@ -6,9 +6,10 @@ import kotlin.math.abs
 import kotlin.reflect.KFunction1
 
 fun main() {
-  val validationSet = TEST_DIR.allFilesRecursively().allMethods()
+  val validationSet = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
+    .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 750 }.take(1000)
+    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(1000)
 //    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformation(validationSet, String::same, String::renameTokens)

@@ -149,6 +149,7 @@ tasks {
 // Compile fatjar for Compute Canada, doesn't like Gradle
   jar {
     manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.CodeCompletionKt"
+//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
 
     from(configurations.compileClasspath.get().files
       .filter { it.extension != "pom" }

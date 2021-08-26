@@ -922,7 +922,10 @@ Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reaso
 To start, must have Java and Python with PyTorch and HuggingFace:
 
 ```bash
-module load java
+export TRANSFORMERS_OFFLINE=1 && \
+module load python/3.8 && \
+module load java && \
+source venv/bin/activate && \
 java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 ```
 
