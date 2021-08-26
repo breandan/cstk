@@ -1,7 +1,8 @@
 import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
-  val kotlinVersion = "1.5.30-RC"
+  val kotlinVersion = "1.5.30"
   kotlin("jvm") version kotlinVersion
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
@@ -58,7 +59,7 @@ dependencies {
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.11.1"
+  val openrwVersion = "7.2.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -147,7 +148,7 @@ tasks {
 
 // Compile fatjar for Compute Canada, doesn't like Gradle
 //  jar {
-//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.VisualizeTSNEKt"
+//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.CodeCompletionKt"
 //
 //    from(configurations.compileClasspath.get().files
 //      .filter { it.extension != "pom" }

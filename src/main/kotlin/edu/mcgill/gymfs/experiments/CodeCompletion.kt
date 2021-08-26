@@ -20,16 +20,17 @@ fun evaluateTransformation(
   vararg codeTxs: KFunction1<String, String>
 ) =
   codeTxs.forEach { codeTx ->
-    val scores = validationSet.map { method -> method to codeTx(method) }
-      .mapNotNull { (original, variant) ->
-        variant.maskIdentifiers().shuffled().take(3).map { masked ->
-          scoreCompletion(variant, masked) ?: return@mapNotNull null
-        }
+    validationSet.map { method -> method to codeTx(method) }
+      .map { (original, variant) ->
+        variant.maskIdentifiers().shuffled().take(3)
+          .mapNotNull { masked -> scoreCompletion(variant, masked) }
       }.fold(0.0 to 0.0) { (total, sum), mtdScores ->
         (total + mtdScores.size to sum + mtdScores.sum()).also { (total, sum) ->
-          println("Running accuracy of $MODEL with ${codeTx.name} ($total samples): ${sum / total}")
+          val runningAverage = (sum / total).toString().take(6)
+          println("Running accuracy of $MODEL with [${codeTx.name}] " +
+            "transformation ($total samples): $runningAverage\n")
         }
-      }.toList() // average across all mask positions for each method
+      }
   }
 
 fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
@@ -41,7 +42,7 @@ fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
   // TODO: sometimes masking modifies other lines, why?
   if (completionLines.size != maskedLines.size ||
     maskedLines.size != groundTruthLines.size) {
-    System.err.println("\n\nError: mismatched lines!\n\n")
+//    System.err.println("\n\nError: mismatched lines!\n\n")
     return null
   }
 
@@ -55,7 +56,7 @@ fun scoreCompletion(groundTruth: String, maskedSeqeunce: String): Double? {
   val leven = Levenshtein().distance(predictedLine, actualLine).toInt()
   val abs = abs(maskedLine.length - actualLine.length)
 
-  // Show some examples
+  // Show some examples which are reasonably sized for CLI
   if (groundTruthLines.all { it.length < 80 } && maskedLines.size in 3..10) {
     printSideBySide(groundTruth, maskedSeqeunce, "synthetic variant", "masked")
     printSideBySide(actualLine, predictedLine, "ground truth", "prediction")
@@ -71,7 +72,9 @@ fun String.maskIdentifiers(): List<String> =
       .filter { (_, token) ->
         token.length > 1
           && token.all(Char::isJavaIdentifierPart)
+          // Not learning syntax
           && token !in reservedWords
+          // Singleton tokens are impossible to predict in zero-shot setting
           && 1 < split(token).size - 1
       }.map { maskIndex ->
         it.foldIndexed("") { i, acc, tok ->
