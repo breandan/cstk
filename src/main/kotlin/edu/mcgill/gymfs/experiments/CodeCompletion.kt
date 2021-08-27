@@ -7,14 +7,14 @@ fun main() {
   val validationSet = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(1000)
+    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(1000).shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformation(validationSet, String::same, String::renameTokens)
+  evaluateTransformations(validationSet, String::same, String::renameTokens)
 }
 
 val defaultTokenizer = BasicTokenizer(false)
-fun evaluateTransformation(
+fun evaluateTransformations(
   validationSet: Sequence<String>,
   vararg codeTxs: KFunction1<String, String>
 ) =
@@ -23,7 +23,7 @@ fun evaluateTransformation(
       .map { (original, variant) ->
         // Masking all identifiers in all snippets is too expensive,
         // so instead we sample a small number of mask positions
-        variant.maskIdentifiers().shuffled().take(3)
+        variant.maskIdentifiers().shuffled().take(10)
           .mapNotNull { (maskedMethod, trueToken) ->
             val (completion, score) = completeAndScore(trueToken, maskedMethod)
             if (completion == ERR) return@mapNotNull null
