@@ -138,13 +138,20 @@ tailrec fun complete(
   )
 
 fun getMaskSubstitution(original: String, revised: String) =
-  DiffUtils.diffInline(original, revised)
-    .deltas.mapNotNull { delta ->
-      delta.source.lines.zip(delta.target.lines)
-        .mapNotNull { (source, target) -> if (source == MSK) target else null }
-        .firstOrNull()
-    }.firstOrNull() ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles sequence
+  (revised.lines() to original.lines()).let { (revisedLines, originalLines) ->
+    if (revisedLines.size != originalLines.size) return@getMaskSubstitution ERR
+    val originalLineIndex = originalLines.indexOfFirst { MSK in it }
+    val originalLine = originalLines[originalLineIndex]
+    val revisedLine = revisedLines[originalLineIndex]
+    DiffUtils.diffInline(originalLine, revisedLine)
+      .deltas.mapNotNull { delta ->
+        delta.source.lines.zip(delta.target.lines)
+          .mapNotNull { (source, target) -> if (source == MSK) target else null }
+          .firstOrNull()
+      }.firstOrNull()
+      ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles sequence
 //.also { println("ERROR: \n\n"); printSideBySide(original, revised) }
+  }
 
 fun makeQuery(query: String = ""): String =
   getMaskSubstitution(query,

@@ -23,13 +23,14 @@ fun synonymize(token: String): String =
     }
   }
 
+val defaultDict: Dictionary = Dictionary.getDefaultResourceInstance()
+
 // Returns single-word synonyms
 fun synonyms(
   word: String,
   synonymDepth: Int = 3,
-  dict: Dictionary = Dictionary.getDefaultResourceInstance()
 ): Set<String> =
-  dict.lookupAllIndexWords(word).indexWordArray.map {
+  defaultDict.lookupAllIndexWords(word).indexWordArray.map {
     it.senses.map { sense ->
       (getSynonymTree(sense, synonymDepth).toList() +
         listOf(getDirectHyponyms(sense), getDirectHypernyms(sense)))

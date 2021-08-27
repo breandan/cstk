@@ -7,10 +7,10 @@ fun main() {
   val validationSet = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(1000).shuffled()
+    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(300).shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformations(validationSet, String::same, String::renameTokens)
+  evaluateTransformations(validationSet, String::renameTokens, String::same)
 }
 
 val defaultTokenizer = BasicTokenizer(false)
@@ -27,7 +27,7 @@ fun evaluateTransformations(
           .mapNotNull { (maskedMethod, trueToken) ->
             val (completion, score) = completeAndScore(trueToken, maskedMethod)
             if (completion == ERR) return@mapNotNull null
-            logDiffs(original, maskedMethod, trueToken, completion)
+//            logDiffs(original, maskedMethod, trueToken, completion)
             score
           }
       }.fold(0.0 to 0.0) { (total, sum), mtdScores ->
