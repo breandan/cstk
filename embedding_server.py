@@ -69,6 +69,7 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             outputs = pred(query)
             # TODO: Return top-k results?
             # Greedy decoding
+            # TODO: 🤗 can mangle sequence outside <mask> bounds, why?
             return max(outputs, key=lambda s: float(s['score']))['sequence']
         else:
             array = self.embed_sequence(query)

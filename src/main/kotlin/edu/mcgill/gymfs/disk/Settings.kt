@@ -69,6 +69,7 @@ const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
 const val MSK = "<mask>"
+const val ERR = "<???>"
 
 const val BERT_EMBEDDING_SIZE = 768
 

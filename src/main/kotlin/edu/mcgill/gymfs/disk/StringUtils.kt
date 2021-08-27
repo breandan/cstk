@@ -1,13 +1,11 @@
 package edu.mcgill.gymfs.disk
 
+import com.github.difflib.DiffUtils
 import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.gymfs.math.kantorovich
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
-import net.sf.extjwnl.data.PointerUtils
-import net.sf.extjwnl.data.PointerUtils.*
-import net.sf.extjwnl.dictionary.Dictionary
 import org.apache.commons.lang3.StringUtils
 import java.net.*
 import java.nio.file.*
@@ -119,18 +117,40 @@ fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
 fun vectorize(query: String) = matrixize(query).first()
 
 // Long sequence embedding: method level
-fun matrixize(query: String): Array<DoubleArray> = query(query).lines()
+fun matrixize(query: String): Array<DoubleArray> = makeQuery(query).lines()
   .map { it.trim().replace("[", "").replace("]", "") }
   .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
 
+// Expands MSK autoregressively until maxTokens reached or stopChar encountered
 tailrec fun complete(
-  query: String, tokens: Int = 1,
-  reply: String = query(query)
-): String = if (tokens == 1) reply else complete(query = reply + MSK, tokens = tokens - 1)
+  query: String,
+  lastToken: String = "",
+  fullCompletion: String = lastToken + makeQuery(query),
+  maxTokens: Int = 1,
+  isStopChar: (Char) -> Boolean = { !it.isJavaIdentifierPart() }
+): String =
+  if (maxTokens == 1 || lastToken.any { isStopChar(it) }) fullCompletion
+  else complete(
+    query = query.replace(MSK, lastToken + MSK),
+    lastToken = fullCompletion,
+    maxTokens = maxTokens - 1
+  )
 
-fun query(query: String = ""): String =
-  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
+fun getMaskSubstitution(original: String, revised: String) =
+  DiffUtils.diffInline(original, revised)
+    .deltas.mapNotNull { delta ->
+      delta.source.lines.zip(delta.target.lines)
+        .mapNotNull { (source, target) -> if (source == MSK) target else null }
+        .firstOrNull()
+    }.firstOrNull() ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles sequence
+//.also { println("ERROR: \n\n"); printSideBySide(original, revised) }
+
+fun makeQuery(query: String = ""): String =
+  getMaskSubstitution(query,
+    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
+      .readText()
+  )
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
@@ -153,7 +173,8 @@ object MetricCSNF: MetricStringDistance {
 
 fun printSideBySide(
   left: String, right: String,
-  leftHeading: String = "original", rightHeading: String = "new",
+  leftHeading: String = "original",
+  rightHeading: String = "new",
   maxLen: Int = 80, maxLines: Int = 20
 ) {
   val (leftLines, rightLines) = left.lines() to right.lines()
@@ -208,7 +229,11 @@ val reservedWords = setOf(
   "data", "enum", "expect", "external", "final", "infix", "inline", "inner",
   "internal", "lateinit", "noinline", "open", "operator",
   "out", "override", "private", "protected", "public", "reified", "sealed",
-  "suspend", "tailrec", "vararg", "field", "it"
+  "suspend", "tailrec", "vararg", "field", "it",
+
+  // Data types
+  "byte", "short", "int", "long", "float", "double", "boolean", "char",
+  "Byte", "Short", "Int", "Long", "Float", "Double", "Boolean", "Char"
 )
 
 fun main() {
