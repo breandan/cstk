@@ -10,7 +10,7 @@ fun main() {
     .filter { defaultTokenizer.tokenize(it).size < 500 }.take(300).shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformations(validationSet, String::renameTokens, String::same)
+  evaluateTransformations(validationSet, String::addDeadCode)//String::renameTokens, String::same)
 }
 
 val defaultTokenizer = BasicTokenizer(false)
@@ -27,7 +27,7 @@ fun evaluateTransformations(
           .mapNotNull { (maskedMethod, trueToken) ->
             val (completion, score) = completeAndScore(trueToken, maskedMethod)
             if (completion == ERR) return@mapNotNull null
-//            logDiffs(original, maskedMethod, trueToken, completion)
+            logDiffs(original, maskedMethod, trueToken, completion)
             score
           }
       }.fold(0.0 to 0.0) { (total, sum), mtdScores ->

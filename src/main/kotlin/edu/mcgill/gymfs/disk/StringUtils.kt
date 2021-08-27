@@ -146,18 +146,18 @@ fun getMaskSubstitution(original: String, revised: String) =
     DiffUtils.diffInline(originalLine, revisedLine)
       .deltas.mapNotNull { delta ->
         delta.source.lines.zip(delta.target.lines)
-          .mapNotNull { (source, target) -> if (source == MSK) target else null }
+          .mapNotNull { (srcδ, tgtδ) -> if (MSK == srcδ) tgtδ else null }
           .firstOrNull()
       }.firstOrNull()
       ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles sequence
-//.also { println("ERROR: \n\n"); printSideBySide(original, revised) }
   }
 
 fun makeQuery(query: String = ""): String =
-  getMaskSubstitution(query,
-    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
-      .readText()
-  )
+  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
+    .readText().let { reply ->
+      getMaskSubstitution(query, reply)
+//        .also { if (it == ERR) println("ERROR: \n\n"); printSideBySide(query, reply) }
+    }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
