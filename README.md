@@ -917,6 +917,8 @@ Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reaso
 
 ```bash
 ./gradlew jar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
+
+salloc -t 3:0:0 --account=def-jinguo --gres=gpu:v100:1 --mem=32G --cpus-per-task=24
 ```
 
 To start, must have Java and Python with PyTorch and HuggingFace:
