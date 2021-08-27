@@ -7,19 +7,22 @@ fun main() {
   val validationSet = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(300).shuffled()
+    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(1000).toList().shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformations(validationSet, String::addDeadCode)//String::renameTokens, String::same)
+  evaluateTransformations(validationSet,
+    String::addDeadCode, String::renameTokens, String::same,
+    String::swapMultilineNoDeps, String::permuteArgumentOrder
+  )
 }
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
-  validationSet: Sequence<String>,
+  validationSet: List<String>,
   vararg codeTxs: KFunction1<String, String>
 ) =
-  codeTxs.forEach { codeTx ->
-    validationSet.map { method -> method to codeTx(method) }
+  codeTxs.toList().parallelStream().forEach { codeTx ->
+    validationSet.asSequence().map { method -> method to codeTx(method) }
       .map { (original, variant) ->
         // Masking all identifiers in all snippets is too expensive,
         // so instead we sample a small number of mask positions
