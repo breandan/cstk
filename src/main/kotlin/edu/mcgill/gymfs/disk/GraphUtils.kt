@@ -9,7 +9,6 @@ import guru.nidi.graphviz.attribute.GraphAttr.COMPOUND
 import guru.nidi.graphviz.attribute.GraphAttr.CONCENTRATE
 import guru.nidi.graphviz.engine.*
 import guru.nidi.graphviz.model.*
-import guru.nidi.graphviz.model.Factory
 import java.io.File
 
 fun <G: Graph<G, E, V>, E: Edge<G, E, V>, V: Vertex<G, E, V>>

@@ -42,7 +42,7 @@ object UniversalSentenceEncoder {
       "https://storage.googleapis.com/tfhub-modules/google/universal-sentence-encoder/4.tar.gz"
     val criteria = Criteria.builder()
       .optApplication(Application.NLP.TEXT_EMBEDDING)
-      .setTypes( Array<String>::class.java, Array<FloatArray>::class.java )
+      .setTypes(Array<String>::class.java, Array<FloatArray>::class.java)
       .optModelUrls(modelUrl)
       .optTranslator(MyTranslator())
       .optProgress(ProgressBar())

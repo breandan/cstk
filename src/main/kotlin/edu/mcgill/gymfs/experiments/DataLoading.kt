@@ -2,7 +2,6 @@ package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
 import java.io.File
-import kotlin.io.path.*
 
 fun fetchOrLoadSampleData(sampleSize: Int = 1000):
   Pair<List<String>, Array<DoubleArray>> =

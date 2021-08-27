@@ -1,6 +1,6 @@
 package edu.mcgill.gymfs.experiments
 
-import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.disk.reservedWords
 
 fun main() {
   val codeSnippet = """

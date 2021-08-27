@@ -6,7 +6,7 @@ import ai.djl.nn.transformer.*
 import ai.djl.training.*
 import ai.djl.training.listener.*
 import ai.djl.training.listener.EvaluatorTrainingListener.TRAIN_ALL
-import ai.djl.training.optimizer.*
+import ai.djl.training.optimizer.Adam
 import ai.djl.training.tracker.*
 import edu.mcgill.gymfs.disk.*
 

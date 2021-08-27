@@ -2,11 +2,9 @@ package edu.mcgill.gymfs.disk
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
-import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree
 import edu.mcgill.gymfs.indices.*
 import java.io.File
 import java.net.URI
-import java.util.*
 import kotlin.time.*
 
 class TrieSearch: CliktCommand() {

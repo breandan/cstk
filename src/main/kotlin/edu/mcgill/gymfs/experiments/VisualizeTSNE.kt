@@ -5,10 +5,10 @@ import com.jujutsu.tsne.barneshut.ParallelBHTsne
 import com.jujutsu.utils.TSneUtils
 import edu.mcgill.kaliningraph.show
 import jetbrains.datalore.base.geometry.DoubleVector
-import jetbrains.datalore.plot.*
+import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
-import jetbrains.letsPlot.geom.*
-import jetbrains.letsPlot.intern.*
+import jetbrains.letsPlot.geom.geomPoint
+import jetbrains.letsPlot.intern.toSpec
 import jetbrains.letsPlot.label.ggtitle
 import java.io.File
 

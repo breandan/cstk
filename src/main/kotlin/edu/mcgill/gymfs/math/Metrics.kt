@@ -1,7 +1,6 @@
 package edu.mcgill.gymfs.math
 
 import com.github.jelmerk.knn.DistanceFunction
-import com.google.ortools.Loader
 import com.google.ortools.linearsolver.MPSolver
 import kotlin.math.*
 import kotlin.random.Random

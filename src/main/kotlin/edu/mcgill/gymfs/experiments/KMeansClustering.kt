@@ -1,13 +1,8 @@
 package edu.mcgill.gymfs.experiments
 
-//import org.tribuo.*
-//import org.tribuo.clustering.ClusteringFactory
-//import org.tribuo.clustering.example.ClusteringDataGenerator
-import org.tribuo.*
 import org.tribuo.clustering.example.ClusteringDataGenerator
 import org.tribuo.clustering.kmeans.KMeansTrainer
 import org.tribuo.clustering.kmeans.KMeansTrainer.Distance.EUCLIDEAN
-import kotlin.random.Random
 import kotlin.system.measureTimeMillis
 
 fun main() {

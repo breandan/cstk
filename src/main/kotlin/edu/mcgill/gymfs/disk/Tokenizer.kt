@@ -2,8 +2,6 @@ package edu.mcgill.gymfs.disk
 
 import com.google.common.base.Ascii
 import com.google.common.collect.Iterables
-import java.io.File
-import java.net.URL
 import java.util.*
 
 /** To check whether a char is whitespace/control/punctuation.  */
