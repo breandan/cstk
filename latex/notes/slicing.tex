@@ -48,7 +48,7 @@ We describe a simple heuristic for extracting method slices in well-formed sourc
 
   \begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
 fun String.sliceIntoMethods(kwds: Set<String> = setOf("fun ")) =
-  lines().fold(-1 to List<String>(0)) { (dyckCtr, methods), ln ->
+  lines().fold(-1 to listOf<String>()) { (dyckCtr, methods), ln ->
     if (dyckCtr < 0 && kwds.any { it in ln }) {
       ln.countBalancedBrackets() to (methods + ln)
     } else if (dyckCtr == 0) {

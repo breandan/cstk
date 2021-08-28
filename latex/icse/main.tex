@@ -49,6 +49,44 @@
 
 \usepackage{multicol}
 
+% Packages
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{fontspec}
+\usepackage{xcolor}
+
+\setmonofont{JetBrainsMono}[
+  Path=./JetbrainsFontFiles/,
+  Extension = .ttf,
+  UprightFont=*-Regular,
+  BoldFont=*-Bold,
+  ItalicFont=*-Italic,
+  BoldItalicFont=*-BoldItalic
+]
+
+\makeatletter
+\def\verbatim@nolig@list{}
+\makeatother
+
+\lstdefinelanguage{kotlin}{
+  comment=[l]{//},
+  commentstyle={\color{gray}\ttfamily},
+  emph={delegate, filter, firstOrNull, forEach, it, lazy, mapNotNull, println, repeat, assert, with, head, tail, len, return@},
+  numberstyle=\noncopyable,
+  emphstyle={\color{OrangeRed}},
+  identifierstyle=\color{black},
+  keywords={abstract, actual, as, as?, break, by, class, companion, continue, data, do, dynamic, else, enum, expect, false, final, for, fun, get, if, import, in, infix, interface, internal, is, null, object, open, operator, override, package, private, public, return, sealed, set, super, suspend, this, throw, true, try, catch, typealias, val, var, vararg, when, where, while, tailrec, reified},
+  keywordstyle={\color{NavyBlue}\bfseries},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]",
+  morestring=[s]{"""*}{*"""},
+  ndkeywords={@Deprecated, @JvmField, @JvmName, @JvmOverloads, @JvmStatic, @JvmSynthetic, Array, Byte, Double, Float, Boolean, Int, Integer, Iterable, Long, Runnable, Short, String},
+  ndkeywordstyle={\color{BurntOrange}\bfseries},
+  sensitive=true,
+  stringstyle={\color{ForestGreen}\ttfamily},
+  literate={`}{{\char0}}1
+}
+
 %% NOTE that a single column version may be required for
 %% submission and peer review. This can be done by changing
 %% the \doucmentclass[...]{acmart} in this template to
@@ -112,8 +150,16 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-%   \title{How reliable are neural language models of source code?}
-  \title{A qualitative study of neural language models of source code}
+  \title{How sensitive is neural code completion to syntactic variance?}
+% \title{Code Transformations
+% Neural language models
+% Interpretability
+% Reliability/Robustness
+% Comprehension/Understanding
+
+% }
+
+% \title{An empirical study of source code transformations on the robustness of neural language models}
 %%
 %% The "author" command and its associated commands are used to define
 %% the authors and their affiliations.
@@ -138,7 +184,9 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
   \begin{abstract}
-    An increasing number of developers rely upon pretrained language models to help them write source code. But how reliable are they and what are the consequences of overreliance? Properly vetted, the risk of errors should be minimal, however complacency can lead to increased reviewer burden and introduce bugs into version control, a risk which users must remain vigilant towards when accepting their suggestions. Companies which host these models are unlikely to give users access to the pretrained models for evaluation. Nevertheless, we would like some assurance the model's suggestions are robust to naturally-occurring variance. In this work, we provide a systematic approach and empirical results for evaluating neural code completion models using automated source code transformations.
+    Neural language models hold great promise as tools for computer-aided programming, but questions still remain as to their reliability and the consequences of overreliance on those tools. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A closer examination of neural language models is thus needed to understand their behavior on programming-related tasks. In this work, we develop a methodology for systematically evaluating neural language models using simple source code transformations such as synonymous renaming, intermediate logging, and independent statement reordering. Applying these transformations to natural code snippets, we evaluate three state-of-the-art models, CodeBERT, GraphCodeBERT and RobertA-Java, which exhibit varying degrees of robustness. Our approach is implemented and released as a modular and extensible toolkit for evaluating the performance of neural code completion models.
+
+    % complacency can lead to increased reviewer burden or more serious technical debt. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance.
 
     % What is the key message?
     %   - Different types of SCTs
@@ -158,6 +206,10 @@
 
   One would expect code completion models to exhibit invariance to certain refactorings. For example, code completion should be invariant to synonym variable renaming or reordering dataflow-independent statements.
 
+  \section{Method}
+
+  We examine in our work three primary questions. Given a set of (1) source code (2) a set of SCTs, (3) a set of slicing and tokenization methods, how do these factors affect accuracy on the masked code completion task. We sample a the top 100 most-starred Java repositories from GitHub organizations with over 100 forks and between 1 and 10 MB in size. From these, we extract a set of Java methods using the heuristic described in the appendix
+
   Code transformations... %describe
 
   How to evaluate source code transformations:
@@ -173,36 +225,6 @@
   language: java, kotlin
   size: method length
   complexity: halstead, cyclometric
-
-
-
-%  What is a language model? Disregarding meaning, a language model is no more than a statistical model of symbolic information. Natural languages differ from mechanical languages in a few key ways. Natural languages are linear: almost all human languages have a fixed maximum recursion depth governed by biological and cognitive factors. Mechanical languages, by contrast, and are typically nonlinear due to their metalinguistic properties. Thus, natural language models cannot represent a mechanical language without significantly constratining their expressiveness.
-
-% One might argue -- since natural language models are effectively linear -- a language model with a large enough working memory, given enough data, should be able to model language fragments whose description length fits inside their working memory. Indeed, recent literature has shown that natural language models are surprisingly adept at modeling idioms in source code. However, we would expect such models to struggle with fragments whose information complexity exceeds its working memory (e.g. trees and graphs whose average MDL stretch the limit).
-
-% What is the difference between working memory, i.e. reasoning, and long-term memory, i.e. knowledge? Long term memory is information stored in the learned parameters, i.e. the topological structure of the network -- as a model \textit{learns}, this information is passively encoded in the topological structure. Long-term memories must be conserved by the data distribution. Distributional shift tends to erase past memories, a phenomena known as catastrophic forgetting.
-
-% In contrast, short-term memories are dynamical patterns of \textit{activity} which must be actively conserved by the network topology. This second mechanism, called working memory, is a dynamical process with a much smaller information footprint, but allows a network to reason about incoming signals and adapt to previously unseen inputs without memorization. To be passed on to successive layers, working memories must be actively conserved by the network topology. Both learning and reasoning are forms of message passing over a graphical structure: learning shapes the graph topology, and reasoning propagates signals through it.
-
-% Models which cannot fit a language into working memory must learn maximal-length fragments and use long-term memory to fill in the gaps -- i.e. by memorizing transitions between fragments in long-term memory. If this is the case, we would expect to find transitions that are locally consistent, but globally nonsensical. For instance, can source code models learn balanced parenthesis? Balanced intermingled parenthesis? \texttt{\{([])\}} Other algebraic data structures (e.g. bush, imbalanced trees, etc.)? What are the limit languages that can be learned by natural language models of source code (e.g. Transformers)?
-
-%  Humans are adept information foraging agents. We can quickly find relevant information in a large corpus by recognizing and following textual landmarks. Software projects are composed of a variety of semi-structured documents containing many clues where relevant information may be found. In this work, we learn a grammar from a model trained on software artifacts like source code and documentation, in order to facilitate common programming tasks such as code search, completion, or knowledge discovery.
-
-%Our work broadly falls under the umbrella of text-based reinforcement learning. Prior literature falls under two categories: natural or formal language. Reinforcement learning (RL) in the natural domain typically focuses on question answering~\citep{buck2017ask, chen2019reinforcement}, or interactive text games~\citep{he2015deep,ammanabrolu2018playing,narasimhan2015language,guo2020interactive,ammanabrolu2020graph}. RL techniques have begun to show promising results for program synthesis~\citep{ellis2019write, johnson2020learning, chen2020program}. Our work falls at the intersection of these two domains.
-
-% Early work in program learning realized the importance of graph-based representations~\citep{allamanis2017learning}, however explicit graph construction requires extensive feature-engineering. More recent work in program synthesis has explored incorporating a terminal~\citep{ellis2019write}, graphical~\citep{walke2020learning} or other user interface to explore the space of valid programs, however do not consider the scope or variety of artifacts in a software project. Others have shown the feasibility of learning a local graph~\citep{johnson2020learning} from source code, but still require an explicit parser to form the initial graph and adaption to settings where style, terminology and document structure vary remains a challenge.
-
-%Imagine a newly-hired developer, who has programming experience, but no prior knowledge about a closed-source project. She receives access to the team's Git repository and is assigned her first ticket: Fix test broken by \texttt{0fb98be}. After locating the commit and becoming familiar with the code, she queries StackOverflow, discovers a relevant solution, copies the code into the project, makes a few edits, presses run, and the test passes.
-
-%In order to accomplish a similar task, an information-seeking agent must be able to explore a local database for information, construct a query, and search a remote database. Similar to a human developer, it might traverse the project to gather information, taking note of various keywords, APIs and design patterns. While traversing the project, the model constructs a project-specific knowledge graph, which it uses to locate other relevant artifacts written by authors who solved the same problem.
-
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=0.8\textwidth]{use_graph}
-%  \caption{Software projects consist of many documents which share common references. These references form an entity alignment graph, with vertices decorated by the surrounding context, and edges by the relation type, e.g. exact duplicate, fuzzy match or synthetic relation (learned or engineered).}
-%\end{figure*}
-
-%During evaluation, we measure task performance across search strategies. Depending on the task in question, various loss functions are possible, from a simple string distance metric over a masked code fragment, to more complex properties (e.g. the presence or absence of errors, or some internal state of the REPL) that must be satisfied by interacting with the runtime environment. Many program analysis and repair tasks are also possible, such as defect, duplicate or vulnerability detection and correction.
 
 
 %  \section{Prior literature}\label{sec:prior-literature}
@@ -392,7 +414,7 @@
 
 %In our third experiment, we compare prediction accuracy across architectures and datasets. Can we constrain the action space (e.g. only querying tokens from the surrounding context) for more efficient trajectory sampling, or allow arbitrary queries? How well does the model architecture transfer to new repositories, within and across programming languages?
 
-  In our third and final set of experiments, we compare performance across hyperparameters. Does contextual expansion lead to better task performence for a given sequence prediction task? By relaxing edge-construction criteria and increasing hyperparamers such as beam search budget, we would expect corresponding task performance to increase.
+  In our third and final set of experiments, we compare performance across hyperparameters. Does contextual expansion lead to better task performance for a given sequence prediction task? By relaxing edge-construction criteria and increasing hyperparamers such as beam search budget, we would expect corresponding task performance to increase.
 
   If our hypothesis is correct, the virtual knowledge graph will span both natural language and source code artifacts. If so, this would provide evidence to support the broader hypothesis~\citep{guo2017semantically} that documentation is a useful source of information. In addition to being useful for the prediction task itself, we anticipate our model could also be used for knowledge graph extraction and suggest semantically relevant code snippets to developers.
 
@@ -405,49 +427,79 @@
   \bibliographystyle{plain}
   \pagebreak
   \appendix
+
+  \section{Slicing procedure}
+
+  We describe below a simple heuristic for extracting method slices in well-formed source code using a Dyck counter. A common coding convention is to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. While imperfect, we observe this pattern can be used to slice methods in a variety of langauges in practice. A Kotlin implementation is given below, which will output the following source code when run on itself:
+
+  \vspace{11pt}
+
+  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:lstlisting}]
+fun String.sliceIntoMethods(kwds: Set<String> = setOf("fun ")) =
+  lines().fold(-1 to List<String>(0)) { (dyckCtr, methods), ln ->
+    if (dyckCtr < 0 && kwds.any { it in ln }) {
+      ln.countBalancedBrackets() to (methods + ln)
+    } else if (dyckCtr == 0) {
+      if (ln.isBlank()) -1 to methods else 0 to methods.put(ln)
+    } else if (dyckCtr > 0) {
+      dyckCtr + ln.countBalancedBrackets() to methods.put(ln)
+    } else -1 to methods
+  }.second
+
+fun List<String>.put(s: String) = dropLast(1) + (last() + "\n$s")
+
+fun String.countBalancedBrackets() = fold(0) { sum, char ->
+  val (lbs, rbs) = setOf('(', '{', '[') to setOf(')', '}', ']')
+  if (char in lbs) sum + 1 else if (char in rbs) sum - 1 else sum
+}
+
+fun main(args: Array<String>) =
+  println(args[0].sliceIntoMethods().joinToString("\n\n"))
+  \end{lstlisting}
+
   \section{Analysis of internal structure}
 
   Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}), explore embedding quality (Fig.~\ref{fig:embedding}) and visualize the synthetic knowledge graphs (Fig.~\ref{fig:graphs}).
 
-    \begin{figure}[H]
+  \begin{figure}[H]
     \centering
     \resizebox{0.45\textwidth}{!}{%
-    \begin{tikzpicture}
-      \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Levenshtein, ylabel=Euclidean]
-        \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/levenshtein.csv};
+      \begin{tikzpicture}
+        \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Levenshtein, ylabel=Euclidean]
+          \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/levenshtein.csv};
 
-        \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/levenshtein.csv};
-        \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/levenshtein.csv};
-        \addplot [fill=red!10] fill between[of=upper and lower];
-      \end{axis}
-    \end{tikzpicture}
-    \begin{tikzpicture}
-      \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Damerau]
-        \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/damerau.csv};
+          \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/levenshtein.csv};
+          \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/levenshtein.csv};
+          \addplot [fill=red!10] fill between[of=upper and lower];
+        \end{axis}
+      \end{tikzpicture}
+      \begin{tikzpicture}
+        \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Damerau]
+          \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/damerau.csv};
 
-        \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/damerau.csv};
-        \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/damerau.csv};
-        \addplot [fill=red!10] fill between[of=upper and lower];
-      \end{axis}
-    \end{tikzpicture}
-    \begin{tikzpicture}
-      \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=MetricLCS]
-        \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/metriclcs.csv};
+          \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/damerau.csv};
+          \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/damerau.csv};
+          \addplot [fill=red!10] fill between[of=upper and lower];
+        \end{axis}
+      \end{tikzpicture}
+      \begin{tikzpicture}
+        \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=MetricLCS]
+          \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/metriclcs.csv};
 
-        \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/metriclcs.csv};
-        \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/metriclcs.csv};
-        \addplot [fill=red!10] fill between[of=upper and lower];
-      \end{axis}
-    \end{tikzpicture}
-    \begin{tikzpicture}
-      \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Jaccard]
-        \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/jaccard.csv};
+          \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/metriclcs.csv};
+          \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/metriclcs.csv};
+          \addplot [fill=red!10] fill between[of=upper and lower];
+        \end{axis}
+      \end{tikzpicture}
+      \begin{tikzpicture}
+        \begin{axis}[width=0.29\textwidth, height=0.3\textwidth, ymax=7, xlabel=Jaccard]
+          \addplot table [mark=none,x=strdist, y=embdist, variable=var, col sep=comma] {data/jaccard.csv};
 
-        \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/jaccard.csv};
-        \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/jaccard.csv};
-        \addplot [fill=red!10] fill between[of=upper and lower];
-      \end{axis}
-    \end{tikzpicture}
+          \addplot [smooth, name path=upper,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}+\thisrow{var}, col sep=comma] {data/jaccard.csv};
+          \addplot [smooth, name path=lower,draw=none] table[x=strdist, y=embdist,variable=var, y expr=\thisrow{embdist}-\thisrow{var}, col sep=comma] {data/jaccard.csv};
+          \addplot [fill=red!10] fill between[of=upper and lower];
+        \end{axis}
+      \end{tikzpicture}
     }
     \caption{CodeBERT latent space distance correlates with string edit distance.}
     \label{fig:lev_vs_euclid}
@@ -462,16 +514,18 @@
 
   \begin{figure}[H]
     \centering
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/query4}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/query5}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/query6}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/query7}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/context4}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/context5}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/context6}}
-      \resizebox{.1\textwidth}{!}{\includegraphics{../data/context7}}
-      \caption{Virtual knowledge graph constructed by visiting nearest-neighbors in latent space.}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/query4}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/query5}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/query6}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/query7}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/context4}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/context5}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/context6}}
+    \resizebox{.1\textwidth}{!}{\includegraphics{../data/context7}}
+    \caption{Virtual knowledge graph constructed by visiting nearest-neighbors in latent space.}
     \label{fig:graphs}
   \end{figure}
+
+
 \end{document}
 \endinput

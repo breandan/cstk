@@ -46,6 +46,7 @@ data class Neighborhood(
       nearestNeighbors.subList(0, i + 1).map { it.item().toString() }
     }
   }
+
   val longestCommonSubstringSoFar by lazy {
     resultsSoFar.map { allResultsUpToCurrent ->
       LCSubstringSolver(DefaultCharSequenceNodeFactory())
