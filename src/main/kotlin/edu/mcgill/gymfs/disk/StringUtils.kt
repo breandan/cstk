@@ -126,7 +126,7 @@ fun matrixize(query: String): Array<DoubleArray> = makeQuery(query).lines()
 tailrec fun complete(
   query: String,
   lastToken: String = "",
-  fullCompletion: String = lastToken + makeQuery(query),
+  fullCompletion: String = lastToken + getSubstitution(query, makeQuery(query)),
   maxTokens: Int = 1,
   isStopChar: (Char) -> Boolean = { !it.isJavaIdentifierPart() }
 ): String =
@@ -137,9 +137,11 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
-fun getMaskSubstitution(original: String, revised: String) =
+// Reverse engineer the fill-mask substitution because 🤗 API returns
+// the entire query text instead of just the masked fragment... why??
+fun getSubstitution(original: String, revised: String) =
   (revised.lines() to original.lines()).let { (revisedLines, originalLines) ->
-    if (revisedLines.size != originalLines.size) return@getMaskSubstitution ERR
+    if (revisedLines.size != originalLines.size) return@getSubstitution ERR
     val originalLineIndex = originalLines.indexOfFirst { MSK in it }
     val originalLine = originalLines[originalLineIndex]
     val revisedLine = revisedLines[originalLineIndex]
@@ -149,15 +151,11 @@ fun getMaskSubstitution(original: String, revised: String) =
           .mapNotNull { (srcδ, tgtδ) -> if (MSK == srcδ) tgtδ else null }
           .firstOrNull()
       }.firstOrNull()
-      ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles sequence
+      ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles entire sequence
   }
 
 fun makeQuery(query: String = ""): String =
-  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
-    .readText().let { reply ->
-      getMaskSubstitution(query, reply)
-//        .also { if (it == ERR) println("ERROR: \n\n"); printSideBySide(query, reply) }
-    }
+  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
@@ -212,36 +210,6 @@ fun printSideBySide(
   }
 }
 
-val reservedWords = setOf(
-  // Java
-  "abstract", "assert", "boolean", "break", "byte", "case",
-  "catch", "char", "class", "const", "continue", "default",
-  "double", "do", "else", "enum", "extends", "false",
-  "final", "finally", "float", "for", "goto", "if",
-  "implements", "import", "instanceof", "int", "interface", "long",
-  "native", "new", "null", "package", "private", "protected",
-  "public", "return", "short", "static", "strictfp", "super",
-  "switch", "synchronized", "this", "throw", "throws", "transient",
-  "true", "try", "void", "volatile", "while",
-
-  // Kotlin
-  "as", "is", "as", "break", "class", "continue", "do", "else", "false", "for",
-  "fun", "if", "in", "null", "object", "package", "return", "super", "this",
-  "throw", "true", "try", "typealias", "typeof", "val",
-  "var", "when", "while", "by", "delegates",
-  "catch", "constructor", "delegate", "dynamic", "field", "file", "finally",
-  "get", "import", "init", "param", "property",
-  "receiver", "set", "is", "setparam", "value", "where", "actual", "abstract",
-  "annotation", "companion", "const", "crossinline",
-  "data", "enum", "expect", "external", "final", "infix", "inline", "inner",
-  "internal", "lateinit", "noinline", "open", "operator",
-  "out", "override", "private", "protected", "public", "reified", "sealed",
-  "suspend", "tailrec", "vararg", "field", "it",
-
-  // Data types
-  "byte", "short", "int", "long", "float", "double", "boolean", "char",
-  "Byte", "Short", "Int", "Long", "Float", "Double", "Boolean", "Char"
-)
 
 fun main() {
   println(kantorovich(matrixize("test  a ing 123"), matrixize("{}{{}{{{}}}{asdf g")))

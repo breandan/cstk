@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
-import edu.mcgill.gymfs.disk.reservedWords
+import edu.mcgill.gymfs.disk.*
+import kotlin.random.Random
 
 fun main() {
   val codeSnippet = """
@@ -26,8 +27,8 @@ fun main() {
   println(codeSnippet.renameTokens())
   println("====SWAPPING LINES WITH NO DATAFLOW DEPS======")
   println(codeSnippet.swapMultilineNoDeps())
-  println("====ADDING DEAD CODE======")
-  println(codeSnippet.addDeadCode())
+  println("====ADDING NONESSENTIAL CODE======")
+  println(codeSnippet.addExtraLogging())
 
   // Semantics-altering mutations
   println("====SWAPPING ARGUMENTS=====")
@@ -37,6 +38,37 @@ fun main() {
   println("====SWAP +/- MUTATION=====")
   println(codeSnippet.swapPlusMinus())
 }
+
+val reservedWords = setOf(
+  // Java
+  "abstract", "assert", "boolean", "break", "byte", "case",
+  "catch", "char", "class", "const", "continue", "default",
+  "double", "do", "else", "enum", "extends", "false",
+  "final", "finally", "float", "for", "goto", "if",
+  "implements", "import", "instanceof", "int", "interface", "long",
+  "native", "new", "null", "package", "private", "protected",
+  "public", "return", "short", "static", "strictfp", "super",
+  "switch", "synchronized", "this", "throw", "throws", "transient",
+  "true", "try", "void", "volatile", "while",
+
+  // Kotlin
+  "as", "is", "as", "break", "class", "continue", "do", "else", "false", "for",
+  "fun", "if", "in", "null", "object", "package", "return", "super", "this",
+  "throw", "true", "try", "typealias", "typeof", "val",
+  "var", "when", "while", "by", "delegates",
+  "catch", "constructor", "delegate", "dynamic", "field", "file", "finally",
+  "get", "import", "init", "param", "property",
+  "receiver", "set", "is", "setparam", "value", "where", "actual", "abstract",
+  "annotation", "companion", "const", "crossinline",
+  "data", "enum", "expect", "external", "final", "infix", "inline", "inner",
+  "internal", "lateinit", "noinline", "open", "operator",
+  "out", "override", "private", "protected", "public", "reified", "sealed",
+  "suspend", "tailrec", "vararg", "field", "it",
+
+  // Data types
+  "byte", "short", "int", "long", "float", "double", "boolean", "char",
+  "Byte", "Short", "Int", "Long", "Float", "Double", "Boolean", "Char"
+)
 
 fun String.mutateSyntax() =
   map {
@@ -92,7 +124,54 @@ fun String.swapMultilineNoDeps(): String =
     if (hasIdsInCommon) listOf(a, b) else listOf(b, a)
   }.flatten().joinToString("\n")
 
-fun String.addDeadCode(): String =
-  lines().joinToString("\n") {
-    if (Math.random() < 0.3) "$it; int deadCode = 2;" else it
-  }
+const val FILL = "<FILL>"
+fun String.prependJavadoc() = """
+/**
+ * $FILL
+ */
+ 
+$this""".trimIndent().completeDocumentation()
+
+tailrec fun String.completeDocumentation(length: Int = 20): String =
+  if(length == 1) replace(FILL, "")
+  else makeQuery(replaceFirst(FILL, MSK))
+    .replaceFirst(Regex("( \\* .*)\n"), "$1$FILL\n")
+    .completeDocumentation(length - 1)
+
+tailrec fun String.fillOneByOne(): String =
+  if (FILL !in this) this else makeQuery(replaceFirst(FILL, MSK)).fillOneByOne()
+
+fun String.addExtraLogging(): String =
+  (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->
+    val (lastLine, thisLine, nextLine) = Triple(window[0], window[1], window[2])
+
+    val loggingFrequency = 1.0 // Lower to decrease logging frequency
+    if (loggingFrequency < Random.nextDouble()) return@joinToString thisLine
+
+    val matchLastLine = Regex("\\s+.*?;").matchEntire(lastLine)
+    val matchThisLine = Regex("\\s+.*?;").matchEntire(thisLine)
+    if (
+      // Only print inside nested blocks of statements
+      matchLastLine != null && matchThisLine != null &&
+      // Space out print statements
+      "print" !in lastLine + thisLine + nextLine
+    ) {
+      val toIndent = thisLine.takeWhile { !it.isJavaIdentifierPart() }
+//      val toPrint = matchLastLine.groupValues[1]
+      "${toIndent}System.out.println($FILL);\n$thisLine"
+    } else thisLine
+  }.fillOneByOne()
+
+//fun String.addExtraComments(commentFrequency: Double = 0.2): String =
+//  lines().fold("" to "") { (lastLine, prevLines), thisLine ->
+//    thisLine to "$prevLines\n" +
+//      if (
+//        lastLine.trim().endsWith(";") &&
+//        thisLine.first().isWhitespace() &&
+//        thisLine.trimStart().first().isJavaIdentifierPart() &&
+//        Random.nextDouble() < commentFrequency
+//      ) {
+//        val indent = thisLine.takeWhile { !it.isJavaIdentifierPart() }
+//        "${indent}println($FILL);\n$thisLine"
+//      } else thisLine
+//  }.second

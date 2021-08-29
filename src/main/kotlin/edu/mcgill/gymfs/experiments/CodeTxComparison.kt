@@ -12,7 +12,7 @@ fun main() {
     listOf(String::mutateSyntax, String::shuffleLines)
 
   val semanticsPreservingTxs =
-    listOf(String::renameTokens, String::swapMultilineNoDeps, String::addDeadCode)
+    listOf(String::renameTokens, String::swapMultilineNoDeps, String::addExtraLogging)
 
   val semanticsAlteringTxs =
     listOf(String::permuteArgumentOrder, String::fuzzLoopBoundaries, String::swapPlusMinus)
@@ -23,7 +23,7 @@ fun main() {
 //  compareTsneEmbeddings(String::renameTokens)
 
   analyzeDimensionalShift(String::swapMultilineNoDeps).let { println(it.joinToString(",")) }
-  analyzeDimensionalShift(String::addDeadCode).let { println(it.joinToString(",")) }
+  analyzeDimensionalShift(String::addExtraLogging).let { println(it.joinToString(",")) }
   analyzeDimensionalShift(String::renameTokens).let { println(it.joinToString(",")) }
 }
 

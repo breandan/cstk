@@ -110,6 +110,11 @@ dependencies {
   // String diffs
   implementation("io.github.java-diff-utils:java-diff-utils:4.10")
 
+// Metrics for evaluating summarization
+//  implementation("org.apache.joshua:joshua-incubating:6.1")
+// TODO: send PR to fix JP build? https://github.com/kavgan/ROUGE-2.0/issues/16
+//  implementation("com.github.kavgan:ROUGE-2.0:1.2.1")
+
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
   // http://www.jflap.org/modules/ConvertedFiles/DFA%20to%20Regular%20Expression%20Conversion%20Module.pdf
