@@ -44,14 +44,14 @@ class KNNSearch: CliktCommand() {
   private fun generateGraphs(total: Int) {
     println("Regenerating $total graphs...")
     fetchOrLoadSampleData().first.take(total).forEach { query ->
-        val id = query.hashCode().toString()
-          knnIndex.edges(query)
-          .toLabeledGraph()
-          .also { it.A.show() }
-          .apply { vertices.first { it.label == id }.occupied = true }
-          .renderVKG()
-          .show()
-      }
+      val id = query.hashCode().toString()
+      knnIndex.edges(query)
+        .toLabeledGraph()
+        .also { it.A.show() }
+        .apply { vertices.first { it.label == id }.occupied = true }
+        .renderVKG()
+        .show()
+    }
   }
 
   @OptIn(ExperimentalTime::class)
