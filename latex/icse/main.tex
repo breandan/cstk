@@ -203,7 +203,7 @@
 
   \section{Introduction}\label{sec:introduction}
 
-  Neural language models play an increasingly synergetic role in software engineering, featuring prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a developer's perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a real-time suggestion. This client-server architecture can be seen as a black-box or \textit{extensional} function from a mathematical perspective. How can we evaluate the behavior of neural language models in this setting? The role of automated testing becomes evident.
+  Neural language models play an increasingly synergetic role in software engineering, featuring prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a developer's perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a real-time suggestion. This client-server architecture can be seen as a black-box or \textit{extensional} function from a mathematical perspective. How can we evaluate the behavior of neural language models in this setting? The value of automated testing becomes evident.
 
   First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively infinite amount of synthetic data by selecting and recombining those transformations. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar invariants exist for source code?
 
@@ -218,55 +218,30 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
 )
   \end{lstlisting}
 
-\noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We will use this notation throughout the paper. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics. Results are reported in
+\noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We will use this notation throughout the paper. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics. Results are reported in~\S\ref{sec:results}.
 
-
-%  \section{Prior literature}\label{sec:prior-literature}
-%
-%  Prior studies of natural langauge in source code have been undertaken ~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating}, which characterize the families of computational languages that neural langauge models can recognize in practice. Our work builds on this literature from a software engineering standpoint: what kinds of idioms
-
-%  Prior work in the code search literature explores the text-to-code~\citep{husain2019codesearchnet} setting, where queries are typically considered to be a short sequence composed by the user, or code-to-code~\citep{kim2018facoy} setting where the query takes the form of a code snippet. Model performance typically evaluated using mean reciprocal rank (MRR), mean average precision (MAP), normalized discounted cumulative gain (NDCG), precision and recall at top N-results (P/R@N), or similar metrics. Although some~\citep{asyrofi2020ausearch} do incorporate other features from the local document, none however, consider the query in the context of a broader project. The ability to align contextual features from the surrounding project, we argue, is essential to delivering semantically relevant search results.
-
-% {
-% \renewcommand{\arraystretch}{1.5}
-% \begin{table}[H]
-%   \small
-%   \begin{tabular}{lllc}
-%     Name & Type & Key contribution & Evaluation method \\
-%     \hline
-%     \href{https://github.com/breandan/gym-fs}{\textsc{Our Work}} & Either-to-Either & Learning to search & Prediction accuracy \\
-%     \href{https://core.ac.uk/download/pdf/162022846.pdf#page=7}{\textsc{FaCoY}}~\citep{kim2018facoy} & Code-to-code & Similarity search & MRR \\
-%     \href{https://www.jameskoppel.com/files/papers/yogo-preprint.pdf#page=11}{\textsc{Yogo}}~\cite{premtoon2020semantic}     & Code-to-code & Equational reasoning & Case study \\
-%     \href{https://arxiv.org/pdf/1909.09436.pdf#page=5}{\textsc{CSNet}}~\citep{husain2019codesearchnet}     & Text-to-code & Big code benchmark & MRR \\
-%     \href{https://arxiv.org/pdf/1812.01158.pdf#section.5}{\textsc{Aroma}}~\citep{luan2019aroma}     & Code-to-code & Structural Search& Recall@N \\
-%     \href{https://raw.githubusercontent.com/mhilmiasyrofi/AUSearch/master/SANER_2020_AUSearch.pdf}{\textsc{AUSearch}}~\citep{asyrofi2020ausearch}     & Code-to-code & Type resolver & Highlight accuracy \\
-
-%     \href{https://arxiv.org/pdf/1905.03813.pdf#section.4}{\textsc{Cambronero}}~\citep{cambronero2019deep}     & Text-to-code & Semantics & Answered@N \\
-%     \href{https://guxd.github.io/papers/deepcs.pdf#section.5}{\textsc{DeepCS}}~\citep{gu2018deep}     & Text-to-code & Deep learning & FRank, *@N, MRR \\
-%     \href{https://www.cs.sjtu.edu.cn/~zhonghao/paper/Lancer.pdf}{\textsc{Lancer}}~\citep{zhou2019lancer}     & Code-to-code & BERT embedding & HitRate@k, MRR \\
-%   \end{tabular}
-%   \caption{\label{tab:ad_comparison} Comparison of existing code search tools.}
-% \end{table}
-% }
-
-%  Although we draw some inspiration from the duplicate detection literature, their work presumes the code was intentionally duplicated or modified but is essentially identical in form or function. In contrast, our work seeks to help users discover artifacts which predictive of as-yet-incomplete code. By aligning salient features from the surrounding document and project graph, we approximate the notion of semantic similarity, without requring a language-specific parser like some methods~\citep{cambronero2019deep} do, and can more easily adapt to settings where the language and project structure varies.
-
-%   Furthermore, unlike prior work, our work considers the surrounding project and related artifacts. Instead of parsing their contents explicitly, which may be computationally intractable, we allow the agent to construct the graph organically by exploring the filesystem, then extract a query.
-
-  Do language models learn to recognize patterns in source code? If so, what kinds? A longstanding research area in software engineering tries to extract idioms from large software repositories. Likewise, a longstanding goal of neural program synthesis is compositional generalization. Both currently require designing a feature representation that “selects” for a specific kind of invariance — for example, structural similarity selects for name-invariance, and semantic similarity captures structural invariance.
-
-  In our work, we explore the extent to which recent language models trained on source code learn regularities they were not explicitly designed to represent. We analyze three different language models, and compare their zero-shot generalization on synthetically-generated patterns. We generate code snippet pairs corresponding to manually-designed variance, and measure the effect on various language models. Each model is evaluated on a set of code snippets exposed to synthetic transformations and predicts a masked token.
-
-  Our goal then, is to identify equivariant representations captured by the language model (LM). To do so, we generate program transformations (PTs) and measure vector equivariance in four rewriting categories:
+  We have identified four rewriting categories, corresponding to possible types of source code transfromations:
 
   \begin{enumerate}
     \item Syntactic - can the LM detect syntactically invalid PTs? (e.g. syntax corruption, imbalanced parenthesis)
-    \item Structural - can the LM detect syntactically valid, but structurally altered PTs? (e.g. use before declaration, permuted argument order)
-    \item Semantic - can the LM detect structurally valid, but semantically altered PTs? (e.g. constant modification, operator substitution and order of operations)
-    \item Equivalence - can the LM detect semantically valid but rewritten PTs? (e.g. semantically valid rewrites)
+    \item Structural - can the LM detect syntactically valid, but semantically unsound PTs? (e.g. use before declaration, permuted argument order)
+    \item Semantic - can the LM detect semantically valid, but semantically altered PTs? (e.g. constant modification, operator substitution and order of operations)
+    \item Cosmetic - can the LM detect syntactically and semantically equivalent PTs? (e.g. variable renaming, documentation)
   \end{enumerate}
 
-  To generate these SCTs, we implement a source code transformation tool which generates synthetic variants of naturally-occurring source code snippets from each of these three categories and evaluates the model for completion accuracy. We have implemented the following source code transformations (SCTs):
+  Prior studies of natural language in source code have been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from a software engineering standpoint: we try to determine which kinds of code idioms neural code completion models are robust to in practice.
+
+  Do language models learn to recognize patterns in source code? If so, what kinds? A longstanding research area in software engineering tries to extract idioms from large software repositories. Likewise, a longstanding goal of neural program synthesis is compositional generalization. Both require a deeper understanding of variability in source code.
+
+  In our work, we explore the extent to which recent language models trained on source code learn regularities they were not explicitly designed to represent. We analyze three different language models, and compare their zero-shot generalization on synthetically-generated substitutions. We generate code snippet pairs corresponding to manually-designed variance, and measure the effect on various language models. Each model is evaluated on a set of code snippets exposed to synthetic transformations and predicts a masked token.
+
+
+
+  \section{Method}
+
+  We examine in our work three primary questions. Given a set of source code snippets, a set of SCTs, a set of slicing and tokenization methods, how do these factors affect accuracy on the masked code completion task? We sample a the top 100 most-starred Java repositories from GitHub organizations with over 100 forks and between 1 and 10 MB in size. From these, we extract a set of Java methods using the heuristic described in \S\ref{sec:slicing}.
+
+  Our goal then, is to identify equivariant representations captured by the language model (LM). To do so, we generate program transformations (PTs) and measure equivariance on various SCTs. To generate these SCTs, we implement a source code transformation tool which generates synthetic variants of naturally-occurring source code snippets from each of these three categories and evaluates the model for completion accuracy. We have implemented the following source code transformations (SCTs):
 
   \begin{enumerate}
     \item \textbf{Synonym renaming}: rename variables with synonyms
@@ -381,7 +356,7 @@ public int receive(byte[] packet) throws IOException {
 %
 %The rollout traces form a graph of related locations inside each project and their corresponding context embeddings, which together form the GNN node features. Once the rollout ends, we run message passing on the resulting GNN for a fixed numbers of steps and decode the graph embedding to obtain a task prediction. The decoder, GNN parameters, and policy network are all trained end-to-end on the downstream task, e.g. code completion, defect detection or correction. After convergence, we compare the results across horizon size and analyze the queries and filetypes which are selected.
 
-  \section{Results}
+  \section{Results}\label{sec:results}
 
   {
     \renewcommand{\arraystretch}{1.5}
@@ -403,7 +378,6 @@ public int receive(byte[] packet) throws IOException {
 
   \section{Discussion}
 
-  We examine in our work three primary questions. Given a set of (1) source code (2) a set of SCTs, (3) a set of slicing and tokenization methods, how do these factors affect accuracy on the masked code completion task. We sample a the top 100 most-starred Java repositories from GitHub organizations with over 100 forks and between 1 and 10 MB in size. From these, we extract a set of Java methods using the heuristic described in \S\ref{sec:slicing}.
 %  \pagebreak
 %  \section{Experiments}\label{sec:experiments}
 %
