@@ -138,6 +138,7 @@ tasks {
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
     "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
+    "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
     "synonymize" to "edu.mcgill.gymfs.experiments.SynonymizeKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {

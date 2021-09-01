@@ -41,14 +41,15 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
-val funKeywords = setOf("public ", "private ", "void ", "static ", "fun ")
+val funKeywords = setOf("public ", "private ", "void ", "static ", "fun ", "/**")
+val notFunKeywords = setOf("class")
 val openParens = setOf('(', '{', '[')
 val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
 fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
   path.allLines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
-    if (dyckSum < 0 && funKeywords.any { it in line } && "(" in line) {
+    if (dyckSum < 0 && funKeywords.any { it in line } && notFunKeywords.none { it in line } && "(" in line) {
       line.countBalancedBrackets() to methods + line
     } else if (dyckSum == 0) {
       if(line.isBlank()) -1 to methods else 0 to methods.put(line)
@@ -58,7 +59,7 @@ fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
       -1 to methods
     }
   }.second
-}.flatten().map { it.trimIndent() }
+}.flatten().map { it.trimIndent() }.filter { "(" in it && "{" in it }
 
 fun List<String>.put(line: String) = dropLast(1) + (last() +"\n"+ line)
 
