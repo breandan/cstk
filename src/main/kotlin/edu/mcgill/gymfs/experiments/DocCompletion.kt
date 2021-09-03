@@ -11,17 +11,24 @@ fun main() {
     .filter { docCriteria(it.lines().first()) }
     .map { originalMethod ->
       val (originalDoc, originalCode) = originalMethod.splitDocAndCode()
-      val syntheticMethod = originalCode.prependJavadoc()
-      val syntheticDoc = syntheticMethod.getDoc()
-      printSideBySide(originalDoc, syntheticDoc,
+      val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
+      val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
+      val syntheticCodeWithSyntheticJavaDoc = originalCode.renameTokens()
+      val syntheticJavadocForRefactoredCode = originalCodeWithSyntheticJavadoc.getDoc()
+
+      printSideBySide(originalDoc, syntheticJavadocForOriginalCode,
         leftHeading = "original doc", rightHeading = "synthetic doc")
-      val rougeScore = rouge(originalDoc.synonymCloud(), syntheticDoc.synonymCloud())
-      println("Rouge score: $rougeScore")
-      rougeScore
+      val originalSynonymCloud = originalDoc.synonymCloud()
+      val rougeScoreWithoutRefactoring = rouge(originalSynonymCloud, syntheticJavadocForOriginalCode.synonymCloud())
+      val rougeScoreWithRefactoring = rouge(originalSynonymCloud, syntheticJavadocForRefactoredCode.synonymCloud())
+      println("Rouge score: $rougeScoreWithoutRefactoring")
+      rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
     }.fold(0.0 to 0.0) { (total, sum), rougeScore ->
       (total + 1.0 to sum + rougeScore).also { (total, sum) ->
         val runningAverage = (sum / total).toString().take(6)
-        println("Running average ROUGE 2.0 score of $MODEL on document synthesis: $runningAverage")
+        println("Running average ROUGE 2.0 score difference between original" +
+          "Javadoc and synthetic Javadoc before and after refactoring" +
+          "of $MODEL on document synthesis: $runningAverage")
       }
     }
 }
@@ -33,7 +40,7 @@ fun rouge(reference: Set<String>, candidate: Set<String>) =
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()
   line.startsWith("/*") ||
-    line.startsWith("//") ||
+//    line.startsWith("//") ||
     line.startsWith("*")
 }
 
