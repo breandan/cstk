@@ -9,33 +9,40 @@ fun main() {
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
     .filter { docCriteria(it.lines().first()) }
-    .map { originalMethod ->
+    .mapNotNull { originalMethod ->
       val (originalDoc, originalCode) = originalMethod.splitDocAndCode()
       val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-      val syntheticCodeWithSyntheticJavaDoc = originalCode.renameTokens()
-      val syntheticJavadocForRefactoredCode = originalCodeWithSyntheticJavadoc.getDoc()
+      val refactoredCodeWithSyntheticJavadoc = originalCode.renameTokens()
+        .swapMultilineNoDeps().permuteArgumentOrder().prependJavadoc()
+      val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
 
-      printSideBySide(originalDoc, syntheticJavadocForOriginalCode,
-        leftHeading = "original doc", rightHeading = "synthetic doc")
       val originalSynonymCloud = originalDoc.synonymCloud()
       val rougeScoreWithoutRefactoring = rouge(originalSynonymCloud, syntheticJavadocForOriginalCode.synonymCloud())
       val rougeScoreWithRefactoring = rouge(originalSynonymCloud, syntheticJavadocForRefactoredCode.synonymCloud())
-      println("Rouge score: $rougeScoreWithoutRefactoring")
-      rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
+
+      if(rougeScoreWithoutRefactoring == 0.0) null else {
+        printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
+          leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
+        printSideBySide(originalMethod, refactoredCodeWithSyntheticJavadoc,
+          leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
+        println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
+        println("Rouge score after refactoring: $rougeScoreWithRefactoring")
+        rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
+      }
     }.fold(0.0 to 0.0) { (total, sum), rougeScore ->
       (total + 1.0 to sum + rougeScore).also { (total, sum) ->
         val runningAverage = (sum / total).toString().take(6)
-        println("Running average ROUGE 2.0 score difference between original" +
-          "Javadoc and synthetic Javadoc before and after refactoring" +
-          "of $MODEL on document synthesis: $runningAverage")
+        println("Running average ROUGE 2.0 score difference " +
+//          "between original Javadoc and synthetic Javadoc before and after refactoring " +
+          "of $MODEL on document synthesis: $runningAverage"
+        )
       }
     }
 }
 
 fun rouge(reference: Set<String>, candidate: Set<String>) =
   reference.intersect(candidate).size.toDouble() / reference.size.toDouble()
-
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()

@@ -17,10 +17,11 @@ fun main() {
 
 fun synonymize(token: String): String =
   StringUtils.splitByCharacterTypeCamelCase(token).joinToString("") { old ->
-    old.synonyms().random().let { new ->
-      if (old.first().isLowerCase()) new
-      else "" + new[0].uppercaseChar() + new.drop(1)
-    }
+    old.synonyms().filter { it !in RESERVED_TOKENS }.ifEmpty { setOf(old) }
+      .random().let { new ->
+        if (old.first().isLowerCase()) new
+        else "" + new[0].uppercaseChar() + new.drop(1)
+      }
   }
 
 val defaultDict: Dictionary = Dictionary.getDefaultResourceInstance()
