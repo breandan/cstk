@@ -11,7 +11,7 @@ import kotlin.time.*
 // Creates a mirror image of the HD path in memory
 private fun URI.mirrorHDFS(imfs: FileSystem): Path {
   val jfsRoot = imfs.getPath(toString()).also { Files.createDirectories(it) }
-  allFilesRecursively(FILE_EXT).map { it.toPath() }.toList().parallelStream()
+  allFilesRecursively().map { it.toPath() }.toList().parallelStream()
     .forEach { src ->
       try {
         val path = src.toAbsolutePath().toString()
@@ -48,7 +48,7 @@ inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
 // Returns all files in the URI matching the extension
 fun URI.allFilesRecursively(
   ext: String? = null,
-  walkIntoCompressedFiles: Boolean = false
+  walkIntoCompressedFiles: Boolean = true
 ): Sequence<URI> =
   toPath().toFile().walkTopDown()
     .filter { it.isFile }

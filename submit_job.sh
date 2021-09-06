@@ -3,6 +3,7 @@
 #SBATCH --account=def-jinguo
 #SBATCH --gres=gpu:v100:1
 #SBATCH --mem=32G
+#SBATCH --cpus-per-task=24
 
 export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core/cudacore/10.2.89/targets/x86_64-linux/lib/
 export TRANSFORMERS_OFFLINE=1

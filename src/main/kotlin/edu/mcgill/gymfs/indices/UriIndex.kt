@@ -11,7 +11,7 @@ object UriIndex {
   @OptIn(ExperimentalTime::class)
   val hashtable by lazy {
     measureTimedValue {
-      ROOT_DIR.allFilesRecursively(FILE_EXT, walkIntoCompressedFiles = true)
+      ROOT_DIR.allFilesRecursively()
         .also { it.filter { it.scheme == "file" }.take(10).forEach { println(it) } }
         .map { it.hashCode() to it }.toMap()
     }.run { println("Indexed URIs in ${duration.inWholeSeconds}s"); value }

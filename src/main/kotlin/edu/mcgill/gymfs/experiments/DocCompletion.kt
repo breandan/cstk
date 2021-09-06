@@ -4,7 +4,7 @@ import edu.mcgill.gymfs.disk.*
 import org.apache.commons.lang3.StringUtils.splitByCharacterTypeCamelCase
 
 fun main() {
-  DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
+  DATA_DIR.allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }

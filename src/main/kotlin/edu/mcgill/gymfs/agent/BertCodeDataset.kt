@@ -64,7 +64,7 @@ class BertCodeDataset(
 
   override fun prepare(progress: Progress?) {
     // get all applicable files
-    parsedFiles = TEST_DIR.allFilesRecursively(FILE_EXT)
+    parsedFiles = TEST_DIR.allFilesRecursively()
       .map { it.toPath() }
       // read & tokenize them
       .map { parseFile(it) }

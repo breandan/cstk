@@ -4,7 +4,7 @@ import edu.mcgill.gymfs.disk.*
 import kotlin.reflect.KFunction1
 
 fun main() {
-  val validationSet = DATA_DIR.allFilesRecursively(walkIntoCompressedFiles = true)
+  val validationSet = DATA_DIR.allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }.take(100).toList().shuffled()

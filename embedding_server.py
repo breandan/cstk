@@ -14,6 +14,10 @@ from transformers import AutoTokenizer, AutoModel, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
 model_name = sys.argv[1]
+# Uncomment and run once on a login node, then go offline for cluster mode
+# tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{model_name}')
+# model: PTM = RobertaForMaskedLM.from_pretrained(f'{model_name}')
+# Offline mode for running on compute nodes
 tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{model_name}', local_files_only=True)
 model: PTM = RobertaForMaskedLM.from_pretrained(f'{model_name}', local_files_only=True)
 attention_width = 760

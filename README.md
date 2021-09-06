@@ -46,11 +46,13 @@ Interface:
 
 ### MiniGitHub construction
 
-Fetches a bunch of smallish repos on GitHub for evaluation:
+Clones a bunch of smallish repos on GitHub for evaluation:
 
 ```bash
 ./gradlew cloneRepos
 ```
+
+Downloads Git repos into the `data` directory by default.
 
 ### Keyword search
 
