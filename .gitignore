@@ -11,3 +11,5 @@ grex*
 *.params
 *.log
 /out/
+/data
+.venv

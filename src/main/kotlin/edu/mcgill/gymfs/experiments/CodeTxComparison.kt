@@ -28,7 +28,7 @@ fun main() {
 }
 
 private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
-    TEST_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
+    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
       matrixize(original).average().zip(matrixize(transformed).average())
         .map { (a, b) -> (a - b).absoluteValue }.toDoubleArray()
@@ -36,7 +36,7 @@ private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
 
 private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =
-    TEST_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
+    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
       listOf(matrixize(original).average() to "o", matrixize(transformed).average() to "t")
     }.flatten().unzip()
@@ -49,7 +49,7 @@ private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
 // Compare distributional shift introduced by each code transformation
 // as measured by some distance metric. https://proceedings.mlr.press/v37/kusnerb15.pdf
 private fun compareDistributionalShift(txs: List<KFunction1<String, String>>) {
-  TEST_DIR.allFilesRecursively().allCodeFragments().map { (c, s) ->
+  DATA_DIR.allFilesRecursively().allCodeFragments().map { (c, s) ->
     txs.mapNotNull { tx ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
       if (original == transformed) return@mapNotNull null
