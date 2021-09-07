@@ -6,11 +6,11 @@ import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import java.net.URL
 
-const val FILE_EXT = "java"
+val FILE_EXTs = setOf("java", "kt")
 const val FILE_SCHEME = "file"
 const val TGZ_SCHEME = "tgz"
 const val HTTP_SCHEME = "http"
-val VFS_SELECTOR = FileExtensionSelector(setOf(FILE_EXT))
+val VFS_SELECTOR = FileExtensionSelector(FILE_EXTs)
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 
 val DELIMITER = Regex("\\W")

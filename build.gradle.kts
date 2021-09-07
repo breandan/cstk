@@ -67,7 +67,7 @@ dependencies {
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
   implementation("com.github.breandan:kaliningraph:0.1.7")
-//  implementation("com.github.breandan:markovian:master-SNAPSHOT")
+  implementation("com.github.breandan:markovian:master-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
@@ -136,7 +136,7 @@ tasks {
     "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxComparisonKt",
     "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxTestKt",
     "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
-    "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthKt",
+    "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthesisKt",
     "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
     "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
     "synonymize" to "edu.mcgill.gymfs.experiments.SynonymizeKt",
@@ -153,18 +153,18 @@ tasks {
   }
 
 // Compile fatjar for Compute Canada, doesn't like Gradle
-  jar {
-    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.CodeCompletionKt"
-//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
-
-    from(configurations.compileClasspath.get().files
-      .filter { it.extension != "pom" }
-      .map { if (it.isDirectory) it else zipTree(it) })
-
-    duplicatesStrategy = EXCLUDE
-    exclude("META-INF/*.DSA")
-    exclude("META-INF/*.RSA")
-    exclude("META-INF/*.SF")
-    archiveBaseName.set("${project.name}-fat")
-  }
+//  jar {
+//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.experiments.CodeCompletionKt"
+////    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
+//
+//    from(configurations.compileClasspath.get().files
+//      .filter { it.extension != "pom" }
+//      .map { if (it.isDirectory) it else zipTree(it) })
+//
+//    duplicatesStrategy = EXCLUDE
+//    exclude("META-INF/*.DSA")
+//    exclude("META-INF/*.RSA")
+//    exclude("META-INF/*.SF")
+//    archiveBaseName.set("${project.name}-fat")
+//  }
 }

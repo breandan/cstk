@@ -71,7 +71,7 @@ fun URI.allLines(): Sequence<String> =
     TGZ_SCHEME -> vfsManager.resolveFile(this)
       .content.getString(UTF_8).lineSequence()
     FILE_SCHEME -> toPath().let {
-      if (it.extension == FILE_EXT && it.exists())
+      if (it.extension in FILE_EXTs && it.exists())
         it.readText().lineSequence()
       else emptySequence()
     }
