@@ -134,12 +134,12 @@ $this""".trimIndent().completeDocumentation()
 
 tailrec fun String.completeDocumentation(length: Int = 20): String =
   if(length == 1) replace(FILL, "")
-  else makeQuery(replaceFirst(FILL, MSK))
-    .replaceFirst(Regex("( \\* .*)\n"), "$1$FILL\n")
+  else replaceFirst(FILL, makeQuery(replaceFirst(FILL, MSK)) + FILL)
     .completeDocumentation(length - 1)
 
 tailrec fun String.fillOneByOne(): String =
-  if (FILL !in this) this else makeQuery(replaceFirst(FILL, MSK)).fillOneByOne()
+  if (FILL !in this) this
+  else replaceFirst(MSK, makeQuery(replaceFirst(FILL, MSK))).fillOneByOne()
 
 fun String.addExtraLogging(): String =
   (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->

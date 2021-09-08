@@ -127,7 +127,7 @@ fun matrixize(query: String): Array<DoubleArray> = makeQuery(query).lines()
 tailrec fun complete(
   query: String,
   lastToken: String = "",
-  fullCompletion: String = lastToken + getSubstitution(query, makeQuery(query)),
+  fullCompletion: String = lastToken + makeQuery(query),
   maxTokens: Int = 1,
   isStopChar: (Char) -> Boolean = { !it.isJavaIdentifierPart() }
 ): String =
@@ -137,23 +137,6 @@ tailrec fun complete(
     lastToken = fullCompletion,
     maxTokens = maxTokens - 1
   )
-
-// Reverse engineer the fill-mask substitution because 🤗 API returns
-// the entire query text instead of just the masked fragment... why??
-fun getSubstitution(original: String, revised: String) =
-  (revised.lines() to original.lines()).let { (revisedLines, originalLines) ->
-    if (revisedLines.size != originalLines.size) return@getSubstitution ERR
-    val originalLineIndex = originalLines.indexOfFirst { MSK in it }
-    val originalLine = originalLines[originalLineIndex]
-    val revisedLine = revisedLines[originalLineIndex]
-    DiffUtils.diffInline(originalLine, revisedLine)
-      .deltas.mapNotNull { delta ->
-        delta.source.lines.zip(delta.target.lines)
-          .mapNotNull { (srcδ, tgtδ) -> if (MSK == srcδ) tgtδ else null }
-          .firstOrNull()
-      }.firstOrNull()
-      ?: ERR // Sometimes unable to recover mask b/c 🤗 mangles entire sequence
-  }
 
 fun makeQuery(query: String = ""): String =
   URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()

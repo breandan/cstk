@@ -72,11 +72,8 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
             outputs = pred(query)
             # TODO: Return top-k results?
-            # Greedy decoding
-            # TODO: 🤗 can mangle sequence outside <mask> bounds, why?
-            completion = max(outputs, key=lambda s: float(s['score']))['sequence']
-            # print(completion)
-            return completion
+            completion = max(outputs, key=lambda s: float(s['score']))
+            return completion['token_str']
         else:
             array = self.embed_sequence(query)
 
