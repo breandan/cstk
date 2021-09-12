@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
 plugins {
-  kotlin("jvm") version "1.6.20-dev-1357"
+  kotlin("jvm") version "1.6.20-dev-1404"
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
@@ -130,8 +130,8 @@ dependencies {
   // implementation("com.github.citiususc:jflap-lib:1.3")
 
 //  implementation("ai.hypergraph:kotlingrad:0.4.6")
-//  implementation("ai.hypergraph:kaliningraph:0.1.8")
-//  implementation("io.github.vovak:astminer:0.7.0")
+  implementation("ai.hypergraph:kaliningraph:0.1.8")
+  implementation("io.github.vovak:astminer:0.7.0")
 }
 
 tasks {
