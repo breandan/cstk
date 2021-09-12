@@ -6,8 +6,4 @@ pluginManagement.repositories {
   maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
-includeBuild("markovian") {
-  dependencySubstitution {
-    substitute(module("com.github.breandan:markovian")).using(project(":"))
-  }
-}
+includeBuild("markovian")

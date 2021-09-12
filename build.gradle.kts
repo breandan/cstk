@@ -13,6 +13,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
   mavenCentral()
+  mavenLocal()
   maven("https://jitpack.io")
   maven("https://oss.sonatype.org/content/repositories/snapshots")
   maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
@@ -74,7 +75,7 @@ dependencies {
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
   implementation("com.github.breandan:kaliningraph:0.1.7")
-  implementation("com.github.breandan:markovian:master-SNAPSHOT")
+  implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
@@ -164,21 +165,19 @@ tasks {
   }
 
 // Compile fatjar for Compute Canada, doesn't like Gradle
-  afterEvaluate {
-    jar {
-      manifest.attributes["Main-Class"] =
-        "edu.mcgill.gymfs.experiments.CodeCompletionKt"
+  jar {
+    manifest.attributes["Main-Class"] =
+      "edu.mcgill.gymfs.experiments.CodeCompletionKt"
 //    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
 
-      from(configurations.compileClasspath.get().files
-        .filter { it.extension != "pom" }
-        .map { if (it.isDirectory) it else zipTree(it) })
+    from(configurations.compileClasspath.get().files
+      .filter { it.extension != "pom" }
+      .map { if (it.isDirectory) it else zipTree(it) })
 
-      duplicatesStrategy = EXCLUDE
-      exclude("META-INF/*.DSA")
-      exclude("META-INF/*.RSA")
-      exclude("META-INF/*.SF")
-      archiveBaseName.set("${project.name}-fat")
-    }
+    duplicatesStrategy = EXCLUDE
+    exclude("META-INF/*.DSA")
+    exclude("META-INF/*.RSA")
+    exclude("META-INF/*.SF")
+    archiveBaseName.set("${project.name}-fat")
   }
 }
