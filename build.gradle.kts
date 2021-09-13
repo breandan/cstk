@@ -1,6 +1,4 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.JavaVersion.VERSION_11
-import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
+import org.gradle.api.JavaVersion.VERSION_15
 
 plugins {
   kotlin("jvm") version "1.6.20-dev-1404"
@@ -16,10 +14,8 @@ version = "1.0-SNAPSHOT"
 repositories {
   mavenCentral()
   mavenLocal()
-  maven("https://jitpack.io")
-  maven("https://oss.sonatype.org/content/repositories/snapshots")
-  maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
   maven("https://packages.jetbrains.team/maven/p/astminer/astminer")
+  maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
 java.toolchain {
@@ -75,6 +71,10 @@ dependencies {
 
 //  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
+
+  val smileVersion = "2.6.0"
+  implementation("com.github.haifengl:smile-kotlin:$smileVersion")
+  implementation("com.github.haifengl:smile-core:$smileVersion")
 
   implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
 
@@ -160,7 +160,7 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions.jvmTarget = VERSION_11.toString()
+    kotlinOptions.jvmTarget = VERSION_15.toString()
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 

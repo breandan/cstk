@@ -1,15 +1,13 @@
 package edu.mcgill.gymfs.experiments
 
 import ai.hypergraph.kaliningraph.show
-import com.jujutsu.tsne.TSne
-import com.jujutsu.tsne.barneshut.ParallelBHTsne
-import com.jujutsu.utils.TSneUtils
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
 import jetbrains.letsPlot.geom.geomPoint
 import jetbrains.letsPlot.intern.toSpec
 import jetbrains.letsPlot.label.ggtitle
+import smile.manifold.tsne
 import java.io.File
 
 fun main() {
@@ -30,9 +28,9 @@ fun main() {
 fun Array<DoubleArray>.reduceDim(
   outputDims: Int = 2,
   perplexity: Double = 10.0,
-  tSne: TSne = ParallelBHTsne()
+  iterations: Int = 99999
 ): Array<out DoubleArray> =
-  tSne.tsne(TSneUtils.buildConfig(this, outputDims, size - 1, perplexity, 99999))
+  tsne(this, d = outputDims, perplexity = perplexity, iterations = iterations).coordinates
 
 fun plotTsneEmbeddingsWithLabels(
   embeddings: Array<out DoubleArray>,

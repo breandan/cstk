@@ -1,15 +1,9 @@
 package edu.mcgill.gymfs.experiments
 
-import astminer.common.model.Node
-import astminer.common.model.Parser
+import ai.hypergraph.kaliningraph.*
+import astminer.common.model.*
 import astminer.parse.antlr.*
 import astminer.parse.antlr.python.PythonParser
-import com.jujutsu.tsne.TSne
-import com.jujutsu.tsne.barneshut.ParallelBHTsne
-import com.jujutsu.utils.TSneUtils
-import ai.hypergraph.kaliningraph.*
-import ai.hypergraph.kaliningraph.circuits.ComputationGraph
-import ai.hypergraph.kaliningraph.SpsMat
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
@@ -28,7 +22,7 @@ fun main() {
   val rounds = listOf(100)//, 2, 5, 10)
   for (round in rounds) {
     val X = graphs.map { it.gnn(t = round) }.permute()
-    val embeddings = embedGraph(X)
+    val embeddings = X.reduceDim()
     val clusters = plot(round, embeddings, labels)
 
     File.createTempFile("clusters", ".html")
@@ -80,14 +74,6 @@ private fun plot(
     plotSpec = plot.toSpec(), plotSize = DoubleVector(1000.0, 500.0)
   )
 }
-
-private fun embedGraph(
-  X: Array<DoubleArray>,
-  outputDims: Int = 2,
-  perplexity: Double = 10.0,
-  tSne: TSne = ParallelBHTsne()
-): Array<out DoubleArray> =
-  tSne.tsne(TSneUtils.buildConfig(X, outputDims, X.size - 1, perplexity, 5000))
 
 fun mineASTs(
   dataDir: String = {}.javaClass.getResource("/datasets/python").path,
