@@ -20,5 +20,5 @@ jobs:
       - name: Build with Gradle
         run: |
           git submodule update --init --recursive
-          cd markovian && ./gradlew publishToMaven && cd ..
+          cd markovian && ./gradlew publishToMavenLocal && cd ..
           ./gradlew trieSearch --args='--query=match'

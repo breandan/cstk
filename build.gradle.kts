@@ -70,7 +70,6 @@ dependencies {
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
 //  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
-  implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
   val smileVersion = "2.6.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
@@ -97,7 +96,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-3")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.132")
+  implementation("org.kohsuke:github-api:1.133")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.2")
 
