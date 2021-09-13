@@ -69,14 +69,13 @@ dependencies {
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.2.0"
+  val openrwVersion = "7.13.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
 //  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
   implementation("com.github.breandan.T-SNE-Java:tsne:master-SNAPSHOT")
 
-  implementation("com.github.breandan:kaliningraph:0.1.7")
   implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
 
   // https://github.com/LearnLib/learnlib
@@ -118,7 +117,7 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
   // String diffs
-  implementation("io.github.java-diff-utils:java-diff-utils:4.10")
+  implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
 // Metrics for evaluating summarization
 //  implementation("org.apache.joshua:joshua-incubating:6.1")
