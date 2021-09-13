@@ -9,7 +9,7 @@ import com.jujutsu.tsne.barneshut.ParallelBHTsne
 import com.jujutsu.utils.TSneUtils
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.circuits.ComputationGraph
-import edu.mcgill.kaliningraph.SpsMat
+import ai.hypergraph.kaliningraph.SpsMat
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*

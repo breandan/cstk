@@ -1,7 +1,7 @@
 package edu.mcgill.gymfs.disk
 
-import edu.mcgill.kaliningraph.*
-import edu.mcgill.kaliningraph.Graph
+import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.Graph
 import guru.nidi.graphviz.*
 import guru.nidi.graphviz.attribute.*
 import guru.nidi.graphviz.attribute.Color.TRANSPARENT

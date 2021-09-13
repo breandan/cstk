@@ -2,7 +2,7 @@ package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.*
-import edu.mcgill.kaliningraph.show
+import ai.hypergraph.kaliningraph.show
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1

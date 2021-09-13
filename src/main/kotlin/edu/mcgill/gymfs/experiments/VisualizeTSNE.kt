@@ -1,9 +1,9 @@
 package edu.mcgill.gymfs.experiments
 
+import ai.hypergraph.kaliningraph.show
 import com.jujutsu.tsne.TSne
 import com.jujutsu.tsne.barneshut.ParallelBHTsne
 import com.jujutsu.utils.TSneUtils
-import edu.mcgill.kaliningraph.show
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*

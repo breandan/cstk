@@ -618,14 +618,14 @@ Angle brackets enclose longest common substring up to current result
 	19.5] import edu.mcgil《l.g》ymfs.disk.*
 	19.6] import com《.g》ithub.jelmerk.knn.SearchResult
 	19.7] import jetbrains.datalore.plot.*
-	19.8] import edu.mcgill.kaliningraph.*
+	19.8] import ai.hypergraph.kaliningraph.*
 	19.9] import jetbrains.letsPlot.intern.*
 	19.10] import com.jujutsu.tsne.TSne
 	19.11] import com.jujutsu.utils.TSneUtils
 	19.12] import org.nield.kotlinstatistics.variance
 	19.13] import com.github.jelmerk.knn.*
 	19.14] import jetbrains.letsPlot.*
-	19.15] import edu.mcgill.kaliningraph.show
+	19.15] import ai.hypergraph.kaliningraph.show
 	19.16] import guru.nidi.graphviz.*
 	19.17] import kotlin.math.pow
 	19.18] import kotlin.system.measureTimeMillis
