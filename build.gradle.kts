@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.file.DuplicatesStrategy.EXCLUDE
 
@@ -6,6 +7,7 @@ plugins {
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
+  id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 group = "com.github.breandan"
@@ -129,7 +131,6 @@ dependencies {
   // https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java
   // implementation("com.github.citiususc:jflap-lib:1.3")
 
-//  implementation("ai.hypergraph:kotlingrad:0.4.6")
   implementation("ai.hypergraph:kaliningraph:0.1.8")
   implementation("io.github.vovak:astminer:0.7.0")
 }
@@ -164,20 +165,12 @@ tasks {
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 
-// Compile fatjar for Compute Canada, doesn't like Gradle
-  jar {
+  shadowJar {
     manifest.attributes["Main-Class"] =
       "edu.mcgill.gymfs.experiments.CodeCompletionKt"
-//    manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
-
-    from(configurations.compileClasspath.get().files
-      .filter { it.extension != "pom" }
-      .map { if (it.isDirectory) it else zipTree(it) })
-
-    duplicatesStrategy = EXCLUDE
-    exclude("META-INF/*.DSA")
-    exclude("META-INF/*.RSA")
-    exclude("META-INF/*.SF")
-    archiveBaseName.set("${project.name}-fat")
+    // Use this to generate the training dataset
+//  manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
+    isZip64 = true
+    archiveFileName.set("${project.name}-fat-${project.version}.jar")
   }
 }
