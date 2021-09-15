@@ -129,6 +129,10 @@ dependencies {
   // https://github.com/LakshmiAntin/JFLAPEnhanced/blob/cbb1e6a52f44c826fcb082c85cba9e5f09dcdb33/gui/action/ArdenLemma.java
   // implementation("com.github.citiususc:jflap-lib:1.3")
 
+  // Software metrics
+//  implementation("com.github.rodhilton:jasome:0.6.8-alpha")
+//  implementation("io.joern:javasrc2cpg_2.13:0.0.5")
+
   implementation("ai.hypergraph:kaliningraph:0.1.8")
   implementation("io.github.vovak:astminer:0.7.0")
 }
@@ -151,6 +155,7 @@ tasks {
     "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
     "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
     "synonymize" to "edu.mcgill.gymfs.experiments.SynonymizeKt",
+    "codeMetrics" to "edu.mcgill.gymfs.math.CodeMetricsKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)

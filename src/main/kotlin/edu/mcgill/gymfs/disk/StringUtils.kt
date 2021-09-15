@@ -41,6 +41,9 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
+val controlFlowKeywords = setOf("if", "else", "while", "case", "for", "switch",
+  "do", "continue", "break", "&&", "||", "?", ":", "catch",
+  "finally", "throw", "throws", "default", "return")
 val funKeywords = setOf("public ", "private ", "void ", "static ", "fun ", "/**")
 val notFunKeywords = setOf("class")
 val openParens = setOf('(', '{', '[')
