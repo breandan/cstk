@@ -4,6 +4,7 @@ import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.EMD
+import edu.mcgill.gymfs.nlp.vectorize
 import java.io.File
 import java.net.URI
 import kotlin.time.*

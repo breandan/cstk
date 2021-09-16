@@ -1,5 +1,10 @@
 package edu.mcgill.gymfs.math
 
+
+fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
+  c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
+
+
 fun <A: Any, B: Any> List<Pair<A?, B>>.filterFirstNotNull(): List<Pair<A, B>> =
   mapNotNull {
     val fst: A? = it.first
@@ -17,7 +22,6 @@ fun <A: Any, B: Any> List<Pair<A, B?>>.filterSecondNotNull(): List<Pair<A, B>> =
       else -> it.first to s
     }
   }
-
 
 inline fun <T: Any, O: Any> List<T>.joinNotNull(
   others: List<O>,
@@ -42,8 +46,7 @@ inline fun <T: Any, O: Any, K: Any> List<T>.innerJoinFirst(
   others: Map<K, O>, on: (a: T, b: Map<K, O>) -> O?
 ): List<Pair<T, O>> =
   mapNotNull {
-    val theOther: O? = on(it, others)
-    when (theOther) {
+    when (val theOther: O? = on(it, others)) {
       null -> null
       else -> it to theOther
     }
@@ -64,8 +67,7 @@ inline fun <T: Any, O: Any> List<T>.innerJoinFirst(
   on: (a: T, b: O) -> Boolean = { a, b -> a == b }
 ): List<Pair<T, O>> =
   mapNotNull {
-    val theOther: O? = others.firstOrNull { o: O -> on(it, o) }
-    when (theOther) {
+    when (val theOther: O? = others.firstOrNull { o: O -> on(it, o) }) {
       null -> null
       else -> it to theOther
     }
@@ -88,7 +90,4 @@ inline fun <T: Any, O: Any> List<T>.mapLeftJoin(
   others: List<O>,
   on: (a: T, b: O) -> Boolean = { a, b -> a == b }
 ): List<Pair<T, List<O>>> =
-  map { me ->
-    val theOthers: List<O> = others.filter { o: O -> on(me, o) }
-    me to theOthers
-  }
+  map { me -> me to others.filter { o: O -> on(me, o) } }

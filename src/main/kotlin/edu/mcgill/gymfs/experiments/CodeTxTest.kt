@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.nlp.*
 import kotlin.random.Random
 
 fun main() {
@@ -37,6 +38,14 @@ fun main() {
   println(codeSnippet.fuzzLoopBoundaries())
   println("====SWAP +/- MUTATION=====")
   println(codeSnippet.swapPlusMinus())
+
+  TEST_DIR.allFilesRecursively().allMethods().take(1000)
+    .map { method ->
+      val variant = method.renameTokens()
+      if (variant == method) null else method to variant
+    }.toList().mapNotNull { it }.forEach { (original, variant) ->
+      if (original != variant) printSideBySide(original, variant)
+    }
 }
 
 val reservedWords = setOf(

@@ -111,11 +111,11 @@ dependencies {
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
   implementation("com.google.ortools:ortools-linux-x86-64:$ortoolsVersion")
 
-  // Synonym service
+  // Wordnet synonym service
   implementation("net.sf.extjwnl:extjwnl:2.0.3")
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
-  // String diffs
+  // Pretty-printing string diffs
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
 // Metrics for evaluating summarization
@@ -146,7 +146,8 @@ tasks {
     "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
-    "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractorKt",
+    "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractionKt",
+    "vizCodeEmbed" to "edu.mcgill.gymfs.experiments.VizCodeEmbeddingsKt",
     "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
     "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxComparisonKt",
     "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxTestKt",
@@ -154,7 +155,6 @@ tasks {
     "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthesisKt",
     "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
     "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
-    "synonymize" to "edu.mcgill.gymfs.experiments.SynonymizeKt",
     "codeMetrics" to "edu.mcgill.gymfs.math.CodeMetricsKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {

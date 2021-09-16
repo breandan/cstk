@@ -4,6 +4,7 @@ import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.indices.*
 import edu.mcgill.gymfs.math.euclidDist
+import edu.mcgill.gymfs.nlp.filterByDFA
 import net.automatalib.automata.fsa.DFA
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets

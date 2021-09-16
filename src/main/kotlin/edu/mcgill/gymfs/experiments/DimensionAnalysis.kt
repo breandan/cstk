@@ -1,6 +1,5 @@
 package edu.mcgill.gymfs.experiments
 
-import edu.mcgill.gymfs.disk.MetricCSNF
 import edu.mcgill.gymfs.math.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation

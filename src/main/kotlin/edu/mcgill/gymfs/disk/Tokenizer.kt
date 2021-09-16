@@ -3,38 +3,42 @@ package edu.mcgill.gymfs.disk
 import com.google.common.base.Ascii
 import com.google.common.collect.Iterables
 import java.util.*
+import java.lang.Character.*
 
 /** To check whether a char is whitespace/control/punctuation.  */
 internal object CharChecker {
   /** To judge whether it's an empty or unknown character.  */
-  fun isInvalid(ch: Char): Boolean {
-    return ch.code == 0 || ch.code == 0xfffd
-  }
+  fun isInvalid(ch: Char): Boolean = ch.code == 0 || ch.code == 0xfffd
 
   /** To judge whether it's a control character(exclude whitespace).  */
   fun isControl(ch: Char): Boolean {
-    if (Character.isWhitespace(ch)) {
-      return false
-    }
-    val type = Character.getType(ch)
-    return type == Character.CONTROL.toInt() || type == Character.FORMAT.toInt()
+    if (isWhitespace(ch)) return false
+    val type = getType(ch)
+    return type == CONTROL.toInt() || type == FORMAT.toInt()
   }
 
   /** To judge whether it can be regarded as a whitespace.  */
   fun isWhitespace(ch: Char): Boolean {
-    if (Character.isWhitespace(ch)) {
-      return true
-    }
-    val type = Character.getType(ch)
-    return type == Character.SPACE_SEPARATOR.toInt() || type == Character.LINE_SEPARATOR.toInt() || type == Character.PARAGRAPH_SEPARATOR.toInt()
+    if (isWhitespace(ch)) return true
+    val type = getType(ch)
+    return type == SPACE_SEPARATOR.toInt() ||
+      type == LINE_SEPARATOR.toInt() ||
+      type == PARAGRAPH_SEPARATOR.toInt()
   }
 
   /** To judge whether it's a punctuation.  */
   fun isPunctuation(ch: Char): Boolean {
-    val type = Character.getType(ch)
-    return type == Character.CONNECTOR_PUNCTUATION.toInt() || type == Character.DASH_PUNCTUATION.toInt() || type == Character.START_PUNCTUATION.toInt() || type == Character.END_PUNCTUATION.toInt() || type == Character.INITIAL_QUOTE_PUNCTUATION.toInt() || type == Character.FINAL_QUOTE_PUNCTUATION.toInt() || type == Character.OTHER_PUNCTUATION.toInt()
+    val type = getType(ch)
+    return type == CONNECTOR_PUNCTUATION.toInt() ||
+      type == DASH_PUNCTUATION.toInt() ||
+      type == START_PUNCTUATION.toInt() ||
+      type == END_PUNCTUATION.toInt() ||
+      type == INITIAL_QUOTE_PUNCTUATION.toInt() ||
+      type == FINAL_QUOTE_PUNCTUATION.toInt() ||
+      type == OTHER_PUNCTUATION.toInt()
   }
 }
+
 /** Basic tokenization (punctuation splitting, lower casing, etc.)  */
 class BasicTokenizer(private val doLowerCase: Boolean) {
   fun tokenize(text: String?): List<String> {

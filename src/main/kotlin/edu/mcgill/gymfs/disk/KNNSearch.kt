@@ -1,10 +1,11 @@
 package edu.mcgill.gymfs.disk
 
+import ai.hypergraph.kaliningraph.show
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.gymfs.experiments.fetchOrLoadSampleData
 import edu.mcgill.gymfs.indices.*
-import ai.hypergraph.kaliningraph.show
+import edu.mcgill.gymfs.nlp.*
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File
 import java.net.URI

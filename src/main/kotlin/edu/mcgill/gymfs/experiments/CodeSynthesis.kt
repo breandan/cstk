@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.nlp.allLines
 import edu.mcgill.markovian.mcmc.toMarkovChain
 import kotlin.time.*
 

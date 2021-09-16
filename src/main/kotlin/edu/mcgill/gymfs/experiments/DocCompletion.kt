@@ -1,7 +1,8 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import org.apache.commons.lang3.StringUtils.splitByCharacterTypeCamelCase
+import edu.mcgill.gymfs.math.rougeSynonym
+import edu.mcgill.gymfs.nlp.*
 
 fun main() {
   DATA_DIR.allFilesRecursively()
@@ -17,9 +18,8 @@ fun main() {
         .swapMultilineNoDeps().permuteArgumentOrder().prependJavadoc()
       val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
 
-      val originalSynonymCloud = originalDoc.synonymCloud()
-      val rougeScoreWithoutRefactoring = rouge(originalSynonymCloud, syntheticJavadocForOriginalCode.synonymCloud())
-      val rougeScoreWithRefactoring = rouge(originalSynonymCloud, syntheticJavadocForRefactoredCode.synonymCloud())
+      val rougeScoreWithoutRefactoring = rougeSynonym(originalDoc, syntheticJavadocForOriginalCode)
+      val rougeScoreWithRefactoring = rougeSynonym(originalDoc, syntheticJavadocForRefactoredCode)
 
       if(rougeScoreWithoutRefactoring == 0.0) null else {
         printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
@@ -41,9 +41,6 @@ fun main() {
     }
 }
 
-fun rouge(reference: Set<String>, candidate: Set<String>) =
-  reference.intersect(candidate).size.toDouble() / reference.size.toDouble()
-
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()
   line.startsWith("/*") ||
@@ -58,9 +55,3 @@ fun String.splitDocAndCode() =
 
 fun String.dropDoc() = lines().filterNot(docCriteria).joinToString("\n")
 fun String.getDoc() = lines().filter(docCriteria).joinToString("\n")
-
-fun String.synonymCloud(): Set<String> =
-  splitByCharacterTypeCamelCase(this)
-    .filter { it.all(Char::isLetter) }
-    .map { it.synonyms() }
-    .flatten().toSet()

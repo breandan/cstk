@@ -1,5 +1,6 @@
 package edu.mcgill.gymfs.disk
 
+import edu.mcgill.gymfs.nlp.allCodeFragments
 import org.apache.commons.vfs2.VFS
 import java.io.*
 import java.net.URI

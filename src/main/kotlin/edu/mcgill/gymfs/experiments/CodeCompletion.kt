@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.nlp.*
 import kotlin.reflect.KFunction1
 
 fun main() {

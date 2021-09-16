@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.disk
 
 import edu.mcgill.gymfs.indices.KWIndex
+import edu.mcgill.gymfs.nlp.allLines
 import java.io.Serializable
 import java.net.URI
 

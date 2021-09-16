@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.nlp.*
 import java.io.File
 
 fun fetchOrLoadSampleData(sampleSize: Int = 1000):

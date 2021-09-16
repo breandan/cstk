@@ -3,6 +3,7 @@ package edu.mcgill.gymfs.disk
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.gymfs.indices.*
+import edu.mcgill.gymfs.nlp.previewResult
 import java.io.File
 import java.net.URI
 import kotlin.time.*

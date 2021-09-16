@@ -1,12 +1,9 @@
-package edu.mcgill.gymfs.disk
+package edu.mcgill.gymfs.nlp
 
-import com.github.difflib.DiffUtils
 import com.github.difflib.text.DiffRowGenerator
-import edu.mcgill.gymfs.math.kantorovich
-import info.debatty.java.stringsimilarity.Levenshtein
+import edu.mcgill.gymfs.disk.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
-import org.apache.commons.lang3.StringUtils
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -82,11 +79,7 @@ fun URI.allLines(): Sequence<String> =
   }
 
 fun Path.read(start: Int = 0, end: Int = -1): String? =
-  try {
-    Files.readString(this)
-  } catch (e: Exception) {
-    null
-  }
+  try { Files.readString(this) } catch (e: Exception) { null }
     ?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
@@ -147,22 +140,6 @@ fun makeQuery(query: String = ""): String =
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
 
-object MetricCSNF: MetricStringDistance {
-  /**
-   * NF1, NF2 := CSNF(S1 + S2)
-   * CSNFΔ(SN1, SN2) := LEVΔ(NF1, NF2)
-   */
-  override fun distance(s1: String, s2: String) =
-    codeSnippetNormalForm(s1 to s2).let { (a, b) -> Levenshtein().distance(a, b) }
-
-  fun codeSnippetNormalForm(pair: Pair<String, String>): Pair<String, String> =
-    (StringUtils.splitByCharacterTypeCamelCase(pair.first).toList() to
-      StringUtils.splitByCharacterTypeCamelCase(pair.second).toList()).let { (c, d) ->
-      val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s to i }.toMap()
-      c.map { vocab[it] }.joinToString("") to d.map { vocab[it] }.joinToString("")
-    }
-}
-
 fun printSideBySide(
   left: String, right: String,
   leftHeading: String = "original",
@@ -195,10 +172,4 @@ fun printSideBySide(
     }
     println("\n")
   }
-}
-
-
-fun main() {
-  println(kantorovich(matrixize("test  a ing 123"), matrixize("{}{{}{{{}}}{asdf g")))
-  println(kantorovich(matrixize("test  a ing 123"), matrixize("open ing 222")))
 }

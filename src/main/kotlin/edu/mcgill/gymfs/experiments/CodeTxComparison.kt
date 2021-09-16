@@ -1,8 +1,9 @@
 package edu.mcgill.gymfs.experiments
 
+import ai.hypergraph.kaliningraph.show
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.*
-import ai.hypergraph.kaliningraph.show
+import edu.mcgill.gymfs.nlp.*
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1
@@ -17,7 +18,8 @@ fun main() {
   val semanticsAlteringTxs =
     listOf(String::permuteArgumentOrder, String::fuzzLoopBoundaries, String::swapPlusMinus)
 
-  //  compareDistributionalShift(semanticsPreservingTxs)
+//  compareDistributionalShift(semanticsPreservingTxs)
+
 //  compareTsneEmbeddings(String::swapMultilineNoDeps)
 //  compareTsneEmbeddings(String::addDeadCode)
 //  compareTsneEmbeddings(String::renameTokens)
@@ -27,6 +29,7 @@ fun main() {
   analyzeDimensionalShift(String::renameTokens).let { println(it.joinToString(",")) }
 }
 
+// Tries to identify the dimensions most influenced by each code transformation
 private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }

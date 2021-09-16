@@ -1,19 +1,9 @@
 package edu.mcgill.gymfs.experiments
 
-import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.disk.RESERVED_TOKENS
 import net.sf.extjwnl.data.PointerUtils.*
 import net.sf.extjwnl.dictionary.Dictionary
 import org.apache.commons.lang3.StringUtils
-
-fun main() {
-  TEST_DIR.allFilesRecursively().allMethods().take(1000)
-    .map { method ->
-      val variant = method.renameTokens()
-      if (variant == method) null else method to variant
-    }.toList().mapNotNull { it }.forEach { (original, variant) ->
-      if (original != variant) printSideBySide(original, variant)
-    }
-}
 
 fun synonymize(token: String): String =
   StringUtils.splitByCharacterTypeCamelCase(token).joinToString("") { old ->

@@ -27,8 +27,7 @@ fun main() {
       }
       val embeddings = use.predict(inputs)!!
 //    if (embeddings == null) println("This example only works for TensorFlow Engine")
-//    else
-//      for (i in inputs.indices) println(embeddings[i].joinToString(","))
+//    else for (i in inputs.indices) println(embeddings[i].joinToString(","))
       println(embeddings.size)
     }
   })

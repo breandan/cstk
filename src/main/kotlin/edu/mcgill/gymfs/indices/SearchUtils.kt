@@ -1,6 +1,7 @@
 package edu.mcgill.gymfs.disk
 
 import edu.mcgill.gymfs.indices.*
+import edu.mcgill.gymfs.nlp.vectorize
 
 fun VecIndex.knn(query: String, k: Int = 10) = knn(vectorize(query), k)
 

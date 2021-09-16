@@ -6,9 +6,6 @@ import kotlin.math.*
 import kotlin.random.Random
 import kotlin.time.*
 
-fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
-  c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
-
 fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
   sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
 
