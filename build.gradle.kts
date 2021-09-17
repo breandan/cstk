@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_15
 
 plugins {
-  kotlin("jvm") version "1.6.20-dev-1404"
+  kotlin("jvm") version "1.6.20-dev-1953"
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
@@ -65,7 +65,7 @@ dependencies {
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.13.0"
+  val openrwVersion = "7.14.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -156,6 +156,7 @@ tasks {
     "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
     "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
     "codeMetrics" to "edu.mcgill.gymfs.math.CodeMetricsKt",
+    "code2Vec" to "edu.mcgill.gymfs.experiments.Code2VecKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
