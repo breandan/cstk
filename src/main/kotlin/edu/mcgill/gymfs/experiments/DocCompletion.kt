@@ -1,7 +1,7 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import edu.mcgill.gymfs.math.rougeSynonym
+import edu.mcgill.gymfs.math.*
 import edu.mcgill.gymfs.nlp.*
 
 fun main() {
@@ -29,6 +29,9 @@ fun main() {
         println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
         println("Rouge score after refactoring: $rougeScoreWithRefactoring")
         rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
+      }?.also {
+        val cyclomaticComplexity = originalCode.approxCyclomatic()
+        rougeScoreByCyclomaticComplexity.getOrPut(cyclomaticComplexity) { mutableListOf() }.add(it)
       }
     }.fold(0.0 to 0.0) { (total, sum), rougeScore ->
       (total + 1.0 to sum + rougeScore).also { (total, sum) ->
@@ -37,9 +40,13 @@ fun main() {
 //          "between original Javadoc and synthetic Javadoc before and after refactoring " +
           "of $MODEL on document synthesis: $runningAverage"
         )
+
+        rougeScoreByCyclomaticComplexity.forEach { (cc, rs) -> println("$cc, ${rs.average()}") }
       }
     }
 }
+
+val rougeScoreByCyclomaticComplexity = mutableMapOf<Int, MutableList<Double>>()
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()

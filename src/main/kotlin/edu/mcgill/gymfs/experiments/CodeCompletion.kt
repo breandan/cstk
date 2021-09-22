@@ -8,7 +8,8 @@ fun main() {
   val validationSet = DATA_DIR.allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }.take(100).toList().shuffled()
+    .filter { defaultTokenizer.tokenize(it).size < 500 }
+    .take(100).toList().shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformations(validationSet,

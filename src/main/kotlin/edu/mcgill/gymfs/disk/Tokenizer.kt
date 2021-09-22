@@ -19,7 +19,7 @@ internal object CharChecker {
 
   /** To judge whether it can be regarded as a whitespace.  */
   fun isWhitespace(ch: Char): Boolean {
-    if (isWhitespace(ch)) return true
+    if (ch.isWhitespace()) return true
     val type = getType(ch)
     return type == SPACE_SEPARATOR.toInt() ||
       type == LINE_SEPARATOR.toInt() ||
