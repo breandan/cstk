@@ -41,7 +41,8 @@ fun main() {
           "of $MODEL on document synthesis: $runningAverage"
         )
 
-        rougeScoreByCyclomaticComplexity.forEach { (cc, rs) -> println("$cc, ${rs.average()}") }
+        rougeScoreByCyclomaticComplexity.toSortedMap()
+          .forEach { (cc, rs) -> println("$cc, ${rs.average()}, ${rs.variance()}") }
       }
     }
 }
