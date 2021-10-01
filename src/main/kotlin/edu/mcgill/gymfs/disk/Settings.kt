@@ -24,8 +24,8 @@ val MODEL =
 //"microsoft/CodeGPT-small-py-adaptedGPT2"
 // The following models support masking
 //"microsoft/codebert-base"
-"microsoft/graphcodebert-base"
-//"microsoft/codebert-base-mlm"
+//"microsoft/graphcodebert-base"
+"microsoft/codebert-base-mlm"
 //"dbernsohn/roberta-java"
 
 val VOCAB_URL = "https://huggingface.co/$MODEL/resolve/main/vocab.json"
@@ -53,7 +53,8 @@ val EMBEDDING_SERVER: String by lazy {
     } catch (ex: Exception) {}
   }
 
-  ProcessBuilder("python", "embedding_server.py", MODEL)
+  ProcessBuilder("python", "embedding_server.py", "--model=$MODEL", "--offline")
+    .also { println("> " + it.command().joinToString(" ")) }
 //    .run { inheritIO() }
     .start().run { Runtime.getRuntime().addShutdownHook(Thread { destroy() }) }
 

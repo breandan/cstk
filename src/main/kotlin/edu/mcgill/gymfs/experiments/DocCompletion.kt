@@ -3,25 +3,40 @@ package edu.mcgill.gymfs.experiments
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.*
 import edu.mcgill.gymfs.nlp.*
+import kotlin.reflect.*
 
 fun main() {
+  data class CodeSnippet(
+    val code: String,
+    val complexity: Int = code.approxCyclomatic(), // Cyclomatic complexity
+    val sct: KFunction1<String, String> //Source code transformation
+  )
+
   DATA_DIR.allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
     .filter { docCriteria(it.lines().first()) }
-    .mapNotNull { originalMethod ->
+    .flatMap {
+      fun String.sct() = renameTokens().swapMultilineNoDeps().permuteArgumentOrder()
+      setOf(
+//        String::renameTokens,
+//        String::shuffleLines,
+//        String::permuteArgumentOrder,
+//        String::swapMultilineNoDeps
+          String::sct
+      ).map { sct -> CodeSnippet(code=it, sct=sct) }
+    }.mapNotNull { (originalMethod, cyclomaticComplexity, sct) ->
       val (originalDoc, originalCode) = originalMethod.splitDocAndCode()
       val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-      val refactoredCodeWithSyntheticJavadoc = originalCode.renameTokens()
-        .swapMultilineNoDeps().permuteArgumentOrder().prependJavadoc()
+      val refactoredCodeWithSyntheticJavadoc = sct(originalCode).prependJavadoc()
       val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
 
       val rougeScoreWithoutRefactoring = rougeSynonym(originalDoc, syntheticJavadocForOriginalCode)
       val rougeScoreWithRefactoring = rougeSynonym(originalDoc, syntheticJavadocForRefactoredCode)
 
-      if(rougeScoreWithoutRefactoring == 0.0) null else {
+      if (rougeScoreWithoutRefactoring == 0.0) null else {
         printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
           leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
         printSideBySide(originalMethod, refactoredCodeWithSyntheticJavadoc,
@@ -30,7 +45,6 @@ fun main() {
         println("Rouge score after refactoring: $rougeScoreWithRefactoring")
         rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
       }?.also {
-        val cyclomaticComplexity = originalCode.approxCyclomatic()
         rougeScoreByCyclomaticComplexity.getOrPut(cyclomaticComplexity) { mutableListOf() }.add(it)
       }
     }.fold(0.0 to 0.0) { (total, sum), rougeScore ->

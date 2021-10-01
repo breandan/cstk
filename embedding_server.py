@@ -5,6 +5,7 @@ from http.server import HTTPServer
 from typing import List
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
+import argparse
 
 import numpy as np
 import torch
@@ -13,16 +14,18 @@ from transformers import AutoTokenizer, AutoModel, \
     PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
-model_name = sys.argv[1]
-# Uncomment and run once on a login node, then go offline for cluster mode
-# tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{model_name}')
-# model: PTM = RobertaForMaskedLM.from_pretrained(f'{model_name}')
-# Offline mode for running on compute nodes
-tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{model_name}', local_files_only=True)
-model: PTM = RobertaForMaskedLM.from_pretrained(f'{model_name}', local_files_only=True)
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', type=str, required=True)
+parser.add_argument('--offline', action='store_true')
+
+args = parser.parse_args()
+
+tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{args.model}', local_files_only=args.offline)
+model: PTM = RobertaForMaskedLM.from_pretrained(f'{args.model}', local_files_only=args.offline)
+
 attention_width = 760
 
-print(f'Loaded model: {model_name}')
+print(f'Loaded model: {args.model}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):

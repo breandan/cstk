@@ -31,7 +31,7 @@ fun main() {
 
 // Tries to identify the dimensions most influenced by each code transformation
 private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
-    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
+    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
       matrixize(original).average().zip(matrixize(transformed).average())
         .map { (a, b) -> (a - b).absoluteValue }.toDoubleArray()
@@ -39,7 +39,7 @@ private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
 
 private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =
-    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed() { i, (c, s) ->
+    DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it to tx(it) }
       listOf(matrixize(original).average() to "o", matrixize(transformed).average() to "t")
     }.flatten().unzip()

@@ -36,13 +36,13 @@ fun main() {
 
 data class Neighborhood(
   val origin: String,
-  val vector: DoubleArray, 
+  val vector: DoubleArray,
   val nearestNeighbors: List<SearchResult<CodeEmbedding, Double>>,
 ) {
   val totalDistance by lazy { nearestNeighbors.sumOf { it.distance() } }
 
   val resultsSoFar by lazy {
-    nearestNeighbors.mapIndexed { i, _ ->
+    List(nearestNeighbors.size) { i ->
       nearestNeighbors.subList(0, i + 1).map { it.item().toString() }
     }
   }
@@ -50,16 +50,16 @@ data class Neighborhood(
   val longestCommonSubstringSoFar by lazy {
     resultsSoFar.map { allResultsUpToCurrent ->
       LCSubstringSolver(DefaultCharSequenceNodeFactory())
-        .apply { allResultsUpToCurrent.forEach { if(it.isNotBlank()) add(it) } }
+        .apply { allResultsUpToCurrent.forEach { if (it.isNotBlank()) add(it) } }
         .longestCommonSubstring.toString()
     }
   }
 
   val prettyPrinted by lazy {
-    nearestNeighbors.zip(longestCommonSubstringSoFar).map { (result, substring) ->
-      if(substring.length < 2) result.item().toString()
-      else result.item().toString()
-        .replace(substring, "《$substring》")
-    }
+    nearestNeighbors.zip(longestCommonSubstringSoFar)
+      .map { (result, substring) ->
+        if (substring.length < 2) result.item().toString()
+        else result.item().toString().replace(substring, "《$substring》")
+      }
   }
 }

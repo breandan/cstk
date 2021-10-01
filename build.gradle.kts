@@ -1,4 +1,4 @@
-import org.gradle.api.JavaVersion.VERSION_15
+import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
   kotlin("jvm") version "1.6.20-dev-1953"
@@ -165,13 +165,13 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions.jvmTarget = VERSION_15.toString()
+    kotlinOptions.jvmTarget = VERSION_13.toString()
     kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.gymfs.experiments.CodeCompletionKt"
+      "edu.mcgill.gymfs.experiments.DocCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
     isZip64 = true

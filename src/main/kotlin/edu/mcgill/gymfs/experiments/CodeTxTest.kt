@@ -127,7 +127,7 @@ fun String.swapMultilineNoDeps(): String =
 
     // Only swap if no dataflow deps are present
     val hasIdsInCommon = a.split(Regex("[^A-Za-z]")).toSet()
-      .intersect(b.split(Regex("[^A-Za-z]")))
+      .intersect(b.split(Regex("[^A-Za-z]")).toSet())
       .any { it.isNotEmpty() && it.all(Char::isJavaIdentifierPart) }
 
     if (hasIdsInCommon) listOf(a, b) else listOf(b, a)

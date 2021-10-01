@@ -54,11 +54,8 @@ fun rebuildVecIndex(indexFile: File, origin: URI): VecIndex =
       measureTimedValue {
         // TODO: Does parallelization really help on single-GPU machine?
         origin.allFilesRecursively().toList().parallelStream().forEach { src ->
-//          var last = ""
           indexURI(src) { line, loc ->
             try {
-//              if (loc.uri.suffix() != last)
-//                last = loc.uri.suffix().also { println(loc.fileSummary()) }
               idx.add(CodeEmbedding(loc, vectorize(line)))
             } catch (exception: Exception) {
             }
