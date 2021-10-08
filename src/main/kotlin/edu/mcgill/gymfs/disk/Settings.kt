@@ -17,16 +17,16 @@ val DELIMITER = Regex("\\W")
 
 // https://huggingface.co/microsoft
 val MODEL =
-//These models do not support masking
-//"microsoft/codeGPT-small-java"
-//"microsoft/CodeGPT-small-java-adaptedGPT2"
-//"microsoft/CodeGPT-small-py"
-//"microsoft/CodeGPT-small-py-adaptedGPT2"
 // The following models support masking
 //"microsoft/codebert-base"
 //"microsoft/graphcodebert-base"
 "microsoft/codebert-base-mlm"
 //"dbernsohn/roberta-java"
+//These models do not support masking
+//"microsoft/codeGPT-small-java"
+//"microsoft/CodeGPT-small-java-adaptedGPT2"
+//"microsoft/CodeGPT-small-py"
+//"microsoft/CodeGPT-small-py-adaptedGPT2"
 
 val VOCAB_URL = "https://huggingface.co/$MODEL/resolve/main/vocab.json"
 
@@ -68,6 +68,10 @@ val EMBEDDING_SERVER: String by lazy {
 
   addr
 }
+
+// Returns the Cartesian product of two sets
+operator fun <T, Y> Set<T>.times(s: Set<Y>): Set<Pair<T, Y>> =
+  flatMap { l -> s.map { r -> l to r }.toSet() }.toSet()
 
 const val UNK = "<unk>"
 const val CLS = "<cls>"

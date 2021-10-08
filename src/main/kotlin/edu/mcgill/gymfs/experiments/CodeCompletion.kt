@@ -1,8 +1,16 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
+import edu.mcgill.gymfs.math.approxCyclomatic
 import edu.mcgill.gymfs.nlp.*
 import kotlin.reflect.KFunction1
+
+data class CodeSnippet(
+  val snippet: String,
+  val complexity: Int = snippet.approxCyclomatic(), // Cyclomatic complexity
+  val sct: KFunction1<String, String>, // Source code transformation
+  val variant: String = sct(snippet)
+)
 
 fun main() {
   val validationSet = DATA_DIR.allFilesRecursively()
@@ -13,6 +21,7 @@ fun main() {
 //    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformations(validationSet,
+    evaluation = String::evaluateCompletion,
     String::addExtraLogging, String::renameTokens, String::same,
     String::swapMultilineNoDeps, String::permuteArgumentOrder
   )
@@ -21,28 +30,32 @@ fun main() {
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: List<String>,
+  evaluation: KFunction1<String, List<Double>>,
   vararg codeTxs: KFunction1<String, String>
 ) =
-  codeTxs.toList().parallelStream().forEach { codeTx ->
-    validationSet.asSequence().map { method -> method to codeTx(method) }
-      .map { (original, variant) ->
-        // Masking all identifiers in all snippets is too expensive,
-        // so instead we sample a small number of mask positions
-        variant.maskIdentifiers().shuffled().take(10)
-          .mapNotNull { (maskedMethod, trueToken) ->
-            val (completion, score) = completeAndScore(trueToken, maskedMethod)
-            if (completion == ERR) return@mapNotNull null
-//            logDiffs(original, maskedMethod, trueToken, completion)
-            score
-          }
-      }.fold(0.0 to 0.0) { (total, sum), mtdScores ->
-        (total + mtdScores.size to sum + mtdScores.sum()).also { (total, sum) ->
-          val runningAverage = (sum / total).toString().take(6)
-          println("Running accuracy of $MODEL with [${codeTx.name}] " +
-            "transformation ($total samples): $runningAverage\n")
-        }
+  validationSet.asSequence()
+    .map { method -> setOf(method) * codeTxs.toSet() }.flatten()
+    .map { (method, codeTx) -> CodeSnippet(snippet = method, sct = codeTx) }
+    .map { snippet -> snippet to snippet.variant.evaluateCompletion() }
+    .fold(0.0 to 0.0) { (total, sum), (snippet, mtdScores) ->
+      (total + mtdScores.size to sum + mtdScores.sum()).also { (total, sum) ->
+        val runningAverage = (sum / total).toString().take(6)
+        println(
+          "Running accuracy of $MODEL with [${snippet.sct.name}] " +
+            "transformation ($total samples): $runningAverage\n"
+        )
       }
-  }
+    }
+
+// Masking all identifiers in all snippets is too expensive,
+// so instead we sample a small number of mask positions
+fun String.evaluateCompletion(): List<Double> =
+  maskIdentifiers().shuffled().take(10)
+    .mapNotNull { (maskedMethod, trueToken) ->
+      val (completion, score) = completeAndScore(trueToken, maskedMethod)
+//      logDiffs(this, maskedMethod, trueToken, completion)
+      if (completion == ERR) null else score
+    }
 
 fun logDiffs(original: String, maskedSequence: String,
              correctToken: String, completion: String) {
