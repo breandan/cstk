@@ -3,10 +3,8 @@ package edu.mcgill.gymfs.experiments
 import edu.mcgill.gymfs.disk.*
 import edu.mcgill.gymfs.math.*
 import edu.mcgill.gymfs.nlp.*
-import kotlin.reflect.*
 
 fun main() {
-
   DATA_DIR.allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
@@ -20,9 +18,9 @@ fun main() {
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps
 //          String::sct
-      ).map { sct -> CodeSnippet(snippet=it, sct=sct) }
+      ).map { sct -> CodeSnippet(original=it, sct=sct) }
     }.mapNotNull { snippet ->
-      val (originalDoc, originalCode) = snippet.snippet.splitDocAndCode()
+      val (originalDoc, originalCode) = snippet.original.splitDocAndCode()
       val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
       val refactoredCodeWithSyntheticJavadoc = snippet.variant.prependJavadoc()
@@ -32,15 +30,15 @@ fun main() {
       val rougeScoreWithRefactoring = rougeSynonym(originalDoc, syntheticJavadocForRefactoredCode)
 
       if (rougeScoreWithoutRefactoring == 0.0) null else {
-        printSideBySide(snippet.snippet, originalCodeWithSyntheticJavadoc,
+        printSideBySide(snippet.original, originalCodeWithSyntheticJavadoc,
           leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
-        printSideBySide(snippet.snippet, refactoredCodeWithSyntheticJavadoc,
+        printSideBySide(snippet.original, refactoredCodeWithSyntheticJavadoc,
           leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
         println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
         println("Rouge score after refactoring: $rougeScoreWithRefactoring")
         rougeScoreWithoutRefactoring - rougeScoreWithRefactoring
       }?.also {
-        rougeScoreByCyclomaticComplexity.getOrPut(snippet.complexity) { mutableListOf() }.add(it)
+        rougeScoreByCyclomaticComplexity.getOrPut(snippet) { mutableListOf() }.add(it)
       }
     }.fold(0.0 to 0.0) { (total, sum), rougeScore ->
       (total + 1.0 to sum + rougeScore).also { (total, sum) ->
@@ -50,13 +48,13 @@ fun main() {
           "of $MODEL on document synthesis: $runningAverage"
         )
 
-        rougeScoreByCyclomaticComplexity.toSortedMap()
-          .forEach { (cc, rs) -> println("$cc, ${rs.average()}, ${rs.variance()}") }
+        rougeScoreByCyclomaticComplexity.toSortedMap(compareBy { it.complexity })
+          .forEach { (cc, rs) -> println("${cc.complexity}, ${rs.average()}, ${rs.variance()}") }
       }
     }
 }
 
-val rougeScoreByCyclomaticComplexity = mutableMapOf<Int, MutableList<Double>>()
+val rougeScoreByCyclomaticComplexity = mutableMapOf<CodeSnippet, MutableList<Double>>()
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()

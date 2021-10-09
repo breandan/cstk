@@ -1,16 +1,19 @@
 package edu.mcgill.gymfs.experiments
 
 import edu.mcgill.gymfs.disk.*
-import edu.mcgill.gymfs.math.approxCyclomatic
+import edu.mcgill.gymfs.math.*
 import edu.mcgill.gymfs.nlp.*
+import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1
 
 data class CodeSnippet(
-  val snippet: String,
-  val complexity: Int = snippet.approxCyclomatic(), // Cyclomatic complexity
+  val original: String,
+  val complexity: Int = original.approxCyclomatic(), // Cyclomatic complexity
   val sct: KFunction1<String, String>, // Source code transformation
-  val variant: String = sct(snippet)
-)
+  val variant: String = sct(original)
+) {
+  override fun hashCode() = complexity.hashCode() // TODO: + sct.hashCode()
+}
 
 fun main() {
   val validationSet = DATA_DIR.allFilesRecursively()
@@ -21,7 +24,7 @@ fun main() {
 //    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformations(validationSet,
-    evaluation = String::evaluateCompletion,
+    evaluation = CodeSnippet::evaluateMultimask,
     String::addExtraLogging, String::renameTokens, String::same,
     String::swapMultilineNoDeps, String::permuteArgumentOrder
   )
@@ -30,32 +33,56 @@ fun main() {
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: List<String>,
-  evaluation: KFunction1<String, List<Double>>,
+  evaluation: KFunction1<CodeSnippet, Double>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet.asSequence()
     .map { method -> setOf(method) * codeTxs.toSet() }.flatten()
-    .map { (method, codeTx) -> CodeSnippet(snippet = method, sct = codeTx) }
-    .map { snippet -> snippet to snippet.variant.evaluateCompletion() }
-    .fold(0.0 to 0.0) { (total, sum), (snippet, mtdScores) ->
-      (total + mtdScores.size to sum + mtdScores.sum()).also { (total, sum) ->
-        val runningAverage = (sum / total).toString().take(6)
-        println(
-          "Running accuracy of $MODEL with [${snippet.sct.name}] " +
-            "transformation ($total samples): $runningAverage\n"
-        )
+    .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
+    .map { snippet -> snippet to snippet.evaluateMultimask() }
+    .forEach { (snippet, metric) ->
+      snippet to metric.also {
+        csByMultimaskPrediction.getOrPut(snippet) { mutableListOf() }
+          .add(metric)
       }
     }
+//    .fold(0.0 to 0.0) { (total, sum), rougeScore ->
+//      (total + 1.0 to sum + rougeScore).also { (total, sum) ->
+//        val runningAverage = (sum / total).toString().take(6)
+//        println("Running average ROUGE 2.0 score difference " +
+////          "between original Javadoc and synthetic Javadoc before and after refactoring " +
+//          "of $MODEL on document synthesis: $runningAverage"
+//        )
+//
+//        rougeScoreByCyclomaticComplexity.toSortedMap(compareBy { it.complexity })
+//          .forEach { (cc, rs) -> println("${cc.complexity}, ${rs.average()}, ${rs.variance()}") }
+//      }
+//    }
+//    .fold(0.0 to 0.0) { (total, sum), (snippet, score) ->
+//      (total + score to sum + mtdScores.sum()).also { (total, sum) ->
+//        val runningAverage = (sum / total).toString().take(6)
+//        println(
+//          "Running accuracy of $MODEL with [${snippet.sct.name}] " +
+//            "transformation ($total samples): $runningAverage\n"
+//        )
+//      }
+//    }
+
+val csByMultimaskPrediction = mutableMapOf<CodeSnippet, MutableList<Double>>()
 
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
-fun String.evaluateCompletion(): List<Double> =
-  maskIdentifiers().shuffled().take(10)
+val SAMPLES = 10
+fun CodeSnippet.evaluateMultimask(): Double =
+  (original.evaluateMultimask() - variant.evaluateMultimask()).absoluteValue
+
+fun String.evaluateMultimask(): Double =
+  maskIdentifiers().shuffled().take(SAMPLES)
     .mapNotNull { (maskedMethod, trueToken) ->
       val (completion, score) = completeAndScore(trueToken, maskedMethod)
 //      logDiffs(this, maskedMethod, trueToken, completion)
       if (completion == ERR) null else score
-    }
+    }.average()
 
 fun logDiffs(original: String, maskedSequence: String,
              correctToken: String, completion: String) {
