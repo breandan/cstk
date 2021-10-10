@@ -210,7 +210,7 @@
   Source code in semantically or even syntactically-equivalent programs has many degrees of freedom: two authors implementing the same function may select different variable names or cosmetic features, such as whitespaces, diagnostic statements or comments. One would expect neural code completion for languages semantically invariant under those changes to exhibit the same invariance: \textit{cosmetically-altered code snippets should not drastically change the model's predictions}. For example, code completion in Java should be invariant to variable renaming, whitespace placement, extra documentation or reordering dataflow-indenpendent statements.
 
 
-  One can make this statement slightly more formal. Given a neural code completion model \lstinline|ncc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, a single cosmetic transformation, \lstinline|ctx: Str->Str|, and a code completion metric, \lstinline|mtr: (Str, Str)->Float|, we would expect the average completion accuracy to remain approximately unchanged regardless of whether the transformation was applied, i.e.,
+  One can make this statement slightly more formal. Given a neural code completion model \lstinline|ncc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, a single cosmetic transformation, \lstinline|ctx: Str->Str|, and a code completion metric, \lstinline|mtr: (Str, Str)->Float|, we would expect the average completion accuracy to remain roughly unchanged regardless of whether the transformation was applied, i.e.,
 
   \noindent\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
 fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
@@ -259,7 +259,7 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
     \label{fig:dataflow}
   \end{figure}
 
-  Our framework encompasses both code completion and document synthesis. For example, we can treat code completion as a masked-token completion task, in which we sample several tokens from the original source code and the variant, then measure the average distributional shift using our favorite metric. This can be done either inside the model's latent space, or using some metric on the output string. We decided to focus on the output space and consider two metrics: ROUGE-synonym and average multimask accuracy. Consider the multimask completion task for a single snippet:
+  Our framework encompasses both code completion and document synthesis. For example, we can treat code completion as a masked-token completion task, in which we sample several tokens from the original source code and the variant, then measure the average shift in model accuracy across each of the mask locations. This can be done either inside the model's latent space, or using some metric on the output string. We decided to focus on the output space and consider two metrics: ROUGE-synonym and average multimask accuracy using top-1 softmax output. Consider the multimask completion task for a single snippet:
 
   \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example1}]
 /**

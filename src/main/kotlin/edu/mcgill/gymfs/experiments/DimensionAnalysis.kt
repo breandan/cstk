@@ -23,6 +23,6 @@ private fun compareDistanceMetricsOnDim(
   .map { (s1, s2) ->
     stringMetric.distance(s1.first, s2.first) to
       euclidDist(s1.second.sliceArray(dims), s2.second.sliceArray(dims))
-  } .map { (a, b) -> a to b }.unzip().let { (a, b) ->
+  }.map { (a, b) -> a to b }.unzip().let { (a, b) ->
     dims to PearsonsCorrelation().correlation(a.toDoubleArray(), b.toDoubleArray())
   }

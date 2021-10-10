@@ -12,7 +12,8 @@ data class CodeSnippet(
   val sct: KFunction1<String, String>, // Source code transformation
   val variant: String = sct(original)
 ) {
-  override fun hashCode() = complexity.hashCode() // TODO: + sct.hashCode()
+  override fun hashCode() = complexity.hashCode() + sct.hashCode()
+  fun print() = printSideBySide(original, variant)
 }
 
 fun main() {
@@ -42,35 +43,35 @@ fun evaluateTransformations(
   validationSet.asSequence()
     .map { method -> setOf(method) * codeTxs.toSet() }.flatten()
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
-    .map { snippet -> snippet to snippet.evaluateMultimask() }
+    .map { snippet -> snippet to evaluation(snippet) }
     .forEach { (snippet, metric) ->
-      snippet to metric.also {
-        csByMultimaskPrediction.getOrPut(snippet) { mutableListOf() }.add(metric)
+      snippet.print()
+      csByMultimaskPrediction[snippet] = metric
+      println(rougeScoreByCyclomaticComplexity.toLatexTable())
+      snippet to metric
+    }
+
+val csByMultimaskPrediction = CodeSnippetAttributeScoresTable()
+
+class CodeSnippetAttributeScoresTable {
+  val scoreByCodeSnippet = mutableMapOf<CodeSnippet, MutableList<Double>>()
+  val complexities = mutableSetOf<Int>()
+  val transformations = mutableSetOf<KFunction1<String, String>>()
+
+  operator fun set(snippet: CodeSnippet, metric: Double) {
+    scoreByCodeSnippet.getOrPut(snippet) { mutableListOf() }.add(metric)
+    complexities += snippet.complexity
+    transformations += snippet.sct
+    println(scoreByCodeSnippet.size)
+  }
+
+  fun toLatexTable() =
+    transformations.toSortedSet(compareBy { it.name }).joinToString("\\\\\n"){ tx ->
+      complexities.toSortedSet().joinToString("&".padEnd(8, ' ')){ cplx ->
+        (scoreByCodeSnippet[CodeSnippet("", cplx, tx, "")] ?: listOf()).average().toString().take(6)
       }
     }
-//    .fold(0.0 to 0.0) { (total, sum), rougeScore ->
-//      (total + 1.0 to sum + rougeScore).also { (total, sum) ->
-//        val runningAverage = (sum / total).toString().take(6)
-//        println("Running average ROUGE 2.0 score difference " +
-////          "between original Javadoc and synthetic Javadoc before and after refactoring " +
-//          "of $MODEL on document synthesis: $runningAverage"
-//        )
-//
-//        rougeScoreByCyclomaticComplexity.toSortedMap(compareBy { it.complexity })
-//          .forEach { (cc, rs) -> println("${cc.complexity}, ${rs.average()}, ${rs.variance()}") }
-//      }
-//    }
-//    .fold(0.0 to 0.0) { (total, sum), (snippet, score) ->
-//      (total + score to sum + mtdScores.sum()).also { (total, sum) ->
-//        val runningAverage = (sum / total).toString().take(6)
-//        println(
-//          "Running accuracy of $MODEL with [${snippet.sct.name}] " +
-//            "transformation ($total samples): $runningAverage\n"
-//        )
-//      }
-//    }
-
-val csByMultimaskPrediction = mutableMapOf<CodeSnippet, MutableList<Double>>()
+}
 
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
