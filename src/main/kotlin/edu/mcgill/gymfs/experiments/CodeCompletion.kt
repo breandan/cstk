@@ -23,10 +23,13 @@ fun main() {
     .take(100).toList().shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
-  evaluateTransformations(validationSet,
+  evaluateTransformations(
+    validationSet = validationSet,
     evaluation = CodeSnippet::evaluateMultimask,
-    String::addExtraLogging, String::renameTokens, String::same,
-    String::swapMultilineNoDeps, String::permuteArgumentOrder
+    codeTxs = arrayOf(
+      String::addExtraLogging, String::renameTokens, String::same,
+      String::swapMultilineNoDeps, String::permuteArgumentOrder
+    )
   )
 }
 
@@ -42,8 +45,7 @@ fun evaluateTransformations(
     .map { snippet -> snippet to snippet.evaluateMultimask() }
     .forEach { (snippet, metric) ->
       snippet to metric.also {
-        csByMultimaskPrediction.getOrPut(snippet) { mutableListOf() }
-          .add(metric)
+        csByMultimaskPrediction.getOrPut(snippet) { mutableListOf() }.add(metric)
       }
     }
 //    .fold(0.0 to 0.0) { (total, sum), rougeScore ->

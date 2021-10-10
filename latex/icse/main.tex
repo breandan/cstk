@@ -203,13 +203,14 @@
 
   \section{Introduction}\label{sec:introduction}
 
-  Neural language models play an increasingly synergetic role in software engineering, featuring prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a developer's perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a real-time suggestion. This client-server architecture can be seen as a black-box or \textit{extensional} function from a mathematical perspective. How can we evaluate the behavior of neural language models in this setting? The value of automated testing becomes evident.
+  Neural language models play an increasingly synergetic role in software engineering, featuring prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a development perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a completion. This client-server architecture can be seen as a black-box or \textit{extensional} function. How can we evaluate the behavior of neural language models in this setting? The value of automated testing becomes evident.
 
   First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively infinite amount of synthetic data by selecting and recombining those transformations. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar invariants exist for source code?
 
-  Source code in semantically or even syntactically-equivalent programs has many degrees of freedom: two authors implementing the same function may select different variable names or cosmetic features, such as whitespaces, diagnostic statements or comments. One would expect neural code completion for a programming language semantically invariant under those changes to share the same invariance: \textit{cosmetically-altered code snippets should not drastically change the model's predictions}. For example, code completion in Java should be invariant to variable renaming, whitespace placement, extra documentation or similar transformations.
+  Source code in semantically or even syntactically-equivalent programs has many degrees of freedom: two authors implementing the same function may select different variable names or cosmetic features, such as whitespaces, diagnostic statements or comments. One would expect neural code completion for languages semantically invariant under those changes to exhibit the same invariance: \textit{cosmetically-altered code snippets should not drastically change the model's predictions}. For example, code completion in Java should be invariant to variable renaming, whitespace placement, extra documentation or reordering dataflow-indenpendent statements.
 
-  One can make this statement a little more formal. Given a neural code completion model \lstinline|ncc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, a single cosmetic transformation, \lstinline|ctx: Str->Str|, and a code completion metric, \lstinline|mtr: (Str, Str)->Float|, we would expect the average completion accuracy to remain approximately the same regardless of whether the transformation was applied, i.e.,
+
+  One can make this statement slightly more formal. Given a neural code completion model \lstinline|ncc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, a single cosmetic transformation, \lstinline|ctx: Str->Str|, and a code completion metric, \lstinline|mtr: (Str, Str)->Float|, we would expect the average completion accuracy to remain approximately unchanged regardless of whether the transformation was applied, i.e.,
 
   \noindent\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
 fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
@@ -218,72 +219,100 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
 )
   \end{lstlisting}
 
-\noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We will use this notation throughout the paper. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics. Results are reported in~\S\ref{sec:results}.
+\noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics.
 
-  We have identified four rewriting categories, corresponding to possible types of source code transfromations:
+  Broadly speaking, we aim to understand how well neural code completion models generalize to plausible perturbations. Do language models learn to recognize certain patterns or \textit{idioms} and if so, what kinds? A great deal of research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from a software engineering standpoint: we explore the extent to which recent language models trained on source code have learned cosmetic regularities, by applying various code transformations across a variety of contexts. We analyze three different language models, and compare their zero-shot generalization on manually-designed source code transformations to generating code snippet pairs corresponding to plausible perturbations, and measure the effect on various language models and tasks. Each model is evaluated on a set of code snippets exposed to synthetic transformations and predicts one ore more masked tokens.
 
-  \begin{enumerate}
-    \item Syntactic - can the LM detect syntactically invalid PTs? (e.g. syntax corruption, imbalanced parenthesis)
-    \item Structural - can the LM detect syntactically valid, but semantically unsound PTs? (e.g. use before declaration, permuted argument order)
-    \item Semantic - can the LM detect semantically valid, but semantically altered PTs? (e.g. constant modification, operator substitution and order of operations)
-    \item Cosmetic - can the LM detect syntactically and semantically equivalent PTs? (e.g. variable renaming, documentation)
-  \end{enumerate}
-
-  Prior studies of natural language in source code have been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from a software engineering standpoint: we try to determine which kinds of code idioms neural code completion models are robust to in practice.
-
-  Do language models learn to recognize patterns in source code? If so, what kinds? A longstanding research area in software engineering tries to extract idioms from large software repositories. Likewise, a longstanding goal of neural program synthesis is compositional generalization. Both require a deeper understanding of variability in source code.
-
-  In our work, we explore the extent to which recent language models trained on source code learn regularities they were not explicitly designed to represent. We analyze three different language models, and compare their zero-shot generalization on synthetically-generated substitutions. We generate code snippet pairs corresponding to manually-designed variance, and measure the effect on various language models. Each model is evaluated on a set of code snippets exposed to synthetic transformations and predicts a masked token.
-
+%  We have identified four rewriting categories, corresponding to possible types of source code transformations:
+%
+%  \begin{enumerate}
+%    \item Syntactic - can the LM detect syntactically invalid PTs? (e.g. syntax corruption, imbalanced parenthesis)
+%    \item Structural - can the LM detect syntactically valid, but semantically unsound PTs? (e.g. use before declaration, permuted argument order)
+%    \item Semantic - can the LM detect semantically valid, but semantically altered PTs? (e.g. constant modification, operator substitution and order of operations)
+%    \item Cosmetic - can the LM detect syntactically and semantically equivalent PTs? (e.g. variable renaming, documentation)
+%  \end{enumerate}
 
 
   \section{Method}
 
-  We examine in our work three primary questions. Given a set of source code snippets, a set of SCTs, a set of slicing and tokenization methods, how do these factors affect accuracy on the masked code completion task? We sample a the top 100 most-starred Java repositories from GitHub organizations with over 100 forks and between 1 and 10 MB in size. From these, we extract a set of Java methods using the heuristic described in \S\ref{sec:slicing}.
+  Given a set of source code snippets of varying complexity, a set of SCTs, and a set of tasks, how do these factors affect model completion accuracy? To measure this, we first sample the top 100 most-starred Java repositories published by GitHub organizations with over 100 forks and between 1 and 10 MB in size. This ensures a diverse dataset of active repositories with a reasonable amount of quality and stylistic diversity. From these, we extract a set of Java methods using the heuristic described in \S\ref{sec:slicing}.
 
-  Our goal then, is to identify equivariant representations captured by the language model (LM). To do so, we generate program transformations (PTs) and measure equivariance on various SCTs. To generate these SCTs, we implement a source code transformation tool which generates synthetic variants of naturally-occurring source code snippets from each of these three categories and evaluates the model for completion accuracy. We have implemented the following source code transformations (SCTs):
+  Our goal then, is to measure the languge models' robustness under various cosmetic changes. To do so, we generate and measure variance on various SCTs. To generate these SCTs, we implement a tool which generates synthetic variants of naturally-occurring source code snippets from each of the following categories and evaluates the model for completion accuracy. We have implemented the following source code transformations (SCTs):
 
   \begin{enumerate}
     \item \textbf{Synonym renaming}: rename variables with synonyms
     \item \textbf{Peripheral code}: introduce dead code to source code
     \item \textbf{Statement reordering}: swap independent statement order
     \item \textbf{Document generation}: add synthetic documentation
-    \item \textbf{Loop bounds fuzzing}: change loop bounds conditions
     \item \textbf{Permute argument order}: scramble method arguments
     \item \textbf{Literal mutation}: mutate contents of primitive types
   \end{enumerate}
 
+  Ideally, these would be generated using a higher-order abstract syntax to ensure syntactic validity, however for the sake of simplicity, we implemented the transformations using a set of ad-hoc regular expressions. While slightly awkward for implementing more complex transformations, we observed in practice this approach can effectively make cosmetic changes like variable renaming and linear statement reordering without much difficulty.
+
   For each SCT, we mask various tokens in the code snippet and compare the model's ability to fill in the correct token before and after the transformation is applied. Our goal is to measure how sensitive the pretrained model is to each type of SCT.
 
-  We also generate some documentation, using the same model. These additions represent a natural language comment which a human might have written. Below are two examples of Javadocs generated by our document synthesizer using GraphCodeBERT:
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.35\textwidth]{figs/dataflow.png}
+    \caption{For each code snippet, we apply a SCT and measure the model's shift in accuracy on some task, e.g. source code or document completion.}
+    \label{fig:dataflow}
+  \end{figure}
 
+  Our framework encompasses both code completion and document synthesis. For example, we can treat code completion as a masked-token completion task, in which we sample several tokens from the original source code and the variant, then measure the average distributional shift using our favorite metric. This can be done either inside the model's latent space, or using some metric on the output string. We decided to focus on the output space and consider two metrics: ROUGE-synonym and average multimask accuracy. Consider the multimask completion task for a single snippet:
 
-  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:lstlisting}]
+  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example1}]
 /**
- * Write a single byte to the output stream.
+ * Write to output buffer and compact
  */
 public void write(int b) throws IOException {
   if (!buffer.hasRemaining()) {
-    throw new IOException("IPPacketOutputStream buffer is full");
+    throw new IOException("OutputStream buffer is full");
   }
   buffer.put((byte) b);
   buffer.flip();
   sink();
   buffer.compact();
 }
+\end{lstlisting}
 
+  We sample k tokens and mask them separately:
+
+  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example1}]
 /**
- * receive packet from local socket
+ * Write to output buffer and compact
  */
-public int receive(byte[] packet) throws IOException {
-  int r = localSocket.getInputStream().read(packet);
-  if (GnirehtetService.VERBOSE) {
-    Log.v(TAG, "Receiving packet: " +
-    Binary.buildPacketString(packet, r));
+public void <MASK>(int b) throws IOException {
+  if (!buffer.hasRemaining()) {
+    throw new IOException("OutputStream buffer is full");
   }
-  return r;
+  buffer.<MASK>((byte) b);
+  buffer.flip();
+  sink();
+  <MASK>.compact();
 }
   \end{lstlisting}
+
+  For each mask location, we collect model's completions, then for each SCT, measure the average distributional shift before and after applying the transformation.
+
+  Similarly, for document synthesis, we discard the original comment in its entirety and autoregressively sample tokens until a newline stopword is encountered. Here is a Javadoc generated by our document synthesizer using GraphCodeBERT:
+
+  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example1}]
+/**
+ * Write a single byte to the output stream.
+ */
+public void write(int b) throws IOException {
+  if (!buffer.hasRemaining()) {
+    throw new IOException("OutputStream buffer is full");
+  }
+  buffer.put((byte) b);
+  buffer.flip();
+  sink();
+  buffer.compact();
+}
+  \end{lstlisting}
+
+  Then we compare the document with the prediction using a synonym expansion: for each salient keyword in the output, we traverse the WordNet hypernym graph up to depth 3 and compute the overlap between the synonym-expanded keyword set of the original document and the completed document for both the original and transformed snippets.
 
 % For example, suppose we are given a string of text in a foreign language:
 
@@ -358,23 +387,43 @@ public int receive(byte[] packet) throws IOException {
 
   \section{Results}\label{sec:results}
 
-  {
+  Documentation Generation
+    {
     \renewcommand{\arraystretch}{1.5}
     \begin{table}[H]
       \small
       \begin{tabular}{l|ccc}
-        Model & IRA & QDL & P/R \\
+        Model & Low Complexity & Medium Complexity & High Complexity \\
         \hline
         \href{https://huggingface.co/microsoft/CodeGPT-small-java}{\textsc{CodeGPT}}~\citep{lu2021codexglue} & X & X & X \\
-        \href{https://huggingface.co/microsoft/graphcodebert-base}{\textsc{GraphCodeBERT}}~\citep{guo2021graphcodebert} & X & X & X \\
-        \href{https://huggingface.co/huggingface/CodeBERTa-small-v1a}{\textsc{CodeBERT-small}}~\citep{feng2020codebert} & X & X & X \\
-        \href{https://huggingface.co/dbernsohn/roberta-java}{\textsc{RoBERTa-Java}}~\citep{liu2019roberta} & X & X & X \\
-        \href{https://copilot.github.com/}{\textsc{Copilot}}\citep{chen2021evaluating} & X & X & X \\
+        \href{https://huggingface.co/microsoft/graphcodebert-base}{\textsc{GraphCodeBERT}}~\citep{guo2021graphcodebert} & Rougescore & Rougescore & Rougescore \\
+        \href{https://huggingface.co/huggingface/CodeBERTa-small-v1a}{\textsc{CodeBERT-small}}~\citep{feng2020codebert} & Rougescore & Rougescore & Rougescore \\
+        \href{https://huggingface.co/dbernsohn/roberta-java}{\textsc{RoBERTa-Java}}~\citep{liu2019roberta} & Rougescore & Rougescore & Rougescore \\
+        \href{https://copilot.github.com/}{\textsc{Copilot}}\citep{chen2021evaluating} & Rougescore & Rougescore & Rougescore \\
 
       \end{tabular}
-      \caption{\label{tab:ad_comparison} Experiments table for comparing pretrained LM embeddings on source code snippets. IRA: Iterrater agreement. QDL: query description length, P/R: Precision/recall}
+      \caption{\label{tab:doc_synthesis} Experiments table for comparing pretrained LM embeddings on source code snippets. IRA: Iterrater agreement. QDL: query description length, P/R: Precision/recall}
     \end{table}
   }
+
+    {
+    \renewcommand{\arraystretch}{1.5}
+    \begin{table}[H]
+      \small
+      \begin{tabular}{l|ccc}
+        Model & Low Complexity & Medium Complexity & High Complexity \\
+        \hline
+        \href{https://huggingface.co/microsoft/CodeGPT-small-java}{\textsc{CodeGPT}}~\citep{lu2021codexglue} & X & X & X \\
+        \href{https://huggingface.co/microsoft/graphcodebert-base}{\textsc{GraphCodeBERT}}~\citep{guo2021graphcodebert} & P/R & P/R & P/R \\
+        \href{https://huggingface.co/huggingface/CodeBERTa-small-v1a}{\textsc{CodeBERT-small}}~\citep{feng2020codebert} & P/R & P/R & P/R \\
+        \href{https://huggingface.co/dbernsohn/roberta-java}{\textsc{RoBERTa-Java}}~\citep{liu2019roberta} & P/R & P/R & P/R \\
+        \href{https://copilot.github.com/}{\textsc{Copilot}}\citep{chen2021evaluating} & P/R & P/R & P/R \\
+
+      \end{tabular}
+      \caption{\label{tab:code_completion} Experiments table for comparing pretrained LM embeddings on source code snippets. IRA: Iterrater agreement. QDL: query description length, P/R: Precision/recall}
+    \end{table}
+  }
+
 
   \section{Discussion}
 
@@ -418,11 +467,11 @@ public int receive(byte[] packet) throws IOException {
 
   \section{Slicing procedure}\label{sec:slicing}
 
-  We describe below a simple heuristic for extracting method slices in well-formed source code using a Dyck counter.~\footnote{\url{https://en.wikipedia.org/wiki/Dyck\_language}} A common coding convention is to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. While imperfect, we observe this pattern can be used to slice methods in a variety of langauges in practice. A Kotlin implementation is given below, which will output the following source code when run on itself:
+  We describe below a simple heuristic for extracting method slices in well-formed source code using a Dyck counter.~\footnote{\url{https://en.wikipedia.org/wiki/Dyck\_language}} A common coding convention is to prefix functions with a keyword, followed by a group of balanced brackets and one or more blank lines. While imperfect, we observe this pattern can be used to slice methods in a variety of languages in practice. A Kotlin implementation is given below, which will output the following source code when run on itself:
 
   \vspace{11pt}
 
-  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:lstlisting}]
+  \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example2}]
 fun String.sliceIntoMethods(kwds: Set<String> = setOf("fun ")) =
   lines().fold(-1 to List<String>(0)) { (dyckCtr, methods), ln ->
     if (dyckCtr < 0 && kwds.any { it in ln }) {
@@ -444,6 +493,8 @@ fun String.countBalancedBrackets() = fold(0) { sum, char ->
 fun main(args: Array<String>) =
   println(args[0].sliceIntoMethods().joinToString("\n\n"))
   \end{lstlisting}
+
+  Using this approach, we can approximate the bracket complexity for each code snippet.
 
   \pagebreak\section{Analysis of internal structure}\label{sec:probe_internals}
 
