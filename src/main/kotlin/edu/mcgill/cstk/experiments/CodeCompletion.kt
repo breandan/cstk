@@ -119,7 +119,7 @@ Complexity &        renameTokens         & shuffleLines         & permuteArgumen
         "\\\\\\hline\\\n"
       ) { it.name.take(15).padEnd(colWidth) } +
       complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
-        (cplx * 10).let { "$it-" + it + 10 }.padEnd(colWidth) + "& " +
+        (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
           transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
               this[CodeSnippet("", cplx * 10, tx, "")]

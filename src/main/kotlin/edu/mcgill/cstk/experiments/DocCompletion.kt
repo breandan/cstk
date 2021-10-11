@@ -18,14 +18,16 @@ fun main() =
         String::swapMultilineNoDeps
       ).map { sct -> CodeSnippet(original=it, sct=sct) }
     }
-    .map { it to evaluateDocSynthesis(it)}
+    .mapNotNull { snp -> evaluateDocSynthesis(snp)?.let { snp to it } }
     .forEachIndexed { i, (snippet, score) ->
       rougeScoreByCyclomaticComplexity[snippet] = score
       println(rougeScoreByCyclomaticComplexity.toLatexTable())
     }
 
-fun evaluateDocSynthesis(snippet: CodeSnippet): Double {
+fun evaluateDocSynthesis(snippet: CodeSnippet): Double? {
   val (originalDoc, originalCode) = snippet.original.splitDocAndCode()
+  val refactoredCode = snippet.sct(originalCode)
+  if (refactoredCode == originalCode) return null
   val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
   val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
   val refactoredCodeWithSyntheticJavadoc = snippet.sct(originalCode).prependJavadoc()
