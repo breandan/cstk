@@ -18,17 +18,18 @@ data class CodeSnippet(
 
 fun main() {
   val validationSet = DATA_DIR.allFilesRecursively()
-    .toList().shuffled().asSequence().allMethods()
+    .allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
-//    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformations(
     validationSet = validationSet,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
-      String::addExtraLogging, String::renameTokens, String::same,
-      String::swapMultilineNoDeps, String::permuteArgumentOrder
+      String::renameTokens,
+      String::shuffleLines,
+      String::permuteArgumentOrder,
+      String::swapMultilineNoDeps
     )
   )
 }
@@ -39,14 +40,13 @@ fun evaluateTransformations(
   evaluation: KFunction1<CodeSnippet, Double>,
   vararg codeTxs: KFunction1<String, String>
 ) =
-  validationSet.asSequence()
-    .map { method -> setOf(method) * codeTxs.toSet() }.flatten()
+  validationSet
+    .flatMap { method -> setOf(method) * codeTxs.toSet() }
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
     .map { snippet -> snippet to evaluation(snippet) }
     .forEach { (snippet, metric) ->
       csByMultimaskPrediction[snippet] = metric
-      println(rougeScoreByCyclomaticComplexity.toLatexTable())
-      snippet to metric
+      println(csByMultimaskPrediction.toLatexTable())
     }
 
 val csByMultimaskPrediction = CodeSnippetAttributeScoresTable()
