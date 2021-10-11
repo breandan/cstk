@@ -6,11 +6,10 @@ import edu.mcgill.gymfs.nlp.*
 
 fun main() =
   DATA_DIR.allFilesRecursively()
-    .allMethods()
+    .toList().shuffled().asSequence().allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
     .filter { docCriteria(it.lines().first()) }
-    .shuffled()
     .flatMap {
       setOf(
         String::renameTokens,
@@ -20,7 +19,7 @@ fun main() =
       ).map { sct -> CodeSnippet(original=it, sct=sct) }
     }
     .map { it to evaluateDocSynthesis(it)}
-    .forEach { (snippet, score) ->
+    .forEachIndexed { i, (snippet, score) ->
       rougeScoreByCyclomaticComplexity[snippet] = score
       println(rougeScoreByCyclomaticComplexity.toLatexTable())
     }

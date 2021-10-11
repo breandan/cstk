@@ -19,8 +19,8 @@ val DELIMITER = Regex("\\W")
 val MODEL =
 // The following models support masking
 //"microsoft/codebert-base"
-//"microsoft/graphcodebert-base"
-"microsoft/codebert-base-mlm"
+"microsoft/graphcodebert-base"
+//"microsoft/codebert-base-mlm"
 //"dbernsohn/roberta-java"
 //These models do not support masking
 //"microsoft/codeGPT-small-java"

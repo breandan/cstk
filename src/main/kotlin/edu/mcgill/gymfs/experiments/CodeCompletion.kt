@@ -18,10 +18,9 @@ data class CodeSnippet(
 
 fun main() {
   val validationSet = DATA_DIR.allFilesRecursively()
-    .allMethods()
+    .toList().shuffled().asSequence().allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
-    .take(100).toList().shuffled()
 //    .also { printOriginalVsTransformed(it) }
 
   evaluateTransformations(
@@ -36,7 +35,7 @@ fun main() {
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
-  validationSet: List<String>,
+  validationSet: Sequence<String>,
   evaluation: KFunction1<CodeSnippet, Double>,
   vararg codeTxs: KFunction1<String, String>
 ) =
@@ -45,7 +44,6 @@ fun evaluateTransformations(
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
     .map { snippet -> snippet to evaluation(snippet) }
     .forEach { (snippet, metric) ->
-      snippet.print()
       csByMultimaskPrediction[snippet] = metric
       println(rougeScoreByCyclomaticComplexity.toLatexTable())
       snippet to metric
@@ -54,23 +52,44 @@ fun evaluateTransformations(
 val csByMultimaskPrediction = CodeSnippetAttributeScoresTable()
 
 class CodeSnippetAttributeScoresTable {
-  val scoreByCodeSnippet = mutableMapOf<CodeSnippet, MutableList<Double>>()
+  val scoreByCodeSnippet = mutableMapOf<Int, MutableList<Double>>()
   val complexities = mutableSetOf<Int>()
   val transformations = mutableSetOf<KFunction1<String, String>>()
 
   operator fun set(snippet: CodeSnippet, metric: Double) {
-    scoreByCodeSnippet.getOrPut(snippet) { mutableListOf() }.add(metric)
+    scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
-    println(scoreByCodeSnippet.size)
   }
 
   fun toLatexTable() =
-    transformations.toSortedSet(compareBy { it.name }).joinToString("\\\\\n"){ tx ->
-      complexities.toSortedSet().joinToString("&".padEnd(8, ' ')){ cplx ->
-        (scoreByCodeSnippet[CodeSnippet("", cplx, tx, "")] ?: listOf()).average().toString().take(6)
-      }
-    }
+      """
+      \begin{table}[H]
+      \begin{tabular}{l|ccc}
+      
+      """.trimIndent() +
+        transformations.joinToString(
+          " & ",
+          "Complexity & ",
+          "\\\\\n\\hline\n"
+        ) { it.name.take(10).padEnd(12) } +
+        complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
+          "$cplx ".padEnd(11) + "& " + transformations.toSortedSet(compareBy { it.name })
+            .joinToString("      &".padEnd(12)) { tx ->
+              (
+                (scoreByCodeSnippet[CodeSnippet("", cplx, tx, "").hashCode()]
+                  ?: listOf()).let {
+                  it.average().toString().take(5) + "±" +
+                    it.variance().toString().take(5)
+                }
+              ).padEnd(11)
+            }
+        } +
+        """
+        
+      \end{table}
+      \end{tabular}
+      """.trimIndent()
 }
 
 // Masking all identifiers in all snippets is too expensive,
