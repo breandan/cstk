@@ -2,11 +2,8 @@ package edu.mcgill.cstk.experiments
 
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.experiments.CodeSnippet.Companion.BINSIZE
-import edu.mcgill.cstk.experiments.CodeSnippet.Companion.binComplexity
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
-import edu.mcgill.markovian.mcmc.Dist
 import kotlin.math.*
 import kotlin.reflect.KFunction1
 
@@ -27,9 +24,9 @@ data class CodeSnippet(
 fun main() {
   val validationSet = DATA_DIR
     .also { println("Evaluating doc completion with $MODEL on $it...") }
-    .allFilesRecursively()
-    .allMethods()
+    .allFilesRecursively().allMethods()
     // Ensure tokenized method fits within attention
+    .filter { defaultTokenizer.tokenize(it).size < 500 }
 
   evaluateTransformations(
     validationSet = validationSet,
@@ -68,7 +65,7 @@ class CodeSnippetAttributeScoresTable {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
-    println("Put $metric in (${snippet.complexity}, ${snippet.sct})")
+    println("Put $metric in (${snippet.complexity}, ${snippet.sct.name})")
   }
   operator fun get(snippet: CodeSnippet): List<Double> =
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList<Double>()
@@ -127,7 +124,7 @@ Complexity &        renameTokens         & shuffleLines         & permuteArgumen
         (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
           transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
-              this[CodeSnippet("", cplx * 10, tx, "")]
+              this[CodeSnippet("", cplx, tx, "")]
                 .let {
                   it.average().toString().take(5) + " ± " +
                     it.variance().toString().take(5) + " (${it.size})"
