@@ -2,6 +2,8 @@ package edu.mcgill.cstk.experiments
 
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.CodeSnippet.Companion.BINSIZE
+import edu.mcgill.cstk.experiments.CodeSnippet.Companion.binComplexity
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 import edu.mcgill.markovian.mcmc.Dist
@@ -10,18 +12,21 @@ import kotlin.reflect.KFunction1
 
 data class CodeSnippet(
   val original: String,
-  val complexity: Int = original.approxCyclomatic(), // Cyclomatic complexity
+  val complexity: Int = binComplexity(original.approxCyclomatic()), // Cyclomatic complexity
   val sct: KFunction1<String, String>, // Source code transformation
   val variant: String = sct(original)
 ) {
-  override fun hashCode() =
-    round(complexity.toDouble() / 10.0).toInt().hashCode() + sct.name.hashCode()
+  companion object {
+    const val BINSIZE = 5
+    fun binComplexity(complexity: Int) = round(complexity.toDouble() / BINSIZE).toInt()
+  }
+  override fun hashCode() = complexity.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(original, variant)
 }
 
 fun main() {
   val validationSet = DATA_DIR
-    .also { println("Running code completion on $it") }
+    .also { println("Evaluating doc completion with $MODEL on $it...") }
     .allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
@@ -61,10 +66,9 @@ class CodeSnippetAttributeScoresTable {
 
   operator fun set(snippet: CodeSnippet, metric: Double) {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
-    val complexity = round(snippet.complexity.toDouble() / 10.0).toInt()
-    complexities += complexity
+    complexities += snippet.complexity
     transformations += snippet.sct
-    println("Put $metric in ($complexity, ${snippet.sct})")
+    println("Put $metric in (${snippet.complexity}, ${snippet.sct})")
   }
   operator fun get(snippet: CodeSnippet): List<Double> =
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList<Double>()

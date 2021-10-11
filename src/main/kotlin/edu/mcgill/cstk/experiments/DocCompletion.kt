@@ -5,7 +5,7 @@ import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 
 fun main() =
-  DATA_DIR.also { println("Running code completion on $it") }
+  DATA_DIR.also { println("Evaluating doc completion with $MODEL on $it...") }
     .allFilesRecursively()
     .toList().shuffled().asSequence().allMethods()
     // Ensure tokenized method fits within attention

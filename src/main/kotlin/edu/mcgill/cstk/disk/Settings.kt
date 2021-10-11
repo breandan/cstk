@@ -55,8 +55,8 @@ val EMBEDDING_SERVER: String by lazy {
 
   ProcessBuilder("python", "embedding_server.py", "--model=$MODEL", "--offline")
     .also { println("> " + it.command().joinToString(" ")) }
-//    .run { inheritIO() }
-    .start().run { Runtime.getRuntime().addShutdownHook(Thread { destroy() }) }
+    .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
+    .start().run { Runtime.getRuntime().addShutdownHook(Thread { println("Server went down!"); destroy() }) }
 
   println("Starting embeddings server...")
   // Spinlock until service is available
