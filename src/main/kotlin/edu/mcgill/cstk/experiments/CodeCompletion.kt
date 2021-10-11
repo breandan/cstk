@@ -108,26 +108,28 @@ Complexity &        renameTokens         & shuffleLines         & permuteArgumen
 \end{tabular}
    */
   fun toLatexTable(colWidth: Int = 20) =
-      """
+    """
       \begin{table}[H]
       \begin{tabular}{l|ccc}
       
       """.trimIndent() +
-        transformations.joinToString(
-          "& ",
-          "Complexity ".padEnd(colWidth) + "& ",
-          "\\\\\\hline\\\n"
-        ) { it.name.take(15).padEnd(colWidth) } +
-        complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
-          "$cplx ".padEnd(colWidth) + "& " + transformations.toSortedSet(compareBy { it.name })
+      transformations.joinToString(
+        "& ",
+        "Complexity ".padEnd(colWidth) + "& ",
+        "\\\\\\hline\\\n"
+      ) { it.name.take(15).padEnd(colWidth) } +
+      complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
+        (cplx * 10).let { "$it-" + it + 10 }.padEnd(colWidth) + "& " +
+          transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
-                this[CodeSnippet("", cplx * 10, tx, "")].let {
+              this[CodeSnippet("", cplx * 10, tx, "")]
+                .let {
                   it.average().toString().take(5) + " ± " +
                     it.variance().toString().take(5) + " (${it.size})"
                 }.padEnd(colWidth)
             }
-        } +
-        """
+      } +
+      """
         
       \end{table}
       \end{tabular}
