@@ -139,24 +139,24 @@ dependencies {
 
 tasks {
   mapOf(
-    "trieSearch" to "edu.mcgill.gymfs.disk.KWSearchKt",
-    "knnSearch" to "edu.mcgill.gymfs.disk.KNNSearchKt",
-    "cloneRepos" to "edu.mcgill.gymfs.github.CloneReposKt",
-    "filterRepos" to "edu.mcgill.gymfs.github.FilterReposKt",
-    "trainBert" to "edu.mcgill.gymfs.agent.BertTrainerKt",
-    "indexKW" to "edu.mcgill.gymfs.indices.KWIndexKt",
-    "indexKNN" to "edu.mcgill.gymfs.indices.VecIndexKt",
-    "querySynth" to "edu.mcgill.gymfs.experiments.DFAExtractionKt",
-    "vizCodeEmbed" to "edu.mcgill.gymfs.experiments.VizCodeEmbeddingsKt",
-    "compareMetrics" to "edu.mcgill.gymfs.experiments.CompareMetricsKt",
-    "compareCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxComparisonKt",
-    "testCodeTxs" to "edu.mcgill.gymfs.experiments.CodeTxTestKt",
-    "nearestNeighbors" to "edu.mcgill.gymfs.experiments.NearestNeighborsKt",
-    "codeSynth" to "edu.mcgill.gymfs.experiments.CodeSynthesisKt",
-    "completeCode" to "edu.mcgill.gymfs.experiments.CodeCompletionKt",
-    "completeDoc" to "edu.mcgill.gymfs.experiments.DocCompletionKt",
-    "codeMetrics" to "edu.mcgill.gymfs.math.CodeMetricsKt",
-    "code2Vec" to "edu.mcgill.gymfs.experiments.Code2VecKt",
+    "trieSearch" to "edu.mcgill.cstk.disk.KWSearchKt",
+    "knnSearch" to "edu.mcgill.cstk.disk.KNNSearchKt",
+    "cloneRepos" to "edu.mcgill.cstk.github.CloneReposKt",
+    "filterRepos" to "edu.mcgill.cstk.github.FilterReposKt",
+    "trainBert" to "edu.mcgill.cstk.agent.BertTrainerKt",
+    "indexKW" to "edu.mcgill.cstk.indices.KWIndexKt",
+    "indexKNN" to "edu.mcgill.cstk.indices.VecIndexKt",
+    "querySynth" to "edu.mcgill.cstk.experiments.DFAExtractionKt",
+    "vizCodeEmbed" to "edu.mcgill.cstk.experiments.VizCodeEmbeddingsKt",
+    "compareMetrics" to "edu.mcgill.cstk.experiments.CompareMetricsKt",
+    "compareCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxComparisonKt",
+    "testCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxTestKt",
+    "nearestNeighbors" to "edu.mcgill.cstk.experiments.NearestNeighborsKt",
+    "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
+    "completeCode" to "edu.mcgill.cstk.experiments.CodeCompletionKt",
+    "completeDoc" to "edu.mcgill.cstk.experiments.DocCompletionKt",
+    "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
+    "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
@@ -171,9 +171,9 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.gymfs.experiments.DocCompletionKt"
+      "edu.mcgill.cstk.experiments.CodeCompletionKt"
     // Use this to generate the training dataset
-//  manifest.attributes["Main-Class"] = "edu.mcgill.gymfs.github.CloneReposKt"
+//  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"
     isZip64 = true
     archiveFileName.set("${project.name}-fat-${project.version}.jar")
   }

@@ -67,7 +67,7 @@ How quickly can we search for substrings? Useful for learning to search.
 ```
 $ ./gradlew -q trieSearch
 Indexing /home/breandan/IdeaProjects/gym-fs
-Indexed in 524ms to: gymfs.idx
+Indexed in 524ms to: cstk.idx
 
 Searching index of size 1227 for [?]=[match]…
 
@@ -609,11 +609,11 @@ Angle brackets enclose longest common substring up to current result
 	18.19] add(CLS)
 
 
-19.] package edu.mcgill.gymfs.agent
-	19.0] package edu.mcgill.gymfs.experiments
-	19.1] 《package edu.mcgill.gymfs.》inference
-	19.2] 《package edu.mcgill.gymfs.》disk
-	19.3] 《package edu.mcgill.gymfs》
+19.] package edu.mcgill.cstk.agent
+	19.0] package edu.mcgill.cstk.experiments
+	19.1] 《package edu.mcgill.cstk.》inference
+	19.2] 《package edu.mcgill.cstk.》disk
+	19.3] 《package edu.mcgill.cstk》
 	19.4] import jetbrains.letsPlot.labe《l.g》gtitle
 	19.5] import edu.mcgil《l.g》ymfs.disk.*
 	19.6] import com《.g》ithub.jelmerk.knn.SearchResult
@@ -710,7 +710,7 @@ val ritingConfig.indefaultResponseExtractory.persDsl {
 
 ### Masked code completion
 
-The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/gymfs/experiments/CodeCompletion.kt) demo:
+The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/CodeCompletion.kt) demo:
 
 ```bash
 ./gradlew completeCode
