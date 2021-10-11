@@ -28,7 +28,7 @@ fun evaluateDocSynthesis(snippet: CodeSnippet): Double {
   val (originalDoc, originalCode) = snippet.original.splitDocAndCode()
   val originalCodeWithSyntheticJavadoc = originalCode.prependJavadoc()
   val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-  val refactoredCodeWithSyntheticJavadoc = snippet.variant.prependJavadoc()
+  val refactoredCodeWithSyntheticJavadoc = snippet.sct(originalCode).prependJavadoc()
   val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
 
   val rougeScoreWithoutRefactoring = rougeSynonym(originalDoc, syntheticJavadocForOriginalCode)
