@@ -117,6 +117,7 @@ fun String.fuzzLoopBoundaries(): String =
       (it[3].toInt() + (1..3).random()) + it[4] }
   }
 
+// Swaps adjacent lines with same indentation and no dataflow deps
 fun String.swapMultilineNoDeps(): String =
   lines().chunked(2).map { lines ->
     if (lines.size != 2) return@map lines

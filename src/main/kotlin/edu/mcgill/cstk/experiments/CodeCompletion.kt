@@ -3,7 +3,7 @@ package edu.mcgill.cstk.experiments
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
-import kotlin.math.absoluteValue
+import kotlin.math.*
 import kotlin.reflect.KFunction1
 
 data class CodeSnippet(
@@ -12,7 +12,8 @@ data class CodeSnippet(
   val sct: KFunction1<String, String>, // Source code transformation
   val variant: String = sct(original)
 ) {
-  override fun hashCode() = complexity.hashCode() + sct.hashCode()
+  override fun hashCode() =
+    round(complexity.toDouble() / 10.0).toInt().hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(original, variant)
 }
 
@@ -22,14 +23,13 @@ fun main() {
     .allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }
+    .filter { defaultTokenizer.tokenize(it).size < 700 }
 
   evaluateTransformations(
     validationSet = validationSet,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
       String::renameTokens,
-      String::shuffleLines,
       String::permuteArgumentOrder,
       String::swapMultilineNoDeps
     )
@@ -60,30 +60,50 @@ class CodeSnippetAttributeScoresTable {
 
   operator fun set(snippet: CodeSnippet, metric: Double) {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
-    complexities += snippet.complexity
+    val complexity = round(snippet.complexity.toDouble() / 10.0).toInt()
+    complexities += complexity
     transformations += snippet.sct
+    println("Put $metric in $complexity, ${snippet.sct}")
   }
-
+  operator fun get(snippet: CodeSnippet): List<Double> =
+    scoreByCodeSnippet[snippet.hashCode()] ?: emptyList<Double>()
 
   /* Example of table output:
 \begin{table}[H]
 \begin{tabular}{l|ccc}
-Complexity &        renameTokens         & shuffleLines         & permuteArgument      & swapMultilineNo     \\\hline\\
-5                   & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
-7                   & 0.035 ± 0.025 (56)        &             0.018 ± 0.008 (27)        &             0.017 ± 0.017 (56)        &             0.0 ± 0.0 (56)      \\
-8                   & 0.0 ± 0.0 (18)            &             0.0 ± 0.0 (6)             &             0.0 ± 0.0 (18)            &             0.0 ± 0.0 (18)      \\
-9                   & 0.076 ± 0.032 (13)        &             0.115 ± 0.044 (13)        &             0.0 ± 0.0 (13)            &             0.0 ± 0.0 (13)      \\
-10                  & 0.0 ± 0.0 (3)             &             0.277 ± 0.043 (3)         &             0.0 ± 0.0 (3)             &             0.0 ± 0.0 (3)       \\
-13                  & 0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)       \\
-20                  & 0.0 ± 0.0 (2)             &             0.1 ± 0.010 (2)           &             0.0 ± 0.0 (2)             &             0.05 ± 0.002 (2)    \\
-21                  & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
-23                  & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
-26                  & 0.0 ± 0.0 (1)             &             0.4 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
-37                  & 0.3 ± 0.0 (1)             &             0.2 ± 0.0 (1)             &             0.099 ± 0.0 (1)           &             0.2 ± 0.0 (1)       \\
-54                  & 0.2 ± 0.0 (1)             &             0.3 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.1 ± 0.0 (1)       \\
-56                  & 0.1 ± 0.0 (1)             &             0.300 ± 0.0 (1)           &             0.199 ± 0.0 (1)           &             0.3 ± 0.0 (1)       \\
-63                  & 0.1 ± 0.0 (1)             &             0.1 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.4 ± 0.0 (1)       \\
-103                 & NaN ± NaN (0)             &             0.0 ± 0.0 (1)             &             NaN ± NaN (0)             &             NaN ± NaN (0)
+Complexity &        renameTokens         & shuffleLines         & permuteArgument      & swapMultilineNo     \\\hline\
+4                   & -0.85 ± 0.050 (7)         &             -0.56 ± 0.157 (7)         &             -0.85 ± 0.050 (7)         &             -0.85 ± 0.050 (7)   \\
+5                   & -1.0 ± 0.0 (1)            &             -0.98 ± 0.0 (1)           &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+7                   & -0.99 ± 9.467 (2)         &             -0.92 ± 0.001 (2)         &             -0.99 ± 9.467 (2)         &             -0.99 ± 9.467 (2)   \\
+9                   & -0.99 ± 1.291 (2)         &             -0.66 ± 0.112 (2)         &             -0.99 ± 1.291 (2)         &             -0.99 ± 1.291 (2)   \\
+10                  & -0.95 ± 0.0 (1)           &             -0.35 ± 0.0 (1)           &             -0.95 ± 0.0 (1)           &             -0.95 ± 0.0 (1)     \\
+12                  & -0.99 ± 8.199 (2)         &             -0.99 ± 5.771 (2)         &             -0.99 ± 8.199 (2)         &             -0.99 ± 8.199 (2)   \\
+13                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+14                  & -0.99 ± 0.0 (1)           &             -0.22 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+16                  & -0.84 ± 0.046 (3)         &             -0.51 ± 0.161 (3)         &             -0.84 ± 0.046 (3)         &             -0.84 ± 0.046 (3)   \\
+17                  & -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)     \\
+18                  & -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+19                  & -1.0 ± 0.0 (1)            &             -0.89 ± 0.0 (1)           &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+20                  & -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+22                  & -0.99 ± 8.641 (2)         &             -0.94 ± 0.002 (2)         &             -0.99 ± 8.641 (2)         &             -0.99 ± 8.641 (2)   \\
+24                  & -0.98 ± 9.514 (3)         &             -0.98 ± 8.439 (3)         &             -0.98 ± 9.514 (3)         &             -0.98 ± 9.514 (3)   \\
+25                  & -0.98 ± 7.149 (2)         &             -0.98 ± 7.149 (2)         &             -0.98 ± 7.149 (2)         &             -0.98 ± 7.149 (2)   \\
+26                  & -0.96 ± 0.0 (1)           &             -0.96 ± 0.0 (1)           &             -0.96 ± 0.0 (1)           &             -0.96 ± 0.0 (1)     \\
+27                  & -0.78 ± 0.038 (2)         &             -0.59 ± 0.146 (2)         &             -0.78 ± 0.038 (2)         &             -0.78 ± 0.038 (2)   \\
+29                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+30                  & NaN ± NaN (0)             &             -0.99 ± 0.0 (1)           &             NaN ± NaN (0)             &             NaN ± NaN (0)       \\
+31                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+35                  & -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+36                  & -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+39                  & -0.96 ± 0.0 (1)           &             -0.94 ± 0.0 (1)           &             -0.96 ± 0.0 (1)           &             -0.96 ± 0.0 (1)     \\
+40                  & -0.94 ± 0.002 (2)         &             -0.94 ± 0.002 (2)         &             -0.94 ± 0.002 (2)         &             -0.94 ± 0.002 (2)   \\
+42                  & -0.96 ± 2.567 (2)         &             -0.96 ± 1.620 (2)         &             -0.96 ± 2.567 (2)         &             -0.96 ± 2.567 (2)   \\
+43                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+44                  & -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)           &             -0.98 ± 0.0 (1)     \\
+50                  & -0.99 ± 0.0 (1)           &             -0.98 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+54                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)      \\
+59                  & -0.99 ± 0.0 (1)           &             -0.95 ± 0.0 (1)           &             -0.99 ± 0.0 (1)           &             -0.99 ± 0.0 (1)     \\
+60                  & -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)            &             -1.0 ± 0.0 (1)
 \end{table}
 \end{tabular}
    */
@@ -94,20 +114,17 @@ Complexity &        renameTokens         & shuffleLines         & permuteArgumen
       
       """.trimIndent() +
         transformations.joinToString(
-          " & ",
-          "Complexity & ".padEnd(colWidth),
+          "& ",
+          "Complexity ".padEnd(colWidth) + "& ",
           "\\\\\\hline\\\n"
         ) { it.name.take(15).padEnd(colWidth) } +
         complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
           "$cplx ".padEnd(colWidth) + "& " + transformations.toSortedSet(compareBy { it.name })
-            .joinToString("      &".padEnd(colWidth)) { tx ->
-              (
-                (scoreByCodeSnippet[CodeSnippet("", cplx, tx, "").hashCode()] ?: listOf())
-                  .let {
-                    it.average().toString().take(5) + " ± " +
-                      it.variance().toString().take(5) + " (${it.size})"
-                  }
-              ).padEnd(colWidth)
+            .joinToString("& ") { tx ->
+                this[CodeSnippet("", cplx * 10, tx, "")].let {
+                  it.average().toString().take(5) + " ± " +
+                    it.variance().toString().take(5) + " (${it.size})"
+                }.padEnd(colWidth)
             }
         } +
         """

@@ -14,7 +14,6 @@ fun main() =
     .flatMap {
       setOf(
         String::renameTokens,
-        String::shuffleLines,
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps
       ).map { sct -> CodeSnippet(original=it, sct=sct) }
@@ -40,6 +39,12 @@ fun evaluateDocSynthesis(snippet: CodeSnippet): Double {
       leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
     printSideBySide(snippet.original, refactoredCodeWithSyntheticJavadoc,
       leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
+    println("=--Original")
+    println(snippet.original)
+    println("=--SyntheticJDoc")
+    println(originalCodeWithSyntheticJavadoc)
+    println("=--RefactoredSyntheticJdoc")
+    println(refactoredCodeWithSyntheticJavadoc)
     println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
     println("Rouge score after refactoring: $rougeScoreWithRefactoring")
   }
