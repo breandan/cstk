@@ -62,6 +62,29 @@ class CodeSnippetAttributeScoresTable {
     transformations += snippet.sct
   }
 
+
+  /* Example of table output:
+\begin{table}[H]
+\begin{tabular}{l|ccc}
+Complexity &        renameTokens         & shuffleLines         & permuteArgument      & swapMultilineNo     \\\hline\\
+5                   & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
+7                   & 0.035 ± 0.025 (56)        &             0.018 ± 0.008 (27)        &             0.017 ± 0.017 (56)        &             0.0 ± 0.0 (56)      \\
+8                   & 0.0 ± 0.0 (18)            &             0.0 ± 0.0 (6)             &             0.0 ± 0.0 (18)            &             0.0 ± 0.0 (18)      \\
+9                   & 0.076 ± 0.032 (13)        &             0.115 ± 0.044 (13)        &             0.0 ± 0.0 (13)            &             0.0 ± 0.0 (13)      \\
+10                  & 0.0 ± 0.0 (3)             &             0.277 ± 0.043 (3)         &             0.0 ± 0.0 (3)             &             0.0 ± 0.0 (3)       \\
+13                  & 0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)             &             0.0 ± 0.0 (2)       \\
+20                  & 0.0 ± 0.0 (2)             &             0.1 ± 0.010 (2)           &             0.0 ± 0.0 (2)             &             0.05 ± 0.002 (2)    \\
+21                  & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
+23                  & 0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
+26                  & 0.0 ± 0.0 (1)             &             0.4 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.0 ± 0.0 (1)       \\
+37                  & 0.3 ± 0.0 (1)             &             0.2 ± 0.0 (1)             &             0.099 ± 0.0 (1)           &             0.2 ± 0.0 (1)       \\
+54                  & 0.2 ± 0.0 (1)             &             0.3 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.1 ± 0.0 (1)       \\
+56                  & 0.1 ± 0.0 (1)             &             0.300 ± 0.0 (1)           &             0.199 ± 0.0 (1)           &             0.3 ± 0.0 (1)       \\
+63                  & 0.1 ± 0.0 (1)             &             0.1 ± 0.0 (1)             &             0.0 ± 0.0 (1)             &             0.4 ± 0.0 (1)       \\
+103                 & NaN ± NaN (0)             &             0.0 ± 0.0 (1)             &             NaN ± NaN (0)             &             NaN ± NaN (0)
+\end{table}
+\end{tabular}
+   */
   fun toLatexTable(colWidth: Int = 20) =
       """
       \begin{table}[H]
@@ -71,7 +94,7 @@ class CodeSnippetAttributeScoresTable {
         transformations.joinToString(
           " & ",
           "Complexity & ".padEnd(colWidth),
-          "\\\\\n\\hline\n"
+          "\\\\\\hline\\\n"
         ) { it.name.take(15).padEnd(colWidth) } +
         complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
           "$cplx ".padEnd(colWidth) + "& " + transformations.toSortedSet(compareBy { it.name })
