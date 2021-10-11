@@ -17,7 +17,9 @@ data class CodeSnippet(
 }
 
 fun main() {
-  val validationSet = DATA_DIR.allFilesRecursively()
+  val validationSet = DATA_DIR
+    .also { println("Running code completion on $it") }
+    .allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
