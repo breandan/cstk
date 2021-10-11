@@ -1,8 +1,10 @@
 package edu.mcgill.cstk.experiments
 
+import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
+import edu.mcgill.markovian.mcmc.Dist
 import kotlin.math.*
 import kotlin.reflect.KFunction1
 
@@ -23,7 +25,6 @@ fun main() {
     .allFilesRecursively()
     .allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 700 }
 
   evaluateTransformations(
     validationSet = validationSet,
@@ -63,7 +64,7 @@ class CodeSnippetAttributeScoresTable {
     val complexity = round(snippet.complexity.toDouble() / 10.0).toInt()
     complexities += complexity
     transformations += snippet.sct
-    println("Put $metric in $complexity, ${snippet.sct}")
+    println("Put $metric in ($complexity, ${snippet.sct})")
   }
   operator fun get(snippet: CodeSnippet): List<Double> =
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList<Double>()
@@ -140,15 +141,19 @@ Complexity &        renameTokens         & shuffleLines         & permuteArgumen
 // so instead we sample a small number of mask positions
 val SAMPLES = 10
 fun CodeSnippet.evaluateMultimask(): Double =
-  (original.evaluateMultimask() - variant.evaluateMultimask()).absoluteValue
+    (original.evaluateMultimask() - variant.evaluateMultimask()).absoluteValue
+
+val dists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 
 fun String.evaluateMultimask(): Double =
+  dists.get(this) {
   maskIdentifiers().shuffled().take(SAMPLES)
     .mapNotNull { (maskedMethod, trueToken) ->
       val (completion, score) = completeAndScore(trueToken, maskedMethod)
 //      logDiffs(this, maskedMethod, trueToken, completion)
       if (completion == ERR) null else score
     }.average()
+  }
 
 fun logDiffs(original: String, maskedSequence: String,
              correctToken: String, completion: String) {

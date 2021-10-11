@@ -135,6 +135,7 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph:0.1.8")
   implementation("io.github.vovak:astminer:0.7.0")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.0.4")
 }
 
 tasks {
@@ -171,7 +172,7 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.experiments.DocCompletionKt"
+      "edu.mcgill.cstk.experiments.CodeCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"
     isZip64 = true
