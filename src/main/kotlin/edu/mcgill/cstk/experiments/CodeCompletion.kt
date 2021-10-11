@@ -43,7 +43,7 @@ fun evaluateTransformations(
   validationSet
     .flatMap { method -> setOf(method) * codeTxs.toSet() }
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
-    .map { snippet -> snippet to evaluation(snippet) }
+    .mapNotNull { snippet -> evaluation(snippet).let { if (it.isNaN()) null else snippet to it } }
     .forEach { (snippet, metric) ->
       csByMultimaskPrediction[snippet] = metric
       println(csByMultimaskPrediction.toLatexTable())
@@ -62,7 +62,7 @@ class CodeSnippetAttributeScoresTable {
     transformations += snippet.sct
   }
 
-  fun toLatexTable() =
+  fun toLatexTable(colWidth: Int = 20) =
       """
       \begin{table}[H]
       \begin{tabular}{l|ccc}
@@ -70,19 +70,19 @@ class CodeSnippetAttributeScoresTable {
       """.trimIndent() +
         transformations.joinToString(
           " & ",
-          "Complexity & ",
+          "Complexity & ".padEnd(colWidth),
           "\\\\\n\\hline\n"
-        ) { it.name.take(10).padEnd(12) } +
+        ) { it.name.take(15).padEnd(colWidth) } +
         complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
-          "$cplx ".padEnd(11) + "& " + transformations.toSortedSet(compareBy { it.name })
-            .joinToString("      &".padEnd(12)) { tx ->
+          "$cplx ".padEnd(colWidth) + "& " + transformations.toSortedSet(compareBy { it.name })
+            .joinToString("      &".padEnd(colWidth)) { tx ->
               (
                 (scoreByCodeSnippet[CodeSnippet("", cplx, tx, "").hashCode()] ?: listOf())
                   .let {
-                    it.average().toString().take(5) + "\\textpm" +
-                      it.variance().toString().take(5) + "(${it.size})"
+                    it.average().toString().take(5) + " ± " +
+                      it.variance().toString().take(5) + " (${it.size})"
                   }
-              ).padEnd(11)
+              ).padEnd(colWidth)
             }
         } +
         """
