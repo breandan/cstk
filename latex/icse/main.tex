@@ -496,6 +496,14 @@ fun main(args: Array<String>) =
 
   Using this approach, we can approximate the bracket complexity for each code snippet.
 
+  \section{Architectural details}
+
+  Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style, enabling straightforward parallelization.
+
+  We can view the tables in this paper as 2D-slices of a rank-n tensor representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample the independent variables uniformly to ensure its entries are evenly populated. Results are continuously delivered to the user, who may preview 2D marginals for any pair and watch the error bounds grow tighter as additional samples are drawn.
+
+  This kind of feature is useful when running on preemptible infrastructure and can be massively parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
+
   \pagebreak\section{Analysis of internal structure}\label{sec:probe_internals}
 
   Our preliminary results compare distance metrics (Fig.~\ref{fig:lev_vs_euclid}), explore embedding quality (Fig.~\ref{fig:embedding}) and visualize the synthetic knowledge graphs (Fig.~\ref{fig:graphs}).
