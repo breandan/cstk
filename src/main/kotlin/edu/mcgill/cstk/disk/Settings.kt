@@ -20,8 +20,8 @@ val MODEL =
 // The following models support masking
 //"microsoft/codebert-base"
 //"microsoft/graphcodebert-base"
-//"microsoft/codebert-base-mlm"
-"dbernsohn/roberta-java"
+"microsoft/codebert-base-mlm"
+//"dbernsohn/roberta-java"
 //These models do not support masking
 //"microsoft/codeGPT-small-java"
 //"microsoft/CodeGPT-small-java-adaptedGPT2"
@@ -53,10 +53,7 @@ val EMBEDDING_SERVER: String by lazy {
     } catch (ex: Exception) {}
   }
 
-  ProcessBuilder("python", "embedding_server.py", "--model=$MODEL", "--offline")
-    .also { println("> " + it.command().joinToString(" ")) }
-    .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
-    .start().run { Runtime.getRuntime().addShutdownHook(Thread { println("Server went down!"); destroy() }) }
+  restartServer()
 
   println("Starting embeddings server...")
   // Spinlock until service is available
@@ -68,6 +65,13 @@ val EMBEDDING_SERVER: String by lazy {
 
   addr
 }
+
+fun restartServer(): Unit =
+  ProcessBuilder("python", "embedding_server.py", "--model=$MODEL", "--offline")
+    .also { println("> " + it.command().joinToString(" ")) }
+    .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
+    .start()
+    .run { Runtime.getRuntime().addShutdownHook(Thread { println("Server went down!"); destroy(); restartServer() }) }
 
 // Returns the Cartesian product of two sets
 operator fun <T, Y> Set<T>.times(s: Set<Y>): Set<Pair<T, Y>> =

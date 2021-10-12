@@ -135,7 +135,12 @@ tailrec fun complete(
   )
 
 fun makeQuery(query: String = ""): String =
-  URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
+  try {
+    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
+  } catch (exception: Exception) {
+    exception.printStackTrace();
+    makeQuery(query)
+  }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
