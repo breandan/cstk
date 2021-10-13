@@ -68,9 +68,13 @@ val EMBEDDING_SERVER: String by lazy {
 
 fun restartServer(): Unit =
   try {
-    ProcessBuilder("while", "true;", "do",
+    ProcessBuilder(
+//      "bash", "-c",
+//      "source", "venv/bin/activate", "&&",
+//      "while", "true;", "do",
       "python", "embedding_server.py", "--model=$MODEL", "--offline",
-      "&&", "break;", "done")
+//      "&&", "break;", "done"
+    )
       .also { println("> " + it.command().joinToString(" ")) }
       .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
       .start()
