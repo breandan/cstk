@@ -67,11 +67,24 @@ val EMBEDDING_SERVER: String by lazy {
 }
 
 fun restartServer(): Unit =
-  ProcessBuilder("python", "embedding_server.py", "--model=$MODEL", "--offline")
-    .also { println("> " + it.command().joinToString(" ")) }
-    .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
-    .start()
-    .run { Runtime.getRuntime().addShutdownHook(Thread { println("Server went down!"); destroy(); restartServer() }) }
+  try {
+    ProcessBuilder("while", "true;", "do",
+      "python", "embedding_server.py", "--model=$MODEL", "--offline",
+      "&&", "break;", "done")
+      .also { println("> " + it.command().joinToString(" ")) }
+      .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
+      .start()
+      .run {
+        Runtime.getRuntime().addShutdownHook(Thread {
+          println("Server went down!")
+          destroy()
+          restartServer()
+        })
+      }
+  } catch (ex: Exception) {
+    ex.printStackTrace()
+    restartServer()
+  }
 
 // Returns the Cartesian product of two sets
 operator fun <T, Y> Set<T>.times(s: Set<Y>): Set<Pair<T, Y>> =

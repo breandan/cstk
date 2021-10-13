@@ -105,8 +105,8 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
 290-300             & 0.0 ± 0.0 (3)       & 0.0 ± 0.0 (3)       & 0.0 ± 0.0 (3)       \\
 330-340             & 0.0 ± 0.0 (1)       & 0.0 ± 0.0 (1)       & 0.0 ± 0.0 (1)       \\
 360-370             & 0.0 ± 0.0 (1)       & 0.0 ± 0.0 (1)       & 0.0 ± 0.0 (1)
-\end{table}
 \end{tabular}
+\end{table}
    */
   fun toLatexTable(colWidth: Int = 20) =
     """
@@ -132,8 +132,8 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
       } +
       """
         
-      \end{table}
       \end{tabular}
+      \end{table}
       """.trimIndent()
 }
 

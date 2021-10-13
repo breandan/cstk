@@ -219,7 +219,7 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = abs(
 )
   \end{lstlisting}
 
-\noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics.
+  \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three different neural code completion models, five different transformations and two different metrics.
 
   Broadly speaking, we aim to understand how well neural code completion models generalize to plausible perturbations. Do language models learn to recognize certain patterns or \textit{idioms} and if so, what kinds? A great deal of research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from a software engineering standpoint: we explore the extent to which recent language models trained on source code have learned cosmetic regularities, by applying various code transformations across a variety of contexts. We analyze three different language models, and compare their zero-shot generalization on manually-designed source code transformations to generating code snippet pairs corresponding to plausible perturbations, and measure the effect on various language models and tasks. Each model is evaluated on a set of code snippets exposed to synthetic transformations and predicts one ore more masked tokens.
 
@@ -274,7 +274,7 @@ public void write(int b) throws IOException {
   sink();
   buffer.compact();
 }
-\end{lstlisting}
+  \end{lstlisting}
 
   We sample k tokens and mask them separately:
 
@@ -386,6 +386,81 @@ public void write(int b) throws IOException {
 %The rollout traces form a graph of related locations inside each project and their corresponding context embeddings, which together form the GNN node features. Once the rollout ends, we run message passing on the resulting GNN for a fixed numbers of steps and decode the graph embedding to obtain a task prediction. The decoder, GNN parameters, and policy network are all trained end-to-end on the downstream task, e.g. code completion, defect detection or correction. After convergence, we compare the results across horizon size and analyze the queries and filetypes which are selected.
 
   \section{Results}\label{sec:results}
+
+  GraphCodeBERT
+    {
+    \begin{table}[H]
+      \small
+      \begin{tabular}{l|ccc}
+        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+        10-20               & 0.012 ± 0.003 (638) & 0.044 ± 0.015 (578) & 0.0 ± 0.0 (638)     \\
+        20-30               & 0.027 ± 0.003 (476) & 0.054 ± 0.011 (475) & 0.005 ± 5.921 (476) \\
+        30-40               & 0.023 ± 0.003 (284) & 0.072 ± 0.014 (283) & 0.005 ± 8.444 (284) \\
+        40-50               & 0.032 ± 0.003 (161) & 0.068 ± 0.011 (161) & 0.009 ± 0.001 (161) \\
+        50-60               & 0.030 ± 0.003 (305) & 0.094 ± 0.011 (305) & 0.020 ± 0.002 (305) \\
+        60-70               & 0.030 ± 0.003 (165) & 0.085 ± 0.013 (165) & 0.036 ± 0.004 (165) \\
+        70-80               & 0.041 ± 0.004 (57)  & 0.074 ± 0.007 (57)  & 0.070 ± 0.008 (57)  \\
+        80-90               & 0.062 ± 0.008 (69)  & 0.101 ± 0.013 (69)  & 0.072 ± 0.007 (69)  \\
+        90-100              & 0.058 ± 0.008 (55)  & 0.104 ± 0.016 (55)  & 0.061 ± 0.008 (54)  \\
+        100-110             & 0.044 ± 0.004 (34)  & 0.067 ± 0.009 (34)  & 0.055 ± 0.007 (34)  \\
+        110-120             & 0.051 ± 0.004 (35)  & 0.094 ± 0.014 (35)  & 0.074 ± 0.006 (35)  \\
+        120-130             & 0.030 ± 0.006 (30)  & 0.053 ± 0.009 (30)  & 0.046 ± 0.009 (30)  \\
+        130-140             & 0.055 ± 0.007 (29)  & 0.082 ± 0.006 (29)  & 0.100 ± 0.012 (29)  \\
+        140-150             & 0.042 ± 0.004 (26)  & 0.053 ± 0.005 (26)  & 0.050 ± 0.005 (26)  \\
+        150-160             & 0.014 ± 0.003 (27)  & 0.022 ± 0.002 (27)  & 0.018 ± 0.003 (27)  \\
+      \end{tabular}
+    \end{table}
+  }
+
+  CodeBERT
+    {
+    \begin{table}[H]
+      \small
+      \begin{tabular}{l|ccc}
+        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+        10-20               & 0.014 ± 0.003 (1691)& 0.050 ± 0.017 (1584)& 1.774 ± 1.770 (1691)\\
+        20-30               & 0.021 ± 0.004 (1656)& 0.051 ± 0.015 (1640)& 0.001 ± 2.482 (1656)\\
+        30-40               & 0.030 ± 0.004 (789) & 0.080 ± 0.019 (787) & 0.004 ± 6.568 (789) \\
+        40-50               & 0.032 ± 0.003 (519) & 0.064 ± 0.014 (517) & 0.013 ± 0.001 (519) \\
+        50-60               & 0.037 ± 0.005 (623) & 0.081 ± 0.013 (624) & 0.017 ± 0.002 (623) \\
+        60-70               & 0.044 ± 0.005 (370) & 0.068 ± 0.007 (370) & 0.028 ± 0.003 (370) \\
+        70-80               & 0.046 ± 0.005 (168) & 0.088 ± 0.013 (168) & 0.049 ± 0.006 (168) \\
+        80-90               & 0.058 ± 0.007 (165) & 0.095 ± 0.013 (165) & 0.058 ± 0.007 (165) \\
+        90-100              & 0.078 ± 0.010 (130) & 0.093 ± 0.010 (130) & 0.080 ± 0.007 (130) \\
+        100-110             & 0.057 ± 0.006 (115) & 0.098 ± 0.011 (115) & 0.048 ± 0.005 (115) \\
+        110-120             & 0.077 ± 0.009 (85)  & 0.082 ± 0.007 (85)  & 0.061 ± 0.008 (85)  \\
+        120-130             & 0.043 ± 0.005 (65)  & 0.073 ± 0.009 (65)  & 0.053 ± 0.006 (65)  \\
+        130-140             & 0.056 ± 0.010 (62)  & 0.066 ± 0.008 (62)  & 0.064 ± 0.006 (62)  \\
+        140-150             & 0.048 ± 0.006 (52)  & 0.059 ± 0.009 (52)  & 0.063 ± 0.008 (52)  \\
+        150-160             & 0.013 ± 0.001 (46)  & 0.032 ± 0.003 (46)  & 0.034 ± 0.005 (46)  \\
+        160-170             & 0.025 ± 0.003 (32)  & 0.028 ± 0.003 (32)  & 0.018 ± 0.001 (32)  \\
+        170-180             & 0.028 ± 0.006 (35)  & 0.025 ± 0.003 (35)  & 0.022 ± 0.004 (35)  \\
+      \end{tabular}
+    \end{table}
+  }
+
+  RoBERTa
+    {
+    \begin{table}[H]
+      \begin{tabular}{l|ccc}
+        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+        10-20               & 0.018 ± 0.004 (594) & 0.071 ± 0.024 (541) & 0.0 ± 0.0 (594)     \\
+        20-30               & 0.030 ± 0.003 (440) & 0.081 ± 0.018 (439) & 0.002 ± 2.675 (440) \\
+        30-40               & 0.032 ± 0.004 (242) & 0.096 ± 0.014 (241) & 0.005 ± 6.368 (242) \\
+        40-50               & 0.036 ± 0.003 (144) & 0.088 ± 0.015 (144) & 0.014 ± 0.001 (144) \\
+        50-60               & 0.026 ± 0.004 (286) & 0.106 ± 0.011 (286) & 0.017 ± 0.002 (286) \\
+        60-70               & 0.036 ± 0.005 (149) & 0.091 ± 0.009 (149) & 0.032 ± 0.005 (149) \\
+        70-80               & 0.051 ± 0.005 (49)  & 0.078 ± 0.013 (49)  & 0.063 ± 0.005 (49)  \\
+        80-90               & 0.064 ± 0.007 (57)  & 0.092 ± 0.009 (57)  & 0.064 ± 0.009 (57)  \\
+        90-100              & 0.040 ± 0.003 (40)  & 0.095 ± 0.009 (40)  & 0.062 ± 0.006 (40)  \\
+        100-110             & 0.054 ± 0.008 (22)  & 0.063 ± 0.005 (22)  & 0.063 ± 0.007 (22)  \\
+        110-120             & 0.045 ± 0.003 (33)  & 0.090 ± 0.006 (33)  & 0.048 ± 0.003 (33)  \\
+        120-130             & 0.02 ± 0.001 (25)   & 0.04 ± 0.002 (25)   & 0.044 ± 0.004 (25)  \\
+        130-140             & 0.044 ± 0.002 (25)  & 0.072 ± 0.006 (25)  & 0.068 ± 0.003 (25)  \\
+        140-150             & 0.054 ± 0.005 (22)  & 0.077 ± 0.007 (22)  & 0.081 ± 0.007 (22)
+      \end{tabular}
+    \end{table}
+  }
 
   Documentation Generation
     {
