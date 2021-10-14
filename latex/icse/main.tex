@@ -236,7 +236,6 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = Δ(
     \item \textbf{Statement reordering}: swap independent statement order
     \item \textbf{Document generation}: add synthetic documentation
     \item \textbf{Permute argument order}: scramble method arguments
-    \item \textbf{Literal mutation}: mutate contents of primitive types
   \end{enumerate}
 
   Ideally, these would be generated using a higher-order abstract syntax to ensure syntactic validity, however for the sake of simplicity, we implemented the transformations using a set of ad-hoc regular expressions. While slightly awkward for implementing more complex transformations, we observed in practice this approach can effectively make cosmetic changes like variable renaming and linear statement reordering without much difficulty.
@@ -250,7 +249,7 @@ fun ctxVariance(ncc, snps, msk, ctx, mtr) = Δ(
     \label{fig:dataflow}
   \end{figure}
 
-  Our framework encompasses both code completion and document synthesis. For example, we can treat code completion as a masked-token completion task, in which we sample several tokens from the original source code and the variant, then measure the average shift in model accuracy across each of the mask locations. This can be done either inside the model's latent space, or using some metric on the output string. We decided to focus on the output space and consider two metrics: ROUGE-synonym and average multimask accuracy using top-1 softmax output. Consider the multimask completion task for a single snippet:
+  Our framework encompasses both code completion and document synthesis. For example, we can treat code completion as a masked-token completion task, in which we sample several tokens from the original source code and the variant, then measure the average shift in model accuracy across the masked locations. This can be done either inside the model's latent space, or using some metric on the output string. We decided to focus on the output space and consider two metrics: ROUGE-synonym and average multimask accuracy using top-1 softmax output. Consider the multimask completion task for a single snippet:
 
   \begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example1}]
 /**
@@ -315,39 +314,58 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
     \label{fig:bert}
   \end{figure}
 
-  We evaluate each model under three SCTs. The renameTokens SCT substitutes each CamelCase subword in the most frequently occurring non-keyword token with a uniformly-sampled lemma in the WordNet hypernym graph up to three hops away, representing an alternately-chosen naming scheme. The permuteArgument SCT scrambles the argument order of a non-SDK function, representing an alternate input signature. The swapMultilineNo SCT swaps adjacent lines which share no common tokens, representing an equivalent topological sort on the dataflow graph.
+  We evaluate each model under the following four SCTs:
 
-  Strictly speaking, we cannot rule out the possibility that our SCTs produce semantic variants due to the inherent complexity of source code analysis, however we have manually verified they are almost always semantically equivalent in practice. A more principled macro system would help to alleviate these concerns, however a framework for transforming isolated code snippets remains unavailable for the Java language at this time.
+  \begin{enumerate}
+  \item The \lstinline|renameTokens| SCT substitutes each CamelCase subword in the most frequent user-defined token with a uniformly-sampled lemma from the WordNet hypernym graph up to three hops away, representing an alternately-chosen [e.g., variable or function] name.
+  \item The \lstinline|permuteArgument| SCT performs a Fisher-Yates shuffle on the arguments of a non-JDK function of dyadic or higher-arity, representing an alternate parameter order of a user-defined function.
+  \item The \lstinline|swapMultilineNo| SCT swaps adjacent lines of equal scope and indentation which share no tokens in common. Although this may change the semantics of effectful code, in the ideal case, this represents an alternate topological sort on the dataflow graph.
+  \item The \lstinline|addExtraLogging| SCT adds intermittent print statements in linear sequences of code, with a single argument synthesized by the code completion model for added variation. More generally, this can be any superfluous statement which does not change the runtime semantics.
+  \end{enumerate}
+
+  Idempotent SCTs (i.e. in which the snippet remains unchanged after transformation) are rejected.
+
+  Strictly speaking, we cannot rule out the possibility that any of the aforementioned SCTs produce semantic variants due to the inherent complexity of source code analysis, however we have manually validated their admissibility. A more principled macro system would help to alleviate these concerns, however a framework for safely rewriting isolated Java code snippets is, to the best of our knowledge, presently unavailable.
+
+ To evaluate the effect size of each transformation, we uniformly sample and mask ten tokens from both the original and transformed code snippet, measure the top-1 masked token completion accuracy on the original and transformed code snippet, record the relative difference in accuracy before and after transformation, and finally report the mean and variance for each code complexity bucket.
+
+  \begin{equation}
+    E=mc^2
+  \end{equation}
+
+  In the following section we report our results for each model, SCT and complexity.
 
   \pagebreak\section{Results}\label{sec:results}
-    {
-    \center{GraphCodeBERT}
-    \begin{table}[H]
-      \tiny
-      \begin{tabular}{l|ccc}
-        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
-        10-20               & 0.012 ± 0.003 (638) & 0.044 ± 0.015 (578) & 0.0 ± 0.0 (638)     \\
-        20-30               & 0.027 ± 0.003 (476) & 0.054 ± 0.011 (475) & 0.005 ± 5.921 (476) \\
-        30-40               & 0.023 ± 0.003 (284) & 0.072 ± 0.014 (283) & 0.005 ± 8.444 (284) \\
-        40-50               & 0.032 ± 0.003 (161) & 0.068 ± 0.011 (161) & 0.009 ± 0.001 (161) \\
-        50-60               & 0.030 ± 0.003 (305) & 0.094 ± 0.011 (305) & 0.020 ± 0.002 (305) \\
-        60-70               & 0.030 ± 0.003 (165) & 0.085 ± 0.013 (165) & 0.036 ± 0.004 (165) \\
-        70-80               & 0.041 ± 0.004 (57)  & 0.074 ± 0.007 (57)  & 0.070 ± 0.008 (57)  \\
-        80-90               & 0.062 ± 0.008 (69)  & 0.101 ± 0.013 (69)  & 0.072 ± 0.007 (69)  \\
-        90-100              & 0.058 ± 0.008 (55)  & 0.104 ± 0.016 (55)  & 0.061 ± 0.008 (54)  \\
-        100-110             & 0.044 ± 0.004 (34)  & 0.067 ± 0.009 (34)  & 0.055 ± 0.007 (34)  \\
-        110-120             & 0.051 ± 0.004 (35)  & 0.094 ± 0.014 (35)  & 0.074 ± 0.006 (35)  \\
-        120-130             & 0.030 ± 0.006 (30)  & 0.053 ± 0.009 (30)  & 0.046 ± 0.009 (30)  \\
-        130-140             & 0.055 ± 0.007 (29)  & 0.082 ± 0.006 (29)  & 0.100 ± 0.012 (29)  \\
-        140-150             & 0.042 ± 0.004 (26)  & 0.053 ± 0.005 (26)  & 0.050 ± 0.005 (26)  \\
-      \end{tabular}
-    \end{table}
+    {\center
 
-  CodeBERT
+    CodeBERT
+      \begin{table}[H]
+        \tiny
+        \begin{tabular}{l|cccc}
+          Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
+          10-20               & -0.22 ± 0.157 (20)  & 0.066 ± 0.396 (100) & 0.162 ± 0.310 (245) & 0.166 ± 0.138 (6)   \\
+          20-30               & -0.28 ± 0.190 (80)  & 0.165 ± 0.301 (233) & 0.105 ± 0.288 (379) & 0.002 ± 0.232 (66)  \\
+          30-40               & -0.31 ± 0.241 (46)  & 0.121 ± 0.265 (123) & 0.166 ± 0.328 (261) & 0.090 ± 0.129 (56)  \\
+          40-50               & -0.27 ± 0.226 (55)  & 0.111 ± 0.378 (100) & 0.098 ± 0.350 (171) & -0.03 ± 0.191 (57)  \\
+          50-60               & -0.10 ± 0.281 (62)  & 0.051 ± 0.268 (125) & 0.122 ± 0.268 (313) & 0.006 ± 0.168 (128) \\
+          60-70               & -0.12 ± 0.236 (48)  & 0.023 ± 0.228 (84)  & 0.168 ± 0.228 (156) & 0.011 ± 0.198 (81)  \\
+          70-80               & -0.12 ± 0.351 (15)  & 0.033 ± 0.350 (44)  & 0.075 ± 0.337 (61)  & -0.04 ± 0.314 (61)  \\
+          80-90               & -0.08 ± 0.316 (38)  & 0.085 ± 0.369 (66)  & 0.066 ± 0.407 (84)  & -0.05 ± 0.351 (68)  \\
+          90-100              & -0.11 ± 0.181 (27)  & 0.329 ± 0.285 (41)  & 0.214 ± 0.303 (61)  & 0.088 ± 0.200 (59)  \\
+          100-110             & -0.05 ± 0.518 (17)  & 0.108 ± 0.285 (23)  & 0.009 ± 0.422 (34)  & 0.176 ± 0.445 (33)  \\
+          110-120             & 0.101 ± 0.334 (14)  & -0.05 ± 0.442 (29)  & 0.022 ± 0.505 (35)  & -0.11 ± 0.226 (28)  \\
+          120-130             & 0.081 ± 0.295 (14)  & 0.233 ± 0.252 (10)  & 0.249 ± 0.326 (18)  & 0.128 ± 0.409 (19)  \\
+          130-140             & 0.188 ± 0.222 (10)  & 0.231 ± 0.311 (18)  & 0.173 ± 0.365 (24)  & 0.083 ± 0.502 (24)  \\
+          140-150             & -0.27 ± 0.426 (7)   & 0.152 ± 0.460 (12)  & 0.083 ± 0.546 (14)  & 0.097 ± 0.630 (16)  \\
+        \end{tabular}
+      \end{table}
+
+
+  GraphCodeBERT
     \begin{table}[H]
       \tiny
       \begin{tabular}{l|ccc}
-        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
         10-20               & 0.014 ± 0.003 (1691)& 0.050 ± 0.017 (1584)& 1.774 ± 1.770 (1691)\\
         20-30               & 0.021 ± 0.004 (1656)& 0.051 ± 0.015 (1640)& 0.001 ± 2.482 (1656)\\
         30-40               & 0.030 ± 0.004 (789) & 0.080 ± 0.019 (787) & 0.004 ± 6.568 (789) \\
@@ -369,7 +387,7 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
     \begin{table}[H]
       \tiny
       \begin{tabular}{l|ccc}
-        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+        Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
         10-20               & 0.018 ± 0.004 (594) & 0.071 ± 0.024 (541) & 0.0 ± 0.0 (594)     \\
         20-30               & 0.030 ± 0.003 (440) & 0.081 ± 0.018 (439) & 0.002 ± 2.675 (440) \\
         30-40               & 0.032 ± 0.004 (242) & 0.096 ± 0.014 (241) & 0.005 ± 6.368 (242) \\

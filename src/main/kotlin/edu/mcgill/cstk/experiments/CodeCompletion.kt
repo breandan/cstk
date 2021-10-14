@@ -120,7 +120,7 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
       transformations.joinToString(
         "& ",
         "Complexity ".padEnd(colWidth) + "& ",
-        "\\\\\\hline\\\n"
+        "\\\\\\hline\\\\\n"
       ) { it.name.take(15).padEnd(colWidth) } +
       complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
         (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
