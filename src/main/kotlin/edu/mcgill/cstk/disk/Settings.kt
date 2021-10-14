@@ -82,12 +82,12 @@ fun restartServer(): Unit =
         Runtime.getRuntime().addShutdownHook(Thread {
           println("Server went down!")
           destroy()
-          restartServer()
+//          restartServer()
         })
       }
   } catch (ex: Exception) {
     ex.printStackTrace()
-    restartServer()
+//    restartServer()
   }
 
 // Returns the Cartesian product of two sets

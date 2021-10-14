@@ -172,7 +172,7 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.experiments.DocCompletionKt"
+      "edu.mcgill.cstk.experiments.CodeCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"
     isZip64 = true

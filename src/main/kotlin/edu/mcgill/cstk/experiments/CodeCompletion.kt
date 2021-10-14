@@ -23,7 +23,7 @@ data class CodeSnippet(
 
 fun main() {
   val validationSet = DATA_DIR
-    .also { println("Evaluating doc completion with $MODEL on $it...") }
+    .also { println("Evaluating code completion with $MODEL on $it...") }
     .allFilesRecursively().allMethods()
     // Ensure tokenized method fits within attention
     .filter { defaultTokenizer.tokenize(it).size < 500 }
@@ -34,7 +34,8 @@ fun main() {
     codeTxs = arrayOf(
       String::renameTokens,
       String::permuteArgumentOrder,
-      String::swapMultilineNoDeps
+      String::swapMultilineNoDeps,
+      String::addExtraLogging
     )
   )
 }
@@ -48,6 +49,7 @@ fun evaluateTransformations(
   validationSet
     .flatMap { method -> setOf(method) * codeTxs.toSet() }
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
+    .filter { it.original != it.variant }
     .mapNotNull { snippet -> evaluation(snippet).let { if (it.isNaN()) null else snippet to it } }
     .forEach { (snippet, metric) ->
       csByMultimaskPrediction[snippet] = metric
@@ -67,8 +69,9 @@ class CodeSnippetAttributeScoresTable {
     transformations += snippet.sct
     println("Put $metric in (${snippet.complexity}, ${snippet.sct.name})")
   }
+
   operator fun get(snippet: CodeSnippet): List<Double> =
-    scoreByCodeSnippet[snippet.hashCode()] ?: emptyList<Double>()
+    scoreByCodeSnippet[snippet.hashCode()] ?: emptyList()
 
   /* Example of table output:
 \begin{table}[H]
@@ -140,8 +143,10 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
 val SAMPLES = 10
+// https://en.wikipedia.org/wiki/Relative_change_and_difference
 fun CodeSnippet.evaluateMultimask(): Double =
-    (original.evaluateMultimask() - variant.evaluateMultimask()).absoluteValue
+  (original.evaluateMultimask() to variant.evaluateMultimask())
+    .let { (a, b) -> (a - b) / max(a, b) }
 
 val dists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 
@@ -173,7 +178,7 @@ fun logDiffs(original: String, maskedSequence: String,
   }
 }
 
-fun completeAndScore(correctToken: String, maskedSeqeunce: String) =
+fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Double> =
    complete(maskedSeqeunce).let { it to if (it == correctToken) 1.0 else 0.0 }
 
 // Returns various maskings with the masked word

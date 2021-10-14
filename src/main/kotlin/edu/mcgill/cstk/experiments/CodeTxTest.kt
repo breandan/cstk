@@ -76,7 +76,10 @@ val reservedWords = setOf(
 
   // Data types
   "byte", "short", "int", "long", "float", "double", "boolean", "char",
-  "Byte", "Short", "Int", "Long", "Float", "Double", "Boolean", "Char"
+  "Byte", "Short", "Int", "Long", "Float", "Double", "Boolean", "Char",
+
+  // Common SDK names
+  "System", "out", "println"
 )
 
 fun String.mutateSyntax() =
@@ -149,13 +152,13 @@ tailrec fun String.completeDocumentation(length: Int = 20): String =
 
 tailrec fun String.fillOneByOne(): String =
   if (FILL !in this) this
-  else replaceFirst(MSK, makeQuery(replaceFirst(FILL, MSK))).fillOneByOne()
+  else replaceFirst(FILL, makeQuery(replaceFirst(FILL, MSK))).fillOneByOne()
 
 fun String.addExtraLogging(): String =
   (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->
     val (lastLine, thisLine, nextLine) = Triple(window[0], window[1], window[2])
 
-    val loggingFrequency = 1.0 // Lower to decrease logging frequency
+    val loggingFrequency = 0.3 // Lower to decrease logging frequency
     if (loggingFrequency < Random.nextDouble()) return@joinToString thisLine
 
     val matchLastLine = Regex("\\s+.*?;").matchEntire(lastLine)
