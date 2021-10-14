@@ -479,7 +479,7 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
     \item Cosmetic - can the LM detect syntactically and semantically equivalent PTs? (e.g. variable renaming, documentation)
   \end{enumerate}
 
-  The present work falls into the latter-most category, however other types of SCTs may be considered in future work.
+  The present work falls into the latter-most category, however other types of SCTs may be considered in future work. Furthermore, while we currently only use mutlimask accuracy at top-1 and ROUGE-synonym score, we hope to compare various other metrics such as mean average precision, MRR, NDCG, interrater agreement and others in the future.
 
   Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this by generating plausible cosmetic variants and measuring end-to-end robustness of the neural language model.
   \pagebreak\bibliography{main}
