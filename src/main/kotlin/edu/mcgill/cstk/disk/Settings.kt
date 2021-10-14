@@ -77,8 +77,7 @@ fun restartServer(): Unit =
     )
       .also { println("> " + it.command().joinToString(" ")) }
       .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
-      .start()
-      .run {
+      .start().run {
         Runtime.getRuntime().addShutdownHook(Thread {
           println("Server went down!")
           destroy()
