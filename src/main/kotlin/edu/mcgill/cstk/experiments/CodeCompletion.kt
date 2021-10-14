@@ -50,7 +50,7 @@ fun evaluateTransformations(
     .flatMap { method -> setOf(method) * codeTxs.toSet() }
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
     .filter { it.original != it.variant }
-    .mapNotNull { snippet -> evaluation(snippet).let { if (it.isNaN()) null else snippet to it } }
+    .mapNotNull { snippet -> evaluation(snippet).let { if (it.isFinite()) snippet to it else null} }
     .forEach { (snippet, metric) ->
       csByMultimaskPrediction[snippet] = metric
       println(csByMultimaskPrediction.toLatexTable())

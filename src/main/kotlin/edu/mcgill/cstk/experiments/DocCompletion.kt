@@ -61,7 +61,7 @@ fun evaluateDocSynthesis(snippet: CodeSnippet): Double? {
   val relativeDifference =
     (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
       max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
-  return if (relativeDifference.isNaN()) null else relativeDifference
+  return if (relativeDifference.isFinite()) relativeDifference else null
 }
 
 val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable()
