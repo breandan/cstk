@@ -20,8 +20,8 @@ val MODEL =
 // The following models support masking
 //"microsoft/codebert-base"
 //"microsoft/graphcodebert-base"
-"microsoft/codebert-base-mlm"
-//"dbernsohn/roberta-java"
+//"microsoft/codebert-base-mlm"
+"dbernsohn/roberta-java"
 //These models do not support masking
 //"microsoft/codeGPT-small-java"
 //"microsoft/CodeGPT-small-java-adaptedGPT2"

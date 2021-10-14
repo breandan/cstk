@@ -304,7 +304,7 @@ public void write(int b) throws IOException {
 
   Then we compare the document with the prediction using a synonym expansion: for each salient keyword in the output, we traverse the WordNet hypernym graph up to depth-three and compute the overlap between the synonym-expanded keyword set of the original document and the completed document for both the original and transformed snippets.
 
-For each token in a string, CodeBERT and its transformer-based cousins emit a fixed-length vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{768 \times (n + 1)}$, the first column of which contains the final hidden layer activations. %We concatenate the CodeBERT sequence `\texttt{<s>}' and using the source tokens, encode and vectorize the encoded sequence using the vocabulary, then take the first row as our sequence embedding as depicted in Fig.~\ref{fig:bert}. In \S~\ref{sec:results}, we compare various distance-metrics to fetch the nearest sequence embeddings in our database and compare precision and recall across various types of distance metrics.
+  For each token in a string, CodeBERT and its transformer-based cousins emit a fixed-length vector, so a line with $n$ tokens produces a matrix of shape $\mathbb R^{768 \times (n + 1)}$, the first column of which contains the final hidden layer activations. %We concatenate the CodeBERT sequence `\texttt{<s>}' and using the source tokens, encode and vectorize the encoded sequence using the vocabulary, then take the first row as our sequence embedding as depicted in Fig.~\ref{fig:bert}. In \S~\ref{sec:results}, we compare various distance-metrics to fetch the nearest sequence embeddings in our database and compare precision and recall across various types of distance metrics.
 %
 
   \begin{figure}[H]
@@ -317,17 +317,17 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
   We evaluate each model under the following four SCTs:
 
   \begin{enumerate}
-  \item The \lstinline|renameTokens| SCT substitutes each CamelCase subword in the most frequent user-defined token with a uniformly-sampled lemma from the WordNet hypernym graph up to three hops away, representing an alternately-chosen [e.g., variable or function] name.
-  \item The \lstinline|permuteArgument| SCT performs a Fisher-Yates shuffle on the arguments of a non-JDK function of dyadic or higher-arity, representing an alternate parameter order of a user-defined function.
-  \item The \lstinline|swapMultilineNo| SCT swaps adjacent lines of equal scope and indentation which share no tokens in common. Although this may change the semantics of effectful code, in the ideal case, this represents an alternate topological sort on the dataflow graph.
-  \item The \lstinline|addExtraLogging| SCT adds intermittent print statements in linear sequences of code, with a single argument synthesized by the code completion model for added variation. More generally, this can be any superfluous statement which does not change the runtime semantics.
+    \item The \lstinline|renameTokens| SCT substitutes each CamelCase subword in the most frequent user-defined token with a uniformly-sampled lemma from the WordNet hypernym graph up to three hops away, representing an alternately-chosen [e.g., variable or function] name.
+    \item The \lstinline|permuteArgument| SCT performs a Fisher-Yates shuffle on the arguments of a non-JDK function of dyadic or higher-arity, representing an alternate parameter order of a user-defined function.
+    \item The \lstinline|swapMultilineNo| SCT swaps adjacent lines of equal scope and indentation which share no tokens in common. Although this may change the semantics of effectful code, in the ideal case, this represents an alternate topological sort on the dataflow graph.
+    \item The \lstinline|addExtraLogging| SCT adds intermittent print statements in linear sequences of code, with a single argument synthesized by the code completion model for added variation. More generally, this can be any superfluous statement which does not change the runtime semantics.
   \end{enumerate}
 
   Idempotent SCTs (i.e. in which the snippet remains unchanged after transformation) are rejected.
 
   Strictly speaking, we cannot rule out the possibility that any of the aforementioned SCTs produce semantic variants due to the inherent complexity of source code analysis, however we have manually validated their admissibility. A more principled macro system would help to alleviate these concerns, however a framework for safely rewriting isolated Java code snippets is, to the best of our knowledge, presently unavailable.
 
- To evaluate the effect size of each transformation, we uniformly sample and mask ten tokens from both the original and transformed code snippet, measure the top-1 masked token completion accuracy on the original and transformed code snippet, record the relative difference in accuracy before and after transformation, and finally report the mean and variance for each code complexity bucket.
+  To evaluate the effect size of each transformation, we uniformly sample and mask ten tokens from both the original and transformed code snippet, measure the top-1 masked token completion accuracy on the original and transformed code snippet, record the relative difference in accuracy before and after transformation, and finally report the mean and variance for each code complexity bucket.
 
   \begin{equation}
     E=mc^2
@@ -336,32 +336,32 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
   In the following section we report our results for each model, SCT and complexity.
 
   \pagebreak\section{Results}\label{sec:results}
-    {\center
+  {\center
 
-    CodeBERT
-      \begin{table}[H]
-        \tiny
-        \begin{tabular}{l|cccc}
-          Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-          10-20               & -0.13 ± 0.094 (42)  & 0.040 ± 0.329 (156) & 0.208 ± 0.348 (359) & 0.033 ± 0.082 (15)  \\
-          20-30               & -0.26 ± 0.189 (112) & 0.137 ± 0.299 (312) & 0.116 ± 0.338 (542) & -0.01 ± 0.202 (82)  \\
-          30-40               & -0.29 ± 0.224 (62)  & 0.098 ± 0.264 (163) & 0.185 ± 0.335 (329) & 0.081 ± 0.109 (73)  \\
-          40-50               & -0.27 ± 0.222 (74)  & 0.142 ± 0.373 (138) & 0.092 ± 0.357 (232) & 0.043 ± 0.208 (82)  \\
-          50-60               & -0.09 ± 0.295 (66)  & 0.041 ± 0.282 (130) & 0.120 ± 0.267 (335) & 0.014 ± 0.181 (136) \\
-          60-70               & -0.21 ± 0.244 (60)  & 0.020 ± 0.280 (108) & 0.161 ± 0.252 (179) & -0.02 ± 0.211 (98)  \\
-          70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
-          80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
-          90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
-          100-110             & -0.07 ± 0.489 (23)  & 0.149 ± 0.345 (29)  & 0.037 ± 0.427 (44)  & 0.140 ± 0.467 (41)  \\
-          110-120             & 0.092 ± 0.335 (18)  & -0.01 ± 0.473 (33)  & -0.04 ± 0.499 (43)  & -0.11 ± 0.236 (32)  \\
-          120-130             & 0.076 ± 0.276 (15)  & 0.141 ± 0.235 (13)  & 0.150 ± 0.352 (21)  & 0.111 ± 0.355 (22)  \\
-          130-140             & 0.129 ± 0.207 (12)  & 0.178 ± 0.340 (21)  & 0.123 ± 0.349 (27)  & 0.033 ± 0.488 (27)  \\
-          140-150             & -0.14 ± 0.387 (9)   & 0.178 ± 0.414 (14)  & 0.107 ± 0.457 (17)  & 0.126 ± 0.542 (19)  \\
-        \end{tabular}
-      \end{table}
+  CodeBERT
+    \begin{table}[H]
+      \tiny
+      \begin{tabular}{l|cccc}
+        Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
+        10-20               & -0.13 ± 0.094 (42)  & 0.040 ± 0.329 (156) & 0.208 ± 0.348 (359) & 0.033 ± 0.082 (15)  \\
+        20-30               & -0.26 ± 0.189 (112) & 0.137 ± 0.299 (312) & 0.116 ± 0.338 (542) & -0.01 ± 0.202 (82)  \\
+        30-40               & -0.29 ± 0.224 (62)  & 0.098 ± 0.264 (163) & 0.185 ± 0.335 (329) & 0.081 ± 0.109 (73)  \\
+        40-50               & -0.27 ± 0.222 (74)  & 0.142 ± 0.373 (138) & 0.092 ± 0.357 (232) & 0.043 ± 0.208 (82)  \\
+        50-60               & -0.09 ± 0.295 (66)  & 0.041 ± 0.282 (130) & 0.120 ± 0.267 (335) & 0.014 ± 0.181 (136) \\
+        60-70               & -0.21 ± 0.244 (60)  & 0.020 ± 0.280 (108) & 0.161 ± 0.252 (179) & -0.02 ± 0.211 (98)  \\
+        70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
+        80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
+        90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
+        100-110             & -0.07 ± 0.489 (23)  & 0.149 ± 0.345 (29)  & 0.037 ± 0.427 (44)  & 0.140 ± 0.467 (41)  \\
+        110-120             & 0.092 ± 0.335 (18)  & -0.01 ± 0.473 (33)  & -0.04 ± 0.499 (43)  & -0.11 ± 0.236 (32)  \\
+        120-130             & 0.076 ± 0.276 (15)  & 0.141 ± 0.235 (13)  & 0.150 ± 0.352 (21)  & 0.111 ± 0.355 (22)  \\
+        130-140             & 0.129 ± 0.207 (12)  & 0.178 ± 0.340 (21)  & 0.123 ± 0.349 (27)  & 0.033 ± 0.488 (27)  \\
+        140-150             & -0.14 ± 0.387 (9)   & 0.178 ± 0.414 (14)  & 0.107 ± 0.457 (17)  & 0.126 ± 0.542 (19)  \\
+      \end{tabular}
+    \end{table}
 
 
-  GraphCodeBERT
+    GraphCodeBERT
     \begin{table}[H]
       \tiny
       \begin{tabular}{l|ccc}
@@ -383,7 +383,7 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
       \end{tabular}
     \end{table}
 
-  RoBERTa
+    RoBERTa
     \begin{table}[H]
       \tiny
       \begin{tabular}{l|ccc}

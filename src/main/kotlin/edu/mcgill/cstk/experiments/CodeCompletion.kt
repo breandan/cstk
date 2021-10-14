@@ -114,7 +114,7 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
   fun toLatexTable(colWidth: Int = 20) =
     """
       \begin{table}[H]
-      \begin{tabular}{l|ccc}
+      \begin{tabular}{l|${"c".repeat(transformations.size)}}
       
       """.trimIndent() +
       transformations.joinToString(
