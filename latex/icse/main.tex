@@ -343,20 +343,20 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
         \tiny
         \begin{tabular}{l|cccc}
           Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-          10-20               & -0.22 ± 0.157 (20)  & 0.066 ± 0.396 (100) & 0.162 ± 0.310 (245) & 0.166 ± 0.138 (6)   \\
-          20-30               & -0.28 ± 0.190 (80)  & 0.165 ± 0.301 (233) & 0.105 ± 0.288 (379) & 0.002 ± 0.232 (66)  \\
-          30-40               & -0.31 ± 0.241 (46)  & 0.121 ± 0.265 (123) & 0.166 ± 0.328 (261) & 0.090 ± 0.129 (56)  \\
-          40-50               & -0.27 ± 0.226 (55)  & 0.111 ± 0.378 (100) & 0.098 ± 0.350 (171) & -0.03 ± 0.191 (57)  \\
-          50-60               & -0.10 ± 0.281 (62)  & 0.051 ± 0.268 (125) & 0.122 ± 0.268 (313) & 0.006 ± 0.168 (128) \\
-          60-70               & -0.12 ± 0.236 (48)  & 0.023 ± 0.228 (84)  & 0.168 ± 0.228 (156) & 0.011 ± 0.198 (81)  \\
-          70-80               & -0.12 ± 0.351 (15)  & 0.033 ± 0.350 (44)  & 0.075 ± 0.337 (61)  & -0.04 ± 0.314 (61)  \\
-          80-90               & -0.08 ± 0.316 (38)  & 0.085 ± 0.369 (66)  & 0.066 ± 0.407 (84)  & -0.05 ± 0.351 (68)  \\
-          90-100              & -0.11 ± 0.181 (27)  & 0.329 ± 0.285 (41)  & 0.214 ± 0.303 (61)  & 0.088 ± 0.200 (59)  \\
-          100-110             & -0.05 ± 0.518 (17)  & 0.108 ± 0.285 (23)  & 0.009 ± 0.422 (34)  & 0.176 ± 0.445 (33)  \\
-          110-120             & 0.101 ± 0.334 (14)  & -0.05 ± 0.442 (29)  & 0.022 ± 0.505 (35)  & -0.11 ± 0.226 (28)  \\
-          120-130             & 0.081 ± 0.295 (14)  & 0.233 ± 0.252 (10)  & 0.249 ± 0.326 (18)  & 0.128 ± 0.409 (19)  \\
-          130-140             & 0.188 ± 0.222 (10)  & 0.231 ± 0.311 (18)  & 0.173 ± 0.365 (24)  & 0.083 ± 0.502 (24)  \\
-          140-150             & -0.27 ± 0.426 (7)   & 0.152 ± 0.460 (12)  & 0.083 ± 0.546 (14)  & 0.097 ± 0.630 (16)  \\
+          10-20               & -0.13 ± 0.094 (42)  & 0.040 ± 0.329 (156) & 0.208 ± 0.348 (359) & 0.033 ± 0.082 (15)  \\
+          20-30               & -0.26 ± 0.189 (112) & 0.137 ± 0.299 (312) & 0.116 ± 0.338 (542) & -0.01 ± 0.202 (82)  \\
+          30-40               & -0.29 ± 0.224 (62)  & 0.098 ± 0.264 (163) & 0.185 ± 0.335 (329) & 0.081 ± 0.109 (73)  \\
+          40-50               & -0.27 ± 0.222 (74)  & 0.142 ± 0.373 (138) & 0.092 ± 0.357 (232) & 0.043 ± 0.208 (82)  \\
+          50-60               & -0.09 ± 0.295 (66)  & 0.041 ± 0.282 (130) & 0.120 ± 0.267 (335) & 0.014 ± 0.181 (136) \\
+          60-70               & -0.21 ± 0.244 (60)  & 0.020 ± 0.280 (108) & 0.161 ± 0.252 (179) & -0.02 ± 0.211 (98)  \\
+          70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
+          80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
+          90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
+          100-110             & -0.07 ± 0.489 (23)  & 0.149 ± 0.345 (29)  & 0.037 ± 0.427 (44)  & 0.140 ± 0.467 (41)  \\
+          110-120             & 0.092 ± 0.335 (18)  & -0.01 ± 0.473 (33)  & -0.04 ± 0.499 (43)  & -0.11 ± 0.236 (32)  \\
+          120-130             & 0.076 ± 0.276 (15)  & 0.141 ± 0.235 (13)  & 0.150 ± 0.352 (21)  & 0.111 ± 0.355 (22)  \\
+          130-140             & 0.129 ± 0.207 (12)  & 0.178 ± 0.340 (21)  & 0.123 ± 0.349 (27)  & 0.033 ± 0.488 (27)  \\
+          140-150             & -0.14 ± 0.387 (9)   & 0.178 ± 0.414 (14)  & 0.107 ± 0.457 (17)  & 0.126 ± 0.542 (19)  \\
         \end{tabular}
       \end{table}
 
@@ -455,6 +455,13 @@ For each token in a string, CodeBERT and its transformer-based cousins emit a fi
   }
 
   \section{Discussion}
+
+
+  We can also reproduce the relative rankings of the models as reported in relevant literature: RoBERTa $<<$ CodeBERT $<$ GraphCodeBERT.
+
+  We observe a clear trend over method complexity: SCTs in low complexity code have a larger effect than similar transformations in high-complexity code. We hypothesize this trend can be explained by the fact that rewriting can have comparatively large effect when the surrounding code snippet is tiny and therefor contains less contextual information.
+
+  If we examine the source code snippets, we notice that renaming can have a significant effect on document synthesis. Examining the synthesized documents, we can see that the model frequently copies tokens from the source code, so renaming can degrade document quality. Similarly swapping multiline statements also reduces document quality.\ldots
 
   \pagebreak
   \section{Conclusion}\label{sec:conclusion}
