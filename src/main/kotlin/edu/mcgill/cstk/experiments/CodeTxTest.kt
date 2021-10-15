@@ -149,10 +149,7 @@ fun String.fillFirstDoc(): String? =
       }.joinToString("\n")
 //      .also { println("To complete: $it")}
         .completeDocumentation(
-          min(
-            10,
-            defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size
-          )
+          min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
         )
 //      .also { println("Completed: $it")}
     } catch (exception: Exception) {

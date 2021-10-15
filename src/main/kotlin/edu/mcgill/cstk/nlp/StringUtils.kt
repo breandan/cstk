@@ -134,10 +134,13 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
-fun makeQuery(query: String = "",
-              selector: List<String>.() -> String = {first()}): String =
+fun makeQuery(
+  query: String = "",
+  selector: List<String>.() -> String = {first()}
+): String =
 //  try {
-    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText().lines().also { println(it.joinToString( "::" )) }.selector()
+    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
+      .readText().lines().selector()
 //  } catch (exception: Exception) {
 //    exception.printStackTrace();
 //    makeQuery(query)
