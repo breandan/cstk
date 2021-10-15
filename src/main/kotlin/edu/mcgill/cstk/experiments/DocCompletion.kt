@@ -100,27 +100,30 @@ fun main() {
       val cyclomaticComplexity = originalMethod.approxCyclomatic()
 //      println("" + cyclomaticComplexity + " " + sct.name + "..." )
       val groundTruth = originalMethod.getDoc()
-        .also { println("Ground truth doc: ${it.substringAfter(("//"))}") }
       val originalCodeWithSyntheticJavadoc = originalMethod.fillFirstDoc() ?: return@forEach
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-        .also { println("Synth origin doc: ${it.substringAfter(("//"))}") }
       val refactoredCodeWithSyntheticJavadoc = sct(originalMethod).fillFirstDoc() ?: return@forEach
       val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
-        .also { println("Synth refact doc: ${it.substringAfter(("//"))}") }
 
       val rougeScoreWithoutRefactoring = rougeSynonym(groundTruth, syntheticJavadocForOriginalCode)
       val rougeScoreWithRefactoring = rougeSynonym(groundTruth, syntheticJavadocForRefactoredCode)
 
-//      printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
-//        leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
-//      printSideBySide(originalMethod, refactoredCodeWithSyntheticJavadoc,
-//        leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
-//        println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
-//        println("Rouge score after refactoring: $rougeScoreWithRefactoring")
       val relativeDifference = (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
             max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
-      println("Relative difference: $relativeDifference")
       if(relativeDifference.isFinite() && relativeDifference.absoluteValue > 0.0) {
+        println("Ground truth doc: ${groundTruth.substringAfter(("//"))}")
+        println("Synth origin doc: ${syntheticJavadocForOriginalCode.substringAfter(("//"))}")
+        println("Synth refact doc: ${syntheticJavadocForRefactoredCode.substringAfter(("//"))}")
+
+        printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
+          leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
+        printSideBySide(originalMethod, refactoredCodeWithSyntheticJavadoc,
+          leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
+
+        println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
+        println("Rouge score after refactoring: $rougeScoreWithRefactoring")
+        println("Relative difference: $relativeDifference")
+
         val snippet = CodeSnippet(originalMethod, cyclomaticComplexity, sct, refactoredCodeWithSyntheticJavadoc)
         rougeScoreByCyclomaticComplexity[snippet] = relativeDifference
         println(rougeScoreByCyclomaticComplexity.toLatexTable())
