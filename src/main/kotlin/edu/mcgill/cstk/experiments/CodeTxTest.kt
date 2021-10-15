@@ -2,6 +2,7 @@ package edu.mcgill.cstk.experiments
 
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
+import kotlin.math.min
 import kotlin.random.Random
 
 fun main() {
@@ -138,16 +139,33 @@ fun String.swapMultilineNoDeps(): String =
   }.flatten().joinToString("\n")
 
 const val FILL = "<FILL>"
-fun String.prependJavadoc() = """
-/**
- * $FILL
- */
- 
-$this""".trimIndent().completeDocumentation()
+fun String.fillFirstDoc(): String? =
+  lines().first { docCriteria(it) }.let { firstDoc ->
+    try {
+      lines().map {
+        if (it == firstDoc)
+          it.substringBefore("//") + "// $FILL"
+        else it
+      }.joinToString("\n")
+//      .also { println("To complete: $it")}
+        .completeDocumentation(
+          min(
+            10,
+            defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size
+          )
+        )
+//      .also { println("Completed: $it")}
+    } catch (exception: Exception) {
+      null
+    }
+  }
 
-tailrec fun String.completeDocumentation(length: Int = 20): String =
-  if(length == 1) replace(FILL, "")
-  else replaceFirst(FILL, makeQuery(replaceFirst(FILL, MSK)) + FILL)
+tailrec fun String.completeDocumentation(length: Int = 20): String? =
+  if (length == 1) replace(FILL, "")
+  else replaceFirst(FILL,
+    makeQuery(replaceFirst(FILL, MSK),
+    selector={ first { it.any { it.isLetterOrDigit() } } } // Nonempty comment
+  ) + FILL)
     .completeDocumentation(length - 1)
 
 tailrec fun String.fillOneByOne(): String =
@@ -171,7 +189,7 @@ fun String.addExtraLogging(): String =
     ) {
       val toIndent = thisLine.takeWhile { !it.isJavaIdentifierPart() }
 //      val toPrint = matchLastLine.groupValues[1]
-      "${toIndent}System.out.println($FILL);\n$thisLine"
+      "${toIndent}System.out.println(\"debug\");\n$thisLine"
     } else thisLine
   }.fillOneByOne()
 

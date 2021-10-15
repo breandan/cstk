@@ -75,9 +75,10 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         if tokenizer.mask_token in query:
             pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
             outputs = pred(query)
-            # TODO: Return top-k results?
-            completion = max(outputs, key=lambda s: float(s['score']))
-            return completion['token_str']
+            completions = sorted(outputs, key=lambda s: float(s['score']))
+            completions = list(map(lambda x: x['token_str'], completions))
+            token = "\n".join(completions)
+            return token
         else:
             array = self.embed_sequence(query)
 

@@ -134,13 +134,14 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
-fun makeQuery(query: String = ""): String =
-  try {
-    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText()
-  } catch (exception: Exception) {
-    exception.printStackTrace();
-    makeQuery(query)
-  }
+fun makeQuery(query: String = "",
+              selector: List<String>.() -> String = {first()}): String =
+//  try {
+    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8")).readText().lines().also { println(it.joinToString( "::" )) }.selector()
+//  } catch (exception: Exception) {
+//    exception.printStackTrace();
+//    makeQuery(query)
+//  }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
@@ -149,7 +150,7 @@ fun printSideBySide(
   left: String, right: String,
   leftHeading: String = "original",
   rightHeading: String = "new",
-  maxLen: Int = 80, maxLines: Int = 20
+  maxLen: Int = 400, maxLines: Int = 100
 ) {
   val (leftLines, rightLines) = left.lines() to right.lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
