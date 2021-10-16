@@ -130,65 +130,15 @@
 
 \input{macros}
 
-%%
-%% Submission ID.
-%% Use this when submitting an article to a sponsored event. You'll
-%% receive a unique submission ID from the organizers
-%% of the event, and this ID should be used as the parameter to this command.
-%%\acmSubmissionID{123-A56-BU3}
-
-%%
-%% The majority of ACM publications use numbered citations and
-%% references.  The command \citestyle{authoryear} switches to the
-%% "author year" style.
-%%
-%% If you are preparing content for an event
-%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
-%% citations and references.
-%% Uncommenting
-%% the next command will enable that style.
-%%\citestyle{acmauthoryear}
-
-%%
-%% end of the preamble, start of the body of the document source.
 \begin{document}
 
-%%
-%% The "title" command has an optional parameter,
-%% allowing the author to define a "short title" to be used in page headers.
   \title{How robust is neural code completion to cosmetic variance?}
-% \title{Code Transformations
-% Neural language models
-% Interpretability
-% Reliability/Robustness
-% Comprehension/Understanding
-
-% }
-
-% \title{An empirical study of source code transformations on the robustness of neural language models}
-%%
-%% The "author" command and its associated commands are used to define
-%% the authors and their affiliations.
-%% Of note is the shared affiliation of the first two authors, and the
-%% "authornote" and "authornotemark" commands
-%% used to denote shared contribution to the research.
   \author{Breandan Considine, Xujie Si, Jin L.C. Guo}
   \email{breandan.considine@mail.mcgill.ca, {xsi, jguo}@cs.mcgill.ca}
   \affiliation{%
     \institution{McGill University}
   }
 
-%%
-%% By default, the full list of authors will be used in the page
-%% headers. Often, this list is too long, and will overlap
-%% other information printed in the page headers. This command allows
-%% the author to define a more concise list
-%% of authors' names for this purpose.
-% \renewcommand{\shortauthors}{Trovato and Tobin, et al.}
-
-%%
-%% The abstract is a short summary of the work to be presented in the
-%% article.
   \begin{abstract}
     Neural language models hold great promise as tools for computer-aided programming, but questions remain over their reliability and the consequences of overreliance. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A closer examination of neural language models is needed to understand their behavior in programming-related tasks. In this work, we develop a methodology for systematically evaluating neural code completion models using common source code transformations such as synonymous renaming, intermediate logging, and independent statement reordering. Applying these synthetic transformations to a dataset of handwritten code snippets, we evaluate three SoTA models, CodeBERT, GraphCodeBERT and RobertA-Java, which exhibit varying degrees of robustness to cosmetic variance. Our approach is implemented and released as a modular and extensible toolkit for evaluating code-based neural language models.
   \end{abstract}
@@ -235,9 +185,9 @@
     \item The \lstinline|permuteArgument| SCT performs a Fisher-Yates shuffle on the arguments of a user-defined function of dyadic or higher-arity, representing an alternate parameter order of some function outside the JDK standard library.
   \end{enumerate}
 
-  Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied) are considered invalid and discarded. Strictly speaking, we cannot rule out the possibility that any of the aforementioned SCTs produce semantic variants due to the inherent complexity of source code analysis, however we have manually validated their admissibility for a large fraction of cases. A more principled macro system would help to alleviate these concerns, however a framework for rewriting partial Java code snippets is, to the best of our knowledge, presently unavailable.
+  Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied) are considered invalid and discarded. Although (3) and (4) may produce semantic variants, strictly speaking, we cannot rule out the possibility that any of the aforementioned SCTs are semantically-preserving due to the inherent complexity of source code analysis, however we have manually validated their admissibility for a large fraction of cases. A more principled macro system would help to alleviate these concerns, however a framework for rewriting partial Java code snippets with flexible error recovery is, to the best of our knowledge, presently unavailable.
 
-  Our framework is capable of evaluating both code completion and document synthesis using the same approach. This can be done either inside the model's latent space using a sensitivity margin, or using some metric on the raw data. We decided to focus on the input domain and consider two metrics: masked token completion accuracy for code completion and ROUGE-synonym score for document synthesis.
+  Our framework is capable of evaluating both code completion and document synthesis using the same end-to-end strategy. In principle, this measurement can be done inside the model's latent space using a sensitivity margin or via some metric on the raw data. In practice, we decided to focus on the input domain and consider two metrics: masked token completion accuracy for code completion and ROUGE-synonym score for document synthesis.
 
   \pagebreak
 
@@ -305,33 +255,28 @@
     }
   \end{lstlisting}
 
-  Initially, we seeded the document completion using \texttt{//<MASK>} and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \texttt{// ///// //...}). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. One could imagine using a more sophisticated natural language filter, however we did not explore this in great depth.
+  Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this in great depth.
 
-  Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style, enabling straightforward parallelization.
-
-  Given a neural code completion model \lstinline|ncc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, an SCT, \lstinline|sct: Str->Str|, and a code completion metric, \lstinline|mtr: (Str, Str)->Float|, we would expect the average completion accuracy to remain unchanged regardless of whether the cosmetic transformation was applied, i.e.,
+  Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. The evaluation pipeline can be described succintly as follows. Given a code completion model \lstinline|cc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, an SCT, \lstinline|sct: Str->Str|, and a single metric over code snippets, \lstinline|mtr: (Str, Str)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
 
   \noindent\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
-fun evaluate(ncc, snps, msk, sct, mtr) = Δ(
-  zip(snps, snps | msk | ncc) | mtr | average,
-  zip(snps | sct, snps | sct | msk | ncc) | mtr | average
+fun evaluate(cc, snps, msk, sct, mtr) = Δ(
+  zip(snps, snps | msk | cc) | mtr | average,
+  zip(snps | sct, snps | sct | msk | cc) | mtr | average
 )
   \end{lstlisting}
 
-  \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models on five different SCTs and two downstream tasks.
+  \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across five different SCTs, various complexity code buckets, and two separate metrics, representing downstream tasks (i.e., code and document synthesis). Those results are reported in \S~\ref{sec:results}.
 
-  We can view the tables in this paper as 2D-slices of a rank-n tensor representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample the independent variables uniformly to ensure its entries are evenly populated. Results are continuously delivered to the user, who may preview 2D marginals for any pair and watch the error bounds grow tighter as additional samples are drawn.
+  Using our framework, it is possible view the marginals of a rank-n tensor representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g. average relative ROUGE-score discrepancy) using a sketch-based historgram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
 
-  This kind of feature is useful when running on preemptible infrastructure and can be massively parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
+  \section{Experiments}\label{sec:results}
 
-  In the following section we report our results for each model, SCT and complexity.
+  Our dataset consists of a hundred of the highest-starred Java repositories hosted by GitHub organizations with over 100 forks and between 1 and 10 MB in size. This ensures a diverse dataset of active repositories with reasonable quality and stylistic diversity.
 
-  \pagebreak\section{Experiments}\label{sec:results}
-  Our dataset consists of a hundred of the most-starred Java repositories published by GitHub organizations with over 100 forks and between 1 and 10 MB in size. This ensures a diverse dataset of active repositories with reasonable quality and stylistic diversity.
+  We evaluate three state-of-the-art pretrained models (GraphCodeBERT, CodeBERT and RoBERTa) on two downstream tasks (code completion and document synthesis). While the number of samples may vary per model and per bucket, we provide the same wall clock time (180 minutes) and hardware resources (NVIDIA Tesla V100) to each model. The number of code snippets each can evaluate in the allotted time vary depending on the architecture, but in each case, the significant figures have mostly converged.
 
-  We evaluate three state-of-the-art pretrained models (GraphCodeBERT, CodeBERT and RoBERTa) on two downstream tasks (code completion and document synthesis). While the sample sizes vary, we provide the same wall clock time (180 minutes) and hardware resources (NVIDIA Tesla V100) to each model. The number of code snippets they can evaluate in the allotted time may vary depending on the architecture, but in each case, the significant figures have mostly converged by this time. Complexity is measured using the procedure described in \S~\ref{sec:slicing}.
-
-  Below, we report the average relative difference in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.
+  Below, we report the average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.
 
   {\center
 
@@ -404,11 +349,11 @@ fun evaluate(ncc, snps, msk, sct, mtr) = Δ(
     \end{table}
   }
 
-  Sample size varies across SCTs because not all SCTs modify candidate snippets and we discard synthetic code snippets which are unchanged after transformation.
+  Sample size varies across SCTs because not all SCTs modify all snippets, and we discard all code snippets which remain unchanged after transformation, which results in column imbalance.
 
-  As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT. In all cases, the  \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
+  Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. In all cases, the \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
 
-  Below are the results for document synthesis, using the ROUGE-synonym metric. Like before, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model.
+  Below are the results for document synthesis, using the ROUGE-synonym metric. Like before, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. Although the sample sizes are smaller and less conclusive, we observe a similar trend across SCTs emerging.\\
 
     {\center
     GraphCodeBERT
@@ -471,29 +416,27 @@ fun evaluate(ncc, snps, msk, sct, mtr) = Δ(
   \end{table}
   }
 
-  \section{Discussion}
+  In both cases, we observe a clear trend across method complexity: SCTs in low complexity code have a larger effect on completion quality than similar transformations in high-complexity code. We hypothesize this phenomenon can be explained by the fact that the same transformation can have a comparatively larger effect on a shorter code snippet than a longer one, which contains more contextual information and is thus more stable to minor perturbations.
 
-  We can also reproduce the relative rankings of the models as reported in relevant literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT.
-
-  We observe a clear trend over method complexity: SCTs in low complexity code have a larger effect than similar transformations in high-complexity code. We hypothesize this trend can be explained by the fact that rewriting can have comparatively large effect when the surrounding code snippet is tiny and therefor contains less contextual information.
-
-  If we examine the source code snippets, we notice that renaming can have a significant effect on document synthesis. Examining the synthesized documents, we can see that the model frequently copies tokens from the source code, so renaming can degrade document quality. Similarly swapping multiline statements also reduces document quality.\ldots
+  Examining the source code transformations, we notice that renaming can have a significant effect on document synthesis. As the model frequently copies tokens from the source code to the document and vis-versa, renaming tends to have a deleterious effect on document quality. Likewise, swapping multiline statements appears to have a significant negative effect on document quality.
 
   \section{Conclusion}\label{sec:conclusion}
 
-  The work described herein is primarily an empirical study, but also represents a framework and a set of methodological practices which may be used to evaluate future code-based neural language models, offering several advantages from a software engineering standpoint. Due to its functional implementation, it is efficient, parallelizable and highly modular.
+  The work described herein is primarily an empirical study, but also showcases a framework and a systematic approach to evaluating neural code completion models. It offers a number of advantages from a software engineering standpoint: due to its functional implementation, it is efficient, parallelizable and highly modular, allowing others to easily reuse and extend our work with new benchmarks.
 
   Despite its simplicity, the Regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL, Refal et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
 
-  Our SCTs can be viewed as ``possible worlds'' in the tradition modal logic: the original author plausibly could have chosen an alternate form of expressing the same procedure. Although we are unable to access all these worlds, we may be able to posit the existence and likelihood of cosmetic alternatives, given a large enough dataset of sufficiently similar code and further reason about the completion model's predictions under those alternatives.
+  Our SCTs can be viewed as ``possible worlds'' in the tradition of modal logic: the original author plausibly could have chosen an alternate form of expressing the same procedure. Although we are unable to access all these worlds, we can posit the existence and likelihood of some and reason about the completion model's predictions under those alternatives.
 
-   One intriguing avenue for future work would be to consider combinations of source code transformations. This would vastly expand the cardinality of the validation set, enabling us to access a much larger space of ``possible worlds'' albeit potentially at the risk of lower semantic admissibility as arbitrary combinations of SCTs can quickly produce invalid code. This would be interesting engineering problem and possible extension to this work.
+   One intriguing avenue for future work would be to consider combinations of source code transformations. This would vastly expand the cardinality of the validation set, enabling us to access a much larger space of possible worlds, albeit potentially at the risk of lower semantic admissibility as arbitrary combinations of SCTs can quickly produce invalid code. This would be interesting engineering problem and possible extension to this work.
 
-  We currently only use average mutli-mask accuracy and ROUGE score, although we hope to compare various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG) in the future.
+  Although we currently only use average mutlimask accuracy and ROUGE-synonym metrics, it would be useful to incorporate various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG). In addition to their utility as yardstick for evaluating model robustness, these metrics can be used to retrain those same models, a direction we hope to explore in future work.
 
-  Finally, we could use the code completion model itself to generate code for testing the same model. We have implemented this to a limited degree in the \lstinline|addExtraLogging| SCT, where the model predicts a single token to log, and the \lstinline|generateDocument| SCT, where the model completes a document, however this could be a useful way to generate extra training data. This would require careful postprocessing.
+  Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \lstinline|addExtraLogging| SCT, in which the model synthesizes a single token to log, and the \lstinline|insertComment| SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
 
-  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this by generating plausible cosmetic variants and measuring end-to-end robustness of the neural language model.
+  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case by treats the model as a black box: it does not require access to the model parameters or training data.
+
+  Our contributions in this work are twofold: we show that SoTA neural language models for source code, depsite their effectiveness on long-range seqeunce prediction tasks are unpredictable in the presence of cosmetic noise. We also describe a systematic approach and open source implementation of a new software toolkit for evaluating code completion models.
   \pagebreak\bibliography{main}
   \bibliographystyle{plain}
   \appendix
