@@ -255,7 +255,7 @@
     }
   \end{lstlisting}
 
-  Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this in great depth.
+  Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this idea in great depth.
 
   Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. The evaluation pipeline can be described succintly as follows. Given a code completion model \lstinline|cc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, an SCT, \lstinline|sct: Str->Str|, and a single metric over code snippets, \lstinline|mtr: (Str, Str)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
 
@@ -268,7 +268,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across five different SCTs, various complexity code buckets, and two separate metrics, representing downstream tasks (i.e., code and document synthesis). Those results are reported in \S~\ref{sec:results}.
 
-  Using our framework, it is possible view the marginals of a rank-n tensor representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g. average relative ROUGE-score discrepancy) using a sketch-based historgram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
+  Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g. average relative ROUGE-score discrepancy) using a sketch-based historgram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
 
   \section{Experiments}\label{sec:results}
 
@@ -276,7 +276,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   We evaluate three state-of-the-art pretrained models (GraphCodeBERT, CodeBERT and RoBERTa) on two downstream tasks (code completion and document synthesis). While the number of samples may vary per model and per bucket, we provide the same wall clock time (180 minutes) and hardware resources (NVIDIA Tesla V100) to each model. The number of code snippets each can evaluate in the allotted time vary depending on the architecture, but in each case, the significant figures have mostly converged.
 
-  Below, we report the average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.
+  Below, we report the average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.\\
 
   {\center
 
@@ -294,11 +294,6 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
         70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
         80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
         90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
-        100-110             & -0.07 ± 0.489 (23)  & 0.149 ± 0.345 (29)  & 0.037 ± 0.427 (44)  & 0.140 ± 0.467 (41)  \\
-        110-120             & 0.092 ± 0.335 (18)  & -0.01 ± 0.473 (33)  & -0.04 ± 0.499 (43)  & -0.11 ± 0.236 (32)  \\
-        120-130             & 0.076 ± 0.276 (15)  & 0.141 ± 0.235 (13)  & 0.150 ± 0.352 (21)  & 0.111 ± 0.355 (22)  \\
-        130-140             & 0.129 ± 0.207 (12)  & 0.178 ± 0.340 (21)  & 0.123 ± 0.349 (27)  & 0.033 ± 0.488 (27)  \\
-        140-150             & -0.14 ± 0.387 (9)   & 0.178 ± 0.414 (14)  & 0.107 ± 0.457 (17)  & 0.126 ± 0.542 (19)  \\
       \end{tabular}
     \end{table}
 
@@ -317,11 +312,6 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
         70-80               & -0.39 ± 0.319 (17)  & 0.126 ± 0.417 (46)  & 0.072 ± 0.335 (69)  & -0.11 ± 0.315 (63)  \\
         80-90               & -0.00 ± 0.339 (37)  & -0.00 ± 0.294 (64)  & 0.056 ± 0.340 (85)  & -0.01 ± 0.295 (69)  \\
         90-100              & -0.13 ± 0.291 (29)  & 0.209 ± 0.386 (49)  & 0.035 ± 0.342 (67)  & 0.011 ± 0.254 (61)  \\
-        100-110             & -0.18 ± 0.289 (17)  & 0.175 ± 0.377 (31)  & 0.005 ± 0.328 (39)  & 0.074 ± 0.381 (34)  \\
-        110-120             & -0.01 ± 0.304 (14)  & 0.130 ± 0.454 (29)  & 0.288 ± 0.469 (34)  & -0.01 ± 0.281 (28)  \\
-        120-130             & 0.022 ± 0.505 (10)  & -0.09 ± 0.408 (13)  & -0.13 ± 0.403 (19)  & -0.01 ± 0.367 (20)  \\
-        130-140             & 0.033 ± 0.331 (11)  & 0.120 ± 0.406 (20)  & 0.032 ± 0.401 (22)  & 0.005 ± 0.530 (24)  \\
-        140-150             & 0.583 ± 0.195 (7)   & -0.04 ± 0.361 (14)  & 0.274 ± 0.290 (17)  & 0.062 ± 0.315 (18)  \\
       \end{tabular}
     \end{table}
 
@@ -330,7 +320,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
       \tiny
       \begin{tabular}{r|cccc}
         Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\\hline\\
-        10-20               & -0.42 ± 0.175 (122) & 0.296 ± 0.406 (277) & 0.387 ± 0.349 (704) & 0.0 ± 0.0 (12)      \\
+        10-20               & -0.42 ± 0.175 (122) & 0.296 ± 0.406 (277) & 0.387 ± 0.349 (704) & 0.0 ± 0.0     (12)  \\
         20-30               & -0.33 ± 0.172 (168) & 0.258 ± 0.338 (460) & 0.302 ± 0.288 (838) & -0.04 ± 0.145 (101) \\
         30-40               & -0.23 ± 0.188 (107) & 0.084 ± 0.261 (313) & 0.224 ± 0.311 (604) & 0.031 ± 0.172 (142) \\
         40-50               & -0.05 ± 0.237 (118) & 0.183 ± 0.291 (249) & 0.254 ± 0.268 (412) & -3.07 ± 0.098 (155) \\
@@ -339,12 +329,6 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
         70-80               & 0.124 ± 0.409 (35)  & 0.062 ± 0.253 (97)  & 0.174 ± 0.338 (132) & -0.01 ± 0.235 (107) \\
         80-90               & -0.06 ± 0.394 (43)  & 0.053 ± 0.350 (94)  & 0.225 ± 0.359 (132) & -0.00 ± 0.296 (103) \\
         90-100              & 0.118 ± 0.341 (47)  & 0.064 ± 0.347 (77)  & 0.294 ± 0.339 (95)  & 0.124 ± 0.309 (88)  \\
-        100-110             & -0.11 ± 0.454 (32)  & -0.00 ± 0.475 (68)  & -0.00 ± 0.497 (81)  & -0.10 ± 0.411 (59)  \\
-        110-120             & -0.16 ± 0.393 (32)  & 0.008 ± 0.498 (57)  & 0.199 ± 0.521 (63)  & -0.02 ± 0.527 (52)  \\
-        120-130             & 0.132 ± 0.249 (20)  & 0.155 ± 0.591 (31)  & 0.291 ± 0.378 (41)  & 0.030 ± 0.496 (39)  \\
-        130-140             & 0.111 ± 0.328 (18)  & 0.027 ± 0.519 (39)  & 0.256 ± 0.463 (46)  & 7.575 ± 0.494 (44)  \\
-        140-150             & 0.265 ± 0.370 (23)  & 0.109 ± 0.575 (32)  & 0.357 ± 0.311 (33)  & 0.201 ± 0.500 (33)  \\
-        150-160             & -0.04 ± 0.602 (12)  & 0.214 ± 0.407 (21)  & 0.064 ± 0.487 (26)  & 0.125 ± 0.512 (24)  \\
       \end{tabular}
     \end{table}
   }
@@ -353,7 +337,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. In all cases, the \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
 
-  Below are the results for document synthesis, using the ROUGE-synonym metric. Like before, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. Although the sample sizes are smaller and less conclusive, we observe a similar trend across SCTs emerging.\\
+  Below are the ROUGE scores we collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. Although the sample sizes are smaller and less conclusive, we observe a similar trend across SCTs emerging.\\
 
     {\center
     GraphCodeBERT
@@ -361,17 +345,11 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
       \tiny
       \begin{tabular}{l|cccc}
         Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-        40-50               & 6.365 ± 0.0 (1)     & 1.697 ± 0.0 (1)     & 8.575 ± 91.68 (2)   & NaN ± NaN (0)       \\
-        50-60               & NaN ± NaN (0)       & NaN ± NaN (0)       & 0.030 ± 0.848 (5)   & -0.70 ± 0.0 (1)     \\
         60-70               & NaN ± NaN (0)       & -0.25 ± 0.281 (3)   & 3.922 ± 129.3 (8)   & -0.29 ± 0.036 (2)   \\
         70-80               & NaN ± NaN (0)       & -0.66 ± 0.0 (1)     & 0.947 ± 3.621 (6)   & 3.689 ± 17.37 (3)   \\
         80-90               & 5.833 ± 0.0 (1)     & -0.66 ± 0.0 (1)     & -0.02 ± 0.720 (7)   & -0.45 ± 0.595 (3)   \\
         90-100              & 5.417 ± 0.0 (1)     & 3.179 ± 22.20 (7)   & 3.746 ± 13.65 (12)  & 2.551 ± 0.0 (1)     \\
         100-110             & NaN ± NaN (0)       & 0.040 ± 0.909 (7)   & 1.156 ± 8.423 (13)  & -0.54 ± 0.539 (7)   \\
-        110-120             & 1.323 ± 9.628 (4)   & 1.162 ± 10.31 (7)   & 2.232 ± 35.40 (8)   & -0.62 ± 0.429 (4)   \\
-        120-130             & 0.363 ± 0.0 (1)     & 0.111 ± 1.120 (4)   & 0.105 ± 1.234 (5)   & -0.64 ± 0.028 (2)   \\
-        130-140             & -1.0 ± 0.0 (1)      & 2.764 ± 34.12 (7)   & 1.446 ± 10.41 (11)  & 2.840 ± 18.54 (7)   \\
-        140-150             & 1.039 ± 0.139 (2)   & -0.35 ± 0.106 (3)   & 0.668 ± 3.425 (7)   & 2.209 ± 27.07 (10)
       \end{tabular}
     \end{table}
 
@@ -381,12 +359,6 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
     \tiny
     \begin{tabular}{l|cccc}
       Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-      40-50               & NaN ± NaN (0)       & NaN ± NaN (0)       & -0.20 ± 0.0 (1)     & -0.75 ± 0.0 (1)     \\
-      60-70               & NaN ± NaN (0)       & NaN ± NaN (0)       & 25.33 ± 1186. (3)   & NaN ± NaN (0)       \\
-      70-80               & -1.0 ± 0.0 (1)      & 0.147 ± 0.001 (2)   & 6.757 ± 213.8 (5)   & NaN ± NaN (0)       \\
-      80-90               & 0.178 ± 0.023 (2)   & 0.65 ± 3.261 (3)    & -0.20 ± 0.016 (2)   & -1.0 ± 0.0 (1)      \\
-      90-100              & -0.85 ± 0.0 (1)     & NaN ± NaN (0)       & NaN ± NaN (0)       & NaN ± NaN (0)       \\
-      100-110             & 1.999 ± 0.0 (1)     & 0.111 ± 2.469 (3)   & -0.73 ± 0.142 (3)   & NaN ± NaN (0)       \\
       110-120             & 0.071 ± 0.0 (1)     & -0.56 ± 0.068 (2)   & 2.345 ± 28.16 (6)   & -0.95 ± 0.0 (1)     \\
       120-130             & -0.81 ± 0.0 (1)     & 0.307 ± 0.036 (2)   & 1.549 ± 12.76 (5)   & NaN ± NaN (0)       \\
       130-140             & -0.33 ± 0.005 (2)   & -0.02 ± 0.137 (6)   & 2.131 ± 8.023 (9)   & 20.66 ± 0.0 (1)     \\
@@ -408,13 +380,19 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
       80-90               & 0.210 ± 1.319 (4)   & 3.016 ± 33.88 (15)  & 1.774 ± 46.96 (55)  & 4.167 ± 49.65 (14)  \\
       90-100              & -0.35 ± 0.075 (3)   & 0.520 ± 1.556 (21)  & 2.435 ± 39.08 (54)  & 0.407 ± 2.483 (18)  \\
       100-110             & 2.645 ± 13.31 (4)   & 0.613 ± 5.410 (19)  & 2.900 ± 96.60 (57)  & 1.348 ± 14.02 (27)  \\
-      110-120             & 0.077 ± 0.915 (6)   & 2.712 ± 79.64 (17)  & 1.945 ± 48.44 (46)  & 0.482 ± 2.780 (16)  \\
-      120-130             & 4.345 ± 68.67 (7)   & -0.01 ± 0.648 (17)  & 1.023 ± 10.94 (46)  & 0.169 ± 2.044 (26)  \\
-      130-140             & 1.633 ± 23.58 (8)   & 1.375 ± 26.31 (18)  & 3.184 ± 90.34 (57)  & 0.469 ± 2.741 (25)  \\
-      140-150             & 3.250 ± 11.12 (6)   & 1.104 ± 4.900 (22)  & 4.442 ± 237.8 (41)  & 0.685 ± 5.981 (27)
     \end{tabular}
   \end{table}
   }
+
+  \vspace{-10pt}\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.20\textwidth]{figs/renameTokens.png}
+    \includegraphics[width=0.20\textwidth]{figs/swapMultilineNo.png}
+    \includegraphics[width=0.20\textwidth]{figs/permuteArgument.png}
+    \includegraphics[width=0.20\textwidth]{figs/addExtraLogging.png}
+    \caption{Average relative difference across all models.}
+    \label{fig:dataflow}
+  \end{figure}
 
   In both cases, we observe a clear trend across method complexity: SCTs in low complexity code have a larger effect on completion quality than similar transformations in high-complexity code. We hypothesize this phenomenon can be explained by the fact that the same transformation can have a comparatively larger effect on a shorter code snippet than a longer one, which contains more contextual information and is thus more stable to minor perturbations.
 
@@ -424,7 +402,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   The work described herein is primarily an empirical study, but also showcases a framework and a systematic approach to evaluating neural code completion models. It offers a number of advantages from a software engineering standpoint: due to its functional implementation, it is efficient, parallelizable and highly modular, allowing others to easily reuse and extend our work with new benchmarks.
 
-  Despite its simplicity, the Regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
+  Despite its simplicity, the regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
 
   Our SCTs can be viewed as ``possible worlds'' in the tradition of modal logic: the original author plausibly could have chosen an alternate form of expressing the same procedure. Although we are unable to access all these worlds, we can posit the existence and likelihood of some, and given a dataset of alternate code snippets, begin to probe the completion model's predictions.
 
