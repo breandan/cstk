@@ -116,7 +116,7 @@ object TrainSeq2Seq {
     }
     return DefaultTrainingConfig(MaskedSoftmaxCrossEntropyLoss())
       .addEvaluator(Accuracy("Accuracy", 0, 2))
-      .optDevices(Device.getDevices(1))
+      .optDevices(arrayOf(Device.gpu()))
       .addTrainingListeners(*TrainingListener.Defaults.logging("."))
       .addTrainingListeners(listener)
   }

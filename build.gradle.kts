@@ -5,8 +5,17 @@ plugins {
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
-  id("com.github.johnrengelman.shadow") version "7.0.0"
+  id("com.github.johnrengelman.shadow") version "7.1.0"
+//  idea
 }
+
+//idea {
+//  module {
+// Why doesn't this work for ASTMiner??
+//    isDownloadJavadoc = true
+//    isDownloadSources = true
+//  }
+//}
 
 group = "com.github.breandan"
 version = "1.0-SNAPSHOT"
@@ -38,7 +47,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.12.0"
+  val djlVersion = "0.13.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
@@ -48,11 +57,11 @@ dependencies {
   implementation("ai.djl:model-zoo:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "0.0.46"
+  val hnswlibVersion = "0.0.49"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.0.1"
+  val multikVersion = "0.1.0"
   implementation("org.jetbrains.kotlinx:multik-api:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -60,12 +69,12 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.2.0")
+  implementation("com.github.ajalt.clikt:clikt:3.3.0")
 
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.14.0"
+  val openrwVersion = "7.16.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -96,7 +105,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-3")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.133")
+  implementation("org.kohsuke:github-api:1.135")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.2")
 
@@ -105,7 +114,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.0.9048"
+  val ortoolsVersion = "9.1.9490"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -158,6 +167,7 @@ tasks {
     "completeDoc" to "edu.mcgill.cstk.experiments.DocCompletionKt",
     "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
+    "astMiner" to "edu.mcgill.cstk.experiments.ASTMinerKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)

@@ -13,3 +13,6 @@ grex*
 /out/
 /data
 .venv
+.DS_Store
+*.jar
+*.hprof

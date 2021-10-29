@@ -62,7 +62,7 @@ private fun createTrainingConfig(): TrainingConfig {
 
   return DefaultTrainingConfig(BertPretrainingLoss())
     .optOptimizer(optimizer)
-    .optDevices(Device.getDevices(MAX_GPUS))
+    .optDevices(arrayOf(Device.gpu()))
     .addTrainingListeners(
       *TrainingListener.Defaults.logging(),
       lossListener,

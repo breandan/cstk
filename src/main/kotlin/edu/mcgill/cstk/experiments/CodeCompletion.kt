@@ -9,7 +9,7 @@ import kotlin.reflect.KFunction1
 
 data class CodeSnippet(
   val original: String,
-  val complexity: Int = binComplexity(original.approxCyclomatic()), // Cyclomatic complexity
+  val complexity: Int = binComplexity(original.approxCyclomatic()),
   val sct: KFunction1<String, String>, // Source code transformation
   val variant: String = sct(original)
 ) {

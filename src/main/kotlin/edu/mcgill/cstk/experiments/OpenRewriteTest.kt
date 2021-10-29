@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments
 
-import org.openrewrite.Recipe
+import org.openrewrite.*
 import org.openrewrite.java.*
 
 fun main() {
@@ -18,5 +18,5 @@ fun main() {
 
   val recipe: Recipe = DeleteMethodArgument("B foo(Bar, Bar, Bar)", 1)
 
-  recipe.run(cus).forEach { println(it.after!!.print()) }
+//  recipe.run(cus).forEach { println(it.after!!.print(Cursor())) }
 }
