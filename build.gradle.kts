@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.6.20-dev-1953"
+  kotlin("jvm") version "1.6.20-dev-4740"
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
@@ -182,7 +182,7 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.experiments.DocCompletionKt"
+      "edu.mcgill.cstk.experiments.CodeCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"
     isZip64 = true
