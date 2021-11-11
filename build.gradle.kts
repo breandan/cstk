@@ -28,9 +28,9 @@ repositories {
 }
 
 java.toolchain {
-  languageVersion.set(JavaLanguageVersion.of(15))
-  vendor.set(JvmVendorSpec.ADOPTOPENJDK)
-  implementation.set(JvmImplementation.J9)
+  languageVersion.set(JavaLanguageVersion.of(17))
+  vendor.set(JvmVendorSpec.AMAZON)
+//  implementation.set(JvmImplementation.J9)
 }
 
 dependencies {
@@ -47,7 +47,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.13.0"
+  val djlVersion = "0.14.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
@@ -61,7 +61,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.1.0"
+  val multikVersion = "0.1.1"
   implementation("org.jetbrains.kotlinx:multik-api:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -143,8 +143,10 @@ dependencies {
 //  implementation("io.joern:javasrc2cpg_2.13:0.0.5")
 
   implementation("ai.hypergraph:kaliningraph:0.1.8")
-  implementation("io.github.vovak:astminer:0.7.0")
+  implementation("io.github.vovak:astminer:0.8.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.4")
+
+  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-1")
 }
 
 tasks {
@@ -168,6 +170,7 @@ tasks {
     "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
     "astMiner" to "edu.mcgill.cstk.experiments.ASTMinerKt",
+    "spoon" to "edu.mcgill.cstk.experiments.SpoonTestKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)

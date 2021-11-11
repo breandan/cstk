@@ -9,13 +9,14 @@ import kotlin.reflect.KFunction1
 
 data class CodeSnippet(
   val original: String,
-  val complexity: Int = binComplexity(original.approxCyclomatic()),
+  val complexity: Int = binByComplexity(original.approxCyclomatic()),
   val sct: KFunction1<String, String>, // Source code transformation
   val variant: String = sct(original)
 ) {
   companion object {
     const val BINSIZE = 5
-    fun binComplexity(complexity: Int) = round(complexity.toDouble() / BINSIZE).toInt()
+    fun binByComplexity(complexity: Int) =
+      round(complexity.toDouble() / BINSIZE).toInt()
   }
   override fun hashCode() = complexity.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(original, variant)
@@ -26,16 +27,19 @@ fun main() {
     .also { println("Evaluating code completion with $MODEL on $it...") }
     .allFilesRecursively().allMethods()
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }
+    .filter { defaultTokenizer.tokenize(it).size < 200 }
 
   evaluateTransformations(
     validationSet = validationSet,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
-      String::renameTokens,
-      String::permuteArgumentOrder,
-      String::swapMultilineNoDeps,
-      String::addExtraLogging
+//      String::renameTokens,
+//      String::permuteArgumentOrder,
+//      String::swapMultilineNoDeps,
+//      String::addExtraLogging,
+      String::fuzzLoopBoundaries,
+//      String::mutateSyntax,
+      String::shuffleLines
     )
   )
 }
@@ -125,9 +129,6 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
       """.trimIndent()
 }
 
-// Masking all identifiers in all snippets is too expensive,
-// so instead we sample a small number of mask positions
-val SAMPLES = 10
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
 fun CodeSnippet.evaluateMultimask(): Double =
   (original.evaluateMultimask() to variant.evaluateMultimask())
@@ -135,14 +136,16 @@ fun CodeSnippet.evaluateMultimask(): Double =
 
 val dists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 
-fun String.evaluateMultimask(): Double =
+// Masking all identifiers in all snippets is too expensive,
+// so instead we sample a small number of mask positions
+fun String.evaluateMultimask(SAMPLES: Int = 10): Double =
   dists.get(this) {
-  maskIdentifiers().shuffled().take(SAMPLES)
-    .mapNotNull { (maskedMethod, trueToken) ->
-      val (completion, score) = completeAndScore(trueToken, maskedMethod)
-//      logDiffs(this, maskedMethod, trueToken, completion)
-      if (completion == ERR) null else score
-    }.average()
+    maskIdentifiers().shuffled().take(SAMPLES)
+      .mapNotNull { (maskedMethod, trueToken) ->
+        val (completion, score) = completeAndScore(trueToken, maskedMethod)
+      logDiffs(this, maskedMethod, trueToken, completion)
+        if (completion == ERR) null else score
+      }.average()
   }
 
 fun logDiffs(original: String, maskedSequence: String,
@@ -164,7 +167,12 @@ fun logDiffs(original: String, maskedSequence: String,
 }
 
 fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Double> =
-   complete(maskedSeqeunce).let { it to if (it == correctToken) 1.0 else 0.0 }
+//   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
+  getPredictions(maskedSeqeunce).let {
+    it.firstOrNull { correctToken.startsWith(it.trim()) }
+      ?.let { it to 1.0 }
+      ?: (it.first() to 0.0)
+  }
 
 // Returns various maskings with the masked word
 fun String.maskIdentifiers(): List<Pair<String, String>> =

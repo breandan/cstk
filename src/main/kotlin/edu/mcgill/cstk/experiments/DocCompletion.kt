@@ -111,9 +111,9 @@ fun main() {
       val relativeDifference = (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
             max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
       if(relativeDifference.isFinite() && relativeDifference.absoluteValue > 0.0) {
-        println("Ground truth doc: ${groundTruth.substringAfter(("//"))}")
-        println("Synth origin doc: ${syntheticJavadocForOriginalCode.substringAfter(("//"))}")
-        println("Synth refact doc: ${syntheticJavadocForRefactoredCode.substringAfter(("//"))}")
+        println("Ground truth doc: ${groundTruth.substringAfter("//")}")
+        println("Synth origin doc: ${syntheticJavadocForOriginalCode.substringAfter("//")}")
+        println("Synth refact doc: ${syntheticJavadocForRefactoredCode.substringAfter("//")}")
 
         printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
           leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
@@ -135,9 +135,9 @@ val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable()
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()
-//  line.startsWith("/*") ||
-    line.startsWith("//")// ||
-//    line.startsWith("*")
+  line.startsWith("/*") ||
+    line.startsWith("//") ||
+    line.startsWith("*")
 }
 
 fun String.splitDocAndCode() =

@@ -142,11 +142,11 @@ const val FILL = "<FILL>"
 fun String.fillFirstDoc(): String? =
   lines().first { docCriteria(it) }.let { firstDoc ->
     try {
-      lines().map {
+      lines().joinToString("\n") {
         if (it == firstDoc)
           it.substringBefore("//") + "// $FILL"
         else it
-      }.joinToString("\n")
+      }
 //      .also { println("To complete: $it")}
         .completeDocumentation(
           min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
@@ -161,7 +161,7 @@ tailrec fun String.completeDocumentation(length: Int = 20): String? =
   if (length == 1) replace(FILL, "")
   else replaceFirst(FILL,
     makeQuery(replaceFirst(FILL, MSK),
-    selector={ first { it.any { it.isLetterOrDigit() } } } // Nonempty comment
+    selector={ first { it.any(Char::isLetterOrDigit) } } // Nonempty comment
   ) + FILL)
     .completeDocumentation(length - 1)
 

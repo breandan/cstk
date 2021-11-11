@@ -2,8 +2,7 @@ package edu.mcgill.cstk.experiments
 
 import astminer.common.model.LabeledResult
 import astminer.parse.gumtree.GumTreeNode
-import astminer.parse.gumtree.java.GumTreeJavaParser
-import astminer.parse.gumtree.java.GumTreeJavaFunctionSplitter
+import astminer.parse.gumtree.java.srcML.*
 import astminer.storage.path.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.allLines
@@ -18,11 +17,11 @@ fun main() {
     .map { it.toString() to it.allLines().joinToString("\n") }
     .forEach { (path, contents) ->
       val fileTree =
-        GumTreeJavaParser().parseInputStream(contents.byteInputStream())
+        GumTreeJavaSrcmlParser().parseInputStream(contents.byteInputStream())
       val labeledResult: LabeledResult<GumTreeNode> = LabeledResult(fileTree,path,path)
 
-      val methodNodes = GumTreeJavaFunctionSplitter().splitIntoFunctions(labeledResult.root, path)
-      methodNodes.forEach { println(it.root.wrappedNode.toPrettyString(it.root.context)) }
+      val methodNodes = GumTreeJavaSrcmlFunctionSplitter().splitIntoFunctions(labeledResult.root, path)
+      methodNodes.forEach {it.root.prettyPrint()}
 
       code2vecStorage.store(labeledResult)
     }

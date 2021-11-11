@@ -4,6 +4,8 @@ import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
+import spoon.Launcher
+import spoon.reflect.declaration.CtMethod
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -38,48 +40,66 @@ fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
-val controlFlowKeywords = setOf("if", "else", "while", "case", "for", "switch",
+val controlFlowKeywords = setOf(
+  "if", "else", "while", "case", "for", "switch",
   "do", "continue", "break", "&&", "||", "?", ":", "catch",
-  "finally", "throw", "throws", "default", "return")
-val funKeywords = setOf("public ", "private ", "void ", "static ", "fun ", "/**")
+  "finally", "throw", "throws", "default", "return"
+)
+val funKeywords =
+  setOf("public ", "private ", "void ", "static ", "fun ", "/**")
 val notFunKeywords = setOf("class")
 val openParens = setOf('(', '{', '[')
 val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
-fun Sequence<URI>.allMethods(): Sequence<String> = map { path ->
-  path.allLines().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
+fun Sequence<URI>.allMethods(where: (CtMethod<*>) -> Boolean = { true }): Sequence<String> =
+  mapNotNull { path ->
+    path.contents()?.let {
+      try {
+        Launcher.parseClass(it).methods
+          .filter { where(it) }
+          .map(CtMethod<*>::toString)
+      } catch (exception: Exception) {
+        null
+      }
+    }
+  }.flatten()
+
+fun String.splitMethods(): List<String> =
+  lineSequence().fold(-1 to listOf<String>()) { (dyckSum, methods), line ->
     if (dyckSum < 0 && funKeywords.any { it in line } && notFunKeywords.none { it in line } && "(" in line) {
       line.countBalancedBrackets() to methods + line
     } else if (dyckSum == 0) {
-      if(line.isBlank()) -1 to methods else 0 to methods.put(line)
+      if (line.isBlank()) -1 to methods else 0 to methods.put(line)
     } else if (dyckSum > 0) {
       dyckSum + line.countBalancedBrackets() to methods.put(line)
     } else {
       -1 to methods
     }
-  }.second
-}.flatten().map { it.trimIndent() }.filter { "(" in it && "{" in it }
+  }.second.map { it.trimIndent() }.filter { "(" in it && "{" in it }
 
-fun List<String>.put(line: String) = dropLast(1) + (last() +"\n"+ line)
+fun List<String>.put(line: String) = dropLast(1) + (last() + "\n" + line)
 
 fun String.countBalancedBrackets(): Int =
   fold(0) { s, c -> if (c in openParens) s + 1 else if (c in closeParens) s - 1 else s }
 
-fun URI.allLines(): Sequence<String> =
+fun URI.contents(): String? =
   when (scheme) {
     TGZ_SCHEME -> vfsManager.resolveFile(this)
-      .content.getString(UTF_8).lineSequence()
-    FILE_SCHEME -> toPath().let {
-      if (it.extension in FILE_EXTs && it.exists())
-        it.readText().lineSequence()
-      else emptySequence()
-    }
-    else -> emptySequence()
+      .content.getString(UTF_8)
+    FILE_SCHEME -> toPath().run { if (extension in FILE_EXTs && exists()) readText() else null }
+    else -> null
   }
 
+fun URI.allLines(): Sequence<String> =
+  contents()?.lineSequence() ?: emptySequence()
+
 fun Path.read(start: Int = 0, end: Int = -1): String? =
-  try { Files.readString(this) } catch (e: Exception) { null }
+  try {
+    Files.readString(this)
+  } catch (e: Exception) {
+    null
+  }
     ?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
@@ -129,14 +149,17 @@ tailrec fun complete(
 ): String =
   if (maxTokens == 1 || lastToken.any { isStopChar(it) }) fullCompletion
   else complete(
-    query = query.replace(MSK, lastToken + MSK),
+    query = query.replace(MSK, fullCompletion + MSK),
     lastToken = fullCompletion,
     maxTokens = maxTokens - 1
   )
 
+fun getPredictions(query: String): List<String> =
+  makeQuery(query) { joinToString("|") }.split("|")
+
 fun makeQuery(
   query: String = "",
-  selector: List<String>.() -> String = {first()}
+  selector: List<String>.() -> String = { first() }
 ): String =
 //  try {
     URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
