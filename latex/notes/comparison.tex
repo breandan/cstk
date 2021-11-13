@@ -1,0 +1,776 @@
+%! suppress = MissingLabel
+%! Author = breandanconsidine
+%! Date = 11/12/21
+
+% Preamble
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,
+  bindingoffset=0.2in,
+  left=1in,
+  right=1in,
+  top=1in,
+  bottom=1in,
+  footskip=.25in]{geometry}
+\newcommand{\wmark}{\textcolor{orange}{\ding{45}}}
+\newcommand{\cmark}{\textcolor{green!80!black}{\ding{51}}}
+\newcommand{\xmark}{\textcolor{red}{\ding{55}}}
+
+\usepackage{multicol}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{soul,listings}
+\usepackage[dvipsnames]{xcolor}
+\DeclareRobustCommand{\hlred}[1]{{\sethlcolor{YellowOrange}\hl{#1}}}
+\DeclareRobustCommand{\hlblue}[1]{{\sethlcolor{SeaGreen}\hl{#1}}}
+\DeclareRobustCommand{\hlblue}[1]{{\sethlcolor{SkyBlue}\hl{#1}}}
+
+\makeatletter
+\def\verbatim@nolig@list{}
+\makeatother
+
+\lstdefinelanguage{java}{
+    comment=[l]{//},
+    commentstyle={\color{gray}\ttfamily},
+    emph={delegate, filter, firstOrNull, forEach, it, lazy, mapNotNull, println, repeat, assert, with, head, tail, len, return@},
+    numberstyle=\noncopyable,
+    emphstyle={\color{OrangeRed}},
+    identifierstyle=\color{black},
+    keywords={abstract, actual, as, as?, break, by, class, companion, continue, data, do, dynamic, else, enum, expect, false, final, for, fun, get, if, import, in, infix, interface, internal, is, null, object, open, operator, override, package, private, public, return, sealed, set, super, suspend, this, throw, true, try, catch, typealias, val, var, vararg, when, where, while, tailrec, reified},
+    keywordstyle={\color{NavyBlue}\bfseries},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    morestring=[s]{"""*}{*"""},
+    ndkeywords={@Deprecated, @JvmField, @JvmName, @JvmOverloads, @JvmStatic, @JvmSynthetic, Array, Byte, Double, Float, Boolean, Int, Integer, Iterable, Long, Runnable, Short, String},
+    ndkeywordstyle={\color{BurntOrange}\bfseries},
+    sensitive=true,
+    stringstyle={\color{ForestGreen}\ttfamily},
+    literate={`}{{\char0}}1,
+    escapeinside={(*@}{@*)}
+}
+
+\lstset{basicstyle=\ttfamily\lst@ifdisplaystyle\tiny\fi,linewidth=15cm}
+\usepackage{adjustbox}
+
+\usepackage{titlesec}
+
+%\titleformat*{\section}{\Small\bfseries}
+%\titleformat*{\subsection}{\footnotesize\bfseries}
+%\titlespacing*{\section}
+%{0pt}{1.5ex plus 1ex minus .2ex}{1.3ex plus .2ex}
+%\titlespacing*{\subsection}
+%{0pt}{1.5ex plus 1ex minus .2ex}{1.3ex plus .2ex}
+
+% Document
+\begin{document}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\section{Example}
+
+\subsection{Summary}
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:  faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful but
+Synth refact doc:  more details here and above and for creating or updating elements are two or fewer than
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+  Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+  // (*@\hlblue{We precompute the AttributeDefinition of the target attribute in order to being able to use much}@*)
+  // faster methods for setting/replacing attributes on the ElementAttributes implementation
+  this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+\begin{lstlisting}[language=java]
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+  Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+  // (*@\hlblue{faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful}@*)
+  // faster methods for setting/replacing attributes on the ElementAttributes implementation
+  this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+\begin{lstlisting}[language=java]
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{sensualizeDistinctness}@*)) {
+  Validate.notNull((*@\hlred{sensualizeDistinctness}@*), "Attribute Definitions cannot be null");
+  //  (*@\hlblue{more details here and above and for creating or updating elements are two or fewer than}@*)
+  // faster methods for setting/replacing attributes on the ElementAttributes implementation
+  this.targetAttributeDefinition = (*@\hlred{sensualizeDistinctness}@*).forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+After renaming \texttt{attributeDefinitions} to \texttt{sensualizeDistinctness}. The comment does not make sense.
+
+\subsection{Discrepancy}
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.3422913719943423
+ROUGE score after refactoring: 0.3352192362093352
+Relative difference: 0.021097046413502178
+Put 0.021097046413502178 in (9, renameTokens)
+\end{lstlisting}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:  faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful but
+Synth refact doc:  Helped in subclass methods for performance testing or by writing the below comments for adding
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{We precompute the AttributeDefinition of the target attribute in order to being able to use much}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+ }
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful but}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{externalizeRedefinition}@*)) {
+     Validate.notNull((*@\hlred{externalizeRedefinition}@*), "Attribute Definitions cannot be null");
+     // (*@\hlblue{Helped in subclass methods for performance testing or by writing the below comments for adding}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = (*@\hlred{externalizeRedefinition}@*).forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+ }
+\end{lstlisting}
+
+\subsection{Comment}
+
+After renaming \texttt{attributeDefinitions} to \texttt{externalizeRedefinition}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.3422913719943423
+ROUGE score after refactoring: 0.15841584158415842
+Relative difference: 1.1607142857142856
+Put 1.1607142857142856 in (9, renameTokens)
+\end{lstlisting}
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+
+\subsection{Summary}
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:  faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:  faster initialization methods and then call several different and distinct values for this definition and the
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{We precompute the AttributeDefinition of the target attribute in order to being able to use much}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{faster implementations are required for the generation but cannot override or replace attributes instead of just}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{assignDistinctness}@*)) {
+     Validate.notNull((*@\hlred{assignDistinctness}@*), "Attribute Definitions cannot be null");
+     // (*@\hlblue{faster initialization methods and then call several different and distinct values for this definition and the}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = (*@\hlred{assignDistinctness}@*).forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+\subsection{Comment}
+
+After renaming \texttt{attributeDefinitions} to \texttt{assignDistinctness}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.4200848656294201
+ROUGE score after refactoring: 0.056577086280056574
+Relative difference: 6.425000000000001
+Put 6.425000000000001 in (11, renameTokens)
+\end{lstlisting}
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:  faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:  convenience calls are replaced to support non standard methods but with only support on standard objects
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{We precompute the AttributeDefinition of the target attribute in order to being able to use much}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{faster implementations are required for the generation but cannot override or replace attributes instead of just}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{evaluateSharpness}@*)) {
+     Validate.notNull((*@\hlred{evaluateSharpness}@*), "Attribute Definitions cannot be null");
+     // (*@\hlblue{convenience calls are replaced to support non standard methods but with only support on standard objects}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = (*@\hlred{evaluateSharpness}@*).forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+\subsection{Comment}
+
+After renaming \texttt{attributeDefinitions} to \texttt{evaluateSharpness}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.4200848656294201
+ROUGE score after refactoring: 0.37057991513437055
+Relative difference: 0.13358778625954212
+Put 0.13358778625954212 in (11, renameTokens)
+\end{lstlisting}
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:  faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:  faster implementations or also use these are preferred for all other or even using other than
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{We precompute the AttributeDefinition of the target attribute in order to being able to use much}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+     // (*@\hlblue{faster implementations are required for the generation but cannot override or replace attributes instead of just}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+     Validate.notNull( "Attribute Definitions cannot be null"(*@\hlred{,attributeDefinitions}@*));
+     // (*@\hlblue{faster implementations or also use these are preferred for all other or even using other than}@*)
+     // faster methods for setting/replacing attributes on the ElementAttributes implementation
+     this.targetAttributeDefinition = attributeDefinitions.forName( this.targetAttrCompleteName(*@\hlred{,getTemplateMode())}@*);
+ }
+\end{lstlisting}
+
+\subsection{Comment}
+
+After swapping the argument order, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.4200848656294201
+ROUGE score after refactoring: 0.43847241867043846
+Relative difference: -0.041935483870967676
+Put -0.041935483870967676 in (11, permuteArgumentOrder)
+\end{lstlisting}
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  char[] are mutable but this is not an issue as this class is package-protected and the code from
+Synth origin doc:  Note the thread in process the callbacks are for which event listeners and thus that it identifies a
+Synth refact doc:  Note the context change occurs wherever a call or action from this instance which originated within a transaction instance
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] id, final char[] event) {
+     // (*@\hlblue{char[] are mutable but this is not an issue as this class is package-protected and the code from}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.event = event;
+ }
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] id, final char[] event) {
+     // (*@\hlblue{Note the thread in process the callbacks are for which event listeners and thus that it identifies a}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.event = event;
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] id, final char[] (*@\hlred{response}@*)) {
+     // (*@\hlblue{Note the context change occurs wherever a call or action from this instance which originated within a transaction instance}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.(*@\hlred{response = response;}@*)
+ }
+\end{lstlisting}
+
+\subsection{Comment}
+
+After renaming \texttt{event} to \texttt{response}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.36507936507936506
+ROUGE score after refactoring: 0.11507936507936507
+Relative difference: 2.1724137931034484
+Put 2.1724137931034484 in (10, renameTokens)
+\end{lstlisting}
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  char[] are mutable but this is not an issue as this class is package-protected and the code from
+Synth origin doc:  Note the thread in process the callbacks are for which event listeners and thus that it identifies a
+Synth refact doc:  Note the thread in process the call stack from to here and which frame is being tracked are which
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] id, final char[] event) {
+     // (*@\hlblue{char[] are mutable but this is not an issue as this class is package-protected and the code from}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.event = event;
+ }
+\end{lstlisting}
+
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] id, final char[] event) {
+     // (*@\hlblue{Note the thread in process the callbacks are for which event listeners and thus that it identifies a}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.event = event;
+ }
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+ public void startEvent(final char[] (*@\hlred{event}@*),final char[] (*@\hlred{id}@*)) {
+     // (*@\hlblue{Note the thread in process the call stack from to here and which frame is being tracked are which}@*)
+     // which this method is called is under control
+     this.newEvent = true;
+     this.id = id;
+     this.event = event;
+ }
+\end{lstlisting}
+
+\subsection{Comment}
+
+After swapping the argument order, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.36507936507936506
+ROUGE score after refactoring: 0.3373015873015873
+Relative difference: 0.08235294117647045
+Put 0.08235294117647045 in (10, permuteArgumentOrder)
+\end{lstlisting}
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  char[] are mutable but this is not an issue as this class is package-protected and the code from
+Synth origin doc:  Note the thread in process the callbacks are for which event listeners and thus that it identifies a
+Synth refact doc:  this object and it parent objects and any children are hidden if a parent control the element whose object
+\end{lstlisting}
+
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+public void startEvent(final char[] id, final char[] event) {
+  // (*@\hlblue{char[] are mutable but this is not an issue as this class is package-protected and the code from}@*)
+  // which this method is called is under control
+  this.newEvent = true;
+  this.id = id;
+  this.event = event;
+}
+\end{lstlisting}
+
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+public void startEvent(final char[] id, final char[] event) {
+  // (*@\hlblue{Note the thread in process the callbacks are for which event listeners and thus that it identifies a}@*)
+  // which this method is called is under control
+  this.newEvent = true;
+  this.id = id;
+  this.event = event;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+\begin{lstlisting}[language=java]
+public void startEvent(final char[] id, final char[] event) {
+  // (*@\hlblue{this object and it parent objects and any children are hidden if a parent control the element whose object}@*)
+  // which this method is called is under control
+  this.newEvent = true;
+
+  this.id = id;
+  this.event = event;
+}
+\end{lstlisting}
+\subsection{Comment}
+
+After adding extra whitespace, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.36507936507936506
+ROUGE score after refactoring: 0.3412698412698413
+Relative difference: 0.06976744186046503
+Put 0.06976744186046503 in (10, addWhitespace)
+\end{lstlisting}
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:  Note here is an exception that may result when the implementation checks whether and if the operation succeeds to
+Synth refact doc:  Make assumption that we already determined here is the caller of it and also know now we already determine
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{No need to control overflow here. The fact that this has overflow will be used as a flag to determine}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{Note here is an exception that may result when the implementation checks whether and if the operation succeeds to}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+@Override
+public void (*@\hlred{level}@*)() throws IOException {
+  // (*@\hlblue{Make assumption that we already determined here is the caller of it and also know now we already determine}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.(*@\hlred{level}@*)();
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+After renaming \texttt{flush} to \texttt{level}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.3645320197044335
+ROUGE score after refactoring: 0.45689655172413796
+Relative difference: -0.20215633423180598
+Put -0.20215633423180598 in (9, renameTokens)
+\end{lstlisting}
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:  Note here is an exception that may result when the implementation checks whether and if the operation succeeds to
+Synth refact doc:  Note here is an assertion that would tell that this writer knows now as is in case we detect
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{No need to control overflow here. The fact that this has overflow will be used as a flag to determine}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{Note here is an exception that may result when the implementation checks whether and if the operation succeeds to}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void flush() throws IOException {
+  @Override
+  (*@\hlred{//  Note here is an assertion that would tell that this writer knows now as is in case we detect}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.os.flush();
+}
+\end{lstlisting}
+\subsection{Comment}
+
+After reordering lines, the comment changes. The reordering is invalid, because \texttt{@Override} is a method annotation.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.3645320197044335
+ROUGE score after refactoring: 0.35467980295566504
+Relative difference: 0.02777777777777774
+Put 0.02777777777777774 in (9, swapMultilineNoDeps)
+\end{lstlisting}
+
+
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:  Note here is an exception that may result when the writer checks whether there exist problems or otherwise to
+Synth refact doc:  Make assumption to ensure there s an even size file and if required then it seems the user will
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{No need to control overflow here. The fact that this has overflow will be used as a flag to determine}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.writer.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+@Override
+public void flush() throws IOException {
+  // (*@\hlblue{Note here is an exception that may result when the writer checks whether there exist problems or otherwise to}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.writer.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+@Override
+public void (*@\hlred{kick}@*)() throws IOException {
+  // (*@\hlblue{Make assumption to ensure there s an even size file and if required then it seems the user will}@*)
+  // that further write operations are actually needed by means of the isOverflown() method.
+  this.writer.(*@\hlred{kick}@*)();
+}
+\end{lstlisting}
+\subsection{Comment}
+
+After renaming \texttt{flush} to \texttt{kick}, the comment changes. The comment does not make sense.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.35714285714285715
+ROUGE score after refactoring: 0.18719211822660098
+Relative difference: 0.9078947368421054
+Put 0.9078947368421054 in (9, renameTokens)
+\end{lstlisting}
+
+
+%---------------------------------------------------------------------------------------------------------------------------------------------------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  release memory
+Synth origin doc:  callers
+Synth refact doc:  call listeners
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+@Override
+protected void onDestroy() {
+  super.onDestroy();
+  // (*@\hlblue{release memory}@*)
+  if (mRecyclerView != null) {
+    mRecyclerView.destroy();
+    mRecyclerView = null;
+  }
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+@Override
+protected void onDestroy() {
+  super.onDestroy();
+  // (*@\hlblue{callers}@*)
+  if (mRecyclerView != null) {
+    mRecyclerView.destroy();
+    mRecyclerView = null;
+  }
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+@Override
+protected void onDestroy() {
+  super.onDestroy();
+  // (*@\hlblue{call listeners}@*)
+  if ((*@\hlred{86RecyclerReconsider}@*) != null) {
+    (*@\hlred{86RecyclerReconsider}@*).destroy();
+    (*@\hlred{86RecyclerReconsider}@*) = null;
+  }
+}
+\end{lstlisting}
+\subsection{Comment}
+
+After renaming \texttt{mRecyclerView} to \texttt{86RecyclerReconsider}. This renaming is invalid because Java identifiers cannot start with a number.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+ROUGE score before refactoring: 0.0
+ROUGE score after refactoring: 0.017964071856287425
+Relative difference: -1.0
+Put -1.0 in (13, renameTokens)
+\end{lstlisting}
+
+
+\end{document}
+

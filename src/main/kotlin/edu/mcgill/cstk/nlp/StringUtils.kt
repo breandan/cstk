@@ -176,7 +176,7 @@ fun printSideBySide(
   left: String, right: String,
   leftHeading: String = "original",
   rightHeading: String = "new",
-  maxLen: Int = 80, maxLines: Int = 20
+  maxLen: Int = 180, maxLines: Int = 200
 ) {
   val (leftLines, rightLines) = left.lines() to right.lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
