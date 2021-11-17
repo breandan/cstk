@@ -771,6 +771,1030 @@ Relative difference: -1.0
 Put -1.0 in (13, renameTokens)
 \end{lstlisting}
 
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  This method is meant to be overriden. By default, no local variables
+Synth origin doc:   this parameter before any attribute local values before tag parsing is executed is not
+Synth refact doc:   The value to the given expression as map key if found then value as
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> computeAdditionalLocalVariables(final ITemplateContext context, final IProcessableElementTag tag, final AttributeName attributeName, final String attributeValue, final IStandardExpression expression) {
+    // (*@\hlred{This}@*) (*@\hlred{method}@*) (*@\hlred{is}@*) (*@\hlred{meant}@*) (*@\hlred{to}@*) (*@\hlred{be}@*) (*@\hlred{overriden.}@*) (*@\hlred{By}@*) (*@\hlred{default,}@*) (*@\hlred{no}@*) (*@\hlred{local}@*) (*@\hlred{variables}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> computeAdditionalLocalVariables(final ITemplateContext context, final IProcessableElementTag tag, final AttributeName attributeName, final String attributeValue, final IStandardExpression expression) {
+    //  (*@\hlred{this}@*) (*@\hlred{parameter}@*) (*@\hlred{before}@*) (*@\hlred{any}@*) (*@\hlred{attribute}@*) (*@\hlred{local}@*) (*@\hlred{values}@*) (*@\hlred{before}@*) (*@\hlred{tag}@*) (*@\hlred{parsing}@*) (*@\hlred{is}@*) (*@\hlred{executed is not}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> (*@\hlred{resolveAccumulativeTopicalVector}@*)(final ITemplateContext context, final IProcessableElementTag tag, final AttributeName attributeName, final String attributeValue, final IStandardExpression expression) {
+    //  (*@\hlred{The}@*) (*@\hlred{value}@*) (*@\hlred{to}@*) (*@\hlred{the}@*) (*@\hlred{given}@*) (*@\hlred{expression}@*) (*@\hlred{as}@*) (*@\hlred{map}@*) (*@\hlred{key}@*) (*@\hlred{if}@*) (*@\hlred{found}@*) (*@\hlred{then value as}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.7447447447447447
+Rouge score after refactoring: 0.10810810810810811
+Relative difference: 5.888888888888888
+\end{lstlisting}
+
+%--------
+Put 5.8888 in (complexity=6, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|c}
+%Complexity          & renameTokens        \\\hline\\
+%60-70               & 5.888 ± 0.0 (1)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  This method is meant to be overriden. By default, no local variables
+Synth origin doc:   this parameter before any attribute local values before tag parsing is executed is not
+Synth refact doc:   this parameter should always exist since not more than this variable is expected to
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> computeAdditionalLocalVariables(final ITemplateContext context, final IProcessableElementTag tag, final AttributeName attributeName, final String attributeValue, final IStandardExpression expression) {
+    // (*@\hlred{This}@*) (*@\hlred{method}@*) (*@\hlred{is}@*) (*@\hlred{meant}@*) (*@\hlred{to}@*) (*@\hlred{be}@*) (*@\hlred{overriden.}@*) (*@\hlred{By}@*) (*@\hlred{default,}@*) (*@\hlred{no}@*) (*@\hlred{local}@*) (*@\hlred{variables}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> computeAdditionalLocalVariables(final ITemplateContext context, final IProcessableElementTag tag, final AttributeName attributeName, final String attributeValue, final IStandardExpression expression) {
+    //  (*@\hlred{this}@*) (*@\hlred{parameter}@*) (*@\hlred{before}@*) (*@\hlred{any}@*) (*@\hlred{attribute}@*) (*@\hlred{local}@*) (*@\hlred{values}@*) (*@\hlred{before}@*) (*@\hlred{tag}@*) (*@\hlred{parsing}@*) (*@\hlred{is}@*) (*@\hlred{executed is not}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+protected Map<String, Object> computeAdditionalLocalVariables((*@\hlred{ }@*)final (*@\hlred{AttributeName}@*) (*@\hlred{attributeName}@*), final (*@\hlred{IStandardExpression}@*) (*@\hlred{expression}@*),final (*@\hlred{ITemplateContext}@*) (*@\hlred{context}@*), final (*@\hlred{IProcessableElementTag}@*) (*@\hlred{tag}@*), final (*@\hlred{String}@*) (*@\hlred{attributeValue}@*)) {
+    //  (*@\hlred{this}@*) (*@\hlred{parameter}@*) (*@\hlred{should}@*) (*@\hlred{always}@*) (*@\hlred{exist}@*) (*@\hlred{since}@*) (*@\hlred{not}@*) (*@\hlred{more}@*) (*@\hlred{than}@*) (*@\hlred{this}@*) (*@\hlred{variable}@*) (*@\hlred{is expected to}@*)
+    // will be set.
+    return null;
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.7447447447447447
+Rouge score after refactoring: 0.7417417417417418
+Relative difference: 0.004048582995951325
+\end{lstlisting}
+
+%--------
+Put 0.0040 in (complexity=6, SCT=permuteArgumentOrder)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful but
+Synth refact doc:   also use this as alternative or add to a group with other groups for performance in
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) (*@\hlred{the}@*) (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{provided}@*) (*@\hlred{instead}@*) (*@\hlred{to}@*) (*@\hlred{implement}@*) (*@\hlred{additional}@*) (*@\hlred{and}@*) (*@\hlred{more}@*) (*@\hlred{sophisticated}@*) (*@\hlred{or}@*) (*@\hlred{intuitive}@*) (*@\hlred{or}@*) (*@\hlred{useful}@*) (*@\hlred{but}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{judgeExplanation}@*)) {
+    Validate.notNull((*@\hlred{judgeExplanation}@*), "Attribute Definitions cannot be null");
+    //  (*@\hlred{also}@*) (*@\hlred{use}@*) (*@\hlred{this}@*) (*@\hlred{as}@*) (*@\hlred{alternative}@*) (*@\hlred{or}@*) (*@\hlred{add}@*) (*@\hlred{to}@*) (*@\hlred{a}@*) (*@\hlred{group}@*) (*@\hlred{with}@*) (*@\hlred{other}@*) (*@\hlred{groups}@*) (*@\hlred{for}@*) (*@\hlred{performance}@*) (*@\hlred{in}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = (*@\hlred{judgeExplanation}@*).forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.3422913719943423
+Rouge score after refactoring: 0.24328147100424327
+Relative difference: 0.40697674418604657
+\end{lstlisting}
+
+%--------
+Put 0.4069 in (complexity=9, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & NaN ± NaN (0)       & 0.406 ± 0.0 (1)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are provided instead to implement additional and more sophisticated or intuitive or useful but
+Synth refact doc:   slower versions use these two versions as opposedto using this class which also defines more
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) (*@\hlred{the}@*) (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{provided}@*) (*@\hlred{instead}@*) (*@\hlred{to}@*) (*@\hlred{implement}@*) (*@\hlred{additional}@*) (*@\hlred{and}@*) (*@\hlred{more}@*) (*@\hlred{sophisticated}@*) (*@\hlred{or}@*) (*@\hlred{intuitive}@*) (*@\hlred{or}@*) (*@\hlred{useful}@*) (*@\hlred{but}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{ascribeExplanation}@*)) {
+    Validate.notNull((*@\hlred{ascribeExplanation}@*), "Attribute Definitions cannot be null");
+    //  (*@\hlred{slower}@*) (*@\hlred{versions}@*) (*@\hlred{use}@*) (*@\hlred{these}@*) (*@\hlred{two}@*) (*@\hlred{versions}@*) (*@\hlred{as}@*) (*@\hlred{opposedto}@*) (*@\hlred{using}@*) (*@\hlred{this}@*) (*@\hlred{class}@*) (*@\hlred{which}@*) (*@\hlred{also}@*) (*@\hlred{defines}@*) (*@\hlred{more}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = (*@\hlred{ascribeExplanation}@*).forName(TEMPLATE_MODE, TARGET_ATTR_NAME);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.3422913719943423
+Rouge score after refactoring: 0.14002828854314003
+Relative difference: 1.4444444444444444
+\end{lstlisting}
+
+%--------
+Put 1.4444 in (complexity=9, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 0.925 ± 0.269 (2)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   slower versions are implemented with these additional methods which call additional methods for avoiding duplicate values
+Synth refact doc:   add some utility code or use these two and three to use generic types to allow
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) (*@\hlred{the}@*) (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, this.targetAttributeCompleteName);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{slower}@*) (*@\hlred{versions}@*) (*@\hlred{are}@*) (*@\hlred{implemented}@*) (*@\hlred{with}@*) (*@\hlred{these}@*) (*@\hlred{additional}@*) (*@\hlred{methods}@*) (*@\hlred{which}@*) (*@\hlred{call}@*) (*@\hlred{additional}@*) (*@\hlred{methods}@*) (*@\hlred{for}@*) (*@\hlred{avoiding}@*) (*@\hlred{duplicate}@*) (*@\hlred{values}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(TEMPLATE_MODE, this.targetAttributeCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{anthropomorphiseExplanation}@*)) {
+    Validate.notNull((*@\hlred{anthropomorphiseExplanation}@*), "Attribute Definitions cannot be null");
+    //  (*@\hlred{add}@*) (*@\hlred{some}@*) (*@\hlred{utility}@*) (*@\hlred{code}@*) (*@\hlred{or}@*) (*@\hlred{use}@*) (*@\hlred{these}@*) (*@\hlred{two}@*) (*@\hlred{and}@*) (*@\hlred{three}@*) to (*@\hlred{use}@*) (*@\hlred{generic}@*) (*@\hlred{types }@*)to (*@\hlred{allow}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = (*@\hlred{anthropomorphiseExplanation}@*).forName(TEMPLATE_MODE, this.targetAttributeCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.36633663366336633
+Rouge score after refactoring: 0.16124469589816123
+Relative difference: 1.2719298245614037
+\end{lstlisting}
+
+%--------
+Put 1.2719 in (complexity=9, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:   helper functions for implementing a subclass and providing a lot to provide for simplicity and for
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) the (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{required}@*) (*@\hlred{for}@*) the (*@\hlred{generation}@*) (*@\hlred{but}@*) (*@\hlred{cannot}@*) (*@\hlred{override}@*) (*@\hlred{or}@*) (*@\hlred{replace}@*) (*@\hlred{attributes}@*) (*@\hlred{instead}@*) (*@\hlred{of}@*) (*@\hlred{just}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{assignSharpness}@*)) {
+    Validate.notNull((*@\hlred{assignSharpness}@*), "Attribute Definitions cannot be null");
+    //  (*@\hlred{helper}@*) (*@\hlred{functions}@*) (*@\hlred{for}@*) (*@\hlred{implementing}@*) (*@\hlred{a}@*) (*@\hlred{subclass}@*) (*@\hlred{and}@*) (*@\hlred{providing}@*) (*@\hlred{a}@*) (*@\hlred{lot}@*) to (*@\hlred{provide}@*) (*@\hlred{for}@*) (*@\hlred{simplicity}@*) (*@\hlred{and}@*) (*@\hlred{for}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = (*@\hlred{assignSharpness}@*).forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.4200848656294201
+Rouge score after refactoring: 0.05233380480905234
+Relative difference: 7.027027027027027
+\end{lstlisting}
+
+%--------
+Put 7.0270 in (complexity=11, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)   \\
+%110-120             & NaN ± NaN (0)       & 7.027 ± 0.0 (1)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:   slower implementations or also other slower or equivalent methods are encouraged and can instead invoke only
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) the (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{required}@*) (*@\hlred{for}@*) the (*@\hlred{generation}@*) (*@\hlred{but}@*) (*@\hlred{cannot}@*) (*@\hlred{override}@*) (*@\hlred{or}@*) (*@\hlred{replace}@*) (*@\hlred{attributes}@*) (*@\hlred{instead}@*) (*@\hlred{of}@*) (*@\hlred{just}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{slower}@*) (*@\hlred{implementations}@*) (*@\hlred{or}@*) (*@\hlred{also}@*) (*@\hlred{other}@*) (*@\hlred{slower}@*) (*@\hlred{or}@*) (*@\hlred{equivalent}@*) (*@\hlred{methods}@*) (*@\hlred{are}@*) (*@\hlred{encouraged}@*) (*@\hlred{and}@*) (*@\hlred{can}@*) (*@\hlred{instead}@*) (*@\hlred{invoke}@*) (*@\hlred{only}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName( this.targetAttrCompleteName(*@\hlred{,getTemplateMode(}@*))(*@\hlred{)}@*);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.4200848656294201
+Rouge score after refactoring: 0.3338048090523338
+Relative difference: 0.2584745762711866
+\end{lstlisting}
+
+%--------
+Put 0.2584 in (complexity=11, SCT=permuteArgumentOrder)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)   \\
+%110-120             & 0.258 ± 0.0 (1)     & 7.027 ± 0.0 (1)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:   also call addOptions or apply options on it and addTo instead to implement any
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) the (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{required}@*) (*@\hlred{for}@*) the (*@\hlred{generation}@*) (*@\hlred{but}@*) (*@\hlred{cannot}@*) (*@\hlred{override}@*) (*@\hlred{or}@*) (*@\hlred{replace}@*) (*@\hlred{attributes}@*) (*@\hlred{instead}@*) (*@\hlred{of}@*) (*@\hlred{just}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions (*@\hlred{accreditAccount}@*)) {
+    Validate.notNull((*@\hlred{accreditAccount}@*), "Attribute Definitions cannot be null");
+    //  (*@\hlred{also}@*) (*@\hlred{call}@*) (*@\hlred{addOptions}@*) (*@\hlred{or}@*) (*@\hlred{apply}@*) (*@\hlred{options}@*) (*@\hlred{on}@*) (*@\hlred{it}@*) (*@\hlred{and}@*) (*@\hlred{addTo}@*) (*@\hlred{instead}@*) to (*@\hlred{implement}@*) (*@\hlred{any}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = (*@\hlred{accreditAccount}@*).forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.4200848656294201
+Rouge score after refactoring: 0.11598302687411598
+Relative difference: 2.6219512195121952
+\end{lstlisting}
+
+%--------
+Put 2.6219 in (complexity=11, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)   \\
+%110-120             & 0.258 ± 0.0 (1)     & 4.824 ± 4.851 (2)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  We precompute the AttributeDefinition of the target attribute in order to being able to use much
+Synth origin doc:   faster implementations are required for the generation but cannot override or replace attributes instead of just
+Synth refact doc:   helper functions to implement more specific behavior and other general purpose behavior to call in this
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    // (*@\hlred{We}@*) (*@\hlred{precompute}@*) (*@\hlred{the}@*) (*@\hlred{AttributeDefinition}@*) (*@\hlred{of}@*) the (*@\hlred{target}@*) (*@\hlred{attribute}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{being}@*) (*@\hlred{able}@*) (*@\hlred{to}@*) (*@\hlred{use}@*) (*@\hlred{much}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull(attributeDefinitions, "Attribute Definitions cannot be null");
+    //  (*@\hlred{faster}@*) (*@\hlred{implementations}@*) (*@\hlred{are}@*) (*@\hlred{required}@*) (*@\hlred{for}@*) the (*@\hlred{generation}@*) (*@\hlred{but}@*) (*@\hlred{cannot}@*) (*@\hlred{override}@*) (*@\hlred{or}@*) (*@\hlred{replace}@*) (*@\hlred{attributes}@*) (*@\hlred{instead}@*) (*@\hlred{of}@*) (*@\hlred{just}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void setAttributeDefinitions(final AttributeDefinitions attributeDefinitions) {
+    Validate.notNull( "Attribute Definitions cannot be null"(*@\hlred{,attributeDefinitions}@*));
+    //  (*@\hlred{helper}@*) (*@\hlred{functions}@*) (*@\hlred{to}@*) (*@\hlred{implement}@*) (*@\hlred{more}@*) (*@\hlred{specific}@*) (*@\hlred{behavior}@*) (*@\hlred{and}@*) (*@\hlred{other}@*) (*@\hlred{general}@*) (*@\hlred{purpose}@*) (*@\hlred{behavior}@*) to (*@\hlred{call}@*) (*@\hlred{in this}@*)
+    // faster methods for setting/replacing attributes on the ElementAttributes implementation
+    this.targetAttributeDefinition = attributeDefinitions.forName(getTemplateMode(), this.targetAttrCompleteName);
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.4200848656294201
+Rouge score after refactoring: 0.1669024045261669
+Relative difference: 1.516949152542373
+\end{lstlisting}
+
+%--------
+Put 1.5169 in (complexity=11, SCT=permuteArgumentOrder)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)   \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  char[] are mutable but this is not an issue as this class is package-protected and the code from
+Synth origin doc:   Note the thread in process the callbacks are for which event listeners and thus that it identifies a
+Synth refact doc:   Note the context in that this method or context in other code is ignored since only that method called
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void startEvent(final char[] id, final char[] event) {
+    // (*@\hlred{char[]}@*) (*@\hlred{are}@*) (*@\hlred{mutable}@*) (*@\hlred{but}@*) (*@\hlred{this}@*) (*@\hlred{is}@*) (*@\hlred{not}@*) (*@\hlred{an}@*) (*@\hlred{issue}@*) (*@\hlred{as}@*) (*@\hlred{this}@*) (*@\hlred{class}@*) (*@\hlred{is}@*) (*@\hlred{package-protected}@*) (*@\hlred{and}@*) (*@\hlred{the}@*) (*@\hlred{code}@*) (*@\hlred{from}@*)
+    // which this method is called is under control
+    this.newEvent = true;
+    this.id = id;
+    this.event = event;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void startEvent(final char[] id, final char[] event) {
+    //  (*@\hlred{Note}@*) (*@\hlred{the}@*) (*@\hlred{thread}@*) (*@\hlred{in}@*) (*@\hlred{process}@*) (*@\hlred{the}@*) (*@\hlred{callbacks}@*) (*@\hlred{are}@*) (*@\hlred{for}@*) (*@\hlred{which}@*) (*@\hlred{event}@*) (*@\hlred{listeners}@*) (*@\hlred{and}@*) (*@\hlred{thus}@*) (*@\hlred{that}@*) (*@\hlred{it}@*) (*@\hlred{identifies}@*) (*@\hlred{a}@*)
+    // which this method is called is under control
+    this.newEvent = true;
+    this.id = id;
+    this.event = event;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void startEvent(final char[] id, final char[] (*@\hlred{byproduct}@*)) {
+    //  (*@\hlred{Note}@*) (*@\hlred{the}@*) (*@\hlred{context}@*) (*@\hlred{in}@*) (*@\hlred{that }@*)this (*@\hlred{method}@*) (*@\hlred{or}@*) (*@\hlred{context}@*) (*@\hlred{in}@*) (*@\hlred{other}@*) (*@\hlred{code}@*) is (*@\hlred{ignored}@*) (*@\hlred{since}@*) (*@\hlred{only}@*) (*@\hlred{that}@*) (*@\hlred{method called}@*)
+    // which this method is called is under control
+    this.newEvent = true;
+    this.id = id;
+    this.(*@\hlred{byproduct}@*) = (*@\hlred{byproduct;}@*)
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.36507936507936506
+Rouge score after refactoring: 0.3531746031746032
+Relative difference: 0.03370786516853921
+\end{lstlisting}
+
+%--------
+Put 0.0337 in (complexity=10, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.041 ± 0.206 (3)   \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:   Note here is an exception that may result when the implementation checks whether and if the operation succeeds to
+Synth refact doc:   notifying os that this object will flush out data without notice and informing that we can detect when
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    // (*@\hlred{No}@*) (*@\hlred{need}@*) (*@\hlred{to}@*) (*@\hlred{control}@*) (*@\hlred{overflow}@*) (*@\hlred{here.}@*) (*@\hlred{The}@*) (*@\hlred{fact}@*) (*@\hlred{that}@*) (*@\hlred{this}@*) (*@\hlred{has}@*) (*@\hlred{overflow}@*) (*@\hlred{will}@*) (*@\hlred{be}@*) (*@\hlred{used}@*) (*@\hlred{as}@*) (*@\hlred{a}@*) (*@\hlred{flag}@*) to(*@\hlred{ determine}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    //  (*@\hlred{Note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{exception}@*) (*@\hlred{that}@*) (*@\hlred{may}@*) (*@\hlred{result}@*) (*@\hlred{when}@*) (*@\hlred{the}@*) (*@\hlred{implementation}@*) (*@\hlred{checks}@*) (*@\hlred{whether}@*) (*@\hlred{and}@*) (*@\hlred{if}@*) (*@\hlred{the}@*) (*@\hlred{operation}@*) (*@\hlred{succeeds}@*) to
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void (*@\hlred{flat-bottom}@*)() throws IOException {
+    //  (*@\hlred{notifying}@*) (*@\hlred{os}@*) (*@\hlred{that}@*) (*@\hlred{this}@*) (*@\hlred{object}@*) (*@\hlred{will}@*) (*@\hlred{flush}@*) (*@\hlred{out}@*) (*@\hlred{data}@*) (*@\hlred{without}@*) (*@\hlred{notice}@*) (*@\hlred{and}@*) (*@\hlred{informing}@*) (*@\hlred{that}@*) (*@\hlred{we}@*) (*@\hlred{can}@*) (*@\hlred{detect}@*) (*@\hlred{when}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.(*@\hlred{flat-bottom}@*)();
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.3645320197044335
+Rouge score after refactoring: 0.07758620689655173
+Relative difference: 3.6984126984126986
+\end{lstlisting}
+
+%--------
+Put 3.6984 in (complexity=9, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|cc}
+%Complexity          & renameTokens        & permuteArgument     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.705 ± 1.478 (4)   \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:   Note here is an exception that may result when the implementation checks whether and if the operation succeeds to
+Synth refact doc:   Note here is an assertion that would tell that this writer knows now as is in case we detect
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    // (*@\hlred{No}@*) (*@\hlred{need}@*) (*@\hlred{to}@*) (*@\hlred{control}@*) (*@\hlred{overflow}@*) (*@\hlred{here.}@*) (*@\hlred{The}@*) (*@\hlred{fact}@*) (*@\hlred{that}@*) (*@\hlred{this}@*) (*@\hlred{has}@*) (*@\hlred{overflow}@*) (*@\hlred{will}@*) (*@\hlred{be}@*) (*@\hlred{used}@*) (*@\hlred{as}@*) (*@\hlred{a}@*) (*@\hlred{flag}@*) to(*@\hlred{ determine}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    //  (*@\hlred{Note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{exception}@*) (*@\hlred{that}@*) (*@\hlred{may}@*) (*@\hlred{result}@*) (*@\hlred{when}@*) (*@\hlred{the}@*) (*@\hlred{implementation}@*) (*@\hlred{checks}@*) (*@\hlred{whether}@*) (*@\hlred{and}@*) (*@\hlred{if}@*) (*@\hlred{the}@*) (*@\hlred{operation}@*) (*@\hlred{succeeds}@*) to
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+
+public void flush() throws IOException {
+(*@\hlred{Override}@*)
+(*@\hlred{    //  Note here is an assertion that would tell that this writer knows now as is in case we detect}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.os.flush();
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.3645320197044335
+Rouge score after refactoring: 0.35467980295566504
+Relative difference: 0.02777777777777774
+\end{lstlisting}
+
+%--------
+Put 0.0277 in (complexity=9, SCT=swapMultilineNoDeps)
+%\begin{table}[H]
+%\begin{tabular}{l|ccc}
+%Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.705 ± 1.478 (4)   & 0.027 ± 0.0 (1)     \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)   & NaN ± NaN (0)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  Model inserted BEFORE can never be processable
+Synth origin doc:   return nullableInstanceObjectsList
+Synth refact doc:   return nullableInstanceBuilderInstanceObject
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+public void insertBefore(final IModel model) {
+    resetAllButVariablesOrAttributes();
+    Validate.notNull(model, "Model cannot be null");
+    this.insertBeforeModel = true;
+    this.insertBeforeModelValue = model;
+    // (*@\hlred{Model}@*) (*@\hlred{inserted BEFORE can never be processable}@*)
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+public void insertBefore(final IModel model) {
+    resetAllButVariablesOrAttributes();
+    Validate.notNull(model, "Model cannot be null");
+    this.insertBeforeModel = true;
+    this.insertBeforeModelValue = model;
+    //  (*@\hlred{return}@*) (*@\hlred{nullableInstanceObjectsList}@*)
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+public void insertBefore(final IModel (*@\hlred{display}@*)) {
+    resetAllButVariablesOrAttributes();
+    Validate.notNull((*@\hlred{display}@*), "Model cannot be null");
+    this.insertBeforeModel = true;
+    this.insertBeforeModelValue = (*@\hlred{display;}@*)
+    //  (*@\hlred{return}@*) (*@\hlred{nullableInstanceBuilderInstanceObject}@*)
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.049773755656108594
+Rouge score after refactoring: 0.042986425339366516
+Relative difference: 0.1578947368421052
+\end{lstlisting}
+
+%--------
+Put 0.1578 in (complexity=8, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|ccc}
+%Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%80-90               & NaN ± NaN (0)       & 0.157 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.705 ± 1.478 (4)   & 0.027 ± 0.0 (1)     \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)   & NaN ± NaN (0)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:   Note here is an exception that may result when the writer checks whether there exist problems or otherwise to
+Synth refact doc:   Note here is an exception because there isn't enough logic in it and thus no assumption made there
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    // (*@\hlred{No}@*) (*@\hlred{need}@*) (*@\hlred{to}@*) (*@\hlred{control}@*) (*@\hlred{overflow}@*) (*@\hlred{here.}@*) (*@\hlred{The}@*) (*@\hlred{fact}@*) (*@\hlred{that}@*) (*@\hlred{this}@*) (*@\hlred{has}@*) (*@\hlred{overflow}@*) (*@\hlred{will}@*) (*@\hlred{be}@*) (*@\hlred{used}@*) (*@\hlred{as}@*) (*@\hlred{a}@*) (*@\hlred{flag}@*) to(*@\hlred{ determine}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    //  (*@\hlred{Note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{exception}@*) (*@\hlred{that}@*) (*@\hlred{may}@*) (*@\hlred{result}@*) (*@\hlred{when}@*) (*@\hlred{the}@*) (*@\hlred{writer}@*) (*@\hlred{checks}@*) (*@\hlred{whether}@*) (*@\hlred{there}@*) (*@\hlred{exist}@*) (*@\hlred{problems}@*) (*@\hlred{or}@*) (*@\hlred{otherwise}@*) to
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void (*@\hlred{feed}@*)() throws IOException {
+    //  (*@\hlred{Note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{exception}@*) (*@\hlred{because}@*) (*@\hlred{there}@*) (*@\hlred{isn't}@*) (*@\hlred{enough}@*) (*@\hlred{logic}@*) (*@\hlred{in}@*) (*@\hlred{it}@*) (*@\hlred{and}@*) (*@\hlred{thus}@*) (*@\hlred{no}@*) (*@\hlred{assumption}@*) (*@\hlred{made}@*) (*@\hlred{there}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.(*@\hlred{feed}@*)();
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.35714285714285715
+Rouge score after refactoring: 0.3817733990147783
+Relative difference: -0.064516129032258
+\end{lstlisting}
+
+%--------
+Put -0.064 in (complexity=9, SCT=renameTokens)
+%\begin{table}[H]
+%\begin{tabular}{l|ccc}
+%Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%80-90               & NaN ± NaN (0)       & 0.157 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.351 ± 1.684 (5)   & 0.027 ± 0.0 (1)     \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)   & NaN ± NaN (0)
+%\end{tabular}
+%\end{table}
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+Ground truth doc:  No need to control overflow here. The fact that this has overflow will be used as a flag to determine
+Synth origin doc:   Note here is an exception that may result when the writer checks whether there exist problems or otherwise to
+Synth refact doc:   Not a check of this implementation to check for any errors but also it seems useful here as to
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    // (*@\hlred{No}@*) (*@\hlred{need}@*) (*@\hlred{to}@*) (*@\hlred{control}@*) (*@\hlred{overflow}@*) (*@\hlred{here.}@*) (*@\hlred{The}@*) (*@\hlred{fact}@*) (*@\hlred{that}@*) (*@\hlred{this}@*) (*@\hlred{has}@*) (*@\hlred{overflow}@*) (*@\hlred{will}@*) (*@\hlred{be}@*) (*@\hlred{used}@*) (*@\hlred{as}@*) (*@\hlred{a}@*) (*@\hlred{flag}@*) to(*@\hlred{ determine}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.flush();
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+
+@Override
+public void flush() throws IOException {
+    //  (*@\hlred{Note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{exception}@*) (*@\hlred{that}@*) (*@\hlred{may}@*) (*@\hlred{result}@*) (*@\hlred{when}@*) (*@\hlred{the}@*) (*@\hlred{writer}@*) (*@\hlred{checks}@*) (*@\hlred{whether}@*) (*@\hlred{there}@*) (*@\hlred{exist}@*) (*@\hlred{problems}@*) (*@\hlred{or}@*) (*@\hlred{otherwise}@*) to
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.flush();
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+
+
+public void flush() throws IOException {
+(*@\hlred{Override}@*)
+(*@\hlred{    //  Not a check of this implementation to check for any errors but also it seems useful here as to}@*)
+    // that further write operations are actually needed by means of the isOverflown() method.
+    this.writer.flush();
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.35714285714285715
+Rouge score after refactoring: 0.13669950738916256
+Relative difference: 1.6126126126126126
+\end{lstlisting}
+
+%--------
+Put 1.6126 in (complexity=9, SCT=swapMultilineNoDeps)
+%\begin{table}[H]
+%\begin{tabular}{l|ccc}
+%Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\\
+%60-70               & 0.004 ± 0.0 (1)     & 5.888 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%80-90               & NaN ± NaN (0)       & 0.157 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%90-100              & -0.21 ± 0.0 (1)     & 1.351 ± 1.684 (5)   & 0.820 ± 0.627 (2)   \\
+%100-110             & NaN ± NaN (0)       & 0.033 ± 0.0 (1)     & NaN ± NaN (0)       \\
+%110-120             & 0.887 ± 0.395 (2)   & 4.824 ± 4.851 (2)   & NaN ± NaN (0)
+%\end{tabular}
+%\end{table}
 
 \end{document}
 
