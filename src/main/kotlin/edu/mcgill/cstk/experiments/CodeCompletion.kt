@@ -169,6 +169,12 @@ fun logDiffs(original: String, maskedSequence: String,
 fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Double> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
   getPredictions(maskedSeqeunce).let {
+    // Sometimes the source code token starts with the correct sequence, but
+    // since source code tokens can be comprised of multiple BERT tokens, we
+    // assume that if the prefix matches the ground truth, it is "correct".
+    // Since the model returns its top-5 predictions, this is equivalent to
+    // top-5 accuracy. This might be invalid if there are multiple tokens
+    // with the same prefix.
     it.firstOrNull { correctToken.startsWith(it.trim()) }
       ?.let { it to 1.0 }
       ?: (it.first() to 0.0)

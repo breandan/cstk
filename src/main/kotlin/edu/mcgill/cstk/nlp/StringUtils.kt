@@ -99,8 +99,7 @@ fun Path.read(start: Int = 0, end: Int = -1): String? =
     Files.readString(this)
   } catch (e: Exception) {
     null
-  }
-    ?.let { it.substring(start, if (end < 0) it.length else end) }
+  }?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
 fun String.extractConcordances(query: String): Sequence<Pair<String, Int>> =
@@ -161,13 +160,8 @@ fun makeQuery(
   query: String = "",
   selector: List<String>.() -> String = { first() }
 ): String =
-//  try {
     URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
       .readText().lines().selector()
-//  } catch (exception: Exception) {
-//    exception.printStackTrace();
-//    makeQuery(query)
-//  }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

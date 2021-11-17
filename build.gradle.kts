@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.6.20-dev-4740"
+  kotlin("jvm") version "1.6.0"
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
@@ -84,7 +84,7 @@ dependencies {
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
-  implementation("com.github.breandan:markovian:1.0-SNAPSHOT")
+  implementation("com.github.breandan:markovian")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
