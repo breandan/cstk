@@ -27,11 +27,11 @@ repositories {
   maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
-java.toolchain {
-  languageVersion.set(JavaLanguageVersion.of(17))
-  vendor.set(JvmVendorSpec.AMAZON)
+//java.toolchain {
+//  languageVersion.set(JavaLanguageVersion.of(17))
+//  vendor.set(JvmVendorSpec.AMAZON)
 //  implementation.set(JvmImplementation.J9)
-}
+//}
 
 dependencies {
   implementation(platform(kotlin("bom")))
