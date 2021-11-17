@@ -111,8 +111,8 @@ fun String.mostFrequentIdentifier(): String =
   }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
 
 fun String.permuteArgumentOrder(): String =
-  replace(Regex("\\((.*,.*)\\)")) { match ->
-    match.groupValues[1].split(",").shuffled().joinToString(",", "(", ")")
+  replace(Regex("\\((.*, .*)\\)")) { match ->
+    match.groupValues[1].split(", ").shuffled().joinToString(", ", "(", ")")
   }
 
 fun String.fuzzLoopBoundaries(): String =
