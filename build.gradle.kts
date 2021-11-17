@@ -50,7 +50,7 @@ dependencies {
   val djlVersion = "0.14.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
-  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.7.0-backport")
+  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.8.0")
   implementation("ai.djl.fasttext:fasttext-engine:$djlVersion")
   implementation("ai.djl.sentencepiece:sentencepiece:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-model-zoo:$djlVersion")
@@ -74,7 +74,7 @@ dependencies {
   // Source code transformation
 //  implementation("fr.inria.gforge.spoon:spoon-core:9.1.0-beta-20")
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.16.0"
+  val openrwVersion = "7.16.3"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 

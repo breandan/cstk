@@ -71,7 +71,7 @@ class CodeSnippetAttributeScoresTable {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
-    println("Put $metric in (${snippet.complexity}, ${snippet.sct.name})")
+    println("Put ${metric.toString().take(6)} in (complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
   }
 
   operator fun get(snippet: CodeSnippet): List<Double> =
@@ -101,7 +101,7 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
 \end{table}
    */
   fun toLatexTable(colWidth: Int = 20) =
-    """
+    ("""
       \begin{table}[H]
       \begin{tabular}{l|${"c".repeat(transformations.size)}}
       
@@ -126,7 +126,7 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
         
       \end{tabular}
       \end{table}
-      """.trimIndent()
+      """.trimIndent()).lines().joinToString("\n") { "%$it" }
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference

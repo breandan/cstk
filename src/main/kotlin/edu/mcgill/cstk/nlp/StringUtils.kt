@@ -166,6 +166,76 @@ fun makeQuery(
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
 
+fun printLatexSummary(
+  summary: String,
+  original: String,
+  synthetic: String,
+  variant: String,
+  discrepancy: String
+) =
+"""
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=java]
+$summary
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=java]
+${diffString(original, synthetic).first.highlightDiffedTeX()}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=java]
+${diffString(original, synthetic).second.highlightDiffedTeX()}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=java]
+${diffString(original, variant).second.highlightDiffedTeX()}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=java]
+$discrepancy
+\end{lstlisting}
+
+%--------
+""".trimIndent().also { println(it) }
+
+fun diffString(old: String, new: String) =
+  DiffRowGenerator.create()
+    .showInlineDiffs(true)
+    .ignoreWhiteSpaces(true)
+    .inlineDiffByWord(true)
+    .newTag { _ -> "~" }
+    .oldTag { _ -> "~" }
+    .lineNormalizer { it }
+    .build()
+    .generateDiffRows(old.lines(), new.lines())
+    .fold("" to "") { (o, n), it, ->
+      "$o\n${it.oldLine}" to "$n\n${it.newLine}"
+    }
+
+fun String.highlightDiffedTeX(
+  hlOpen: String = "(*@\\hlred{",
+  hlClose: String = "}@*)"
+) = fold("" to true) { (str, open), char ->
+    if(open && char == '~') "$str$hlOpen" to false
+    else if(!open && char == '~') "$str$hlClose" to true
+    else "$str$char" to open
+  }.first
+
 fun printSideBySide(
   left: String, right: String,
   leftHeading: String = "original",

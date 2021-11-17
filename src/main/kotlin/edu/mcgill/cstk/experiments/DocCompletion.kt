@@ -93,7 +93,8 @@ fun main() {
         String::renameTokens,
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps,
-        String::addExtraLogging
+        String::addExtraLogging,
+        String::swapPlusMinus
       ).map { sct -> it to sct }
     }
     .forEach { (originalMethod, sct) ->
@@ -111,18 +112,20 @@ fun main() {
       val relativeDifference = (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
             max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
       if(relativeDifference.isFinite() && relativeDifference.absoluteValue > 0.0) {
-        println("Ground truth doc: ${groundTruth.substringAfter("//")}")
-        println("Synth origin doc: ${syntheticJavadocForOriginalCode.substringAfter("//")}")
-        println("Synth refact doc: ${syntheticJavadocForRefactoredCode.substringAfter("//")}")
-
-        printSideBySide(originalMethod, originalCodeWithSyntheticJavadoc,
-          leftHeading = "original doc", rightHeading = "synthetic doc before refactoring")
-        printSideBySide(originalMethod, refactoredCodeWithSyntheticJavadoc,
-          leftHeading = "original doc", rightHeading = "synthetic doc after refactoring")
-
-        println("Rouge score before refactoring: $rougeScoreWithoutRefactoring")
-        println("Rouge score after refactoring: $rougeScoreWithRefactoring")
-        println("Relative difference: $relativeDifference")
+        printLatexSummary(
+          summary = """
+          Ground truth doc: ${groundTruth.substringAfter("//")}
+          Synth origin doc: ${syntheticJavadocForOriginalCode.substringAfter("//")}
+          Synth refact doc: ${syntheticJavadocForRefactoredCode.substringAfter("//")}
+          """.trimIndent(),
+          original = originalMethod,
+          synthetic = originalCodeWithSyntheticJavadoc,
+          variant = refactoredCodeWithSyntheticJavadoc,
+          discrepancy = """
+          Rouge score before refactoring: $rougeScoreWithoutRefactoring
+          Rouge score after refactoring: $rougeScoreWithRefactoring
+          Relative difference: $relativeDifference""".trimIndent()
+        )
 
         val snippet = CodeSnippet(originalMethod, cyclomaticComplexity, sct, refactoredCodeWithSyntheticJavadoc)
         rougeScoreByCyclomaticComplexity[snippet] = relativeDifference
