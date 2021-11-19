@@ -16,7 +16,7 @@ val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 val DELIMITER = Regex("\\W")
 
 // https://huggingface.co/microsoft
-val MODEL =
+const val MODEL =
 // The following models support masking
 //"microsoft/codebert-base"
 "microsoft/graphcodebert-base"

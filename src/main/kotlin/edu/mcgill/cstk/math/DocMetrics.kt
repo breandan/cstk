@@ -18,3 +18,7 @@ fun String.synonymCloud(): Set<String> =
 
 fun bleu(reference: String, candidate: String) =
   BleuScore(reference, candidate).bleu
+
+fun main() {
+  println(bleu("Mary had a little lamb", "Mary had a sheep"))
+}

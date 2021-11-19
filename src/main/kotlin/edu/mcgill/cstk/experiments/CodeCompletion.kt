@@ -2,10 +2,11 @@ package edu.mcgill.cstk.experiments
 
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.math.*
+import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
-import kotlin.math.*
+import kotlin.math.round
 import kotlin.reflect.KFunction1
+
 
 data class CodeSnippet(
   val original: String,
@@ -28,7 +29,7 @@ fun main() {
     .allFilesRecursively().allMethods()
     .map { it.first.toString() }
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 500 }
+//    .filter { defaultTokenizer.tokenize(it).size < 500 }
 
   evaluateTransformations(
     validationSet = validationSet,

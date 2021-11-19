@@ -57,22 +57,14 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
   companion object {
     /* Performs invalid character removal and whitespace cleanup on text. */
     fun cleanText(text: String?): String {
-      if (text == null) {
-        throw NullPointerException("The input String is null.")
-      }
+      if (text == null) throw NullPointerException("The input String is null.")
       val stringBuilder = StringBuilder("")
-      for (index in 0 until text.length) {
-        val ch = text[index]
-
+      for (element in text) {
         // Skip the characters that cannot be used.
-        if (CharChecker.isInvalid(ch) || CharChecker.isControl(ch)) {
+        if (CharChecker.isInvalid(element) || CharChecker.isControl(element)) {
           continue
         }
-        if (CharChecker.isWhitespace(ch)) {
-          stringBuilder.append(" ")
-        } else {
-          stringBuilder.append(ch)
-        }
+        stringBuilder.append(if (CharChecker.isWhitespace(element)) " " else element)
       }
       return stringBuilder.toString()
     }
@@ -82,7 +74,7 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
       if (text == null) {
         throw NullPointerException("The input String is null.")
       }
-      return Arrays.asList(*text.split(" ").toTypedArray())
+      return listOf(*text.split(" ").toTypedArray())
     }
 
     /* Splits punctuation on a piece of text. */
@@ -92,17 +84,16 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
       }
       val tokens: MutableList<String> = java.util.ArrayList()
       var startNewWord = true
-      for (i in 0 until text.length) {
-        val ch = text[i]
-        if (CharChecker.isPunctuation(ch)) {
-          tokens.add(ch.toString())
+      for (element in text) {
+        if (CharChecker.isPunctuation(element)) {
+          tokens.add(element.toString())
           startNewWord = true
         } else {
           if (startNewWord) {
             tokens.add("")
             startNewWord = false
           }
-          tokens[tokens.size - 1] = Iterables.getLast(tokens) + ch
+          tokens[tokens.size - 1] = Iterables.getLast(tokens) + element
         }
       }
       return tokens
@@ -123,9 +114,7 @@ class FullTokenizer(private val dic: Map<String, Int> = MODEL_DICT, doLowerCase:
 
   fun convertTokensToIds(tokens: List<String>): List<Int?> {
     val outputIds: MutableList<Int?> = ArrayList()
-    for (token in tokens) {
-      outputIds.add(dic[token])
-    }
+    for (token in tokens) outputIds.add(dic[token])
     return outputIds
   }
 

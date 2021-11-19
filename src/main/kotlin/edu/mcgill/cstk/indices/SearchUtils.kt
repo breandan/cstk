@@ -17,6 +17,6 @@ fun KWIndex.search(query: String): List<Concordance> =
 // Returns a map of files to concordances with all files containing all keywords
 fun KWIndex.search(vararg keywords: String) =
   keywords.map { search(it) }.reduce { acc, results ->
-    val common = results.map { it.uri }.intersect(results.map { it.uri })
+    val common = results.map { it.uri }.intersect(results.map { it.uri }.toSet())
     (acc + results).filter { it.uri in common }
   }.groupBy { it.uri }

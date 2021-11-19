@@ -223,7 +223,7 @@ fun diffString(old: String, new: String) =
     .lineNormalizer { it }
     .build()
     .generateDiffRows(old.lines(), new.lines())
-    .fold("" to "") { (o, n), it, ->
+    .fold("" to "") { (o, n), it ->
       "$o\n${it.oldLine}" to "$n\n${it.newLine}"
     }
 

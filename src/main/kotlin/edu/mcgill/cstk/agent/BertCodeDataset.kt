@@ -13,7 +13,6 @@ import java.util.*
 import java.util.Map.Entry.comparingByValue
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.toPath
-import kotlin.streams.toList
 
 
 class BertCodeDataset(
@@ -270,13 +269,13 @@ class BertCodeDataset(
       val currentToken = StringBuilder()
       for (idx in 0..length) {
         val c: Char = if (idx < length) normalizedLine[idx] else 0.toChar()
-        val isAlphabetic = Character.isAlphabetic(c.toInt())
+        val isAlphabetic = Character.isAlphabetic(c.code)
         val isUpperCase = Character.isUpperCase(c)
         if (c.code == 0 || !isAlphabetic || isUpperCase) {
           // we have reached the end of the string, encountered something other than a letter
           // or reached a new part of a camel-cased word - emit a new token
           if (currentToken.isNotEmpty()) {
-            result.add(currentToken.toString().toLowerCase())
+            result.add(currentToken.toString().lowercase())
             currentToken.setLength(0)
           }
           // if we haven't reached the end, we need to use the char

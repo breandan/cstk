@@ -7,8 +7,7 @@ fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
 
 fun <A: Any, B: Any> List<Pair<A?, B>>.filterFirstNotNull(): List<Pair<A, B>> =
   mapNotNull {
-    val fst: A? = it.first
-    when (fst) {
+    when (val fst: A? = it.first) {
       null -> null
       else -> fst to it.second
     }
@@ -16,8 +15,7 @@ fun <A: Any, B: Any> List<Pair<A?, B>>.filterFirstNotNull(): List<Pair<A, B>> =
 
 fun <A: Any, B: Any> List<Pair<A, B?>>.filterSecondNotNull(): List<Pair<A, B>> =
   mapNotNull {
-    val s: B? = it.second
-    when (s) {
+    when (val s: B? = it.second) {
       null -> null
       else -> it.first to s
     }
@@ -27,7 +25,7 @@ inline fun <T: Any, O: Any> List<T>.joinNotNull(
   others: List<O>,
   on: (a: T, b: O) -> Boolean = { a, b -> a == b }
 ): List<Pair<T, List<O>>> =
-  map { it: T -> it to others.filter { o: O -> on(it, o) } }
+  map { it to others.filter { o: O -> on(it, o) } }
 
 inline fun <T: Any, O: Any, K: Any> List<T>.joinNotNull(
   others: Map<K, O>, on: (a: T, b: Map<K, O>) -> List<O?>
