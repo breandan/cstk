@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.math
 
+import edu.berkeley.nlp.mt.BleuScore
 import edu.mcgill.cstk.experiments.synonyms
 import org.apache.commons.lang3.StringUtils
 
@@ -14,3 +15,6 @@ fun String.synonymCloud(): Set<String> =
     .filter { it.all(Char::isLetter) }
     .map { it.synonyms() }
     .flatten().toSet()
+
+fun bleu(reference: String, candidate: String) =
+  BleuScore(reference, candidate).bleu

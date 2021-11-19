@@ -24,19 +24,11 @@ repositories {
   mavenCentral()
   mavenLocal()
   maven("https://packages.jetbrains.team/maven/p/astminer/astminer")
+  // Required by KG 0.1.8, remove after updating
+  maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
-//java.toolchain {
-//  languageVersion.set(JavaLanguageVersion.of(17))
-//  vendor.set(JvmVendorSpec.AMAZON)
-//  implementation.set(JvmImplementation.J9)
-//}
-
 dependencies {
-  implementation(platform(kotlin("bom")))
-  implementation(kotlin("stdlib-jdk8"))
-  implementation(kotlin("reflect"))
-
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
@@ -126,10 +118,10 @@ dependencies {
   // Pretty-printing string diffs
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
-// Metrics for evaluating summarization
+// Metrics for evaluating summarization (e.g. BLEU, METEOR, chrF, SARI)
+  implementation("edu.berkeley.nlp:berkeleyparser:r32")
+  implementation("edu.berkeley.nlp:berkeleylm:1.1.2")
 //  implementation("org.apache.joshua:joshua-incubating:6.1")
-// TODO: send PR to fix JP build? https://github.com/kavgan/ROUGE-2.0/issues/16
-//  implementation("com.github.kavgan:ROUGE-2.0:1.2.1")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75

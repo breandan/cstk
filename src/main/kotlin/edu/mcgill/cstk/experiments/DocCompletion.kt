@@ -21,8 +21,8 @@ fun main() {
         String::renameTokens,
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps,
-        String::addExtraLogging,
-        String::swapPlusMinus
+//        String::addExtraLogging,
+//        String::swapPlusMinus
       ).map { sct -> it to sct }
     }
     .forEach { (methodAndOrigin, sct) ->
