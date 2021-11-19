@@ -24,7 +24,6 @@ repositories {
   mavenCentral()
   mavenLocal()
   maven("https://packages.jetbrains.team/maven/p/astminer/astminer")
-  maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
 }
 
 //java.toolchain {
@@ -185,8 +184,8 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-//      "edu.mcgill.cstk.experiments.CodeCompletionKt"
-      "edu.mcgill.cstk.experiments.DocCompletionKt"
+      "edu.mcgill.cstk.experiments.CodeCompletionKt"
+//      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"
     isZip64 = true
