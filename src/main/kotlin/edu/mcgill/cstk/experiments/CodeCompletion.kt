@@ -26,19 +26,20 @@ fun main() {
   val validationSet = DATA_DIR
     .also { println("Evaluating code completion with $MODEL on $it...") }
     .allFilesRecursively().allMethods()
+    .map { it.first.toString() }
     // Ensure tokenized method fits within attention
-    .filter { defaultTokenizer.tokenize(it).size < 200 }
+    .filter { defaultTokenizer.tokenize(it).size < 500 }
 
   evaluateTransformations(
     validationSet = validationSet,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
-//      String::renameTokens,
-//      String::permuteArgumentOrder,
-//      String::swapMultilineNoDeps,
-//      String::addExtraLogging,
+      String::renameTokens,
+      String::permuteArgumentOrder,
+      String::swapMultilineNoDeps,
+      String::addExtraLogging,
       String::fuzzLoopBoundaries,
-//      String::mutateSyntax,
+      String::mutateSyntax,
       String::shuffleLines
     )
   )
@@ -47,34 +48,37 @@ fun main() {
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: Sequence<String>,
-  evaluation: KFunction1<CodeSnippet, Double>,
+  evaluation: KFunction1<CodeSnippet, Pair<Int, Int>>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
     .flatMap { method -> setOf(method) * codeTxs.toSet() }
     .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
     .filter { it.original != it.variant }
-    .mapNotNull { snippet -> evaluation(snippet).let { if (it.isFinite()) snippet to it else null} }
-    .forEach { (snippet, metric) ->
-      csByMultimaskPrediction[snippet] = metric
+    .map { snippet -> snippet to evaluation(snippet) }
+    .forEach { (snippet, rightAndTotal) ->
+      csByMultimaskPrediction[snippet] = rightAndTotal
       println(csByMultimaskPrediction.toLatexTable())
     }
 
-val csByMultimaskPrediction = CodeSnippetAttributeScoresTable()
+val csByMultimaskPrediction = CodeSnippetAttributeScoresTable<Pair<Int, Int>> {
+  it.unzip().run { first.sum().toString().take(5) + " / " +
+    second.sum().toString().take(5) + " (${it.size})" }
+}
 
-class CodeSnippetAttributeScoresTable {
-  val scoreByCodeSnippet = mutableMapOf<Int, MutableList<Double>>()
+class CodeSnippetAttributeScoresTable<V>(val accumulator: (List<V>) -> String) {
+  val scoreByCodeSnippet = mutableMapOf<Int, MutableList<V>>()
   val complexities = mutableSetOf<Int>()
   val transformations = mutableSetOf<KFunction1<String, String>>()
 
-  operator fun set(snippet: CodeSnippet, metric: Double) {
+  operator fun set(snippet: CodeSnippet, metric: V) {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
     println("Put ${metric.toString().take(6)} in (complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
   }
 
-  operator fun get(snippet: CodeSnippet): List<Double> =
+  operator fun get(snippet: CodeSnippet): List<V> =
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList()
 
   /* Example of table output:
@@ -116,10 +120,8 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
           transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
               this[CodeSnippet("", cplx, tx, "")]
-                .let {
-                  it.average().toString().take(5) + " ± " +
-                    it.variance().toString().take(5) + " (${it.size})"
-                }.padEnd(colWidth)
+                .let { accumulator(it) }
+                .padEnd(colWidth)
             }
       } +
       """
@@ -130,22 +132,24 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
-fun CodeSnippet.evaluateMultimask(): Double =
+fun CodeSnippet.evaluateMultimask(): Pair<Int, Int> =
   (original.evaluateMultimask() to variant.evaluateMultimask())
-    .let { (a, b) -> (a - b) / max(a, b) }
+    .let { (a, b) -> (a.first - b.first) to a.second }
 
-val dists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
+val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
-fun String.evaluateMultimask(SAMPLES: Int = 10): Double =
+fun String.evaluateMultimask(SAMPLES: Int = 200): Pair<Int, Int> =
   dists.get(this) {
     maskIdentifiers().shuffled().take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
-      logDiffs(this, maskedMethod, trueToken, completion)
+//        logDiffs(this, maskedMethod, trueToken, completion)
         if (completion == ERR) null else score
-      }.average()
+      }.fold(0 to 0) { (correct, total), it ->
+        if(it > 0) correct + 1 to total + 1 else correct to total + 1
+      }
   }
 
 fun logDiffs(original: String, maskedSequence: String,
@@ -166,7 +170,7 @@ fun logDiffs(original: String, maskedSequence: String,
   }
 }
 
-fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Double> =
+fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Int> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
   getPredictions(maskedSeqeunce).let {
     // Sometimes the source code token starts with the correct sequence, but
@@ -176,8 +180,8 @@ fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String,
     // top-5 accuracy. This might be invalid if there are multiple tokens
     // with the same prefix.
     it.firstOrNull { correctToken.startsWith(it.trim()) }
-      ?.let { it to 1.0 }
-      ?: (it.first() to 0.0)
+      ?.let { it to 1 }
+      ?: (it.first() to 0)
   }
 
 // Returns various maskings with the masked word

@@ -52,13 +52,13 @@ val openParens = setOf('(', '{', '[')
 val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
-fun Sequence<URI>.allMethods(where: (CtMethod<*>) -> Boolean = { true }): Sequence<String> =
+fun Sequence<URI>.allMethods(where: (CtMethod<*>) -> Boolean = { true }): Sequence<Pair<CtMethod<*>, URI>> =
   mapNotNull { path ->
     path.contents()?.let {
       try {
         Launcher.parseClass(it).methods
           .filter { where(it) }
-          .map(CtMethod<*>::toString)
+          .map { it to path }
       } catch (exception: Exception) {
         null
       }
@@ -240,9 +240,10 @@ fun printSideBySide(
   left: String, right: String,
   leftHeading: String = "original",
   rightHeading: String = "new",
-  maxLen: Int = 180, maxLines: Int = 200
+  maxLen: Int = 180, maxLines: Int = 200,
 ) {
-  val (leftLines, rightLines) = left.lines() to right.lines()
+  val leftLines = left.lines()
+  val rightLines = right.lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
     val rows = DiffRowGenerator.create()
       .showInlineDiffs(true)
@@ -254,16 +255,20 @@ fun printSideBySide(
       .build()
       .generateDiffRows(leftLines, rightLines)
 
+    val padLeft = rows.maxOf { it.oldLine.length }
+    val padRight = rows.maxOf { it.newLine.length }
+
     println(
-      "| $leftHeading".padEnd(maxLen + 3, ' ') +
-        "| $rightHeading".padEnd(maxLen + 3, ' ') + "|"
+      "| $leftHeading".padEnd(padLeft + 3, ' ') +
+        "| $rightHeading".padEnd(padRight + 3, ' ') + "|"
     )
-    val sep = "|".padEnd(maxLen + 3, '-')
-    println("$sep$sep|")
+    val lsep = "|".padEnd(padLeft + 3, '-')
+    val rsep = "|".padEnd(padRight + 3, '-')
+    println("$lsep$rsep|")
     rows.forEach { row ->
       println(
-        "| " + row.oldLine.padEnd(maxLen, ' ') + " | " +
-          row.newLine.padEnd(maxLen, ' ') + " |"
+        "| " + row.oldLine.padEnd(padLeft, ' ') + " | " +
+          row.newLine.padEnd(padRight, ' ') + " |"
       )
     }
     println("\n")

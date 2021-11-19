@@ -40,8 +40,10 @@ fun main() {
   println("====SWAP +/- MUTATION=====")
   println(codeSnippet.swapPlusMinus())
 
-  TEST_DIR.allFilesRecursively().allMethods().take(1000)
-    .map { method ->
+  TEST_DIR.allFilesRecursively().allMethods()
+    .map { it.first.toString() to it.second }
+    .take(1000)
+    .map { (method, origin) ->
       val variant = method.renameTokens()
       if (variant == method) null else method to variant
     }.toList().mapNotNull { it }.forEach { (original, variant) ->
@@ -146,24 +148,18 @@ fun String.fillFirstDoc(): String? =
         if (it == firstDoc)
           it.substringBefore("//") + "// $FILL"
         else it
-      }
-//      .also { println("To complete: $it")}
-        .completeDocumentation(
-          min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
-        )
-//      .also { println("Completed: $it")}
-    } catch (exception: Exception) {
-      null
-    }
+      }.completeDocumentation(
+        min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
+      )
+    } catch (exception: Exception) { null }
   }
 
 tailrec fun String.completeDocumentation(length: Int = 20): String? =
   if (length == 1) replace(FILL, "")
   else replaceFirst(FILL,
     makeQuery(replaceFirst(FILL, MSK),
-    selector={ first { it.any(Char::isLetterOrDigit) } } // Nonempty comment
-  ) + FILL)
-    .completeDocumentation(length - 1)
+      selector = { first { it.any(Char::isLetterOrDigit) } } // Nonempty comment
+    ) + FILL).completeDocumentation(length - 1)
 
 tailrec fun String.fillOneByOne(): String =
   if (FILL !in this) this

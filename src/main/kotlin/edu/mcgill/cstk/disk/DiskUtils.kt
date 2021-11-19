@@ -2,6 +2,7 @@ package edu.mcgill.cstk.disk
 
 import edu.mcgill.cstk.nlp.allCodeFragments
 import org.apache.commons.vfs2.VFS
+import org.apache.commons.vfs2.FileObject
 import java.io.*
 import java.net.URI
 import java.nio.file.*
@@ -52,16 +53,16 @@ fun URI.allFilesRecursively(
   walkIntoCompressedFiles: Boolean = true
 ): Sequence<URI> =
   toPath().toFile().walkTopDown()
-    .filter { it.isFile }
-    .map { it.toURI() }
+    .filter(File::isFile)
+    .map(File::toURI)
     .map {
       if (walkIntoCompressedFiles && it.extension() == TGZ_SCHEME)
         vfsManager.resolveFile("tgz:${it.path}").runCatching {
-          findFiles(VFS_SELECTOR).asSequence().map { it.uri }
+          findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI)
         }.getOrDefault(sequenceOf())
       else sequenceOf(it)
     }.flatten()
-    .filter { ext == null || it.extension() == ext }
+    .filter { ext == null || it.extension() == ext }.shuffled()
 
 fun URI.extension() = toString().substringAfterLast('.')
 fun URI.suffix() = toString().substringAfterLast('/')

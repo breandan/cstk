@@ -9,9 +9,10 @@ import kotlin.math.absoluteValue
 fun main() {
   DATA_DIR.allFilesRecursively()
     .allMethods()
+    .map { it.first.toString() to it.second }
     // Ensure tokenized method fits within attention
-    .filter { method ->
-      defaultTokenizer.tokenize(method).size < 800 &&
+    .filter { (method, origin) ->
+      defaultTokenizer.tokenize(method).size < 500 &&
         method.approxCyclomatic() < 15 &&
         method.lines().any { line -> docCriteria(line) }
     }
@@ -24,12 +25,12 @@ fun main() {
         String::swapPlusMinus
       ).map { sct -> it to sct }
     }
-    .forEach { (originalMethod, sct) ->
-      val cyclomaticComplexity = originalMethod.approxCyclomatic()
-      val groundTruth = originalMethod.getDoc()
-      val originalCodeWithSyntheticJavadoc = originalMethod.fillFirstDoc() ?: return@forEach
+    .forEach { (methodAndOrigin, sct) ->
+      val (method, origin) = methodAndOrigin
+      val groundTruth = method.getDoc()
+      val originalCodeWithSyntheticJavadoc = method.fillFirstDoc() ?: return@forEach
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-      val refactoredCodeWithSyntheticJavadoc = sct(originalMethod).fillFirstDoc() ?: return@forEach
+      val refactoredCodeWithSyntheticJavadoc = sct(method).fillFirstDoc() ?: return@forEach
       val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
 
       val rougeScoreWithoutRefactoring = rougeSynonym(groundTruth, syntheticJavadocForOriginalCode)
@@ -47,14 +48,14 @@ fun main() {
 
       // Only report nontrivial lines (i.e. should contain some text)
       // when there is a variance between the synthetic docs after refactoring
-      if (oc.length > 30 && sc.isNotBlank() && sc != rc)
+      if (oc.length > 30 && sc.isNotBlank() && sc != rc) {
         printLatexSummary(
           summary = """
             Ground truth doc: $oc
             Synth origin doc: $sc
             Synth refact doc: $rc
             """.trimIndent(),
-          original = originalMethod,
+          original = method,
           synthetic = originalCodeWithSyntheticJavadoc,
           variant = refactoredCodeWithSyntheticJavadoc,
           discrepancy = """
@@ -62,17 +63,22 @@ fun main() {
             Rouge score after refactoring: $rougeScoreWithRefactoring
             Relative difference: $relativeDifference""".trimIndent()
         )
+        println("% Origin: $origin")
+      }
 
       // Only record nonzero and finite relative differences in comparison
       if (relativeDifference.run { isFinite() && absoluteValue > 0.0 }) {
-        val snippet = CodeSnippet(originalMethod, cyclomaticComplexity, sct, refactoredCodeWithSyntheticJavadoc)
+        val snippet = CodeSnippet(original = method, sct = sct, variant = refactoredCodeWithSyntheticJavadoc)
         rougeScoreByCyclomaticComplexity[snippet] = relativeDifference
         println(rougeScoreByCyclomaticComplexity.toLatexTable())
       }
     }
 }
 
-val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable()
+val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable<Double> {
+  it.average().toString().take(5) + " ± " +
+    it.variance().toString().take(5) + " (${it.size})"
+}
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()
