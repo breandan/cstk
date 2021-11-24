@@ -716,6 +716,16 @@ The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/cstk
 ./gradlew completeCode
 ```
 
+### Document synthesis
+
+The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/DocCompletion.kt) demo:
+
+```bash
+./gradlew completeDoc
+```
+
+For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf).
+
 ### Source Code Transformations
 
 CSTK supports a number of source code transformations for studying the effect on neural language models. Some examples are given below.
