@@ -138,6 +138,11 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.4")
 
   implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-1")
+  implementation("org.jetbrains.research.ml.ast.transformations:ast-transformations") {
+    version {
+      branch = "master"
+    }
+  }
 }
 
 tasks {
