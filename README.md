@@ -1,7 +1,10 @@
 # CSTK: Code Search Toolkit
 
-Tools and experiments for code search. Provides:
+Tools and experiments for code search. Broadly, we consider code synthesis as a search problem: programming is like a kind of biased random walk through edit space. Program synthesis then, can be viewed as is a goal-directed Markov decision process which takes a specification, and applies a sequence of source code transformations to evolve the code to more closely approximate some specification (e.g. test- or document- driven development). This repository provides tools for evaluating state-of-the-art neural code synthesizers by exploring various tasks, from natural language and code search and completion, optimal transport, to various couplings between code and documentation.
 
+* Probing tools for pretrained neural language models
+* Autoregressive code and document completion with masked LMs
+* Full-factorial experiments on source code
 * Indices for keyword and vector embedding
 * Learning to search & grammar induction
     * Passive DFA learning from membership
@@ -11,40 +14,34 @@ Tools and experiments for code search. Provides:
     * Proximity-based graph embedding
 * Metrics for string, vector and distribution matching
     * Kantorovich metric on code embeddings
-    * Code-snippet normal form
     * Various string distance metrics
-* TSNE visualization of code embeddings
-* Ranking metrics: NDCG, MAP@K, MRR
+    * Code-snippet normal form distance
+    * Ranking metrics: NDCG, MAP@K, MRR
+* [TSNE visualization](src/main/kotlin/edu/mcgill/cstk/experiments/VizCodeEmbeddings.kt) of code embeddings
 * Datamining and dataloading tools
 * ["MiniGitHub" mock training interface](#minigithub-construction)
 * [Probabilistic code synthesis with Markov tensors](#probabilistic-code-synthesis)
-* Probing tools for pretrained neural language models
-* Autoregressive code completion with masked LMs
 * Synthetic source code transformations
-    * [Synonym variable renaming](#synonym-renaming)
+    * Synonym variable renaming
     * Dead code introduction
     * Loop bounds alteration
     * Argument order swapping
     * Line order swapping
 * [Method slicing](latex/notes/slicing.pdf)
 
-# Indexing
-
-Provides a mock API for filesystem interactions.
-
-Stores BPE-compressed files in memory.
-
-Gives an agent the ability to selectively read and query files.
-
-Interface:
-
-* `Path.read(start, end)` - Returns file chunk at offset.
-* `Path.grep(query)` - Returns offsets matching query.
-* `Path.knn(code)` - Fetches similar code snippets to the query.
+Code and documentation are complementary and synergistic datatypes. A good programmer should be able to read and write both. Thus, we would expect a neural programmer to be conversant in both human and programming languages. We try to evaluate the extent to which that intuition holds true.
 
 # Usage
 
+We try our best to take an empirical approach. All experiments are conducted on a set of random repositories from GitHub containing a mixture of source code and documentation.
+
 ### MiniGitHub construction
+
+We first sample some random repositories from GitHub:
+
+```bash
+./gradlew sampleRepos
+```
 
 Clones a bunch of smallish repos on GitHub for evaluation:
 
@@ -53,6 +50,297 @@ Clones a bunch of smallish repos on GitHub for evaluation:
 ```
 
 Downloads Git repos into the `data` directory by default.
+
+### Masked code completion
+
+The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/CodeCompletion.kt) demo:
+
+```bash
+./gradlew completeCode
+```
+
+### Document synthesis
+
+The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/DocCompletion.kt) demo:
+
+```bash
+./gradlew completeDoc
+```
+
+For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf).
+
+### Source Code Transformations
+
+CSTK supports a number of source code transformations for studying the effect on neural language models. Some examples are given below.
+
+#### Synonym renaming
+
+Synonym renaming is provided by [extJWNL](https://github.com/extjwnl/extjwnl). Run the following command:
+
+```bash
+./gradlew synonymize
+```
+
+<details>
+
+Left column is the original, right column is synonymized:
+
+```
+fun VecIndex.knn(v: DoubleArray, i: Int, exact: Boolean = false) =    |    fun VecIndex.knn(v: DoubleArray, i: Int, involve: Boolean = false) =
+  if(exact) exactKNNSearch(v, i + 10)                                 |      if(involve) involveKNNSearch(v, i + 10)
+  else findNearest(v, i + 10)                                         |      else findNearest(v, i + 10)
+    .filter { !it.item().embedding.contentEquals(v) }                 |        .filter { !it.item().embedding.contentEquals(v) }
+    .distinctBy { it.item().toString() }.take(i)                      |        .distinctBy { it.item().toString() }.take(i)
+============================================================================================================================================
+fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) = |    fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestEdge: Int) =
+  asExactIndex().findNearest(vq, nearestNeighbors)                    |      asExactIndex().findNearest(vq, nearestEdge)
+============================================================================================================================================
+  override fun vector(): DoubleArray = embedding                      |      override fun variable(): DoubleArray = embedding
+============================================================================================================================================
+  override fun dimensions(): Int = embedding.size                     |      override fun mark(): Int = embedding.size
+============================================================================================================================================
+  override fun toString() = loc.getContext(0)                         |      override fun toWithdraw() = loc.getContext(0)
+}                                                                     |    }
+============================================================================================================================================
+fun main() {                                                          |    fun main() {
+  buildOrLoadVecIndex()                                               |      baseOrDepositVecFurnish()
+}                                                                     |    }
+============================================================================================================================================
+fun buildOrLoadKWIndex(                                               |    fun buildOrLoadKWIndex(
+  indexFile: File = File(DEFAULT_KNNINDEX_FILENAME),                  |      regulateIncriminate: File = File(DEFAULT_KNNINDEX_FILENAME),
+  rootDir: URI = TEST_DIR                                             |      rootDir: URI = TEST_DIR
+): KWIndex =                                                          |    ): KWIndex =
+  if (!indexFile.exists())                                            |      if (!regulateIncriminate.exists())
+    rebuildKWIndex(rootDir).apply { serializeTo(indexFile) }          |        rebuildKWIndex(rootDir).apply { serializeTo(regulateIncriminate) }
+  else indexFile.deserializeFrom()                                    |      else regulateIncriminate.deserializeFrom()
+============================================================================================================================================
+fun main() {                                                          |    fun main() {
+  buildOrLoadKWIndex(                                                 |      intensifyOrConcernKWFact(
+    indexFile = File(DEFAULT_KWINDEX_FILENAME),                       |        indexFile = File(DEFAULT_KWINDEX_FILENAME),
+    rootDir = File("data").toURI()                                    |        rootDir = File("data").toURI()
+  )                                                                   |      )
+}                                                                     |    }
+============================================================================================================================================
+fun String.shuffleLines() = lines().shuffled().joinToString("\n")     |    fun String.walkDepression() = lines().shuffled().joinToString("\n")
+============================================================================================================================================
+fun String.swapPlusMinus() =                                          |    fun String.goQualityMinus() =
+  map { if (it == '+') '-' else it }.joinToString("")                 |      map { if (it == '+') '-' else it }.joinToString("")
+============================================================================================================================================
+fun String.fuzzLoopBoundaries(): String =                             |    fun String.fuzzLoopBoundaries(): String =
+  replace(Regex("(for|while)(.*)([0-9]+)(.*)")) { match ->            |      replace(Regex("(for|while)(.*)([0-9]+)(.*)")) { change ->
+    match.groupValues.let { it[1] + it[2] +                           |        change.groupValues.let { it[1] + it[2] +
+      (it[3].toInt() + (1..3).random()) + it[4] }                     |          (it[3].toInt() + (1..3).random()) + it[4] }
+  }                                                                   |      }
+============================================================================================================================================
+fun String.swapMultilineNoDeps(): String =                            |    fun String.swapMultilineNoDeps(): String =
+  lines().chunked(2).map { lines ->                                   |      reenforce().chunked(2).map { reenforce ->
+    if (lines.size != 2) return@map lines                             |        if (reenforce.size != 2) return@map reenforce
+    val (a, b) = lines.first() to lines.last()                        |        val (a, b) = reenforce.first() to reenforce.last()
+    // Same indentation                                               |        // Same indentation
+    if (a.trim().length - a.length != b.trim().length - b.length)     |        if (a.trim().length - a.length != b.trim().length - b.length)
+      return@map listOf(a, b)                                         |          return@map listOf(a, b)
+============================================================================================================================================
+fun String.addDeadCode(): String =                                    |    fun String.reckonDeadLabel(): String =
+  lines().joinToString("\n") {                                        |      lines().joinToString("\n") {
+    if (Math.random() < 0.3) "$it; int deadCode = 2;" else it         |        if (Math.random() < 0.3) "$it; int deadCode = 2;" else it
+  }                                                                   |      }
+============================================================================================================================================
+fun main() = TrainSeq2Seq.runExample()                                |    fun main() = TrainSeq2Seq.contendRepresentation()
+============================================================================================================================================
+  override fun getData(manager: NDManager): Iterable<Batch> =         |      override fun buyData(manager: NDManager): Iterable<Batch> =
+    object: Iterable<Batch>, Iterator<Batch> {                        |        object: Iterable<Batch>, Iterator<Batch> {
+      var maskedInstances: List<MaskedInstance> = createEpochData()   |          var maskedInstances: List<MaskedInstance> = createEpochData()
+      var idx: Int = batchSize                                        |          var idx: Int = batchSize
+============================================================================================================================================
+      override fun hasNext(): Boolean = idx < maskedInstances.size    |          override fun bangNext(): Boolean = idx < maskedInstances.size
+============================================================================================================================================
+  override fun prepare(progress: Progress?) {                         |      override fun prepare(progress: Progress?) {
+    // get all applicable files                                       |        // get all applicable files
+    parsedFiles = TEST_DIR.allFilesRecursively(FILE_EXT)              |        analyzeAccuse = TEST_DIR.allFilesRecursively(FILE_EXT)
+      .map { it.toPath() }                                            |          .map { it.toPath() }
+      // read & tokenize them                                         |          // read & tokenize them
+      .map { parseFile(it) }                                          |          .map { parseFile(it) }
+    // determine dictionary                                           |        // determine dictionary
+    dictionary = buildDictionary(countTokens(parsedFiles))            |        dictionary = buildDictionary(countTokens(analyzeAccuse))
+  }                                                                   |      }
+============================================================================================================================================
+  fun getDictionarySize(): Int = dictionary!!.tokens.size             |      fun channeliseDictionaryFiller(): Int = dictionary!!.tokens.size
+============================================================================================================================================
+    operator fun get(id: Int): String =                               |        operator fun get(id: Int): String =
+      if (id >= 0 && id < tokens.size) tokens[id] else UNK            |          if (id >= 0 && id < sign.size) sign[id] else UNK
+============================================================================================================================================
+    operator fun get(token: String): Int =                            |        operator fun get(sign: String): Int =
+      tokenToId.getOrDefault(token, UNK_ID)                           |          signToId.getOrDefault(sign, UNK_ID)
+============================================================================================================================================
+    fun toTokens(ids: List<Int>): List<String> = ids.map { this[it] } |        fun toSymbol(ids: List<Int>): List<String> = ids.map { this[it] }
+============================================================================================================================================
+    fun getRandomToken(rand: Random?): String =                       |        fun getRandomToken(rand: Random?): String =
+      tokens[rand!!.nextInt(tokens.size)]                             |          disk[rand!!.nextInt(disk.size)]
+============================================================================================================================================
+    private fun batchFromList(                                        |        private fun batchFromList(
+      ndManager: NDManager,                                           |          metalTrainer: NDManager,
+      batchData: List<IntArray>                                       |          batchData: List<IntArray>
+    ) = ndManager.create(batchData.toTypedArray())                    |        ) = metalTrainer.create(batchData.toTypedArray())
+============================================================================================================================================
+    private fun batchFromList(                                        |        private fun assemblageFromEnumerate(
+      ndManager: NDManager,                                           |          ndManager: NDManager,
+      instances: List<MaskedInstance>,                                |          instances: List<MaskedInstance>,
+      f: (MaskedInstance) -> IntArray                                 |          f: (MaskedInstance) -> IntArray
+    ): NDArray = batchFromList(ndManager, instances.map { f(it) })    |        ): NDArray = assemblageFromEnumerate(ndManager, instances.map { f(it) })
+============================================================================================================================================
+fun List<Double>.variance() =                                         |    fun List<Double>.variance() =
+  average().let { mean -> map { (it - mean).pow(2) } }.average()      |      cypher().let { mean -> map { (it - mean).pow(2) } }.cypher()
+============================================================================================================================================
+fun euclidDist(f1: DoubleArray, f2: DoubleArray) =                    |    fun geometerDist(f1: DoubleArray, f2: DoubleArray) =
+  sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())                   |      sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
+============================================================================================================================================
+fun Array<DoubleArray>.average(): DoubleArray =                       |    fun Array<DoubleArray>.average(): DoubleArray =
+  fold(DoubleArray(first().size)) { a, b ->                           |      fold(DoubleArray(first().size)) { a, b ->
+    a.zip(b).map { (i, j) -> i + j }.toDoubleArray()                  |        a.zip(b).map { (i, j) -> i + j }.toBidVesture()
+  }.map { it / size }.toDoubleArray()                                 |      }.map { it / size }.toBidVesture()
+============================================================================================================================================
+  override fun distance(u: DoubleArray, v: DoubleArray) =             |      override fun distance(u: DoubleArray, v: DoubleArray) =
+    kantorovich(arrayOf(u), arrayOf(v))                               |        kantorovich(standOf(u), standOf(v))
+}                                                                     |    }
+============================================================================================================================================
+fun main() {                                                          |    fun main() {
+  val (a, b) = Pair(randomMatrix(400, 768), randomMatrix(400, 768))   |      val (a, b) = Pair(randomArray(400, 768), randomArray(400, 768))
+  println(measureTime { println(kantorovich(a, b)) })                 |      println(measureTime { println(kantorovich(a, b)) })
+}                                                                     |    }
+============================================================================================================================================
+    override fun processInput(                                        |        override fun processInput(
+      ctx: TranslatorContext,                                         |          ctx: TranslatorContext,
+      inputs: Array<String>                                           |          infix: Array<String>
+    ): NDList = NDList(                                               |        ): NDList = NDList(
+      NDArrays.stack(                                                 |          NDArrays.stack(
+        NDList(inputs.map { ctx.ndManager.create(it) })               |            NDList(infix.map { ctx.ndManager.create(it) })
+      )                                                               |          )
+    )                                                                 |        )
+============================================================================================================================================
+    override fun getBatchifier(): Batchifier? = null                  |        override fun channelizeBatchifier(): Batchifier? = null
+  }                                                                   |      }
+}                                                                     |    }
+============================================================================================================================================
+fun main() {                                                          |    fun main() {
+  val answer = BertQaInference.predict()                              |      val satisfy = BertQaInference.predict()
+  BertQaInference.logger.info("Answer: {}", answer)                   |      BertQaInference.logger.info("Answer: {}", satisfy)
+}                                                                     |    }
+============================================================================================================================================
+fun URI.extension() = toString().substringAfterLast('.')              |    fun URI.extension() = toRemove().substringAfterLast('.')
+fun URI.suffix() = toString().substringAfterLast('/')                 |    fun URI.suffix() = toRemove().substringAfterLast('/')
+============================================================================================================================================
+  fun getContext(surroundingLines: Int) =                             |      fun getContext(surroundingPipage: Int) =
+    uri.allLines().drop((line - surroundingLines).coerceAtLeast(0))   |        uri.allLines().drop((line - surroundingPipage).coerceAtLeast(0))
+      .take(surroundingLines + 1).joinToString("\n") { it.trim() }    |          .take(surroundingPipage + 1).joinToString("\n") { it.trim() }
+============================================================================================================================================
+  fun fileSummary() = toString().substringBeforeLast(':')             |      fun impeachSummary() = toString().substringBeforeLast(':')
+}                                                                     |    }
+============================================================================================================================================
+fun MutableGraph.show(filename: String = "temp") =                    |    fun MutableGraph.show(name: String = "temp") =
+  render(Format.PNG).run {                                            |      render(Format.PNG).run {
+    toFile(File.createTempFile(filename, ".png"))                     |        toFile(File.createTempFile(name, ".png"))
+  }.show()                                                            |      }.show()
+============================================================================================================================================
+fun <T> List<Pair<T, T>>.toLabeledGraph(                              |    fun <T> List<Pair<T, T>>.toLabeledGraph(
+  toVertex: T.() -> LGVertex = { LGVertex(hashCode().toString()) }    |      toExtreme: T.() -> LGVertex = { LGVertex(hashCode().toString()) }
+): LabeledGraph =                                                     |    ): LabeledGraph =
+  fold(first().first.toVertex().graph) { acc, (s, t) ->               |      fold(first().first.toExtreme().graph) { acc, (s, t) ->
+    val (v, w) = s.toVertex() to t.toVertex()                         |        val (v, w) = s.toExtreme() to t.toExtreme()
+    acc + LabeledGraph { v - w; w - v }                               |        acc + LabeledGraph { v - w; w - v }
+  }                                                                   |      }
+============================================================================================================================================
+  override fun run() {                                                |      override fun run() {
+    printQuery()                                                      |        availablenessAsk()
+    graphs.toIntOrNull()?.let { generateGraphs(it) }                  |        graphs.toIntOrNull()?.let { generateGraphs(it) }
+  }                                                                   |      }
+============================================================================================================================================
+fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =  |    fun URI.slowGrep(ask: String, glob: String = "*"): Sequence<QIC> =
+  allFilesRecursively().map { it.toPath() }                           |      allFilesRecursively().map { it.toPath() }
+    .mapNotNull { path ->                                             |        .mapNotNull { path ->
+      path.read()?.let { contents ->                                  |          path.read()?.let { contents ->
+        contents.extractConcordances(".*$query.*")                    |            contents.extractConcordances(".*$ask.*")
+          .map { (cxt, idx) -> QIC(query, path, cxt, idx) }           |              .map { (cxt, idx) -> QIC(ask, path, cxt, idx) }
+      }                                                               |          }
+    }.flatten()                                                       |        }.flatten()
+============================================================================================================================================
+```
+</details>
+
+
+### Probabilistic Code synthesis
+
+The following command will run the code synthesis demo:
+
+```bash
+./gradlew codeSynth -P train=[PATH_TO_TRAINING_DATA]
+```
+
+<details>
+
+This should produce something like the following text.
+
+3 symbols / symbol:
+
+```kotlin
+fun test = projection be
+       val private fun checkbox(): String {
+                  }
+
+    fun box(): String {
+         as String {
+      return "test org.rust
+       fun String {
+       s
+                       }
+           va     val box(): String {
+                     }
+```
+
+3 symbols / symbol:
+
+```python
+class Detection_instring else class_componse_source)
+           first_list_end]
+
+                           PVOID),
+    exception must in not instarted the commension.
+
+                 tokens = 0
+            error:
+             
+       def __name:  line, untile_path)
+           no blockThreader sys.get_paracter)
+        @rtype:  breated line_filenance',
+            if isinstack if not sequeue_size = node):
+```
+
+3 symbols / symbol, memory = 2:
+
+```kotlin
+val ritingConfig.indefaultResponseExtractory.persDsl {
+        */
+     * @see [hasNextContentType) }
+		fun true): UsertionInjectionInterFunctionse {
+
+    fun result() {
+		action that matcher example.order = ReactiveEntityList() {}
+
+	 * @see Request
+	inline fun values() = Selections.assure()
+
+             * This bean defining ther the ream()`.
+    * @see [list)
+		}
+	}
+
+    fun val set
+    
+       @Generate lastImperateBridge
+ * @see String, get method instance fun <reified contain await()
+      * @params: Map`() {
+		val mockRequest = Mocked().buil
+```
+</details>
 
 ### Keyword search
 
@@ -633,295 +921,21 @@ Angle brackets enclose longest common substring up to current result
 ```
 </details>
 
-### Probabilistic Code synthesis
 
-The following command will run the code synthesis demo:
+### Indexing
 
-```bash
-./gradlew codeSynth -P train=[PATH_TO_TRAINING_DATA]
-```
+Provides a mock API for filesystem interactions.
 
-<details>
+Stores BPE-compressed files in memory.
 
-This should produce something like the following text.
+Gives an agent the ability to selectively read and query files.
 
-3 symbols / symbol:
+Interface:
 
-```kotlin
-fun test = projection be
-       val private fun checkbox(): String {
-                  }
+* `Path.read(start, end)` - Returns file chunk at offset.
+* `Path.grep(query)` - Returns offsets matching query.
+* `Path.knn(code)` - Fetches similar code snippets to the query.
 
-    fun box(): String {
-         as String {
-      return "test org.rust
-       fun String {
-       s
-                       }
-           va     val box(): String {
-                     }
-```
-
-3 symbols / symbol:
-
-```python
-class Detection_instring else class_componse_source)
-           first_list_end]
-
-                           PVOID),
-    exception must in not instarted the commension.
-
-                 tokens = 0
-            error:
-             
-       def __name:  line, untile_path)
-           no blockThreader sys.get_paracter)
-        @rtype:  breated line_filenance',
-            if isinstack if not sequeue_size = node):
-```
-
-3 symbols / symbol, memory = 2:
-
-```kotlin
-val ritingConfig.indefaultResponseExtractory.persDsl {
-        */
-     * @see [hasNextContentType) }
-		fun true): UsertionInjectionInterFunctionse {
-
-    fun result() {
-		action that matcher example.order = ReactiveEntityList() {}
-
-	 * @see Request
-	inline fun values() = Selections.assure()
-
-             * This bean defining ther the ream()`.
-    * @see [list)
-		}
-	}
-
-    fun val set
-    
-       @Generate lastImperateBridge
- * @see String, get method instance fun <reified contain await()
-      * @params: Map`() {
-		val mockRequest = Mocked().buil
-```
-</details>
-
-### Masked code completion
-
-The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/CodeCompletion.kt) demo:
-
-```bash
-./gradlew completeCode
-```
-
-### Document synthesis
-
-The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/DocCompletion.kt) demo:
-
-```bash
-./gradlew completeDoc
-```
-
-For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf).
-
-### Source Code Transformations
-
-CSTK supports a number of source code transformations for studying the effect on neural language models. Some examples are given below.
-
-#### Synonym renaming
-
-Synonym renaming is provided by [extJWNL](https://github.com/extjwnl/extjwnl). Run the following command:
-
-```bash
-./gradlew synonymize
-```
-
-<details>
-
-Left column is the original, right column is synonymized:
-
-```
-fun VecIndex.knn(v: DoubleArray, i: Int, exact: Boolean = false) =    |    fun VecIndex.knn(v: DoubleArray, i: Int, involve: Boolean = false) =
-  if(exact) exactKNNSearch(v, i + 10)                                 |      if(involve) involveKNNSearch(v, i + 10)
-  else findNearest(v, i + 10)                                         |      else findNearest(v, i + 10)
-    .filter { !it.item().embedding.contentEquals(v) }                 |        .filter { !it.item().embedding.contentEquals(v) }
-    .distinctBy { it.item().toString() }.take(i)                      |        .distinctBy { it.item().toString() }.take(i)
-============================================================================================================================================
-fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestNeighbors: Int) = |    fun VecIndex.exactKNNSearch(vq: DoubleArray, nearestEdge: Int) =
-  asExactIndex().findNearest(vq, nearestNeighbors)                    |      asExactIndex().findNearest(vq, nearestEdge)
-============================================================================================================================================
-  override fun vector(): DoubleArray = embedding                      |      override fun variable(): DoubleArray = embedding
-============================================================================================================================================
-  override fun dimensions(): Int = embedding.size                     |      override fun mark(): Int = embedding.size
-============================================================================================================================================
-  override fun toString() = loc.getContext(0)                         |      override fun toWithdraw() = loc.getContext(0)
-}                                                                     |    }
-============================================================================================================================================
-fun main() {                                                          |    fun main() {
-  buildOrLoadVecIndex()                                               |      baseOrDepositVecFurnish()
-}                                                                     |    }
-============================================================================================================================================
-fun buildOrLoadKWIndex(                                               |    fun buildOrLoadKWIndex(
-  indexFile: File = File(DEFAULT_KNNINDEX_FILENAME),                  |      regulateIncriminate: File = File(DEFAULT_KNNINDEX_FILENAME),
-  rootDir: URI = TEST_DIR                                             |      rootDir: URI = TEST_DIR
-): KWIndex =                                                          |    ): KWIndex =
-  if (!indexFile.exists())                                            |      if (!regulateIncriminate.exists())
-    rebuildKWIndex(rootDir).apply { serializeTo(indexFile) }          |        rebuildKWIndex(rootDir).apply { serializeTo(regulateIncriminate) }
-  else indexFile.deserializeFrom()                                    |      else regulateIncriminate.deserializeFrom()
-============================================================================================================================================
-fun main() {                                                          |    fun main() {
-  buildOrLoadKWIndex(                                                 |      intensifyOrConcernKWFact(
-    indexFile = File(DEFAULT_KWINDEX_FILENAME),                       |        indexFile = File(DEFAULT_KWINDEX_FILENAME),
-    rootDir = File("data").toURI()                                    |        rootDir = File("data").toURI()
-  )                                                                   |      )
-}                                                                     |    }
-============================================================================================================================================
-fun String.shuffleLines() = lines().shuffled().joinToString("\n")     |    fun String.walkDepression() = lines().shuffled().joinToString("\n")
-============================================================================================================================================
-fun String.swapPlusMinus() =                                          |    fun String.goQualityMinus() =
-  map { if (it == '+') '-' else it }.joinToString("")                 |      map { if (it == '+') '-' else it }.joinToString("")
-============================================================================================================================================
-fun String.fuzzLoopBoundaries(): String =                             |    fun String.fuzzLoopBoundaries(): String =
-  replace(Regex("(for|while)(.*)([0-9]+)(.*)")) { match ->            |      replace(Regex("(for|while)(.*)([0-9]+)(.*)")) { change ->
-    match.groupValues.let { it[1] + it[2] +                           |        change.groupValues.let { it[1] + it[2] +
-      (it[3].toInt() + (1..3).random()) + it[4] }                     |          (it[3].toInt() + (1..3).random()) + it[4] }
-  }                                                                   |      }
-============================================================================================================================================
-fun String.swapMultilineNoDeps(): String =                            |    fun String.swapMultilineNoDeps(): String =
-  lines().chunked(2).map { lines ->                                   |      reenforce().chunked(2).map { reenforce ->
-    if (lines.size != 2) return@map lines                             |        if (reenforce.size != 2) return@map reenforce
-    val (a, b) = lines.first() to lines.last()                        |        val (a, b) = reenforce.first() to reenforce.last()
-    // Same indentation                                               |        // Same indentation
-    if (a.trim().length - a.length != b.trim().length - b.length)     |        if (a.trim().length - a.length != b.trim().length - b.length)
-      return@map listOf(a, b)                                         |          return@map listOf(a, b)
-============================================================================================================================================
-fun String.addDeadCode(): String =                                    |    fun String.reckonDeadLabel(): String =
-  lines().joinToString("\n") {                                        |      lines().joinToString("\n") {
-    if (Math.random() < 0.3) "$it; int deadCode = 2;" else it         |        if (Math.random() < 0.3) "$it; int deadCode = 2;" else it
-  }                                                                   |      }
-============================================================================================================================================
-fun main() = TrainSeq2Seq.runExample()                                |    fun main() = TrainSeq2Seq.contendRepresentation()
-============================================================================================================================================
-  override fun getData(manager: NDManager): Iterable<Batch> =         |      override fun buyData(manager: NDManager): Iterable<Batch> =
-    object: Iterable<Batch>, Iterator<Batch> {                        |        object: Iterable<Batch>, Iterator<Batch> {
-      var maskedInstances: List<MaskedInstance> = createEpochData()   |          var maskedInstances: List<MaskedInstance> = createEpochData()
-      var idx: Int = batchSize                                        |          var idx: Int = batchSize
-============================================================================================================================================
-      override fun hasNext(): Boolean = idx < maskedInstances.size    |          override fun bangNext(): Boolean = idx < maskedInstances.size
-============================================================================================================================================
-  override fun prepare(progress: Progress?) {                         |      override fun prepare(progress: Progress?) {
-    // get all applicable files                                       |        // get all applicable files
-    parsedFiles = TEST_DIR.allFilesRecursively(FILE_EXT)              |        analyzeAccuse = TEST_DIR.allFilesRecursively(FILE_EXT)
-      .map { it.toPath() }                                            |          .map { it.toPath() }
-      // read & tokenize them                                         |          // read & tokenize them
-      .map { parseFile(it) }                                          |          .map { parseFile(it) }
-    // determine dictionary                                           |        // determine dictionary
-    dictionary = buildDictionary(countTokens(parsedFiles))            |        dictionary = buildDictionary(countTokens(analyzeAccuse))
-  }                                                                   |      }
-============================================================================================================================================
-  fun getDictionarySize(): Int = dictionary!!.tokens.size             |      fun channeliseDictionaryFiller(): Int = dictionary!!.tokens.size
-============================================================================================================================================
-    operator fun get(id: Int): String =                               |        operator fun get(id: Int): String =
-      if (id >= 0 && id < tokens.size) tokens[id] else UNK            |          if (id >= 0 && id < sign.size) sign[id] else UNK
-============================================================================================================================================
-    operator fun get(token: String): Int =                            |        operator fun get(sign: String): Int =
-      tokenToId.getOrDefault(token, UNK_ID)                           |          signToId.getOrDefault(sign, UNK_ID)
-============================================================================================================================================
-    fun toTokens(ids: List<Int>): List<String> = ids.map { this[it] } |        fun toSymbol(ids: List<Int>): List<String> = ids.map { this[it] }
-============================================================================================================================================
-    fun getRandomToken(rand: Random?): String =                       |        fun getRandomToken(rand: Random?): String =
-      tokens[rand!!.nextInt(tokens.size)]                             |          disk[rand!!.nextInt(disk.size)]
-============================================================================================================================================
-    private fun batchFromList(                                        |        private fun batchFromList(
-      ndManager: NDManager,                                           |          metalTrainer: NDManager,
-      batchData: List<IntArray>                                       |          batchData: List<IntArray>
-    ) = ndManager.create(batchData.toTypedArray())                    |        ) = metalTrainer.create(batchData.toTypedArray())
-============================================================================================================================================
-    private fun batchFromList(                                        |        private fun assemblageFromEnumerate(
-      ndManager: NDManager,                                           |          ndManager: NDManager,
-      instances: List<MaskedInstance>,                                |          instances: List<MaskedInstance>,
-      f: (MaskedInstance) -> IntArray                                 |          f: (MaskedInstance) -> IntArray
-    ): NDArray = batchFromList(ndManager, instances.map { f(it) })    |        ): NDArray = assemblageFromEnumerate(ndManager, instances.map { f(it) })
-============================================================================================================================================
-fun List<Double>.variance() =                                         |    fun List<Double>.variance() =
-  average().let { mean -> map { (it - mean).pow(2) } }.average()      |      cypher().let { mean -> map { (it - mean).pow(2) } }.cypher()
-============================================================================================================================================
-fun euclidDist(f1: DoubleArray, f2: DoubleArray) =                    |    fun geometerDist(f1: DoubleArray, f2: DoubleArray) =
-  sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())                   |      sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
-============================================================================================================================================
-fun Array<DoubleArray>.average(): DoubleArray =                       |    fun Array<DoubleArray>.average(): DoubleArray =
-  fold(DoubleArray(first().size)) { a, b ->                           |      fold(DoubleArray(first().size)) { a, b ->
-    a.zip(b).map { (i, j) -> i + j }.toDoubleArray()                  |        a.zip(b).map { (i, j) -> i + j }.toBidVesture()
-  }.map { it / size }.toDoubleArray()                                 |      }.map { it / size }.toBidVesture()
-============================================================================================================================================
-  override fun distance(u: DoubleArray, v: DoubleArray) =             |      override fun distance(u: DoubleArray, v: DoubleArray) =
-    kantorovich(arrayOf(u), arrayOf(v))                               |        kantorovich(standOf(u), standOf(v))
-}                                                                     |    }
-============================================================================================================================================
-fun main() {                                                          |    fun main() {
-  val (a, b) = Pair(randomMatrix(400, 768), randomMatrix(400, 768))   |      val (a, b) = Pair(randomArray(400, 768), randomArray(400, 768))
-  println(measureTime { println(kantorovich(a, b)) })                 |      println(measureTime { println(kantorovich(a, b)) })
-}                                                                     |    }
-============================================================================================================================================
-    override fun processInput(                                        |        override fun processInput(
-      ctx: TranslatorContext,                                         |          ctx: TranslatorContext,
-      inputs: Array<String>                                           |          infix: Array<String>
-    ): NDList = NDList(                                               |        ): NDList = NDList(
-      NDArrays.stack(                                                 |          NDArrays.stack(
-        NDList(inputs.map { ctx.ndManager.create(it) })               |            NDList(infix.map { ctx.ndManager.create(it) })
-      )                                                               |          )
-    )                                                                 |        )
-============================================================================================================================================
-    override fun getBatchifier(): Batchifier? = null                  |        override fun channelizeBatchifier(): Batchifier? = null
-  }                                                                   |      }
-}                                                                     |    }
-============================================================================================================================================
-fun main() {                                                          |    fun main() {
-  val answer = BertQaInference.predict()                              |      val satisfy = BertQaInference.predict()
-  BertQaInference.logger.info("Answer: {}", answer)                   |      BertQaInference.logger.info("Answer: {}", satisfy)
-}                                                                     |    }
-============================================================================================================================================
-fun URI.extension() = toString().substringAfterLast('.')              |    fun URI.extension() = toRemove().substringAfterLast('.')
-fun URI.suffix() = toString().substringAfterLast('/')                 |    fun URI.suffix() = toRemove().substringAfterLast('/')
-============================================================================================================================================
-  fun getContext(surroundingLines: Int) =                             |      fun getContext(surroundingPipage: Int) =
-    uri.allLines().drop((line - surroundingLines).coerceAtLeast(0))   |        uri.allLines().drop((line - surroundingPipage).coerceAtLeast(0))
-      .take(surroundingLines + 1).joinToString("\n") { it.trim() }    |          .take(surroundingPipage + 1).joinToString("\n") { it.trim() }
-============================================================================================================================================
-  fun fileSummary() = toString().substringBeforeLast(':')             |      fun impeachSummary() = toString().substringBeforeLast(':')
-}                                                                     |    }
-============================================================================================================================================
-fun MutableGraph.show(filename: String = "temp") =                    |    fun MutableGraph.show(name: String = "temp") =
-  render(Format.PNG).run {                                            |      render(Format.PNG).run {
-    toFile(File.createTempFile(filename, ".png"))                     |        toFile(File.createTempFile(name, ".png"))
-  }.show()                                                            |      }.show()
-============================================================================================================================================
-fun <T> List<Pair<T, T>>.toLabeledGraph(                              |    fun <T> List<Pair<T, T>>.toLabeledGraph(
-  toVertex: T.() -> LGVertex = { LGVertex(hashCode().toString()) }    |      toExtreme: T.() -> LGVertex = { LGVertex(hashCode().toString()) }
-): LabeledGraph =                                                     |    ): LabeledGraph =
-  fold(first().first.toVertex().graph) { acc, (s, t) ->               |      fold(first().first.toExtreme().graph) { acc, (s, t) ->
-    val (v, w) = s.toVertex() to t.toVertex()                         |        val (v, w) = s.toExtreme() to t.toExtreme()
-    acc + LabeledGraph { v - w; w - v }                               |        acc + LabeledGraph { v - w; w - v }
-  }                                                                   |      }
-============================================================================================================================================
-  override fun run() {                                                |      override fun run() {
-    printQuery()                                                      |        availablenessAsk()
-    graphs.toIntOrNull()?.let { generateGraphs(it) }                  |        graphs.toIntOrNull()?.let { generateGraphs(it) }
-  }                                                                   |      }
-============================================================================================================================================
-fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =  |    fun URI.slowGrep(ask: String, glob: String = "*"): Sequence<QIC> =
-  allFilesRecursively().map { it.toPath() }                           |      allFilesRecursively().map { it.toPath() }
-    .mapNotNull { path ->                                             |        .mapNotNull { path ->
-      path.read()?.let { contents ->                                  |          path.read()?.let { contents ->
-        contents.extractConcordances(".*$query.*")                    |            contents.extractConcordances(".*$ask.*")
-          .map { (cxt, idx) -> QIC(query, path, cxt, idx) }           |              .map { (cxt, idx) -> QIC(ask, path, cxt, idx) }
-      }                                                               |          }
-    }.flatten()                                                       |        }.flatten()
-============================================================================================================================================
-```
-</details>
 
 # Deployment
 
@@ -945,6 +959,8 @@ java -jar gym-fs-fat-1.0-SNAPSHOT.jar | tee logfile.txt
 ```
 
 # Research Questions
+
+Some research questions which this work attempts to explore:
 
 * Can we learn to synthesize a search query which is likely to retrieve results containing relevant information to the local context
 * Do good queries contain keywords from the surrounding context? What information sources are the most salient?

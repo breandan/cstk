@@ -150,7 +150,7 @@ tasks {
     "trieSearch" to "edu.mcgill.cstk.disk.KWSearchKt",
     "knnSearch" to "edu.mcgill.cstk.disk.KNNSearchKt",
     "cloneRepos" to "edu.mcgill.cstk.github.CloneReposKt",
-    "filterRepos" to "edu.mcgill.cstk.github.FilterReposKt",
+    "sampleRepos" to "edu.mcgill.cstk.github.SampleReposKt",
     "trainBert" to "edu.mcgill.cstk.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.cstk.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.cstk.indices.VecIndexKt",
