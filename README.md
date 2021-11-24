@@ -1,6 +1,6 @@
 # CSTK: Code Search Toolkit
 
-Tools and experiments for code search. Broadly, we consider code synthesis as a search problem: programming is like a kind of biased random walk through edit space. Program synthesis then, can be viewed as is a goal-directed Markov decision process which takes a specification, and applies a sequence of source code transformations to evolve the code to more closely approximate some specification (e.g. test- or document- driven development). This repository provides tools for evaluating state-of-the-art neural code synthesizers by exploring various tasks, from natural language and code search and completion, optimal transport, to various couplings between code and documentation.
+Tools and experiments for code search. Broadly, we consider code synthesis as a search problem: [programming](https://breandan.net/public/programming_with_intelligent_machines.html) is like a kind of biased random walk through edit space. Program synthesis then, can be viewed as is a goal-directed Markov decision process which takes a specification, and applies a sequence of source code transformations to evolve the code to more closely approximate some specification (e.g. test- or document- driven development). This repository provides tools for evaluating state-of-the-art neural code synthesizers by exploring various tasks, from natural language and code search and completion, optimal transport, to various couplings between code and documentation.
 
 * Probing tools for pretrained neural language models
 * Autoregressive code and document completion with masked LMs
@@ -29,21 +29,23 @@ Tools and experiments for code search. Broadly, we consider code synthesis as a 
     * Line order swapping
 * [Method slicing](latex/notes/slicing.pdf)
 
-Code and documentation are complementary and synergistic datatypes. A good programmer should be able to read and write both. Thus, we would expect a neural programmer to be conversant in both human and programming languages. We try to evaluate the extent to which that intuition holds true.
+Code and documentation are complementary and synergistic datatypes. A good programmer should be able to read and write both. We expect a neural programmer to attain fluency in both human and programming languages. We try to evaluate the extent to which SOTA neural language models have mastered the ability to relate code to documentation. This indicates they have some understanding of the intent.
+
+We try our best to take an empirical approach. All experiments are conducted on a relatively diverse sampling of repositories from GitHub containing a mixture of source code and documentation. In those experiments, we use code completion, code search and other downstream tasks to compare the accuracy of pretrained models in constructed scenarios.
 
 # Usage
 
-We try our best to take an empirical approach. All experiments are conducted on a set of random repositories from GitHub containing a mixture of source code and documentation.
+Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 17.
 
 ### MiniGitHub construction
 
-We first sample some random repositories from GitHub:
+First sample some random repositories from GitHub:
 
 ```bash
 ./gradlew sampleRepos
 ```
 
-Clones a bunch of smallish repos on GitHub for evaluation:
+Then clone those repositories for evaluation:
 
 ```bash
 ./gradlew cloneRepos
@@ -59,6 +61,8 @@ The following will run the [`CodeCompletion.kt`](src/main/kotlin/edu/mcgill/cstk
 ./gradlew completeCode
 ```
 
+We use this task to evaluate the impact of source code transformation. If the relative completion accuracy drops after a SCT has been applied, this indicates the model is sensitive to noise.
+
 ### Document synthesis
 
 The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/experiments/DocCompletion.kt) demo:
@@ -67,7 +71,7 @@ The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/
 ./gradlew completeDoc
 ```
 
-For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf).
+For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf) using greedy autoregressive decoding with a natural language filter.
 
 ### Source Code Transformations
 
@@ -939,7 +943,7 @@ Interface:
 
 # Deployment
 
-Need to build fat JAR locally then deploy, CC doesn't like Gradle for some reason.
+Need to build a fat JAR locally then deploy, CC dislikes Gradle for some reason.
 
 ```bash
 ./gradlew shadowJar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
