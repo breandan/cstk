@@ -120,6 +120,4 @@ val DATA_DIR = File("data").absoluteFile.toURI()
 val TEST_DIR = File("src").absoluteFile.toURI()
 const val DEFAULT_KNNINDEX_FILENAME = "vector.idx"
 const val DEFAULT_KWINDEX_FILENAME = "keyword.idx"
-const val MINIGITHUB_REPOS_FILE = "github.txt"
-const val MINIGITHUB_SIZE = 100
 val TOKENIZER = BertTokenizer()

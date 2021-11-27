@@ -42,7 +42,7 @@ Experiments are mostly self-contained. Each Gradle task corresponds to a single 
 First sample some random repositories from GitHub:
 
 ```bash
-./gradlew sampleGithub
+./gradlew sampleRepos
 ```
 
 Then clone those repositories for evaluation:
