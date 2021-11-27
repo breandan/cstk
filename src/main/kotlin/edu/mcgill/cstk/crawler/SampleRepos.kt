@@ -17,7 +17,7 @@ fun main() {
 }
 
 fun sampleGoogleCode() =
-  (1..835).forEach { pg ->
+  (39..835).forEach { pg ->
     val url = "https://code.google.com/archive/search?q=java&page=$pg"
     val text = fetchJSWebpage(url)
 
