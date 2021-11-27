@@ -9,7 +9,7 @@ fun main() {
   val exclude = mutableSetOf<String>()
   val gitlabApiToken = File(".gltoken").readText().trim()
 
-  val query = "java+%7C+android+-javascript"
+  for (query in listOf("*", "java+%7C+android+-javascript")) {
   var noError = true
   var i = 1
 
@@ -32,7 +32,7 @@ fun main() {
         if (text == null || text.length < 200) {
           noError = true; return
         }
-//        println(response)
+        println(response)
         val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
         val matches = regex.find(text)
         var match = matches?.next()
@@ -55,6 +55,7 @@ fun main() {
     TimeUnit.SECONDS.sleep(13)
   }
 }
+}
 
 fun shouldBeExcludedFromGitlab(
   repo: String, strsToExclude: Set<String> = setOf(
@@ -67,7 +68,8 @@ fun shouldBeExcludedFromGitlab(
   try {
     val text = URL("https://gitlab.com/${repo}").readText().drop(3500)
     for (str in strsToExclude) if (str in text) return true
-    return false
+    if ("repository-language-bar-tooltip-language&quot;&gt;Java&lt;" in text) return false
+    return true
   } catch (e: Exception) {
     return true
   }

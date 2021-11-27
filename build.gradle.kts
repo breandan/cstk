@@ -97,6 +97,8 @@ dependencies {
 
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.135")
+  // Querying and filtering data from GitLab
+//  implementation("org.gitlab4j:gitlab4j-api:4.19.0")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.0.2")
 
