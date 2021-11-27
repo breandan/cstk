@@ -9,7 +9,10 @@ fun main() {
   val exclude = mutableSetOf<String>()
   val gitlabApiToken = File(".gltoken").readText().trim()
 
-  for (query in listOf("*", "java+%7C+android+-javascript")) {
+  val queries = listOf("*", "java+%7C+android+-javascript") +
+    ('a'..'z').map { it.toString() }
+
+  for (query in queries) {
   var noError = true
   var i = 1
 
