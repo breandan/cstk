@@ -13,6 +13,7 @@ import java.util.*
 import java.util.Map.Entry.comparingByValue
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.toPath
+import kotlin.streams.*
 
 
 class BertCodeDataset(
@@ -256,7 +257,7 @@ class BertCodeDataset(
       Files.lines(file, StandardCharsets.UTF_8)
         .map { line: String -> normalizeLine(line) }
         .filter { line: String -> line.trim { it <= ' ' }.isNotEmpty() }
-        .toList()
+        .asSequence().toList()
     } catch (ioe: IOException) {
       throw IllegalStateException("Could not read file $file", ioe)
     }

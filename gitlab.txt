@@ -4,9 +4,9 @@ https://gitlab.com/greg/diva-android
 https://gitlab.com/jerome/android-emulation
 https://gitlab.com/abgeana/android-commandlinetools
 https://gitlab.com/solarus-games/solarus-android
+https://gitlab.com/englishanywhere/FirebaseUI-Android
 https://gitlab.com/safesurfer/SafeSurfer-Android
 https://gitlab.com/technowolf/wallture-android
-https://gitlab.com/englishanywhere/FirebaseUI-Android
 https://gitlab.com/configseeder/java-demo
 https://gitlab.com/interhack-team-1/bandanar-android-app
 https://gitlab.com/nomadic-labs/cortez-android
@@ -16,9 +16,9 @@ https://gitlab.com/corina-s/java-project
 https://gitlab.com/afonseca2/java-threads
 https://gitlab.com/gitlab-silver/android-build-box
 https://gitlab.com/calebw/android-app-test
+https://gitlab.com/stkerr/my-test-android-app
 https://gitlab.com/cealsair/simple-java
 https://gitlab.com/blocksq/noise-java
-https://gitlab.com/stkerr/my-test-android-app
 https://gitlab.com/lvlup-pro/lvlup-sdk-java
 https://gitlab.com/juliebyrne-amazing-demo/java-app
 https://gitlab.com/lilHermit/remote-logger-client-android
@@ -27,14 +27,13 @@ https://gitlab.com/poffey21/java-maven-multimodules
 https://gitlab.com/pierre_adrien/my-new-android-app
 https://gitlab.com/axcelinno/console-java-simple
 https://gitlab.com/louca.mendy/bet-bro-java
-https://gitlab.com/lincwilliams-demo-area/juliet-java-1
+https://gitlab.com/lincwilliams-demo-area/java-just-sast
 https://gitlab.com/sa_group_pfd/simple-java-cd-training
 https://gitlab.com/SteveTerhar/java-code-coverage
 https://gitlab.com/rossfuhrman/android_snake_game
 https://gitlab.com/oka_kurniawan/iap-short-java-bridging-course
 https://gitlab.com/xiaogang_gitlab/juliet-test-suite-java-1
 https://gitlab.com/crossref/java_starter_project
-https://gitlab.com/arihantar/aarogyasetu_android
 https://gitlab.com/adadapted/android_sdk
 https://gitlab.com/accu-trade/cordova-plugin-androidx-multidex
 https://gitlab.com/java-team9/javademo
@@ -45,8 +44,8 @@ https://gitlab.com/k880/javatrainings
 https://gitlab.com/unboundsoftware/java_cet_plus_fonts
 https://gitlab.com/MozardBV/nl-mozard-JavaConnectionTester
 https://gitlab.com/jameschahwan/UTS-Advanced-Internet-Programming-Assignment1
+https://gitlab.com/ongresinc/fluent-process
 https://gitlab.com/marnow/stretch-ambition-lab
-https://gitlab.com/ongresinc/stringprep
 https://gitlab.com/pqq/kBrowser
 https://gitlab.com/bbmsoft.net/bbmsoft-parent
 https://gitlab.com/Fortify/example-eightball

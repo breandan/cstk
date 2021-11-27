@@ -28,16 +28,15 @@ fun main() {
       }
 
       override fun onResponse(response: Response?) {
-        if (response == null) {
+        val text = response?.body()?.string()
+        if (text == null || text.length < 200) {
           noError = true; return
         }
-        println(response)
+//        println(response)
         val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
-        val matches = regex.find(response.body().string())
+        val matches = regex.find(text)
         var match = matches?.next()
-        if (match == null) {
-          noError = true; return
-        }
+        if (match == null) { noError = true; return }
         while (match != null) {
           val url =
             match.value.dropLast(4).substringAfter("https://gitlab.com/")
@@ -61,7 +60,8 @@ fun shouldBeExcludedFromGitlab(
   repo: String, strsToExclude: Set<String> = setOf(
     "The repository for this project is empty",
     "forked_from_link",
-    "github"
+    "github",
+    "mirror",
   )
 ): Boolean {
   try {
