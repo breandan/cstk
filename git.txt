@@ -1,0 +1,13 @@
+https://git.drupalcode.org/project/javab
+https://git.savannah.gnu.org/git/gnuprologjava
+https://git.savannah.nongnu.org/git/aramorph
+https://git.shibboleth.net/git/java-opensaml
+https://git.renater.fr/anonscm/git/graphab/graphab
+https://git.locationtech.org/r/geoff/org.locationtech.geoff
+https://git.scc.kit.edu/von-bis-public/sample-app
+https://git.bioconductor.org/packages/OnassisJavaLibs
+https://git.fh-aachen.de/java-juelich/aufgaben-wiki.wiki
+https://git.sr.ht/~electric/DigitReader
+https://git.sven.stormbind.net/java-package
+https://git.gnome.org/browse/archive/java-gobject-introspection
+https://git.mylab.th-luebeck.de/nane.kratzke/mvc-java
