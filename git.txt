@@ -11,3 +11,6 @@ https://git.sr.ht/~electric/DigitReader
 https://git.sven.stormbind.net/java-package
 https://git.gnome.org/browse/archive/java-gobject-introspection
 https://git.mylab.th-luebeck.de/nane.kratzke/mvc-java
+https://gitlab.une.edu.au/cosc360in2018/play-java-seed
+https://gitlab.oit.duke.edu/ym129/son
+git://git.code.sf.net/p/tassel/tassel4-standalone
