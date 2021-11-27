@@ -9,8 +9,8 @@ fun main() {
   val exclude = mutableSetOf<String>()
   val gitlabApiToken = File(".gltoken").readText().trim()
 
-  val queries = listOf("*", "java+%7C+android+-javascript") +
-    ('a'..'z').map { it.toString() }
+  val queries = //listOf("*", "java+%7C+android+-javascript") +
+    ('g'..'z').map { it.toString() }
 
   for (query in queries) {
   var noError = true
@@ -33,13 +33,16 @@ fun main() {
       override fun onResponse(response: Response?) {
         val text = response?.body()?.string()
         if (text == null || text.length < 200) {
-          noError = true; return
+          noError = false; return
         }
         println(response)
         val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
         val matches = regex.find(text)
         var match = matches?.next()
-        if (match == null) { noError = true; return }
+        if (match == null) {
+          noError = false;
+          return
+        }
         while (match != null) {
           val url =
             match.value.dropLast(4).substringAfter("https://gitlab.com/")
@@ -54,6 +57,8 @@ fun main() {
         }
       }
     })
+
+    client
 
     TimeUnit.SECONDS.sleep(13)
   }
