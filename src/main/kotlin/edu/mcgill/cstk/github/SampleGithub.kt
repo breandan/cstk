@@ -26,7 +26,7 @@ fun main() =
     .collect(Collectors.toList())
     .sortedBy { -it.openIssueCount }
     .forEach {
-      File(MINIGITHUB_REPOS_FILE).appendText(it.httpTransportUrl + "\n")
+      File(MINIGITHUB_REPOS_FILE).appendText(it.httpTransportUrl.dropLast(4) + "\n")
       println(
         it.openIssueCount.toString().padEnd(6) +
           it.stargazersCount.toString().padEnd(9) +

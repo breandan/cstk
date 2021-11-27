@@ -118,10 +118,6 @@ dependencies {
   // Pretty-printing string diffs
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
-// Metrics for evaluating summarization (e.g. BLEU, METEOR, chrF, SARI)
-  implementation("edu.berkeley.nlp:berkeleyparser:r32")
-  implementation("edu.berkeley.nlp:berkeleylm:1.1.2")
-//  implementation("org.apache.joshua:joshua-incubating:6.1")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
@@ -150,7 +146,6 @@ tasks {
     "trieSearch" to "edu.mcgill.cstk.disk.KWSearchKt",
     "knnSearch" to "edu.mcgill.cstk.disk.KNNSearchKt",
     "cloneRepos" to "edu.mcgill.cstk.github.CloneReposKt",
-    "sampleRepos" to "edu.mcgill.cstk.github.SampleReposKt",
     "trainBert" to "edu.mcgill.cstk.agent.BertTrainerKt",
     "indexKW" to "edu.mcgill.cstk.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.cstk.indices.VecIndexKt",
@@ -167,6 +162,8 @@ tasks {
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
     "astMiner" to "edu.mcgill.cstk.experiments.ASTMinerKt",
     "spoon" to "edu.mcgill.cstk.experiments.SpoonTestKt",
+    "sampleGitlab" to "edu.mcgill.cstk.github.SampleGitlabKt",
+    "sampleGithub" to "edu.mcgill.cstk.github.SampleGithubKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
@@ -181,7 +178,8 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.experiments.CodeCompletionKt"
+      "edu.mcgill.cstk.github.SampleGitlabKt"
+//      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.github.CloneReposKt"

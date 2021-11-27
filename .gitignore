@@ -5,6 +5,7 @@
 *.idx
 *.json
 .ghtoken
+.gltoken
 grex*
 *.data
 *.txt
