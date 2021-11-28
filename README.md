@@ -16,7 +16,7 @@ Tools and experiments for code search. Broadly, we consider code synthesis as a 
   * Parsing and whole-AST GNN embeddings
   * Transformer embeddings of source code snippets
   * [t-SNE visualization](src/main/kotlin/edu/mcgill/cstk/experiments/VizCodeEmbeddings.kt) of code embeddings
-* [Persistent homology](#persistent-homology-of-source-code) of source code embeddings
+* [Persistent homology](#persistent-homology) of source code embeddings
 * Metrics for string, vector and distribution matching
   * Kantorovich metric on code embeddings
   * Various string distance metrics
@@ -80,7 +80,7 @@ The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/
 
 For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf) using greedy autoregressive decoding with a natural language filter.
 
-### Persistent homology of code
+### Persistent homology
 
 It is possible to visualize persistent homology. To construct a Čech complex on a set of source code snippets run:
 
@@ -94,10 +94,9 @@ This will embed the snippets and construct edges between the nearest neighbors. 
 
 | Matrix | Graph |
 ---------|-------|
-|
-![](latex/data/context4.png) | ![](latex/data/query4.png) |
-![](latex/data/context5.png) | ![](latex/data/query5.png) |
-![](latex/data/context6.png) | ![](latex/data/query6.png) |
+| <img src="latex/data/context4.png" height="200"/> | <img src="latex/data/query4.png" height="200"/>
+| <img src="latex/data/context5.png" height="200"/> | <img src="latex/data/query5.png" height="200"/>
+| <img src="latex/data/context6.png" height="200"/> | <img src="latex/data/query6.png" height="200"/>
 
 </details>
 
