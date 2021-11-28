@@ -4,32 +4,37 @@ Tools and experiments for code search. Broadly, we consider code synthesis as a 
 
 * Probing tools for pretrained neural language models
 * Autoregressive code and document completion with masked LMs
-* Full-factorial experiments on source code
+* [Full-factorial experiments](https://en.wikipedia.org/wiki/Factorial_experiment) on source code
 * Indices for keyword and vector embedding
 * Learning to search & grammar induction
-    * Passive DFA learning from membership
-    * Keyword/BoW-based query synthesis
+  * Passive DFA learning from membership
+  * Keyword/BoW-based query synthesis
 * Semantic graph construction
-    * Keyword-matching edge construction
-    * Proximity-based graph embedding
+  * Keyword-matching edge construction
+  * Proximity-based graph embedding
+* Vector embeddings for code
+  * Parsing and whole-AST GNN embeddings
+  * Transformer embeddings of source code snippets
+  * [t-SNE visualization](src/main/kotlin/edu/mcgill/cstk/experiments/VizCodeEmbeddings.kt) of code embeddings
+* [Persistent homology](#persistent-homology-of-source-code) of source code embeddings
 * Metrics for string, vector and distribution matching
-    * Kantorovich metric on code embeddings
-    * Various string distance metrics
-    * Code-snippet normal form distance
-    * Ranking metrics: NDCG, MAP@K, MRR
-* [TSNE visualization](src/main/kotlin/edu/mcgill/cstk/experiments/VizCodeEmbeddings.kt) of code embeddings
-* Datamining and dataloading tools
-* ["MiniGitHub" mock training interface](#minigithub-construction)
+  * Kantorovich metric on code embeddings
+  * Various string distance metrics
+  * Code-snippet normal form distance
+  * Ranking metrics: NDCG, MAP@K, MRR
+  * [Comparison of nearest-neighbors](#nearest-neighbor-search)
+* Tools for mining software repositories
+  * Supports Google Code, Gitlab, and self-hosted Git instances
+  * Deduplication with GitHub to avoid dataset biases
 * [Probabilistic code synthesis with Markov tensors](#probabilistic-code-synthesis)
 * Synthetic source code transformations
-    * Synonym variable renaming
-    * Dead code introduction
-    * Loop bounds alteration
-    * Argument order swapping
-    * Line order swapping
-* [Method slicing](latex/notes/slicing.pdf)
+  * Synonym variable renaming
+  * Dead code introduction
+  * Loop bounds alteration
+  * Argument order swapping
+  * Line order swapping
 
-Code and documentation are complementary and synergistic datatypes. A good programmer should be able to read and write both. We expect a neural programmer to attain fluency in both human and programming languages. We try to evaluate the extent to which SOTA neural language models have mastered the ability to relate code to documentation. This indicates they have some understanding of the intent.
+Code and documentation are complementary and synergistic datatypes. A good programmer should be able to read and write both. We expect a neural programmer to attain fluency in both human and programming languages and evaluate the extent to which SOTA neural language models have mastered this ability. This indicates they have some understanding of intent.
 
 We try our best to take an empirical approach. All experiments are conducted on a relatively diverse sampling of repositories from GitHub containing a mixture of source code and documentation. In those experiments, we use code completion, code search and other downstream tasks to compare the accuracy of pretrained models in constructed scenarios.
 
@@ -37,9 +42,11 @@ We try our best to take an empirical approach. All experiments are conducted on 
 
 Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 17.
 
-### MiniGitHub construction
+### Mining software repositories
 
-First sample some random repositories from GitHub:
+Tokens for accessing the [GitHub](https://docs.github.com/en/rest/reference/search) and [GitLab](https://docs.github.com/en/rest/reference/search) developer APIs should be placed in the `.ghtoken` and `.gltoken` files, respectively.
+
+The following comment will sample some repositories from GitHub, GitLab, Google Code:
 
 ```bash
 ./gradlew sampleRepos
@@ -72,6 +79,27 @@ The following will run the [`DocCompletion.kt`](src/main/kotlin/edu/mcgill/cstk/
 ```
 
 For example, here are some [synthetic documents produced by GraphCodeBERT](/latex/notes/all_synthetic_docs.pdf) using greedy autoregressive decoding with a natural language filter.
+
+### Persistent homology of code
+
+It is possible to visualize persistent homology. To construct a Čech complex on a set of source code snippets run:
+
+```
+./gradlew nearestNeighbors
+```
+
+This will embed the snippets and construct edges between the nearest neighbors. It's a nice way to visualize code:
+
+<details>
+
+| Matrix | Graph |
+---------|-------|
+|
+![](latex/data/context4.png) | ![](latex/data/query4.png) |
+![](latex/data/context5.png) | ![](latex/data/query5.png) |
+![](latex/data/context6.png) | ![](latex/data/query6.png) |
+
+</details>
 
 ### Source Code Transformations
 
@@ -270,6 +298,22 @@ fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =  |    fun U
 ```
 </details>
 
+### Whole-AST embeddings
+
+The [Code2Vec.kt](src/main/kotlin/edu/mcgill/cstk/experiments/Code2Vec.kt) extracts an AST from a set of source code snippets:
+
+```
+./gradlew code2Vec
+```
+
+Then it runs a few dozen iterations of GNN message passing and plots the whole-AST embedding in latent space. After dimensional reduction using t-SNE, we obtain the following picture:
+
+<details>
+
+![](/latex/figs/embeddings.png)
+</details>
+
+Colors represent the graph size. Additional rounds of message passing will result in further separation.
 
 ### Probabilistic Code synthesis
 
@@ -987,6 +1031,12 @@ Some research questions which this work attempts to explore:
 * [LearnLib](https://github.com/LearnLib/learnlib) - Java library for automata learning algorithms
 * [OR-Tools](https://developers.google.com/optimization/introduction/overview) - Software suite for combinatorial optimization
 * [KeyBERT](https://github.com/MaartenGr/KeyBERT) - Minimal keyword extraction using BERT
+
+## Mining repositories
+
+* [GitHub Java API](https://github.com/hub4j/github-api) - Fluent DSL for GitHub queries
+* [GitLab4J API](https://github.com/gitlab4j/gitlab4j-api) - Fluent DSL for GitLab queries
+* [HtmlUnit](https://github.com/HtmlUnit/htmlunit) - Simulates a headless browser
 
 # Papers
 

@@ -120,6 +120,7 @@ dependencies {
   // Pretty-printing string diffs
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
+  // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.55.0")
 
   // DFA to RegEx conversion
@@ -152,7 +153,6 @@ tasks {
     "indexKW" to "edu.mcgill.cstk.indices.KWIndexKt",
     "indexKNN" to "edu.mcgill.cstk.indices.VecIndexKt",
     "querySynth" to "edu.mcgill.cstk.experiments.DFAExtractionKt",
-    "vizCodeEmbed" to "edu.mcgill.cstk.experiments.VizCodeEmbeddingsKt",
     "compareMetrics" to "edu.mcgill.cstk.experiments.CompareMetricsKt",
     "compareCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxComparisonKt",
     "testCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxTestKt",
@@ -162,6 +162,7 @@ tasks {
     "completeDoc" to "edu.mcgill.cstk.experiments.DocCompletionKt",
     "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
+    "vizCodeEmbed" to "edu.mcgill.cstk.experiments.VizCodeEmbeddingsKt",
     "astMiner" to "edu.mcgill.cstk.experiments.ASTMinerKt",
     "spoon" to "edu.mcgill.cstk.experiments.SpoonTestKt",
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
