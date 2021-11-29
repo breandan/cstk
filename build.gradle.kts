@@ -96,7 +96,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-3")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.135")
+  implementation("org.kohsuke:github-api:1.301")
   // Querying and filtering data from GitLab
 //  implementation("org.gitlab4j:gitlab4j-api:4.19.0")
 
