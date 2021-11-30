@@ -4,6 +4,7 @@ import com.gargoylesoftware.htmlunit.*
 import com.gargoylesoftware.htmlunit.html.HtmlPage
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine
 import com.squareup.okhttp.*
+import org.gitlab4j.api.GitLabApi
 import org.kohsuke.github.*
 import java.io.*
 import java.net.URL
@@ -12,8 +13,8 @@ import java.util.stream.Collectors
 
 fun main() {
 //  sampleGithub()
-//  sampleGitlab()
-  sampleGoogleCode()
+  sampleGitlab()
+//  sampleGoogleCode()
 }
 
 fun sampleGoogleCode() =
@@ -23,20 +24,22 @@ fun sampleGoogleCode() =
 
     val regex = Regex("href=\"/archive/p/([^\"]*)\"")
     val matches = regex.findAll(text).map { it.groups[1]!!.value }.toList()
-    val uniqueMatches = matches.filter { !isGCodeRepoOnGithub(it) }
+    val uniqueMatches = matches.filter { !isRepoOnGitHub(it) }
     val gcodePrefix = "https://code.google.com/archive/p/"
     uniqueMatches.forEach { File(GC_REPOS_FILE).appendText(gcodePrefix + it + "\n") }
     println("Page $pg of 835 contained ${uniqueMatches.size} / ${matches.size} repos not on GitHub")
   }
 
-fun isGCodeRepoOnGithub(name: String) =
+fun isRepoOnGitHub(name: String) =
 //  "We couldn’t find any repositories matching" !in fetchJSWebpage("https://github.com/search?q=$name").also { println(it) }
-  GitHubBuilder()
-    .withJwtToken(File(".ghtoken").readText())
-    .build().searchRepositories()
-    .q(name)
-    .list()
-    .take(1).isNotEmpty()
+  try {
+    GitHubBuilder()
+      .withJwtToken(File(".ghtoken").readText())
+      .build().searchRepositories()
+      .q(name)
+      .list()
+      .take(1).isNotEmpty()
+  } catch (e :Exception) { e.printStackTrace();false }
 
 fun fetchJSWebpage(url: String) =
   (WebClient(BrowserVersion.CHROME).apply {
@@ -82,12 +85,23 @@ fun sampleGithub() =
       )
     }
 
+val gitlabApiToken = File(".gltoken").readText().trim()
+val gitLabApi = GitLabApi("https://gitlab.com", gitlabApiToken)
+
+fun sendGET(queryUrl: String) =
+  OkHttpClient().newCall(
+    Request.Builder().url(queryUrl)
+      .header("PRIVATE-TOKEN", gitlabApiToken)
+      .build()
+    ).execute().let { response ->
+    if(response.isSuccessful) response.body().toString() else ""
+  }
+
 fun sampleGitlab() {
   val exclude = mutableSetOf<String>()
-  val gitlabApiToken = File(".gltoken").readText().trim()
 
   val queries = //listOf("*", "java+%7C+android+-javascript") +
-    ('g'..'z').map { it.toString() }
+    ('a'..'z').map { it.toString() }
 
   for (query in queries) {
     var noError = true
@@ -96,43 +110,26 @@ fun sampleGitlab() {
     while (noError) {
       val queryUrl =
         "https://gitlab.com/api/v4/search?scope=projects&search=$query&per_page=100&page=${i++}"
+      val text = sendGET(queryUrl)
+      if (text.length < 200) noError = false
 
-      val request = Request.Builder().url(queryUrl)
-        .header("PRIVATE-TOKEN", gitlabApiToken)
-        .build()
+      val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
+      val matches = regex.findAll(text).map { it.value.dropLast(4).substringAfter("https://gitlab.com/") }.toList()
+      if (matches.isEmpty()) noError = false
+      val uniqueMatches = matches.filter { url ->
+        val name = url.substringAfterLast('/')
+        val owner = url.substringBeforeLast('/')
+        exclude.add(name) &&
+          exclude.add(owner) &&
+          !shouldBeExcludedFromGitlab(url) &&
+          !isRepoOnGitHub(name)
+      }
 
-      val client = OkHttpClient()
-      client.newCall(request).enqueue(object: Callback {
-        override fun onFailure(request: Request?, e: IOException?) {
-          noError = false
-        }
-
-        override fun onResponse(response: Response?) {
-          val text = response?.body()?.string()
-          if (text == null || text.length < 200) {
-            noError = false; return
-          }
-          println(response)
-          val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
-          val matches = regex.findAll(text).map { it.value.dropLast(4).substringAfter("https://gitlab.com/") }.toList()
-          if (matches.isEmpty()) {
-            noError = false;
-            return
-          }
-          val uniqueMatches = matches.filter { url ->
-            exclude.add(url.substringAfter('/')) &&
-              exclude.add(url.substringBefore('/')) &&
-              !isGitlabRepoOnGithub(url) &&
-              !shouldBeExcludedFromGitlab(url)
-          }
-
-          uniqueMatches.forEach { url ->
-            val dedupedRepo = "https://gitlab.com/$url"
-            File(GL_REPOS_FILE).appendText(dedupedRepo)
-            println(dedupedRepo)
-          }
-        }
-      })
+      uniqueMatches.forEach { url ->
+        val dedupedRepo = "https://gitlab.com/$url"
+        File(GL_REPOS_FILE).appendText(dedupedRepo)
+        println(dedupedRepo)
+      }
 
       TimeUnit.SECONDS.sleep(13)
     }
@@ -142,6 +139,7 @@ fun sampleGitlab() {
 fun shouldBeExcludedFromGitlab(
   repo: String, strsToExclude: Set<String> = setOf(
     "The repository for this project is empty",
+    "Exported from",
     "forked_from_link",
     "github",
     "mirror",
@@ -156,11 +154,3 @@ fun shouldBeExcludedFromGitlab(
     return true
   }
 }
-
-fun isGitlabRepoOnGithub(repo: String) =
-  try {
-    URL("https://github.com/${repo}").readText()
-    true
-  } catch (e: Exception) {
-    false
-  }
