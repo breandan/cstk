@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.cstk.experiments.fetchOrLoadSampleData
 import edu.mcgill.cstk.indices.*
+import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 import info.debatty.java.stringsimilarity.MetricLCS
 import java.io.File

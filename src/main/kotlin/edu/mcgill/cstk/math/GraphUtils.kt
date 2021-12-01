@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.disk
+package edu.mcgill.cstk.math
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.Graph
