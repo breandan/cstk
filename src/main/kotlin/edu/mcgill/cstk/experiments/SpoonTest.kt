@@ -1,7 +1,11 @@
 package edu.mcgill.cstk.experiments
 
+import edu.mcgill.cstk.disk.*
 import spoon.Launcher
 import spoon.reflect.declaration.CtClass
+import spoon.support.compiler.FileSystemFolder
+import java.io.File
+import java.net.URI
 
 fun main() {
   val l =
@@ -19,7 +23,20 @@ fun main() {
       }
     """.trimIndent())
 
-  l.methods.forEach { println(it.docComment); println() }
+  //println(l.superclass.simpleName)
+  //  Launcher().apply {
+  //    addInputResource(FileSystemFolder(File()))
+  //  }
+
+  val f = File("$DATA_DIR/Netflix_zuul.tgz").unzip()
+  val model = Launcher().apply {
+    addInputResource(FileSystemFolder(f))
+    buildModel()
+  }.model
+
+  println(model.allTypes.joinToString(", ") { it.simpleName + "->" + (it.superclass?.simpleName ?: "*") })
+
+//  l.methods.forEach { println(it.docComment); println() }
 
   // https://github.com/SpoonLabs/spoon-examples/blob/master/src/main/java/fr/inria/gforge/spoon/transformation/OnTheFlyTransfoTest.java
 }

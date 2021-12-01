@@ -85,8 +85,7 @@ fun String.countBalancedBrackets(): Int =
 
 fun URI.contents(): String? =
   when (scheme) {
-    TGZ_SCHEME -> vfsManager.resolveFile(this)
-      .content.getString(UTF_8)
+    TGZ_SCHEME -> vfsManager.resolveFile(this).content.getString(UTF_8)
     FILE_SCHEME -> toPath().run { if (extension in FILE_EXTs && exists()) readText() else null }
     else -> null
   }

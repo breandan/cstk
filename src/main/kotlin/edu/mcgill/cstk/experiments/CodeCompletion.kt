@@ -23,16 +23,16 @@ data class CodeSnippet(
   fun print() = printSideBySide(original, variant)
 }
 
-fun main() {
-  val validationSet = DATA_DIR
-    .also { println("Evaluating code completion with $MODEL on $it...") }
-    .allFilesRecursively().allMethods()
-    .map { it.first.toString() }
-    // Ensure tokenized method fits within attention
-//    .filter { defaultTokenizer.tokenize(it).size < 500 }
-
+fun main() =
   evaluateTransformations(
-    validationSet = validationSet,
+    validationSet =
+    DATA_DIR
+      .also { println("Evaluating code completion with $MODEL on $it...") }
+      .allFilesRecursively().allMethods()
+      .map { it.first.toString() }
+      // Ensure tokenized method fits within attention
+//    .filter { defaultTokenizer.tokenize(it).size < 500 }
+    ,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
       String::renameTokens,
@@ -44,7 +44,6 @@ fun main() {
       String::shuffleLines
     )
   )
-}
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(

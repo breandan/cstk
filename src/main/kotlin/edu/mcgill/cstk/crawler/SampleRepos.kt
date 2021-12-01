@@ -17,7 +17,7 @@ fun main() {
 }
 
 fun sampleGoogleCode() =
-  (39..835).forEach { pg ->
+  (1..835).forEach { pg ->
     val url = "https://code.google.com/archive/search?q=java&page=$pg"
     val text = fetchJSWebpage(url)
 
@@ -35,9 +35,9 @@ fun wasCopiedToGithub(name: String, origin: String) = try {
     .build().searchRepositories()
     .q(name)
     .list()
-    .take(10)
-    .any { it.name == name || origin.lowercase() in (it.description?.lowercase() ?: "") }
-} catch (e :Exception) { e.printStackTrace(); true } // Assume
+    .take(1).isNotEmpty()
+    //.any { it.name.lowercase() == name.lowercase() || origin.lowercase() in (it.description?.lowercase() ?: "") }
+} catch (e :Exception) { e.printStackTrace(); true } // Assume copied by default
 
 fun fetchJSWebpage(url: String) =
   (WebClient(BrowserVersion.CHROME).apply {

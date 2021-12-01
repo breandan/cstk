@@ -1,11 +1,12 @@
 package edu.mcgill.cstk.disk
 
 import edu.mcgill.cstk.nlp.allCodeFragments
-import org.apache.commons.vfs2.VFS
-import org.apache.commons.vfs2.FileObject
+import org.apache.commons.vfs2.*
 import java.io.*
+import java.io.File
 import java.net.URI
 import java.nio.file.*
+import java.nio.file.FileSystem
 import java.util.zip.*
 import kotlin.io.path.*
 import kotlin.time.*
@@ -24,6 +25,17 @@ private fun URI.mirrorHDFS(imfs: FileSystem): Path {
       }
     }
   return jfsRoot
+}
+
+
+fun File.unzip(
+  filename: String = path.substringAfterLast('/').substringBeforeLast('.'),
+  dirname: File = Files.createTempDirectory(filename).toFile()
+): File = dirname.also {
+  vfsManager.runCatching {
+    val from = createFileSystem(resolveFile(path))
+    toFileObject(dirname).copyFrom(from, VFS_SELECTOR)
+  }.onFailure { it.printStackTrace() }
 }
 
 @OptIn(ExperimentalTime::class)
@@ -69,31 +81,32 @@ fun URI.suffix() = toString().substringAfterLast('/')
 
 fun indexURI(src: URI, indexFn: (String, Concordance) -> Unit): Unit =
   when {
-    // TODO: HTTP_SCHEME?
-    src.scheme == TGZ_SCHEME || src.extension() == TGZ_SCHEME -> vfsManager
-      .resolveFile("tgz:${src.path}")
-      .runCatching {
-        println("Indexing $name")
-        findFiles(VFS_SELECTOR).asSequence()
-          .map { it.uri }.allCodeFragments()
+    src.scheme == TGZ_SCHEME || src.extension() == TGZ_SCHEME ->
+      vfsManager
+        .resolveFile("tgz:${src.path}")
+        .runCatching {
+          println("Indexing $name")
+          findFiles(VFS_SELECTOR).asSequence()
+            .map { it.uri }.allCodeFragments()
+            .forEach { (location, line) -> indexFn(line, location) }
+        }.let {
+          println(
+            if (it.isSuccess) "Indexed ${src.suffix()} " +
+              "(${src.toPath().fileSize() / 1000}kb)"
+            else "Failed to index $src due to ${it.exceptionOrNull()}"
+          )
+        }
+    src.scheme == FILE_SCHEME ->
+      try {
+        (if (src.toPath().isDirectory()) src.allFilesRecursively()
+        else {
+          println("Indexing $src")
+          sequenceOf(src)
+        }).allCodeFragments()
           .forEach { (location, line) -> indexFn(line, location) }
-      }.let {
-        println(
-          if (it.isSuccess) "Indexed ${src.suffix()} " +
-            "(${src.toPath().fileSize() / 1000}kb)"
-          else "Failed to index $src due to ${it.exceptionOrNull()}"
-        )
+      } catch (e: Exception) {
+        System.err.println("Unreadable …$src due to ${e.message}")
       }
-    src.scheme == FILE_SCHEME -> try {
-      (if (src.toPath().isDirectory()) src.allFilesRecursively()
-      else {
-        println("Indexing $src")
-        sequenceOf(src)
-      }).allCodeFragments()
-        .forEach { (location, line) -> indexFn(line, location) }
-    } catch (e: Exception) {
-      System.err.println("Unreadable …$src due to ${e.message}")
-    }
     else -> Unit
   }
 
