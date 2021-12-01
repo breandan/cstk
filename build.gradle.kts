@@ -166,6 +166,7 @@ tasks {
     "spoon" to "edu.mcgill.cstk.experiments.SpoonTestKt",
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
+    "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
