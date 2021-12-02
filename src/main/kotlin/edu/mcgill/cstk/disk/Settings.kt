@@ -5,6 +5,7 @@ import ai.djl.nn.transformer.BertBlock
 import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import java.net.URL
+import kotlin.random.Random
 
 val FILE_EXTs = setOf("java", "kt")
 const val FILE_SCHEME = "file"
@@ -122,3 +123,5 @@ val TEST_DIR = File("src").absoluteFile.toURI()
 const val DEFAULT_KNNINDEX_FILENAME = "vector.idx"
 const val DEFAULT_KWINDEX_FILENAME = "keyword.idx"
 val TOKENIZER = BertTokenizer()
+
+val DEFAULT_RAND = Random(1)

@@ -135,7 +135,7 @@ class BertCodeDataset(
     )
 
     // Randomly pick 20% of indices to mask
-    val maskedIndices = label.indices.shuffled(rand)
+    val maskedIndices = label.indices.shuffled(DEFAULT_RAND)
       .take((label.size / 5).coerceAtMost(MAX_MASKING_PER_INSTANCE)).sorted()
 
     val masked = label.copyOf().also { masked ->

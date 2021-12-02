@@ -12,7 +12,7 @@ fun fetchOrLoadSampleData(sampleSize: Int = 1000):
     ?: TEST_DIR
       .allFilesRecursively()
       .allCodeFragments()
-      .shuffled()
+      .shuffled(DEFAULT_RAND)
       .take(sampleSize)
       .map { it.second to vectorize(it.second) }
       .unzip().let { (l, v) -> l to v.toTypedArray() }

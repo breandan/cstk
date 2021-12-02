@@ -2,47 +2,72 @@ package edu.mcgill.cstk.crawler
 
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.defaultTokenizer
-import edu.mcgill.cstk.nlp.allMethods
+import edu.mcgill.cstk.nlp.*
 import spoon.Launcher
-import spoon.reflect.declaration.CtType
-import spoon.reflect.reference.CtTypeReference
-import spoon.support.compiler.FileSystemFolder
+import spoon.reflect.declaration.*
 import java.io.File
-import kotlin.io.path.toPath
 
 fun main() {
   //collectLengthStats()
-  collectTreeStats()
+  collectSubtypeStats()
 }
 
-fun collectTreeStats() {
-  DATA_DIR.allFilesRecursively("tgz", false).toList()
-    .map {
+fun collectSubtypeStats() {
+  DATA_DIR.allFilesRecursively("tgz", false)
+    .mapNotNull {
       println(it)
       val f = File(it).unzip()
-      val model = Launcher().apply {
-        f.toURI().allFilesRecursively().forEach {
-          runCatching { addInputResource(it.path) }
-        }
-        //addInputResource(FileSystemFolder(f))
-        buildModel()
-      }.model
+      val launcher = Launcher()
+      val previouslyVisitedTypes = mutableSetOf<String>()
+      f.toURI().allFilesRecursively().forEach {
+        try {
+          if (previouslyVisitedTypes.add(it.suffix()))
+            launcher.addInputResource(it.path)
+        } catch (e: Exception) { /*e.printStackTrace()*/ }
+      }
+      try {
+        launcher.buildModel()
+      } catch(e: Exception) {
+        //e.printStackTrace()
+        return@mapNotNull null
+      }
 
-      println(model.allTypes.joinToString(", ") { it: CtType<*> ->
-        val name = it.simpleName
-        val superclass = it.superclass?.simpleName
-        val supertypes = it.superInterfaces.map { it.simpleName }
-        val numMethods = it.methods.size
-        val numMethodsInherited = it.countInheritedMethods()
-        "$name($numMethods/$numMethodsInherited)" + if (superclass != null) "<:$superclass" +
-          if(supertypes.isEmpty()) "" else supertypes.joinToString(",", "{", "}") else ""
-      })
-    }.take(10)
+      launcher.model.allTypes.filterNotNull().joinToString("") { type ->
+        val name = type.simpleName
+        val supertypes = type.superTypes().mapNotNull {
+          it?.simpleName + if(it == null) "" else if(it.isClass) "(C)" else "(I)"
+        }
+        val allMembers = type.allMembers()
+        val (allFields, allMethods) = allMembers.let { (f, m) -> f.size to m.size }
+        val (fields, methods) = type.fields.size to type.methods.size
+        name +
+          (if (supertypes.isNotEmpty()) "<:${supertypes.joinToString(",", "{", "}")}" else "") +
+          " (local: $fields fields, $methods methods) " +
+          (if(supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
+          "\n"
+      }
+    }.take(10).forEach { println("$it\n") }
 }
 
-fun CtType<*>.countInheritedMethods(superType: CtTypeReference<*>? = superclass): Int =
-  if(superType == null) 0
-  else methods.size + (superType.typeDeclaration?.countInheritedMethods() ?: 0)
+fun CtType<*>?.superTypes() =
+  if (this == null) emptyList()
+  else (superclass?.let { listOf(it.typeDeclaration) } ?: emptyList()) +
+    superInterfaces.mapNotNull { kotlin.runCatching { it?.typeDeclaration }.getOrNull() }
+
+// Returns number of inherited fields and methods
+fun CtType<*>?.allMembers(
+  maxHeight: Int = 10,
+  superTypes: List<CtType<*>> = superTypes()
+): Pair<Set<CtField<*>>, Set<CtMethod<*>>> =
+  if (this == null || superTypes.isEmpty() || maxHeight == 0)
+    emptySet<CtField<*>>() to emptySet()
+  else (fields.toSet() to methods.toSet()) +
+    superTypes.fold(emptySet<CtField<*>>() to emptySet()) { p, it ->
+      p + it.allMembers(maxHeight - 1)
+    }
+
+operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =
+  first + other.first to second + other.second
 
 fun collectLengthStats() {
   println("total lines, total tokens, avg line len, len comments, len code")
@@ -62,7 +87,6 @@ fun collectLengthStats() {
             defaultTokenizer.tokenize(method.docComment ?: "").size + ", " +
             defaultTokenizer.tokenize(method.body?.toString() ?: "").size
         )
-      } catch (exception: Exception) {
-      }
+      } catch (_: Exception) {}
     }
 }

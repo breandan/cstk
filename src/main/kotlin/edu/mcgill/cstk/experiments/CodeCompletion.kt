@@ -142,7 +142,7 @@ val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100
 // so instead we sample a small number of mask positions
 fun String.evaluateMultimask(SAMPLES: Int = 200): Pair<Int, Int> =
   dists.get(this) {
-    maskIdentifiers().shuffled().take(SAMPLES)
+    maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
 //        logDiffs(this, maskedMethod, trueToken, completion)

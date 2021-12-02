@@ -2,6 +2,7 @@ package edu.mcgill.cstk.math
 
 import com.github.jelmerk.knn.DistanceFunction
 import com.google.ortools.linearsolver.MPSolver
+import edu.mcgill.cstk.disk.DEFAULT_RAND
 import kotlin.math.*
 import kotlin.random.Random
 import kotlin.time.*
@@ -75,4 +76,4 @@ fun main() {
 }
 
 fun randomMatrix(n: Int, m: Int) =
-  Array(n) { DoubleArray(m) { Random.nextDouble() } }
+  Array(n) { DoubleArray(m) { DEFAULT_RAND.nextDouble() } }

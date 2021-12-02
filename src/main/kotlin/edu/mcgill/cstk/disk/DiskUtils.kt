@@ -74,7 +74,7 @@ fun URI.allFilesRecursively(
         }.getOrDefault(sequenceOf())
       else sequenceOf(it)
     }.flatten()
-    .filter { ext == null || it.extension() == ext }.shuffled()
+    .filter { ext == null || it.extension() == ext }.shuffled(DEFAULT_RAND)
 
 fun URI.extension() = toString().substringAfterLast('.')
 fun URI.suffix() = toString().substringAfterLast('/')

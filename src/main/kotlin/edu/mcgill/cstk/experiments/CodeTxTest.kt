@@ -92,7 +92,7 @@ fun String.mutateSyntax() =
     else it
   }.joinToString("")
 
-fun String.shuffleLines() = lines().shuffled().joinToString("\n")
+fun String.shuffleLines() = lines().shuffled(DEFAULT_RAND).joinToString("\n")
 
 fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
@@ -114,7 +114,7 @@ fun String.mostFrequentIdentifier(): String =
 
 fun String.permuteArgumentOrder(): String =
   replace(Regex("\\((.*, .*)\\)")) { match ->
-    match.groupValues[1].split(", ").shuffled().joinToString(", ", "(", ")")
+    match.groupValues[1].split(", ").shuffled(DEFAULT_RAND).joinToString(", ", "(", ")")
   }
 
 fun String.fuzzLoopBoundaries(): String =
@@ -170,7 +170,7 @@ fun String.addExtraLogging(): String =
     val (lastLine, thisLine, nextLine) = Triple(window[0], window[1], window[2])
 
     val loggingFrequency = 0.3 // Lower to decrease logging frequency
-    if (loggingFrequency < Random.nextDouble()) return@joinToString thisLine
+    if (loggingFrequency < DEFAULT_RAND.nextDouble()) return@joinToString thisLine
 
     val matchLastLine = Regex("\\s+.*?;").matchEntire(lastLine)
     val matchThisLine = Regex("\\s+.*?;").matchEntire(thisLine)

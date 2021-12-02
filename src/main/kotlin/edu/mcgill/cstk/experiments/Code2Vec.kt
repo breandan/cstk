@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.*
 import astminer.common.model.*
 import astminer.parse.antlr.*
 import astminer.parse.antlr.python.PythonParser
+import edu.mcgill.cstk.disk.DEFAULT_RAND
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
@@ -49,7 +50,7 @@ private fun List<SpsMat>.permute(): Array<DoubleArray> =
     map { cur ->
       val data = cur.toFDRM().getData()
       val padded = DoubleArray(maxDim) { if (it < data.size) data[it] else 0.0 }
-      padded.apply { shuffle(Random.Default) }.take(20).toDoubleArray()//.also { println(it.map { 0.0 < it }.joinToString()) }
+      padded.apply { shuffle(DEFAULT_RAND) }.take(20).toDoubleArray()//.also { println(it.map { 0.0 < it }.joinToString()) }
     }.toTypedArray()
   }
 
