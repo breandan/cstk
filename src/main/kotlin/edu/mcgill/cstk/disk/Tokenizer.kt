@@ -27,16 +27,16 @@ internal object CharChecker {
   }
 
   /** To judge whether it's a punctuation.  */
-  fun isPunctuation(ch: Char): Boolean {
-    val type = getType(ch)
-    return type == CONNECTOR_PUNCTUATION.toInt() ||
-      type == DASH_PUNCTUATION.toInt() ||
-      type == START_PUNCTUATION.toInt() ||
-      type == END_PUNCTUATION.toInt() ||
-      type == INITIAL_QUOTE_PUNCTUATION.toInt() ||
-      type == FINAL_QUOTE_PUNCTUATION.toInt() ||
-      type == OTHER_PUNCTUATION.toInt()
-  }
+  fun isPunctuation(ch: Char) =
+    getType(ch) in setOf(
+      CONNECTOR_PUNCTUATION.toInt(),
+      DASH_PUNCTUATION.toInt(),
+      START_PUNCTUATION.toInt(),
+      END_PUNCTUATION.toInt(),
+      INITIAL_QUOTE_PUNCTUATION.toInt(),
+      FINAL_QUOTE_PUNCTUATION.toInt(),
+      OTHER_PUNCTUATION.toInt()
+    )
 }
 
 /** Basic tokenization (punctuation splitting, lower casing, etc.)  */
@@ -82,7 +82,7 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
       if (text == null) {
         throw NullPointerException("The input String is null.")
       }
-      val tokens: MutableList<String> = java.util.ArrayList()
+      val tokens = mutableListOf<String>()
       var startNewWord = true
       for (element in text) {
         if (CharChecker.isPunctuation(element)) {

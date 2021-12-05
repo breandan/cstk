@@ -32,9 +32,9 @@ const val MODEL =
 val VOCAB_URL = "https://huggingface.co/$MODEL/resolve/main/vocab.json"
 
 val MODEL_DICT: Map<String, Int> by lazy {
-  val vocabFile = File("model_$MODEL.json")
-  val json = if(vocabFile.exists()) vocabFile.readText()
-  else URL(VOCAB_URL).readText().also{vocabFile.writeText(it)}
+  val vocabFile = File("model_${MODEL.replace("/", "_")}.json")
+  val json = if (vocabFile.exists()) vocabFile.readText()
+  else URL(VOCAB_URL).readText().also { vocabFile.run { createNewFile(); writeText(it) } }
 
   json.removePrefix("{\"")
     .substringBeforeLast("\"")

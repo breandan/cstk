@@ -8,7 +8,7 @@ import kotlin.time.*
 @ExperimentalTime
 fun main() {
   val mc = measureTimedValue {
-    TEST_DIR.allFilesRecursively(walkIntoCompressedFiles = false).toList()
+    TEST_DIR.allFilesRecursively(readCompressed = false).toList()
       .map { src ->
         try { src.allLines().joinToString("\n") } catch (e: Exception) { "" }
           .asSequence().chunked(3).toMarkovChain(2)

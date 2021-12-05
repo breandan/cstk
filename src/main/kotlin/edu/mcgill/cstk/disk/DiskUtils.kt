@@ -27,7 +27,6 @@ private fun URI.mirrorHDFS(imfs: FileSystem): Path {
   return jfsRoot
 }
 
-
 fun File.unzip(
   filename: String = path.substringAfterLast('/').substringBeforeLast('.'),
   dirname: File = Files.createTempDirectory(filename).toFile()
@@ -62,13 +61,13 @@ inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
 // Returns all files in the URI matching the extension
 fun URI.allFilesRecursively(
   ext: String? = null,
-  walkIntoCompressedFiles: Boolean = true
+  readCompressed: Boolean = true
 ): Sequence<URI> =
   toPath().toFile().walkTopDown()
     .filter(File::isFile)
     .map(File::toURI)
     .map {
-      if (walkIntoCompressedFiles && it.extension() == TGZ_SCHEME)
+      if (readCompressed && it.extension() == TGZ_SCHEME)
         vfsManager.resolveFile("tgz:${it.path}").runCatching {
           findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI)
         }.getOrDefault(sequenceOf())

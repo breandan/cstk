@@ -12,42 +12,33 @@ fun main() {
   collectSubtypeStats()
 }
 
-fun collectSubtypeStats() {
-  DATA_DIR.allFilesRecursively("tgz", false)
-    .mapNotNull {
-      println(it)
-      val f = File(it).unzip()
-      val launcher = Launcher()
-      val previouslyVisitedTypes = mutableSetOf<String>()
-      f.toURI().allFilesRecursively().forEach {
-        try {
-          if (previouslyVisitedTypes.add(it.suffix()))
-            launcher.addInputResource(it.path)
-        } catch (e: Exception) { /*e.printStackTrace()*/ }
-      }
+fun collectSubtypeStats() =
+  DATA_DIR.allFilesRecursively("tgz", false).mapNotNull {
+    println(it)
+    val f = File(it).unzip()
+    val launcher = Launcher()
+    val uniqueTypes = mutableSetOf<String>()
+    f.toURI().allFilesRecursively().forEach {
       try {
-        launcher.buildModel()
-      } catch(e: Exception) {
-        //e.printStackTrace()
-        return@mapNotNull null
-      }
+        if (uniqueTypes.add(it.suffix())) launcher.addInputResource(it.path)
+      } catch (e: Exception) { /*e.printStackTrace()*/ }
+    }
 
-      launcher.model.allTypes.filterNotNull().joinToString("") { type ->
-        val name = type.simpleName
-        val supertypes = type.superTypes().mapNotNull {
-          it?.simpleName + if(it == null) "" else if(it.isClass) "(C)" else "(I)"
-        }
-        val allMembers = type.allMembers()
-        val (allFields, allMethods) = allMembers.let { (f, m) -> f.size to m.size }
-        val (fields, methods) = type.fields.size to type.methods.size
-        name +
-          (if (supertypes.isNotEmpty()) "<:${supertypes.joinToString(",", "{", "}")}" else "") +
-          " (local: $fields fields, $methods methods) " +
-          (if(supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
-          "\n"
-      }
-    }.take(10).forEach { println("$it\n") }
-}
+    try { launcher.buildModel() } catch(e: Exception) { return@mapNotNull null }
+
+    launcher.model.allTypes.filterNotNull().joinToString("") { type ->
+      val supertypes = type.superTypes().filterNotNull()
+        .map { it.simpleName + if (it.isClass) "(C)" else "(I)" }
+      val allMembers = type.allMembers()
+      val (allFields, allMethods) = allMembers.let { (f, m) -> f.size to m.size }
+      val (fields, methods) = type.fields.size to type.methods.size
+      type.simpleName +
+        (if (supertypes.isNotEmpty()) "<:${supertypes.joinToString(",", "{", "}")}" else "") +
+        " (local: $fields fields, $methods methods) " +
+        (if(supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
+        "\n"
+    }
+  }.take(10).forEach { println("$it\n") }
 
 fun CtType<*>?.superTypes() =
   if (this == null) emptyList()
