@@ -10,6 +10,7 @@ import kotlin.random.Random
 val FILE_EXTs = setOf("java", "kt")
 const val FILE_SCHEME = "file"
 const val TGZ_SCHEME = "tgz"
+const val ZIP_SCHEME = "zip"
 const val HTTP_SCHEME = "http"
 val VFS_SELECTOR = FileExtensionSelector(FILE_EXTs)
 val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
@@ -118,6 +119,7 @@ val MSK_ID = RESERVED_TOKENS.indexOf(MSK)
 val BERT_BUILDER = BertBlock.builder().micro()
 val ROOT_DIR = File("").absoluteFile.toURI()
 val DATA_DIR = File("data").absoluteFile.toURI()
+val GCODE_DIR = File("data/gcode").absoluteFile.toURI()
 val CSN_DIR = File("data/CSN").absoluteFile.toURI()
 val TEST_DIR = File("src").absoluteFile.toURI()
 const val DEFAULT_KNNINDEX_FILENAME = "vector.idx"

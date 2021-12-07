@@ -9,7 +9,10 @@ import java.io.File
 
 fun main() {
   //collectLengthStats()
-  collectSubtypeStats()
+  // https://gist.github.com/breandan/afac9ef7e7f2d7f0302f8a0f5926fe4d
+  //collectSubtypeStats()
+  // https://gist.github.com/breandan/cdb780ae883b7e49de1596fe0de96849
+  collectGCodeStats("java")
 }
 
 fun collectSubtypeStats() =
@@ -59,6 +62,26 @@ fun CtType<*>?.allMembers(
 
 operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =
   first + other.first to second + other.second
+
+fun collectGCodeStats(extension: String) {
+  println("repo, total files, total lines, lines without comments and blanks")
+  GCODE_DIR.allFilesRecursively(readCompressed = false)
+    .filter { it.extension() == extension }
+    .groupBy { it.path.substringAfter("gcode/").substringBefore("/") }
+    .entries
+    .forEach { (repoName, uris) ->
+      val (totalLines, codeLines) =
+        uris.flatMap { it.contents()?.lines() ?: emptyList() }
+          .fold(0 to 0) { (a, b), it ->
+            a + 1 to b + if (it.isLineACommentOrEmpty()) 0 else 1
+          }
+
+      println("$repoName, ${uris.size}, $totalLines, $codeLines")
+    }
+}
+
+fun String.isLineACommentOrEmpty(commentPrefixes: Set<String> = setOf("//", "* ", "/*")) =
+  trim().let{ it.length <= 1 || it.take(2) in commentPrefixes }
 
 fun collectLengthStats() {
   println("total lines, total tokens, avg line len, len comments, len code")

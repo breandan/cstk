@@ -55,7 +55,6 @@ https://code.google.com/archive/p/ingweb-gestion-de-inventarios-moduloii
 https://code.google.com/archive/p/gwu-biophysics
 https://code.google.com/archive/p/ioclparser
 https://code.google.com/archive/p/inginf93
-https://code.google.com/archive/p/pjchartre
 https://code.google.com/archive/p/ugvbr
 https://code.google.com/archive/p/tccsoa
 https://code.google.com/archive/p/solidmodelingworldview

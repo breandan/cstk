@@ -67,13 +67,16 @@ fun URI.allFilesRecursively(
     .filter(File::isFile)
     .map(File::toURI)
     .map {
-      if (readCompressed && it.extension() == TGZ_SCHEME)
-        vfsManager.resolveFile("tgz:${it.path}").runCatching {
-          findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI)
-        }.getOrDefault(sequenceOf())
-      else sequenceOf(it)
+      if (readCompressed) readCompressedFile(it) else sequenceOf(it)
     }.flatten()
     .filter { ext == null || it.extension() == ext }.shuffled(DEFAULT_RAND)
+
+fun readCompressedFile(path: URI) =
+  if (path.extension() in setOf("tgz", "zip"))
+    vfsManager.resolveFile("${path.extension()}:${path.path}").runCatching {
+      findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI)
+    }.getOrDefault(sequenceOf())
+  else sequenceOf(path)
 
 fun URI.extension() = toString().substringAfterLast('.')
 fun URI.suffix() = toString().substringAfterLast('/')

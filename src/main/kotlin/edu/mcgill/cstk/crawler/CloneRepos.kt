@@ -14,7 +14,7 @@ fun main() {
 //  cloneSelfHosted()
 }
 
-const val TO_TAKE = 100
+const val TO_TAKE = 300
 const val GH_REPOS_FILE = "github.txt"
 const val GC_REPOS_FILE = "gcode.txt"
 const val GL_REPOS_FILE = "gitlab.txt"
