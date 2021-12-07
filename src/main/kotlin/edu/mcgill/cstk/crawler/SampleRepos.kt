@@ -13,13 +13,13 @@ import java.util.stream.Collectors
 
 fun main() {
 //  sampleGithub()
-  sampleGitlab()
-//  sampleGoogleCode()
+//  sampleGitlab()
+//  sampleGoogleCode("java")
 }
 
-fun sampleGoogleCode() =
+fun sampleGoogleCode(query: String) =
   (1..835).forEach { pg ->
-    val url = "https://code.google.com/archive/search?q=java&page=$pg"
+    val url = "https://code.google.com/archive/search?q=$query&page=$pg"
     val text = fetchJSWebpage(url)
 
     val regex = Regex("href=\"/archive/p/([^\"]*)\"")
@@ -31,14 +31,14 @@ fun sampleGoogleCode() =
   }
 
 fun wasCopiedToGithub(name: String, origin: String) = try {
-  GitHubBuilder()
-    .withJwtToken(File(".ghtoken").readText())
-    .build().searchRepositories()
-    .q(name)
-    .list()
-    .take(1).isNotEmpty()
-    //.any { it.name.lowercase() == name.lowercase() || origin.lowercase() in (it.description?.lowercase() ?: "") }
-} catch (e :Exception) { e.printStackTrace(); true } // Assume copied by default
+    GitHubBuilder()
+      .withJwtToken(File(".ghtoken").readText())
+      .build().searchRepositories()
+      .q(name)
+      .list()
+      .take(1).isNotEmpty()
+      //.any { it.name.lowercase() == name.lowercase() || origin.lowercase() in (it.description?.lowercase() ?: "") }
+  } catch (e: Exception) { e.printStackTrace(); true } // Assume copied by default
 
 fun fetchJSWebpage(url: String) =
   (WebClient(CHROME).apply {

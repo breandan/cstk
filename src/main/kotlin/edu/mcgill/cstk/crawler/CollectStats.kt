@@ -6,17 +6,18 @@ import edu.mcgill.cstk.nlp.*
 import spoon.Launcher
 import spoon.reflect.declaration.*
 import java.io.File
+import java.net.URI
 
 fun main() {
-  //collectLengthStats()
+  //DATA_DIR.collectMethodStats()
   // https://gist.github.com/breandan/afac9ef7e7f2d7f0302f8a0f5926fe4d
-  //collectSubtypeStats()
+  //DATA_DIR.collectSubtypeStats()
   // https://gist.github.com/breandan/cdb780ae883b7e49de1596fe0de96849
-  collectGCodeStats("java")
+  GCODE_DIR.collectLineStats { it.extension() in setOf("java") }
 }
 
-fun collectSubtypeStats() =
-  DATA_DIR.allFilesRecursively("tgz", false).mapNotNull {
+fun URI.collectSubtypeStats() =
+  allFilesRecursively("tgz", false).mapNotNull {
     println(it)
     val f = File(it).unzip()
     val launcher = Launcher()
@@ -35,7 +36,7 @@ fun collectSubtypeStats() =
       val allMembers = type.allMembers()
       val (allFields, allMethods) = allMembers.let { (f, m) -> f.size to m.size }
       val (fields, methods) = type.fields.size to type.methods.size
-      type.simpleName +
+      "\t" + type.simpleName +
         (if (supertypes.isNotEmpty()) "<:${supertypes.joinToString(",", "{", "}")}" else "") +
         " (local: $fields fields, $methods methods) " +
         (if(supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
@@ -63,13 +64,11 @@ fun CtType<*>?.allMembers(
 operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =
   first + other.first to second + other.second
 
-fun collectGCodeStats(extension: String) {
+fun URI.collectLineStats(filter: (URI) -> Boolean) {
   println("repo, total files, total lines, lines without comments and blanks")
-  GCODE_DIR.allFilesRecursively(readCompressed = false)
-    .filter { it.extension() == extension }
+  allFilesRecursively(readCompressed = false).filter { filter(it) }
     .groupBy { it.path.substringAfter("gcode/").substringBefore("/") }
-    .entries
-    .forEach { (repoName, uris) ->
+    .entries.forEach { (repoName, uris) ->
       val (totalLines, codeLines) =
         uris.flatMap { it.contents()?.lines() ?: emptyList() }
           .fold(0 to 0) { (a, b), it ->
@@ -83,11 +82,9 @@ fun collectGCodeStats(extension: String) {
 fun String.isLineACommentOrEmpty(commentPrefixes: Set<String> = setOf("//", "* ", "/*")) =
   trim().let{ it.length <= 1 || it.take(2) in commentPrefixes }
 
-fun collectLengthStats() {
+fun URI.collectMethodStats() {
   println("total lines, total tokens, avg line len, len comments, len code")
-  DATA_DIR.allFilesRecursively()
-    .allMethods()
-    .forEach { (method, uri) ->
+  allFilesRecursively().allMethods().forEach { (method, uri) ->
       try {
         val string = method.toString()
         val lines = string.lines()
