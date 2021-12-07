@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.crawler
 
 import com.gargoylesoftware.htmlunit.*
+import com.gargoylesoftware.htmlunit.BrowserVersion.CHROME
 import com.gargoylesoftware.htmlunit.html.HtmlPage
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine
 import com.squareup.okhttp.*
@@ -40,7 +41,7 @@ fun wasCopiedToGithub(name: String, origin: String) = try {
 } catch (e :Exception) { e.printStackTrace(); true } // Assume copied by default
 
 fun fetchJSWebpage(url: String) =
-  (WebClient(BrowserVersion.CHROME).apply {
+  (WebClient(CHROME).apply {
     javaScriptEngine = JavaScriptEngine(this)
     options.isJavaScriptEnabled = true
     cookieManager.isCookiesEnabled = true

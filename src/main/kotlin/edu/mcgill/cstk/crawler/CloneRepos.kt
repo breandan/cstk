@@ -1,18 +1,16 @@
 package edu.mcgill.cstk.crawler
 
-import com.gargoylesoftware.htmlunit.*
-import com.gargoylesoftware.htmlunit.html.HtmlPage
-import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine
 import edu.mcgill.cstk.utils.execute
 import java.io.File
 import java.net.URL
 import java.nio.file.*
+import kotlin.io.path.*
 
 fun main() {
   File("data").apply { mkdir() }
 //  cloneGithub()
-//  cloneGoogleCode()
-  cloneGitlab()
+  cloneGoogleCode()
+//  cloneGitlab()
 //  cloneSelfHosted()
 }
 
@@ -22,64 +20,51 @@ const val GC_REPOS_FILE = "gcode.txt"
 const val GL_REPOS_FILE = "gitlab.txt"
 const val SH_REPOS_FILE = "git.txt"
 
-fun cloneGoogleCode(
-  dir: String = "gcode".also {
-    Files.createDirectories(Paths.get("data/$it"))
-  }
-) = File(GC_REPOS_FILE).readLines()
-  .take(TO_TAKE).parallelStream().forEach {
+fun makeDataDir(dir: String) = Paths.get("data/$dir")
+  .let { if (it.exists()) it.pathString else Files.createDirectories(it).pathString }
+
+fun cloneGoogleCode(dir: String = makeDataDir("gcode")) =
+  File(GC_REPOS_FILE).readLines().take(TO_TAKE).forEach {
     val repo = it.substringAfter("https://code.google.com/archive/p/")
-    println("Downloading $repo")
+    println("Downloading $it")
     downloadFile(
       url = URL("https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/$repo/source-archive.zip"),
-      filename = repo.replace("/", "_") + ".tgz"
+      filename = "$dir/" + repo.replace("/", "_") + ".zip"
     )
   }
 
 fun cloneGitlab(
-  dir: String = "gitlab".also {
-    Files.createDirectories(Paths.get("data/$it"))
-  }
-) =  File(GL_REPOS_FILE).readLines()
-  .take(10).forEach {
-    val repo = it.substringAfter("https://gitlab.com/")
-    val proj = repo.substringAfter('/')
-    val tarUrl = URL("https://gitlab.com/$repo/-/archive/master/$proj-master.tar.gz")
-    println("Downloading $tarUrl")
-    wgetFile(url = tarUrl,
-      filename = "data/gitlab_" + repo.replace("/", "_") + ".tgz")
-  }
+  dir: String = makeDataDir("gitlab"),
+  gitlabPrefix: String = "https://gitlab.com/"
+) = File(GL_REPOS_FILE).readLines().take(10).forEach {
+  val repo = it.substringAfter(gitlabPrefix)
+  val proj = repo.substringAfter('/')
+  println("Downloading $it")
+  wgetFile(
+    url = URL("$gitlabPrefix$repo/-/archive/master/$proj-master.tar.gz"),
+    filename = "$dir/" + repo.replace("/", "_") + ".tgz"
+  )
+}
 
-fun cloneSelfHosted(
-  dir: String = "git".also {
-    Files.createDirectories(Paths.get("data/$it"))
-  }
-) =
-  File(GH_REPOS_FILE).readLines().take(TO_TAKE).parallelStream()
+fun cloneSelfHosted(dir: String = makeDataDir("git")) =
+  File(GH_REPOS_FILE).readLines().take(TO_TAKE)
     .forEach { repo -> "git clone --depth=1 $repo".execute() }
 
-fun cloneGithub(
-  dir: String = "github".also {
-    Files.createDirectories(Paths.get("data/$it"))
-  }
-) = File(GH_REPOS_FILE).readLines()
-  .take(TO_TAKE).parallelStream().forEach {
+fun cloneGithub(dir: String = makeDataDir("github")) =
+  File(GH_REPOS_FILE).readLines().take(TO_TAKE).forEach {
     val repo = it.substringAfter("https://github.com/")
-    println("Downloading $repo")
+    println("Downloading $it")
     downloadFile(
       url = URL("https://api.github.com/repos/$repo/tarball"),
-      filename = "data/github_" + repo.replace("/", "_") + ".tgz"
+      filename = "$dir/" + repo.replace("/", "_") + ".tgz"
     )
   }
 
 fun wgetFile(url: URL, filename: String) = "wget $url -O $filename".execute()
 
-fun downloadFile(url: URL, filename: String) =
-  runCatching {
-    try {
-      val file = File(filename)
-      val data = url.readBytes()
-      file.writeBytes(data)
-      println("Downloaded $url to ${file.path}")
-    } catch (ex: Exception) { ex.printStackTrace(); throw ex }
-  }
+fun downloadFile(url: URL, filename: String) = try {
+  File(filename).writeBytes(url.readBytes())
+  println("Downloaded $url to $filename")
+} catch (ex: Exception) {
+  ex.printStackTrace()
+}
