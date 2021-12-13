@@ -29,13 +29,13 @@ print(f'Loaded model: {args.model}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
-    def tokenize(self, query: str) -> List[int]:
-        padded_query = f'{tokenizer.bos_token}{query}{tokenizer.eos_token}'
-        # tic = time.perf_counter()
-        tokens = tokenizer.tokenize(padded_query)
-        # toc = time.perf_counter()
-        # print(f"Tokenized in {toc - tic:0.4f} seconds")
-        return tokenizer.convert_tokens_to_ids(tokens)
+def tokenize(query: str):
+    padded_query = f'{tokenizer.bos_token}{query}{tokenizer.eos_token}'
+    # tic = time.perf_counter()
+    tokens = tokenizer.tokenize(padded_query)
+    # toc = time.perf_counter()
+    # print(f"Tokenized in {toc - tic:0.4f} seconds")
+    return tokens
 
     def embed_sequence(self, query: str) -> np.ndarray:
         """

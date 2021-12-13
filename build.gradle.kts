@@ -134,7 +134,7 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph:0.1.8")
   implementation("io.github.vovak:astminer:0.8.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.0.4")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
 
   implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-1")
   implementation("org.jetbrains.research.ml.ast.transformations:ast-transformations") {

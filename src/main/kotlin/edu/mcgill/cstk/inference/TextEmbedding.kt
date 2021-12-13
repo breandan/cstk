@@ -48,7 +48,7 @@ object UniversalSentenceEncoder {
       .build()
     ModelZoo.loadModel(criteria).use { model ->
       model.newPredictor().use { predictor ->
-        return predictor.predict(inputs.toTypedArray())
+        return@predict predictor.predict(inputs.toTypedArray())
       }
     }
   }
@@ -58,9 +58,7 @@ object UniversalSentenceEncoder {
       ctx: TranslatorContext,
       inputs: Array<String>
     ): NDList = NDList(
-      NDArrays.stack(
-        NDList(inputs.map { ctx.ndManager.create(it) })
-      )
+      NDArrays.stack(NDList(inputs.map { ctx.ndManager.create(it) }))
     )
 
     override fun processOutput(

@@ -54,28 +54,54 @@ fun CtType<*>?.allMembers(
   maxHeight: Int = 10,
   superTypes: List<CtType<*>> = superTypes()
 ): Pair<Set<CtField<*>>, Set<CtMethod<*>>> =
-  if (this == null || superTypes.isEmpty() || maxHeight == 0)
-    emptySet<CtField<*>>() to emptySet()
+  if (this == null) emptySet<CtField<*>>() to emptySet()
   else (fields.toSet() to methods.toSet()) +
-    superTypes.fold(emptySet<CtField<*>>() to emptySet()) { p, it ->
+    if (superTypes.isEmpty() || maxHeight == 0)
+      (emptySet<CtField<*>>() to emptySet())
+    else superTypes.fold(emptySet<CtField<*>>() to emptySet()) { p, it ->
       p + it.allMembers(maxHeight - 1)
     }
+
+fun CtType<*>?.numInheritedMembers() =
+  if(this == null) 0
+  else allMembers().let { (a, b) -> a.size + b.size - fields.size - methods.size }
 
 operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =
   first + other.first to second + other.second
 
+fun List<URI>.allTypes() =
+  Launcher().apply {
+    val uniqueTypes = mutableSetOf<String>()
+    forEach {
+      try {
+        if (uniqueTypes.add(it.suffix())) addInputResource(it.path)
+      } catch (e: Exception) { /*e.printStackTrace()*/ }
+    }
+    try { buildModel() } catch (e: Exception) { }
+  }.model.allTypes
+
 fun URI.collectLineStats(filter: (URI) -> Boolean) {
-  println("repo, total files, total lines, lines without comments and blanks")
+  println("repo, licenses, total files, total lines, holes, holes * inherited members")
   allFilesRecursively(readCompressed = false).filter { filter(it) }
     .groupBy { it.path.substringAfter("gcode/").substringBefore("/") }
     .entries.forEach { (repoName, uris) ->
-      val (totalLines, codeLines) =
-        uris.flatMap { it.contents()?.lines() ?: emptyList() }
-          .fold(0 to 0) { (a, b), it ->
-            a + 1 to b + if (it.isLineACommentOrEmpty()) 0 else 1
-          }
+      val licenses = mutableSetOf<String>()
+      val (totalLines, numHoles, numInherited) = uris.allTypes().fold(Triple(0, 0, 0)) { (a, b, c), it ->
+        val contents = it.toString()
+        licenses.add(
+          if ("Apache " in contents) "Apache"
+          else if ("GPL " in contents) "GPL"
+          else if ("MIT license" in contents) "MIT"
+          else if ("Copyright (" in contents) "Custom"
+          else "?"
+        )
+        val lines = it.toString().lines()
+        val holes = lines.filter { !it.isLineACommentOrEmpty() }
+        val numInheritedMembers = it.numInheritedMembers()
+        Triple(a + lines.size + holes.size, b + holes.size, c + numInheritedMembers * holes.size)
+      }
 
-      println("$repoName, ${uris.size}, $totalLines, $codeLines")
+      println("$repoName, ${licenses.joinToString("/")}, ${uris.size}, $totalLines, $numHoles, $numInherited")
     }
 }
 

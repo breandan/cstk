@@ -26,12 +26,12 @@ data class CodeSnippet(
 fun main() =
   evaluateTransformations(
     validationSet =
-    DATA_DIR
-      .also { println("Evaluating code completion with $MODEL on $it...") }
-      .allFilesRecursively().allMethods()
-      .map { it.first.toString() }
-      // Ensure tokenized method fits within attention
-//    .filter { defaultTokenizer.tokenize(it).size < 500 }
+      DATA_DIR
+        .also { println("Evaluating code completion with $MODEL on $it...") }
+        .allFilesRecursively().allMethods()
+        .map { it.first.toString() }
+        // Ensure tokenized method fits within attention
+        //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,
     evaluation = CodeSnippet::evaluateMultimask,
     codeTxs = arrayOf(
@@ -50,16 +50,14 @@ fun evaluateTransformations(
   validationSet: Sequence<String>,
   evaluation: KFunction1<CodeSnippet, Pair<Int, Int>>,
   vararg codeTxs: KFunction1<String, String>
-) =
-  validationSet
-    .flatMap { method -> setOf(method) * codeTxs.toSet() }
-    .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
-    .filter { it.original != it.variant }
-    .map { snippet -> snippet to evaluation(snippet) }
-    .forEach { (snippet, rightAndTotal) ->
-      csByMultimaskPrediction[snippet] = rightAndTotal
-      println(csByMultimaskPrediction.toLatexTable())
-    }
+) = validationSet.flatMap { method -> setOf(method) * codeTxs.toSet() }
+  .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
+  .filter { it.original != it.variant }
+  .map { snippet -> snippet to evaluation(snippet) }
+  .forEach { (snippet, rightAndTotal) ->
+    csByMultimaskPrediction[snippet] = rightAndTotal
+    println(csByMultimaskPrediction.toLatexTable())
+  }
 
 val csByMultimaskPrediction = CodeSnippetAttributeScoresTable<Pair<Int, Int>> {
   it.unzip().run { first.sum().toString().take(5) + " / " +
@@ -84,27 +82,30 @@ class CodeSnippetAttributeScoresTable<V>(val accumulator: (List<V>) -> String) {
   /* Example of table output:
 \begin{table}[H]
 \begin{tabular}{l|ccc}
-Complexity          & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
-10-20               & 0.011 ± 0.003 (594) & 0.046 ± 0.016 (539) & 1.683 ± 1.680 (594) \\
-20-30               & 0.031 ± 0.003 (442) & 0.056 ± 0.012 (441) & 0.004 ± 6.042 (442) \\
-30-40               & 0.023 ± 0.003 (243) & 0.086 ± 0.016 (242) & 0.003 ± 4.389 (243) \\
-40-50               & 0.029 ± 0.003 (147) & 0.071 ± 0.016 (147) & 0.014 ± 0.001 (147) \\
-50-60               & 0.027 ± 0.003 (286) & 0.091 ± 0.011 (286) & 0.014 ± 0.002 (286) \\
-60-70               & 0.034 ± 0.004 (149) & 0.082 ± 0.009 (149) & 0.024 ± 0.003 (149) \\
-70-80               & 0.045 ± 0.005 (49)  & 0.084 ± 0.009 (49)  & 0.078 ± 0.009 (49)  \\
-80-90               & 0.054 ± 0.005 (57)  & 0.105 ± 0.016 (57)  & 0.077 ± 0.010 (57)  \\
-90-100              & 0.062 ± 0.008 (40)  & 0.085 ± 0.010 (40)  & 0.080 ± 0.007 (40)  \\
-100-110             & 0.022 ± 0.001 (22)  & 0.054 ± 0.010 (22)  & 0.036 ± 0.004 (22)  \\
-110-120             & 0.073 ± 0.009 (34)  & 0.091 ± 0.007 (34)  & 0.064 ± 0.008 (34)  \\
-120-130             & 0.032 ± 0.002 (25)  & 0.092 ± 0.011 (25)  & 0.044 ± 0.005 (25)  \\
-130-140             & 0.037 ± 0.002 (27)  & 0.055 ± 0.005 (27)  & 0.077 ± 0.007 (27)  \\
-140-150             & 0.065 ± 0.005 (23)  & 0.078 ± 0.013 (23)  & 0.095 ± 0.009 (23)  \\
-150-160             & 0.004 ± 3.840 (25)  & 0.016 ± 0.002 (25)  & 0.012 ± 0.001 (25)  \\
-160-170             & 0.030 ± 0.003 (13)  & 0.023 ± 0.001 (13)  & 0.007 ± 7.100 (13)  \\
+Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
+10-20      & 0.011 ± 0.003 (594) & 0.046 ± 0.016 (539) & 1.683 ± 1.680 (594) \\
+20-30      & 0.031 ± 0.003 (442) & 0.056 ± 0.012 (441) & 0.004 ± 6.042 (442) \\
+30-40      & 0.023 ± 0.003 (243) & 0.086 ± 0.016 (242) & 0.003 ± 4.389 (243) \\
+40-50      & 0.029 ± 0.003 (147) & 0.071 ± 0.016 (147) & 0.014 ± 0.001 (147) \\
+50-60      & 0.027 ± 0.003 (286) & 0.091 ± 0.011 (286) & 0.014 ± 0.002 (286) \\
+60-70      & 0.034 ± 0.004 (149) & 0.082 ± 0.009 (149) & 0.024 ± 0.003 (149) \\
+70-80      & 0.045 ± 0.005 (49)  & 0.084 ± 0.009 (49)  & 0.078 ± 0.009 (49)  \\
+80-90      & 0.054 ± 0.005 (57)  & 0.105 ± 0.016 (57)  & 0.077 ± 0.010 (57)  \\
+90-100     & 0.062 ± 0.008 (40)  & 0.085 ± 0.010 (40)  & 0.080 ± 0.007 (40)  \\
+100-110    & 0.022 ± 0.001 (22)  & 0.054 ± 0.010 (22)  & 0.036 ± 0.004 (22)  \\
+110-120    & 0.073 ± 0.009 (34)  & 0.091 ± 0.007 (34)  & 0.064 ± 0.008 (34)  \\
+120-130    & 0.032 ± 0.002 (25)  & 0.092 ± 0.011 (25)  & 0.044 ± 0.005 (25)  \\
+130-140    & 0.037 ± 0.002 (27)  & 0.055 ± 0.005 (27)  & 0.077 ± 0.007 (27)  \\
+140-150    & 0.065 ± 0.005 (23)  & 0.078 ± 0.013 (23)  & 0.095 ± 0.009 (23)  \\
+150-160    & 0.004 ± 3.840 (25)  & 0.016 ± 0.002 (25)  & 0.012 ± 0.001 (25)  \\
+160-170    & 0.030 ± 0.003 (13)  & 0.023 ± 0.001 (13)  & 0.007 ± 7.100 (13)  \\
 \end{tabular}
 \end{table}
    */
-  fun toLatexTable(colWidth: Int = 20) =
+  fun toLatexTable(
+    colWidth: Int = 20,
+    colHeadings: List<String> = listOf("Complexity") + transformations.map { it.name }
+  ) =
     ("""
       \begin{table}[H]
       \begin{tabular}{l|${"c".repeat(transformations.size)}}
@@ -119,8 +120,7 @@ Complexity          & renameTokens        & permuteArgument     & swapMultilineN
         (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
           transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
-              this[CodeSnippet("", cplx, tx, "")]
-                .let { accumulator(it) }
+              accumulator(this[CodeSnippet("", cplx, tx, "")])
                 .padEnd(colWidth)
             }
       } +
