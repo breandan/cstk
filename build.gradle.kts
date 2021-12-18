@@ -62,6 +62,8 @@ dependencies {
   // CLI parser
   implementation("com.github.ajalt.clikt:clikt:3.3.0")
 
+  implementation("com.beust:klaxon:5.5")
+
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
   val openrwVersion = "7.16.3"
@@ -167,6 +169,7 @@ tasks {
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
+    "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
