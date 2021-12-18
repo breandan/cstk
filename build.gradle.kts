@@ -5,7 +5,7 @@ plugins {
   id("com.github.ben-manes.versions") version "0.39.0"
 //  kotlin("plugin.serialization") version kotlinVersion
   id("de.undercouch.download") version "4.1.2"
-  id("com.github.johnrengelman.shadow") version "7.1.0"
+  id("com.github.johnrengelman.shadow") version "7.1.1"
 //  idea
 }
 
@@ -108,7 +108,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.1.9490"
+  val ortoolsVersion = "9.2.9972"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -122,7 +122,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.55.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.56.0")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
