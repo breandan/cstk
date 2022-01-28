@@ -1,4 +1,3 @@
-\usepackage{listings}%! suppress = LineBreak
 %%
 %% This is file `sample-sigconf.tex',
 %% generated with the docstrip utility.
@@ -25,10 +24,8 @@
 %% The first command in your LaTeX source must be the \documentclass command.
 \documentclass[sigconf,review,anonymous]{acmart}
 
-
 % Packages
 \usepackage{amsfonts}
-\usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{float}
@@ -41,7 +38,6 @@
 
 \usepackage{booktabs}
 \usepackage{pifont}
-\usepackage{fontspec}
 \usepackage{fontawesome}
 
 \newcommand{\wmark}{\textcolor{orange}{\ding{45}}}
@@ -52,10 +48,11 @@
 
 % Packages
 \usepackage{amsmath}
-\usepackage{soul,listings,xcolor}
+\usepackage{soul}
+\usepackage{listings}
+\usepackage{xcolor}
 \DeclareRobustCommand{\hlred}[1]{{\sethlcolor{pink}\hl{#1}}}
 \usepackage{fontspec}
-\usepackage{xcolor}
 
 \setmonofont{JetBrainsMono}[
   Contextuals={Alternate},
@@ -153,11 +150,11 @@
 
   Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their sensitivity to adversarially-constructed noise in the input space~\cite{sun2020adv}. Recognizing the risk this issue poses for code completion, recent work has explored adversarial robustness for source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages due to the problem of semantic drift. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice.
 
-  Our work builds on this literature from an engineering standpoint: we explore the extent to which neural code completion models generalize to plausible cosmetic variation. Applying synthetic transformations to naturally-occurring code snippets, we compare the robustness of these models on two downstream tasks: code and document completion. Whereas prior work has explored similar probing tasks on both natural language and source code, they are typically adversial and may admit a much wider class of transformations. Our work is treats the model as a black box and considers a very narrow class of transformations. We have identified three high-level categories of source code transformations:
+  Our work builds on this literature from an engineering standpoint: we explore the extent to which neural code completion models generalize to plausible cosmetic variation. Applying synthetic transformations to naturally-occurring code snippets, we compare the robustness of these models on two downstream tasks: code and document completion. Whereas prior work has explored similar probing tasks on both natural language and source code, they are typically adversarial and may admit a much wider class of transformations. Our work is treats the model as a black box and considers a very narrow class of transformations. We have identified three high-level categories of source code transformations:
 
   \begin{enumerate}[itemsep=1ex]
     \item \textbf{Syntactic}, which may be valid (i.e., parsable) or invalid (e.g., typos, imbalanced parentheses, unparsable code)
-    \item \textbf{Semantic}, either preserving (functional code clones) or altering (e.g., disequal constant or expression rewriting)
+    \item \textbf{Semantic}, either preserving (functional code clones) or altering (e.g., dis-equal constant or expression rewriting)
     \item \textbf{Cosmetic}, e.g., variable renaming, independent statement reordering, extra documentation, dead code, or logging
   \end{enumerate}
 
@@ -268,7 +265,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across five different SCTs, various complexity code buckets, and two separate metrics, representing downstream tasks (i.e., code and document synthesis). Those results are reported in \S~\ref{sec:results}.
 
-  Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g. code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g. average relative ROUGE-score discrepancy) using a sketch-based historgram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
+  Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g., code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g., average relative ROUGE-score discrepancy) using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
 
   \section{Experiments}\label{sec:results}
 
@@ -414,7 +411,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
   Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
 
-  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, depsite their effectiveness on long-range seqeunce prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations.
+  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations.
   \pagebreak\bibliography{main}
   \bibliographystyle{plain}
   \appendix
