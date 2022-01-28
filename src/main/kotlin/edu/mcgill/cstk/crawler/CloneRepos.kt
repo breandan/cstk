@@ -8,8 +8,8 @@ import kotlin.io.path.*
 
 fun main() {
   File("data").apply { mkdir() }
-//  cloneGithub()
-  cloneGoogleCode()
+  cloneGithub()
+//  cloneGoogleCode()
 //  cloneGitlab()
 //  cloneSelfHosted()
 }

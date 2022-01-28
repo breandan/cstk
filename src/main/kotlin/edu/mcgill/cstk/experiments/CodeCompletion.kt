@@ -50,7 +50,8 @@ fun evaluateTransformations(
   validationSet: Sequence<String>,
   evaluation: KFunction1<CodeSnippet, Pair<Int, Int>>,
   vararg codeTxs: KFunction1<String, String>
-) = validationSet.flatMap { method -> setOf(method) * codeTxs.toSet() }
+) =
+  validationSet.flatMap { method -> setOf(method) * codeTxs.toSet() }
   .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
   .filter { it.original != it.variant }
   .map { snippet -> snippet to evaluation(snippet) }
