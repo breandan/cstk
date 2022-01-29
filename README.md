@@ -68,11 +68,12 @@ python embedding_server.py --model microsoft/codebert-base
 python embedding_server.py --model microsoft/graphcodebert-base
 ```
 
-Then, make sure the project builds correctly on a login node. This make take a few minutes:
+Then, make sure the project builds correctly on a login node and download the dataset. This make take a few minutes the first time it is run:
 
 ```bash
 module load java && \
-./gradlew build
+./gradlew build && \
+./gradlew cloneRepos
 ```
 
 To run an experiment interactively, request a GPU instance like so:
@@ -92,7 +93,7 @@ module load python/3.8
 module load java
 source bin/activate
 # Use --offline for all Gradle commands on Compute nodes
-./gradlew --offline [...]
+./gradlew --offline [...] | tee logfile.txt
 ```
 
 Once you have confirmed the experiment runs smoothly and are ready to submit a longer job, edit [`submit_job.sh`](submit_job.sh) and run the following command to submit it to Slurm:
