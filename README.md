@@ -40,25 +40,59 @@ We try our best to take an empirical approach. All experiments are conducted on 
 
 # Usage
 
+## Setup
+
+First clone this repo and initialize the submodule:
+
+```bash
+git clone git@github.com:breandan/cstk.git && \
+cd cstk && \
+git submodule init && \
+git submodule update
+```
+
+The following instructions assume you are running experiments on Compute Canada such as Narval or a similar cluster. Create a virtual environment and install the following dependencies:
+
+```bash
+module load python/3.8 && \
+python3 -m venv . && \
+source bin/activate && \
+pip install torch==1.5.1 -f https://download.pytorch.org/whl/torch_stable.html && \
+pip install transformers
+```
+
+Prefetch the models from the login node. Once the model has been loaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+
+```bash
+python embedding_server.py --model microsoft/codebert-base
+python embedding_server.py --model microsoft/graphcodebert-base
+```
+
+Submitting the job using [`submit_job.sh`](submit_job.sh) to Slurm:
+
+```bash
+sbatch submit_job.sh
+```
+
+## Experiments
+
 Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 17.
 
 ### Mining software repositories
 
 Tokens for accessing the [GitHub](https://docs.github.com/en/rest/reference/search) and [GitLab](https://docs.github.com/en/rest/reference/search) developer APIs should be placed in the `.ghtoken` and `.gltoken` files, respectively.
 
-The following comment will sample some repositories from GitHub, GitLab, Google Code:
+The following command is optional and will sample some repositories from [GitHub](github.txt), [GitLab](gitlab.txt), [Google Code](gcode.txt). To change the repository selection criteria, edit [`SampleRepos.kt`](src/main/kotlin/edu/mcgill/cstk/crawler/SampleRepos.kt):
 
 ```bash
 ./gradlew sampleRepos
 ```
 
-Then clone those repositories for evaluation:
+Those repositories may be cloned for evaluation. The following command will download Git repos into the `data` directory by default. To change the defaults, edit [`CloneRepos.kt`](src/main/kotlin/edu/mcgill/cstk/crawler/CloneRepos.kt):
 
 ```bash
 ./gradlew cloneRepos
 ```
-
-Downloads Git repos into the `data` directory by default.
 
 ### Masked code completion
 

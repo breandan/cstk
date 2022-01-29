@@ -12,7 +12,7 @@ import java.net.URL
 import java.util.stream.Collectors
 
 fun main() {
-//  sampleGithub()
+  sampleGithub()
 //  sampleGitlab()
 //  sampleGoogleCode("java")
 }
