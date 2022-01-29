@@ -4,6 +4,7 @@ import edu.mcgill.cstk.utils.execute
 import java.io.File
 import java.net.URL
 import java.nio.file.*
+import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
 fun main() {
@@ -60,6 +61,7 @@ fun cloneGithub(dir: String = makeDataDir("github")) =
       url = URL("https://api.github.com/repos/$repo/tarball"),
       filename = "$dir/" + repo.replace("/", "_") + ".tgz"
     )
+    TimeUnit.SECONDS.sleep(5)
   }
 
 fun wgetFile(url: URL, filename: String) = "wget $url -O $filename".execute()
