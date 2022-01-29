@@ -1,13 +1,15 @@
 package edu.mcgill.cstk.math
 
-import ai.hypergraph.kaliningraph.*
-import ai.hypergraph.kaliningraph.Graph
-import guru.nidi.graphviz.*
+import ai.hypergraph.kaliningraph.graphs.*
+import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.Graph
+import ai.hypergraph.kaliningraph.visualization.*
 import guru.nidi.graphviz.attribute.*
 import guru.nidi.graphviz.attribute.Color.TRANSPARENT
 import guru.nidi.graphviz.attribute.GraphAttr.COMPOUND
 import guru.nidi.graphviz.attribute.GraphAttr.CONCENTRATE
-import guru.nidi.graphviz.engine.*
+import guru.nidi.graphviz.engine.Format
+import guru.nidi.graphviz.graph
 import guru.nidi.graphviz.model.*
 import java.io.File
 

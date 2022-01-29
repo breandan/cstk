@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments
 
-import ai.hypergraph.kaliningraph.show
+import ai.hypergraph.kaliningraph.visualization.show
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
@@ -44,8 +44,7 @@ fun plotTsneEmbeddingsWithLabels(
   val plot = letsPlot(data) { x = "x"; y = "y"; color = "labels" } +
     ggsize(300, 250) + geomPoint(size = 6) +
     ggtitle("Lines by Structural Similarity") +
-    theme().axisLineBlank().axisTitleBlank()
-      .axisTicksBlank().axisTextBlank()
+    theme(axisLine = "blank", axisTitle =  "blank", axisTicks = "blank", axisText = "blank")
   return PlotSvgExport.buildSvgImageFromRawSpecs(
     plotSpec = plot.toSpec(), plotSize = DoubleVector(1000.0, 500.0)
   )

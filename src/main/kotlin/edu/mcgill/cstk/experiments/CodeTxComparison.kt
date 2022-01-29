@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments
 
-import ai.hypergraph.kaliningraph.show
+import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*

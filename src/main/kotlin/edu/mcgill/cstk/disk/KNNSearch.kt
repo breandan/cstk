@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.disk
 
-import ai.hypergraph.kaliningraph.show
+import ai.hypergraph.kaliningraph.visualization.show
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.cstk.experiments.fetchOrLoadSampleData

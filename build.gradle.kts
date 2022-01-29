@@ -134,6 +134,9 @@ dependencies {
 //  implementation("com.github.rodhilton:jasome:0.6.8-alpha")
 //  implementation("io.joern:javasrc2cpg_2.13:0.0.5")
 
+  implementation("guru.nidi:graphviz-java:0.18.1")
+  implementation("guru.nidi:graphviz-kotlin:0.18.1")
+
   implementation("ai.hypergraph:kaliningraph:0.1.9")
   implementation("io.github.vovak:astminer:0.8.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")

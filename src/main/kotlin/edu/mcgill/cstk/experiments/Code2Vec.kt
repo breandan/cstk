@@ -1,19 +1,21 @@
 package edu.mcgill.cstk.experiments
 
-import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.closure
+import ai.hypergraph.kaliningraph.graphs.*
+import ai.hypergraph.kaliningraph.tensor.DoubleMatrix
+import ai.hypergraph.kaliningraph.theory.gnn
+import ai.hypergraph.kaliningraph.visualization.show
 import astminer.common.model.*
-import astminer.parse.antlr.*
+import astminer.parse.antlr.AntlrNode
 import astminer.parse.antlr.python.PythonParser
 import edu.mcgill.cstk.disk.DEFAULT_RAND
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
 import jetbrains.letsPlot.*
-import jetbrains.letsPlot.geom.*
+import jetbrains.letsPlot.geom.geomPoint
 import jetbrains.letsPlot.intern.toSpec
 import jetbrains.letsPlot.label.ggtitle
-import org.ejml.kotlin.*
 import java.io.File
-import kotlin.random.Random
 
 fun main() {
 //  val (labels, graphs) = generateASTs()
@@ -45,10 +47,10 @@ fun Node.toKGraph() =
   }
 
 // Pad length to a common vector length for TNSE
-private fun List<SpsMat>.permute(): Array<DoubleArray> =
-  maxOf { it.nz_length }.let { maxDim ->
+private fun List<DoubleMatrix>.permute(): Array<DoubleArray> =
+  maxOf { it.count { it.third != 0.0 } }.let { maxDim ->
     map { cur ->
-      val data = cur.toFDRM().getData()
+      val data = cur.data
       val padded = DoubleArray(maxDim) { if (it < data.size) data[it] else 0.0 }
       padded.apply { shuffle(DEFAULT_RAND) }.take(20).toDoubleArray()//.also { println(it.map { 0.0 < it }.joinToString()) }
     }.toTypedArray()
@@ -67,7 +69,7 @@ private fun plot(
   val plot = letsPlot(data) { x = "x"; y = "y"; color = "labels" } +
     ggsize(300, 250) + geomPoint(size = 6) +
     ggtitle("Graph Types by Structural Similarity (t = $messagePassingRounds)") +
-    theme().axisLineBlank().axisTitleBlank().axisTicksBlank().axisTextBlank()
+    theme(axisLine = "blank", axisTitle =  "blank", axisTicks = "blank", axisText = "blank")
 //  plot = names.foldIndexed(plot) { i, plt, f -> plt +
 //    geom_text(x = embeddings[i][0] + 5, y = embeddings[i][1] + 5, label = f, color= BLACK)
 //  }
@@ -94,17 +96,17 @@ fun mineASTs(
 //    }.map { it.first to it.second.toGate().graph }.take(numExps).toList()
 //  }.unzip()
 
-fun generateDigraphs(
-  heights: IntRange = 4..7,
-  degrees: IntRange = 2..5,
-  numExps: Int = 50,
-): Pair<List<String>, List<LabeledGraph>> =
-  heights.flatMap { height ->
-    degrees.flatMap { degree ->
-      (0..numExps).map { i ->
-        val graph: LabeledGraph = (1..height)
-          .fold(LabeledGraph(LGVertex("0"))) { it, _ -> it.attachRandomT(degree) }
-        "$degree / $height" to graph
-      }
-    }
-  }.unzip()
+//fun generateDigraphs(
+//  heights: IntRange = 4..7,
+//  degrees: IntRange = 2..5,
+//  numExps: Int = 50,
+//): Pair<List<String>, List<LabeledGraph>> =
+//  heights.flatMap { height ->
+//    degrees.flatMap { degree ->
+//      (0..numExps).map { i ->
+//        val graph: LabeledGraph = (1..height)
+//          .fold(LabeledGraph(LGVertex("0"))) { it, _ -> it.attachRandomT(degree) }
+//        "$degree / $height" to graph
+//      }
+//    }
+//  }.unzip()
