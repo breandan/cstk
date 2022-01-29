@@ -61,14 +61,41 @@ pip install torch==1.5.1 -f https://download.pytorch.org/whl/torch_stable.html &
 pip install transformers
 ```
 
-Prefetch the models from the login node. Once the model has been loaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+Prefetch the models from the login node (requires internet access). Once the model has been loaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd>. This should only need to be run once and will be cached on disk.
 
 ```bash
 python embedding_server.py --model microsoft/codebert-base
 python embedding_server.py --model microsoft/graphcodebert-base
 ```
 
-Submitting the job using [`submit_job.sh`](submit_job.sh) to Slurm:
+Then, make sure the project builds correctly on a login node. This make take a few minutes:
+
+```bash
+module load java && \
+./gradlew build
+```
+
+To run an experiment interactively, request a GPU instance like so:
+
+```bash
+salloc --time 3:0:0 --account=[YOUR_ADVISOR] --gres=gpu:a100:1 --mem=40G
+```
+
+Compute nodes have no internet, so future commands will require need to occur offline.
+
+```bash
+# Default CUDA version may not work, use older version
+export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core/cudacore/10.2.89/targets/x86_64-linux/lib/
+# Disable 🤗 from phoning home on a Compute node
+export TRANSFORMERS_OFFLINE=1
+module load python/3.8
+module load java
+source bin/activate
+# Use --offline for all Gradle commands on Compute nodes
+./gradlew --offline [...]
+```
+
+Once you have confirmed the experiment runs smoothly and are ready to submit a longer job, edit [`submit_job.sh`](submit_job.sh) and run the following command to submit it to Slurm:
 
 ```bash
 sbatch submit_job.sh

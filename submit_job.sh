@@ -9,5 +9,5 @@ export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core
 export TRANSFORMERS_OFFLINE=1
 module load python/3.8
 module load java
-source venv/bin/activate
-./gradlew completeCode | tee logfile.txt
+source bin/activate
+./gradlew --offline completeCode | tee logfile.txt
