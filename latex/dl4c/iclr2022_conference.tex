@@ -238,124 +238,109 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
 Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g., code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
 
-\section{Experiments}\label{sec:results}
+\section{Experiments}\label{sec:experiments}
 
 Our dataset consists of a hundred of the highest-starred Java repositories hosted by GitHub organizations with over 100 forks and between 1 and 10 MB in size. This ensures a diverse dataset of active repositories with reasonable quality and stylistic diversity.
 
 We design a full factorial experiment across nine categories of code complexity, four SCTs, three state-of-the-art pretrained models (GraphCodeBERT, CodeBERT and RoBERTa) and two downstream tasks (code completion and document synthesis). While the number of samples may vary per model and per bucket, we provide the same wall clock time (180 minutes) and hardware resources (NVIDIA Tesla V100) to each model. The number of code snippets each can evaluate in the allotted time varies depending on the architecture, but in each case, the significant figures have mostly converged.
 
-Below, we report the average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.\\
+\pagebreak\section{Results}\label{sec:results}
 
+We ran two tasks, code synthesis and documentation synthesis. The results follow.
 \begin{center}
-  CodeBERT
   \begin{table}[H]
     \tiny
-    \begin{tabular}{r|cccc}
-      Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\\hline\\
-      10-20               & -0.13 ± 0.094 (42)  & 0.040 ± 0.329 (156) & 0.208 ± 0.348 (359) & 0.033 ± 0.082 (15)  \\
-      20-30               & -0.26 ± 0.189 (112) & 0.137 ± 0.299 (312) & 0.116 ± 0.338 (542) & -0.01 ± 0.202 (82)  \\
-      30-40               & -0.29 ± 0.224 (62)  & 0.098 ± 0.264 (163) & 0.185 ± 0.335 (329) & 0.081 ± 0.109 (73)  \\
-      40-50               & -0.27 ± 0.222 (74)  & 0.142 ± 0.373 (138) & 0.092 ± 0.357 (232) & 0.043 ± 0.208 (82)  \\
-      50-60               & -0.09 ± 0.295 (66)  & 0.041 ± 0.282 (130) & 0.120 ± 0.267 (335) & 0.014 ± 0.181 (136) \\
-      60-70               & -0.21 ± 0.244 (60)  & 0.020 ± 0.280 (108) & 0.161 ± 0.252 (179) & -0.02 ± 0.211 (98)  \\
-      70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
-      80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
-      90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
+    \begin{tabular}{|c|r|c|c|c|c|}
+      \hline&&&&&\\
+      Model & Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{CodeBERT}}} &&&&&\\
+      & 10-20               & -0.13 ± 0.094 (42)  & 0.040 ± 0.329 (156) & 0.208 ± 0.348 (359) & 0.033 ± 0.082 (15)  \\
+      & 20-30               & -0.26 ± 0.189 (112) & 0.137 ± 0.299 (312) & 0.116 ± 0.338 (542) & -0.01 ± 0.202 (82)  \\
+      & 30-40               & -0.29 ± 0.224 (62)  & 0.098 ± 0.264 (163) & 0.185 ± 0.335 (329) & 0.081 ± 0.109 (73)  \\
+      & 40-50               & -0.27 ± 0.222 (74)  & 0.142 ± 0.373 (138) & 0.092 ± 0.357 (232) & 0.043 ± 0.208 (82)  \\
+      & 50-60               & -0.09 ± 0.295 (66)  & 0.041 ± 0.282 (130) & 0.120 ± 0.267 (335) & 0.014 ± 0.181 (136) \\
+      & 60-70               & -0.21 ± 0.244 (60)  & 0.020 ± 0.280 (108) & 0.161 ± 0.252 (179) & -0.02 ± 0.211 (98)  \\
+      & 70-80               & -0.11 ± 0.384 (24)  & 0.071 ± 0.343 (55)  & 0.081 ± 0.376 (79)  & -0.03 ± 0.356 (73)  \\
+      & 80-90               & -0.12 ± 0.325 (42)  & 0.080 ± 0.363 (70)  & 0.035 ± 0.429 (97)  & -0.04 ± 0.350 (75)  \\
+      & 90-100              & -0.04 ± 0.307 (37)  & 0.214 ± 0.291 (52)  & 0.218 ± 0.293 (70)  & 0.075 ± 0.226 (69)  \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{GraphCodeBERT}}} &&&&&\\
+      & 10-20               & -0.31 ± 0.204 (21)  & 0.201 ± 0.384 (114) & 0.137 ± 0.374 (276) & 0.166 ± 0.055 (6)   \\
+      & 20-30               & -0.18 ± 0.155 (93)  & 0.130 ± 0.317 (247) & 0.034 ± 0.323 (438) & -0.03 ± 0.209 (71)  \\
+      & 30-40               & -0.19 ± 0.233 (48)  & 0.174 ± 0.209 (149) & 0.198 ± 0.340 (288) & -0.04 ± 0.108 (64)  \\
+      & 40-50               & -0.22 ± 0.256 (61)  & 0.093 ± 0.346 (94)  & 0.078 ± 0.346 (181) & -0.08 ± 0.282 (63)  \\
+      & 50-60               & -0.26 ± 0.228 (59)  & 0.064 ± 0.259 (139) & 0.099 ± 0.280 (323) & -0.06 ± 0.185 (135) \\
+      & 60-70               & -0.21 ± 0.207 (45)  & 0.058 ± 0.251 (85)  & 0.122 ± 0.249 (170) & -0.00 ± 0.224 (82)  \\
+      & 70-80               & -0.39 ± 0.319 (17)  & 0.126 ± 0.417 (46)  & 0.072 ± 0.335 (69)  & -0.11 ± 0.315 (63)  \\
+      & 80-90               & -0.00 ± 0.339 (37)  & -0.00 ± 0.294 (64)  & 0.056 ± 0.340 (85)  & -0.01 ± 0.295 (69)  \\
+      & 90-100              & -0.13 ± 0.291 (29)  & 0.209 ± 0.386 (49)  & 0.035 ± 0.342 (67)  & 0.011 ± 0.254 (61)  \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{RoBERTa}}} &&&&&\\
+      & 10-20               & -0.42 ± 0.175 (122) & 0.296 ± 0.406 (277) & 0.387 ± 0.349 (704) & 0.0 ± 0.0     (12)  \\
+      & 20-30               & -0.33 ± 0.172 (168) & 0.258 ± 0.338 (460) & 0.302 ± 0.288 (838) & -0.04 ± 0.145 (101) \\
+      & 30-40               & -0.23 ± 0.188 (107) & 0.084 ± 0.261 (313) & 0.224 ± 0.311 (604) & 0.031 ± 0.172 (142) \\
+      & 40-50               & -0.05 ± 0.237 (118) & 0.183 ± 0.291 (249) & 0.254 ± 0.268 (412) & -3.07 ± 0.098 (155) \\
+      & 50-60               & -0.06 ± 0.239 (108) & 0.085 ± 0.253 (259) & 0.246 ± 0.242 (510) & -0.00 ± 0.138 (203) \\
+      & 60-70               & -0.03 ± 0.196 (80)  & -4.31 ± 0.282 (171) & 0.174 ± 0.273 (291) & -0.02 ± 0.240 (144) \\
+      & 70-80               & 0.124 ± 0.409 (35)  & 0.062 ± 0.253 (97)  & 0.174 ± 0.338 (132) & -0.01 ± 0.235 (107) \\
+      & 80-90               & -0.06 ± 0.394 (43)  & 0.053 ± 0.350 (94)  & 0.225 ± 0.359 (132) & -0.00 ± 0.296 (103) \\
+      & 90-100              & 0.118 ± 0.341 (47)  & 0.064 ± 0.347 (77)  & 0.294 ± 0.339 (95)  & 0.124 ± 0.309 (88)  \\
+      &                     &                     &                     &                     &                     \\
+      \hline
     \end{tabular}
-  \end{table}
-
-
-  GraphCodeBERT
-  \begin{table}[H]
-    \tiny
-    \begin{tabular}{r|cccc}
-      Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\\hline\\
-      10-20               & -0.31 ± 0.204 (21)  & 0.201 ± 0.384 (114) & 0.137 ± 0.374 (276) & 0.166 ± 0.055 (6)   \\
-      20-30               & -0.18 ± 0.155 (93)  & 0.130 ± 0.317 (247) & 0.034 ± 0.323 (438) & -0.03 ± 0.209 (71)  \\
-      30-40               & -0.19 ± 0.233 (48)  & 0.174 ± 0.209 (149) & 0.198 ± 0.340 (288) & -0.04 ± 0.108 (64)  \\
-      40-50               & -0.22 ± 0.256 (61)  & 0.093 ± 0.346 (94)  & 0.078 ± 0.346 (181) & -0.08 ± 0.282 (63)  \\
-      50-60               & -0.26 ± 0.228 (59)  & 0.064 ± 0.259 (139) & 0.099 ± 0.280 (323) & -0.06 ± 0.185 (135) \\
-      60-70               & -0.21 ± 0.207 (45)  & 0.058 ± 0.251 (85)  & 0.122 ± 0.249 (170) & -0.00 ± 0.224 (82)  \\
-      70-80               & -0.39 ± 0.319 (17)  & 0.126 ± 0.417 (46)  & 0.072 ± 0.335 (69)  & -0.11 ± 0.315 (63)  \\
-      80-90               & -0.00 ± 0.339 (37)  & -0.00 ± 0.294 (64)  & 0.056 ± 0.340 (85)  & -0.01 ± 0.295 (69)  \\
-      90-100              & -0.13 ± 0.291 (29)  & 0.209 ± 0.386 (49)  & 0.035 ± 0.342 (67)  & 0.011 ± 0.254 (61)  \\
-    \end{tabular}
-  \end{table}
-
-  RoBERTa
-  \begin{table}[H]
-    \tiny
-    \begin{tabular}{r|cccc}
-      Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\\hline\\
-      10-20               & -0.42 ± 0.175 (122) & 0.296 ± 0.406 (277) & 0.387 ± 0.349 (704) & 0.0 ± 0.0     (12)  \\
-      20-30               & -0.33 ± 0.172 (168) & 0.258 ± 0.338 (460) & 0.302 ± 0.288 (838) & -0.04 ± 0.145 (101) \\
-      30-40               & -0.23 ± 0.188 (107) & 0.084 ± 0.261 (313) & 0.224 ± 0.311 (604) & 0.031 ± 0.172 (142) \\
-      40-50               & -0.05 ± 0.237 (118) & 0.183 ± 0.291 (249) & 0.254 ± 0.268 (412) & -3.07 ± 0.098 (155) \\
-      50-60               & -0.06 ± 0.239 (108) & 0.085 ± 0.253 (259) & 0.246 ± 0.242 (510) & -0.00 ± 0.138 (203) \\
-      60-70               & -0.03 ± 0.196 (80)  & -4.31 ± 0.282 (171) & 0.174 ± 0.273 (291) & -0.02 ± 0.240 (144) \\
-      70-80               & 0.124 ± 0.409 (35)  & 0.062 ± 0.253 (97)  & 0.174 ± 0.338 (132) & -0.01 ± 0.235 (107) \\
-      80-90               & -0.06 ± 0.394 (43)  & 0.053 ± 0.350 (94)  & 0.225 ± 0.359 (132) & -0.00 ± 0.296 (103) \\
-      90-100              & 0.118 ± 0.341 (47)  & 0.064 ± 0.347 (77)  & 0.294 ± 0.339 (95)  & 0.124 ± 0.309 (88)  \\
-    \end{tabular}
+    \caption{\label{tab:code-synth}Average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.}
   \end{table}
 \end{center}
 
-
-Below are the ROUGE scores collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. \\
-
 \begin{center}
-GraphCodeBERT
   \begin{table}[H]
     \tiny
-    \begin{tabular}{l|cccc}
-      Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-      60-70               & NaN ± NaN (0)       & -0.25 ± 0.281 (3)   & 3.922 ± 129.3 (8)   & -0.29 ± 0.036 (2)   \\
-      70-80               & NaN ± NaN (0)       & -0.66 ± 0.0 (1)     & 0.947 ± 3.621 (6)   & 3.689 ± 17.37 (3)   \\
-      80-90               & 5.833 ± 0.0 (1)     & -0.66 ± 0.0 (1)     & -0.02 ± 0.720 (7)   & -0.45 ± 0.595 (3)   \\
-      90-100              & 5.417 ± 0.0 (1)     & 3.179 ± 22.20 (7)   & 3.746 ± 13.65 (12)  & 2.551 ± 0.0 (1)     \\
-      100-110             & NaN ± NaN (0)       & 0.040 ± 0.909 (7)   & 1.156 ± 8.423 (13)  & -0.54 ± 0.539 (7)   \\
+    \begin{tabular}{|c|r|c|c|c|c|}
+      \hline&&&&&\\
+      Model & Complexity          & \lstinline|renameTokens|        & \lstinline|swapMultilineNo|     & \lstinline|permuteArgument|     & \lstinline|addExtraLogging|     \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{CodeBERT}}} &&&&&\\
+      & 60-70               & NaN ± NaN (0)       & -0.25 ± 0.281 (3)   & 3.922 ± 129.3 (8)   & -0.29 ± 0.036 (2)   \\
+      & 70-80               & NaN ± NaN (0)       & -0.66 ± 0.0 (1)     & 0.947 ± 3.621 (6)   & 3.689 ± 17.37 (3)   \\
+      & 80-90               & 5.833 ± 0.0 (1)     & -0.66 ± 0.0 (1)     & -0.02 ± 0.720 (7)   & -0.45 ± 0.595 (3)   \\
+      & 90-100              & 5.417 ± 0.0 (1)     & 3.179 ± 22.20 (7)   & 3.746 ± 13.65 (12)  & 2.551 ± 0.0 (1)     \\
+      & 100-110             & NaN ± NaN (0)       & 0.040 ± 0.909 (7)   & 1.156 ± 8.423 (13)  & -0.54 ± 0.539 (7)   \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{GraphCodeBERT}}} &&&&&\\
+      & 110-120             & 0.071 ± 0.0 (1)     & -0.56 ± 0.068 (2)   & 2.345 ± 28.16 (6)   & -0.95 ± 0.0 (1)     \\
+      & 120-130             & -0.81 ± 0.0 (1)     & 0.307 ± 0.036 (2)   & 1.549 ± 12.76 (5)   & NaN ± NaN (0)       \\
+      & 130-140             & -0.33 ± 0.005 (2)   & -0.02 ± 0.137 (6)   & 2.131 ± 8.023 (9)   & 20.66 ± 0.0 (1)     \\
+      & 140-150             & -1.0 ± 0.0 (1)      & -0.24 ± 0.304 (3)   & 0.239 ± 1.016 (6)   & -0.51 ± 0.0 (1)     \\
+      &                     &                     &                     &                     &                     \\
+      &                     &                     &                     &                     &                     \\
+      &                     &                     &                     &                     &                     \\
+      &                     &                     &                     &                     &                     \\
+      &                     &                     &                     &                     &                     \\
+      \hline\multirow{0}{*}{\rotatebox[origin=c]{90}{\textsc{RoBERTa}}} &&&&&\\
+      & 30-40               & NaN ± NaN (0)       & NaN ± NaN (0)       & 3.142 ± 14.87 (2)   & 1.4 ± 0.0 (1)       \\
+      & 40-50               & -0.69 ± 0.037 (2)   & 0.644 ± 19.80 (13)  & 0.350 ± 12.70 (39)  & -0.53 ± 0.864 (9)   \\
+      & 50-60               & NaN ± NaN (0)       & 1.653 ± 9.808 (14)  & 1.671 ± 26.44 (85)  & 3.194 ± 75.10 (8)   \\
+      & 60-70               & NaN ± NaN (0)       & 0.186 ± 1.067 (15)  & 2.107 ± 19.51 (82)  & 0.218 ± 4.887 (8)   \\
+      & 70-80               & NaN ± NaN (0)       & 9.666 ± 183.9 (8)   & 2.515 ± 56.38 (48)  & 0.200 ± 3.070 (10)  \\
+      & 80-90               & 0.210 ± 1.319 (4)   & 3.016 ± 33.88 (15)  & 1.774 ± 46.96 (55)  & 4.167 ± 49.65 (14)  \\
+      & 90-100              & -0.35 ± 0.075 (3)   & 0.520 ± 1.556 (21)  & 2.435 ± 39.08 (54)  & 0.407 ± 2.483 (18)  \\
+      & 100-110             & 2.645 ± 13.31 (4)   & 0.613 ± 5.410 (19)  & 2.900 ± 96.60 (57)  & 1.348 ± 14.02 (27)  \\
+      &                     &                     &                     &                     &                     \\
+      \hline
     \end{tabular}
-  \end{table}
-
-  CodeBERT
-
-  \begin{table}[H]
-    \tiny
-    \begin{tabular}{l|cccc}
-      Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-      110-120             & 0.071 ± 0.0 (1)     & -0.56 ± 0.068 (2)   & 2.345 ± 28.16 (6)   & -0.95 ± 0.0 (1)     \\
-      120-130             & -0.81 ± 0.0 (1)     & 0.307 ± 0.036 (2)   & 1.549 ± 12.76 (5)   & NaN ± NaN (0)       \\
-      130-140             & -0.33 ± 0.005 (2)   & -0.02 ± 0.137 (6)   & 2.131 ± 8.023 (9)   & 20.66 ± 0.0 (1)     \\
-      140-150             & -1.0 ± 0.0 (1)      & -0.24 ± 0.304 (3)   & 0.239 ± 1.016 (6)   & -0.51 ± 0.0 (1)
-    \end{tabular}
-  \end{table}
-
-  RoBERTa
-
-  \begin{table}[H]
-    \tiny
-    \begin{tabular}{l|cccc}
-      Complexity          & renameTokens        & swapMultilineNo     & permuteArgument     & addExtraLogging     \\\hline\\
-      30-40               & NaN ± NaN (0)       & NaN ± NaN (0)       & 3.142 ± 14.87 (2)   & 1.4 ± 0.0 (1)       \\
-      40-50               & -0.69 ± 0.037 (2)   & 0.644 ± 19.80 (13)  & 0.350 ± 12.70 (39)  & -0.53 ± 0.864 (9)   \\
-      50-60               & NaN ± NaN (0)       & 1.653 ± 9.808 (14)  & 1.671 ± 26.44 (85)  & 3.194 ± 75.10 (8)   \\
-      60-70               & NaN ± NaN (0)       & 0.186 ± 1.067 (15)  & 2.107 ± 19.51 (82)  & 0.218 ± 4.887 (8)   \\
-      70-80               & NaN ± NaN (0)       & 9.666 ± 183.9 (8)   & 2.515 ± 56.38 (48)  & 0.200 ± 3.070 (10)  \\
-      80-90               & 0.210 ± 1.319 (4)   & 3.016 ± 33.88 (15)  & 1.774 ± 46.96 (55)  & 4.167 ± 49.65 (14)  \\
-      90-100              & -0.35 ± 0.075 (3)   & 0.520 ± 1.556 (21)  & 2.435 ± 39.08 (54)  & 0.407 ± 2.483 (18)  \\
-      100-110             & 2.645 ± 13.31 (4)   & 0.613 ± 5.410 (19)  & 2.900 ± 96.60 (57)  & 1.348 ± 14.02 (27)  \\
-    \end{tabular}
+    \caption{\label{tab:doc-synth}ROUGE scores collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model.}
   \end{table}
 \end{center}
 
 \vspace{-10pt}\begin{figure}[H]
-                \centering
-                \includegraphics[width=0.20\textwidth]{figs/renameTokens.png}
-                \includegraphics[width=0.20\textwidth]{figs/swapMultilineNo.png}
-                \includegraphics[width=0.20\textwidth]{figs/permuteArgument.png}
-                \includegraphics[width=0.20\textwidth]{figs/addExtraLogging.png}
-                \caption{Average relative difference across all models.}
-                \label{fig:dataflow}
+    \centering
+    \includegraphics[width=0.20\textwidth]{figs/renameTokens.png}
+    \includegraphics[width=0.20\textwidth]{figs/swapMultilineNo.png}
+    \includegraphics[width=0.20\textwidth]{figs/permuteArgument.png}
+    \includegraphics[width=0.20\textwidth]{figs/addExtraLogging.png}
+    \caption{Average relative difference across all models.}
+    \label{fig:dataflow}
 \end{figure}
 
 Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. The \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
