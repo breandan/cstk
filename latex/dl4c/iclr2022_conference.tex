@@ -1,11 +1,11 @@
-
-\documentclass{article} % For LaTeX2e
+\documentclass[usenames,dvipsnames]{article} % For LaTeX2e
 \usepackage{iclr2022_conference,times}
 
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
 
 % Packages
+\usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{float}
@@ -66,7 +66,7 @@
   escapeinside={(*@}{@*)}
 }
 
-\lstset{basicstyle=\ttfamily\lst@ifdisplaystyle\small\fi}
+\lstset{basicstyle=\ttfamily\lst@ifdisplaystyle\tiny\fi, language=kotlin}
 
 
 \usepackage{url}
@@ -104,9 +104,9 @@ Many factors influence the performance of neural code completion models. We prop
 
 % First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
 
-Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their sensitivity to adversarially-constructed noise in the input space~\cite{sun2020adv}. Recognizing the risk this issue poses for code completion, recent work has explored adversarial robustness for source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages due to the problem of semantic drift. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice.
+Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their sensitivity to noise in the input space~\cite{sun2020adv}. Similar studies have been undertaken to study the robustness of pretrained language models of source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice.
 
-Our work builds on this literature from an engineering standpoint: we explore the extent to which neural code completion models generalize to plausible cosmetic variation. Applying synthetic transformations to naturally-occurring code snippets, we compare the robustness of these models on two downstream tasks: code and document completion. Whereas prior work has explored similar probing tasks on both natural language and source code, they are typically adversarial and may admit a much wider class of transformations. Our work is treats the model as a black box and considers a very narrow class of transformations. We have identified three high-level categories of source code transformations:
+Our work builds on this literature from an engineering standpoint: we investigate how neural code completion models respond to plausible cosmetic variation. Applying synthetic transformations to naturally-occurring code snippets, we compare the robustness of these models on two downstream tasks: code and document completion. Whereas prior work has explored similar probing tasks on both natural language and source code, they are typically adversarial and may admit a much wider class of transformations. Our work treats the model as a black box and considers a very narrow class of transformations. We have identified three high-level categories of source code transformations:
 
 \begin{enumerate}[itemsep=1ex]
   \item \textbf{Syntactic}, which may be valid (i.e., parsable) or invalid (e.g., typos, imbalanced parentheses, unparsable code)
@@ -114,9 +114,9 @@ Our work builds on this literature from an engineering standpoint: we explore th
   \item \textbf{Cosmetic}, e.g., variable renaming, independent statement reordering, extra documentation, dead code, or logging
 \end{enumerate}
 
-In contrast with syntactic or semantic transformations, cosmetic transformations are semantically identical, syntactically valid and only superficially alter syntactic structure. We show that even in this highly restrictive space of transformations, source code has many degrees of freedom: two authors implementing the same function may select different variable names or other cosmetic features, such as whitespaces, diagnostic statements or comments. One would expect neural code completion for programming languages semantically invariant under those changes to share the same invariance: \textit{cosmetically-altered code snippets should not drastically change the language model's predictions}. Yet our results suggest that even in this narrow space of transformations, SoTA neural code completion models exhibit sensitivity to our cosmetic changes.
+In contrast with syntactic or semantic transformations, cosmetic transformations are semantically identical, syntactically valid and only superficially alter syntactic structure. We show that even in this highly restrictive space of transformations, source code has many degrees of freedom: two authors implementing the same function may select different variable names or other cosmetic features, such as whitespaces, diagnostic statements or comments. One would expect neural code completion for programming languages semantically invariant under those changes to share the same invariance: \textit{cosmetically-altered code snippets should not drastically change the language model's predictions}. Yet our results suggest that even in this narrow space of transformations, SoTA neural code completion models can be surprisingly sensitive to noise in the cosmetic domain space.
 
-In addition to its empirical value, our work provides a modular and extensible software testing framework for evaluating black-box code completion models and constructing similar benchmarks. Our toolkit is open source and may be obtained at the following URL: \url{https://anonymous.4open.science/r/cstk-1458}
+In addition to its empirical value, our work provides a modular and extensible software testing framework for evaluating black-box code completion models and constructing similar benchmarks, available here: \url{https://anonymous.4open.science/r/cstk-1458}
 
 \section{Method}
 
@@ -138,79 +138,94 @@ Ideally, these SCTs would be implemented using a higher-order abstract syntax (H
   \item The \lstinline|permuteArgument| SCT performs a Fisher-Yates shuffle on the arguments of a user-defined function of dyadic or higher-arity, representing an alternate parameter order of some function outside the JDK standard library.
 \end{enumerate}
 
-Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied) are considered invalid and discarded. Although (3) and (4) may produce semantic variants, strictly speaking, we cannot rule out the possibility that any of the aforementioned SCTs are semantically-preserving due to the inherent complexity of source code analysis, however we have manually validated their admissibility for a large fraction of cases. A more principled macro system would help to alleviate these concerns, however a framework for rewriting partial Java code snippets with flexible error recovery is, to the best of our knowledge, presently unavailable.
+Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied) are considered invalid and discarded. Although (3) and (4) may produce semantic variants, strictly speaking, we cannot eliminate the possibility that any of the SCTs are always semantically-invariant, however we have manually validated their admissibility for a large fraction of cases. A more principled macro system would help to alleviate these concerns, however such a framework for rewriting partial Java code snippets with flexible error recovery is, to the best of our knowledge, presently unavailable.
 
 Our framework is capable of evaluating both code completion and document synthesis using the same end-to-end strategy. In principle, this measurement can be done inside the model's latent space using a sensitivity margin or via some metric on the raw data. In practice, we decided to focus on the input domain and consider two metrics: masked token completion accuracy for code completion and ROUGE-synonym score for document synthesis.
 
 \pagebreak
 
-For code completion, we uniformly sample and mask N individual tokens from both the original and transformed code snippet for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code snippet, recording the relative difference in accuracy before and after transformation.
+For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code snippet for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code snippet. An example of this procedure may be found in the table below.
 
-\begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example2}]
- ---------------------------------|-------------------------------
-    1.a) Original method          |   1.a) Synonymous Variant
- ---------------------------------|-------------------------------
-    public void flush(int b) {    |   public void flush(int b) {
-      buffer.write((byte) b);     |     (*@\hlred{cushion}@*).write((byte) b);
-      buffer.compact();           |     (*@\hlred{cushion}@*).compact();
-    }                             |   }
-
- ---------------------------------|-------------------------------
-    2.a) Multi-masked method      |   2.b) Multi-masked variant
- ---------------------------------|-------------------------------
-    public void <MASK>(int b) {   |   public void <MASK>(int b) {
-      buffer.<MASK>((byte) b);    |     cushion.<MASK>((byte) b);
-      <MASK>.compact();           |     <MASK>.compact();
-    }                             |   }
-
- ---------------------------------|-------------------------------
-    3.a) Model predictions        |   3.b) Model predictions
- ---------------------------------|-------------------------------
-    public void (*@\hl{output}@*)(int b) {   |   public void (*@\hl{append}@*)(int b) {
-      buffer.write((byte) b);     |     cushion.(*@\hl{add}@*)((byte) b);
-      buffer.compact();           |     cushion.compact();
-    }                             |   }
-\end{lstlisting}
+\begin{center}
+\begin{tabular}{|p{4.5cm}|p{4.5cm}|}
+  \hline\\[-1em]1.a) Original method  &  1.b) Synonymous Variant\\[-1em]\\\hline
+  \begin{lstlisting}
+  public void flush(int b) {
+    buffer.write((byte) b);
+    buffer.compact();
+  }
+  \end{lstlisting} & \begin{lstlisting}
+  public void flush(int b) {
+    (*@\hlred{cushion}@*).write((byte) b);
+    (*@\hlred{cushion}@*).compact();
+  }
+  \end{lstlisting}
+  \\\hline\\[-1em]2.a) Multi-masked method   &  2.b) Multi-masked variant\\[-1em]\\\hline
+  \begin{lstlisting}
+  public void <MASK>(int b) {
+    buffer.<MASK>((byte) b);
+    <MASK>.compact();
+  }
+  \end{lstlisting} & \begin{lstlisting}
+  public void <MASK>(int b) {
+    cushion.<MASK>((byte) b);
+    <MASK>.compact();
+  }
+  \end{lstlisting} 
+  \\\hline\\[-1em]3.a) Model predictions  &  3.b) Model predictions\\[-1em]\\\hline
+  \begin{lstlisting}
+  public void (*@\hl{output}@*)(int b) {
+    buffer.write((byte) b);
+    buffer.compact();
+  }
+  \end{lstlisting} & \begin{lstlisting}
+  public void (*@\hl{append}@*)(int b) {
+    cushion.(*@\hl{add}@*)((byte) b);
+    cushion.compact();
+  }
+  \end{lstlisting} \\\hline
+\end{tabular}
+\end{center}
 
 % The model correctly predicted $\frac{2}{3}$ masked tokens in the original snippet, and $\frac{1}{3}$ after renaming, so the relative accuracy is $\frac{\frac{2}{3} - \frac{1}{3}}{\frac{2}{3}} = \frac{1}{2}$.
 
-Similarly, in the case of document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. In the following example, we apply the \lstinline|renameTokens| SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, before and after applying the SCT.
+Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. In the following example, we apply the \lstinline|renameTokens| SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, before and after applying the SCT.
 
-\begin{lstlisting}[basicstyle=\scriptsize\ttfamily, language=kotlin,label={lst:example3}]
- //--------------------------------------------------------------
- // 1.) Original method with ground truth document
- //--------------------------------------------------------------
-    public void testBuildSucceeds(String gradleVersion) {
-        setup( gradleVersion );
-        // Make sure the test build setup actually compiles
-        BuildResult buildResult = getRunner().build();
-        assertCompileOutcome( buildResult, SUCCESS );
-    }
-
- //--------------------------------------------------------------
- // 2.) Synthetic document before applying SCT
- //--------------------------------------------------------------
-    public void testBuildSucceeds(String gradleVersion) {
-        setup( gradleVersion );
-        // (*@\hl{build the tests with gradletuce compiler}@*)
-        BuildResult buildResult = getRunner().build();
-        assertCompileOutcome( buildResult, SUCCESS );
-    }
-
- //--------------------------------------------------------------
- // 3.) Synthetic document after applying renameTokens SCT
- //--------------------------------------------------------------
-    public void testBuildSucceeds(String (*@\hlred{gradleAdaptation}@*)) {
-        setup((*@ \hlred{gradleAdaptation} @*));
-        // (*@\hl{build the actual code for test suite generation}@*)
-        BuildResult buildResult = getRunner().build();
-        assertCompileOutcome( buildResult, SUCCESS );
-    }
-\end{lstlisting}
+\begin{center}
+\begin{tabular}{|p{7.5cm}|}
+  \hline\\[-1em]1.) Original method with ground truth document \\[-1em]\\\hline
+  \begin{lstlisting}
+  public void testBuildSucceeds(String gradleVersion) {
+    setup(gradleVersion);
+    // Make sure the test build setup actually compiles
+    BuildResult buildResult = getRunner().build();
+    assertCompileOutcome(buildResult, SUCCESS);
+  }
+  \end{lstlisting}
+  \\\hline\\[-1em]2.) Synthetic document before applying SCT \\[-1em]\\\hline
+  \begin{lstlisting}
+  public void testBuildSucceeds(String gradleVersion) {
+    setup(gradleVersion);
+    // (*@\hl{build the tests with gradletuce compiler}@*)
+    BuildResult buildResult = getRunner().build();
+    assertCompileOutcome(buildResult, SUCCESS);
+  }
+  \end{lstlisting}
+  \\\hline\\[-1em]3.) Synthetic document after applying SCT \\[-1em]\\\hline
+  \begin{lstlisting}
+  public void testBuildSucceeds(String (*@\hlred{gradleAdaptation}@*)) {
+    setup((*@\hlred{gradleAdaptation}@*));
+    // (*@\hl{build the actual code for test suite generation}@*)
+    BuildResult buildResult = getRunner().build();
+    assertCompileOutcome(buildResult, SUCCESS);
+  }
+  \end{lstlisting}\\\hline
+\end{tabular}
+\end{center}
 
 Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this idea in great depth.
 
-Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. The evaluation pipeline can be described succinctly as follows. Given a code completion model \lstinline|cc: Str->Str|, a list of code snippets, \lstinline|snps: List<Str>|, a masking procedure, \lstinline|msk: Str->Str|, an SCT, \lstinline|sct: Str->Str|, and a single metric over code snippets, \lstinline|mtr: (Str, Str)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
+Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. The evaluation pipeline can be described succinctly as follows. Given a code completion model \lstinline|cc: String->String|, a list of code snippets, \lstinline|snps: List<String>|, a masking procedure, \lstinline|msk: String->String|, an SCT, \lstinline|sct: String->String|, and a single metric over code snippets, \lstinline|mtr: (String, String)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
 
 \noindent\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
 fun evaluate(cc, snps, msk, sct, mtr) = Δ(
@@ -221,7 +236,7 @@ fun evaluate(cc, snps, msk, sct, mtr) = Δ(
 
 \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across five different SCTs, various complexity code buckets, and two separate metrics, representing downstream tasks (i.e., code and document synthesis). Those results are reported in \S~\ref{sec:results}.
 
-Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g., code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest (e.g., average relative ROUGE-score discrepancy) using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
+Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g., code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
 
 \section{Experiments}\label{sec:results}
 
@@ -231,9 +246,8 @@ We design a full factorial experiment across nine categories of code complexity,
 
 Below, we report the average relative decrease in completion accuracy after applying the SCT in the column to a code snippet whose Dyck-1 complexity is reported in the row heading, plus or minus the variance, with a sample size reported in parentheses.\\
 
-{\center
-
-CodeBERT
+\begin{center}
+  CodeBERT
   \begin{table}[H]
     \tiny
     \begin{tabular}{r|cccc}
@@ -284,15 +298,12 @@ CodeBERT
       90-100              & 0.118 ± 0.341 (47)  & 0.064 ± 0.347 (77)  & 0.294 ± 0.339 (95)  & 0.124 ± 0.309 (88)  \\
     \end{tabular}
   \end{table}
-}
+\end{center}
 
-Sample size varies across SCTs because not all SCTs modify all snippets, and we discard all code snippets which remain unchanged after transformation, which results in column imbalance.
 
-Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. In all cases, the \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
+Below are the ROUGE scores collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. \\
 
-Below are the ROUGE scores we collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model. Although the sample sizes are smaller and less conclusive, we observe a similar trend across SCTs emerging.\\
-
-{\center
+\begin{center}
 GraphCodeBERT
   \begin{table}[H]
     \tiny
@@ -335,7 +346,7 @@ GraphCodeBERT
       100-110             & 2.645 ± 13.31 (4)   & 0.613 ± 5.410 (19)  & 2.900 ± 96.60 (57)  & 1.348 ± 14.02 (27)  \\
     \end{tabular}
   \end{table}
-}
+\end{center}
 
 \vspace{-10pt}\begin{figure}[H]
                 \centering
@@ -346,6 +357,8 @@ GraphCodeBERT
                 \caption{Average relative difference across all models.}
                 \label{fig:dataflow}
 \end{figure}
+
+Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. The \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
 
 In both cases, we observe a clear trend across method complexity: SCTs in low complexity code have a larger effect on completion quality than similar transformations in high-complexity code. We hypothesize this phenomenon can be explained by the fact that the same transformation can have a comparatively larger effect on a shorter code snippet than a longer one, which contains more contextual information and is thus more stable to minor perturbations.
 
