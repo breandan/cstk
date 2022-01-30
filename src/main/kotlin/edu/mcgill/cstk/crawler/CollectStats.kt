@@ -82,6 +82,8 @@ fun List<URI>.allTypes() =
 
 // To collect all license information, run the following command from the ZIPs directory
 // for i in *.zip; do zipgrep -EoiIm5  ".{0,200}license.{0,200}" "$i"; done | tee all_licenses_data1.txt
+// Track progress during the job (may take a few hours):
+// echo $(grep -oi "^[^/]*" all_licenses_data.txt | sort --unique | wc -l) / $(ls | wc -l)
 fun URI.collectLineStats(filter: (URI) -> Boolean) {
   println("repo, licenses, total files, total lines, holes, holes * inherited members")
   allFilesRecursively(readCompressed = false).filter { filter(it) }
