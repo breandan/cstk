@@ -80,6 +80,8 @@ fun List<URI>.allTypes() =
     try { buildModel() } catch (e: Exception) { }
   }.model.allTypes
 
+// To collect all license information, run the following command from the ZIPs directory
+// for i in *.zip; do zipgrep -EoiIm5  ".{0,200}license.{0,200}" "$i"; done | tee all_licenses_data1.txt
 fun URI.collectLineStats(filter: (URI) -> Boolean) {
   println("repo, licenses, total files, total lines, holes, holes * inherited members")
   allFilesRecursively(readCompressed = false).filter { filter(it) }

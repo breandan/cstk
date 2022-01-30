@@ -25,7 +25,7 @@ fun makeDataDir(dir: String) = Paths.get("data/$dir")
   .let { if (it.exists()) it.pathString else Files.createDirectories(it).pathString }
 
 // After cloning, run the following command to extract source code files
-// find . -name "*.zip" -type f -exec unzip "{}" "*.java" \;
+// mkdir unzipped && find . -name "*.zip" -type f -exec unzip -jd "unzipped/{}" "{}" "*.java" "LICENSE" "license" "License" \;
 fun cloneGoogleCode(dir: String = makeDataDir("gcode")) =
   File(GC_REPOS_FILE).readLines().take(TO_TAKE).forEach {
     val repo = it.substringAfter("https://code.google.com/archive/p/")
