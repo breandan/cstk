@@ -64,8 +64,7 @@ pip install transformers
 Prefetch the models from the login node (requires internet access). Once the model has been loaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd>. This should only need to be run once and will be cached on disk.
 
 ```bash
-python embedding_server.py --model microsoft/codebert-base
-python embedding_server.py --model microsoft/graphcodebert-base
+python embedding_server.py --model microsoft/codebert-base microsoft/graphcodebert-base
 ```
 
 Then, make sure the project builds correctly on a login node and download the dataset. This make take a few minutes the first time it is run:
