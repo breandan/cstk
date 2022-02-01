@@ -15,13 +15,17 @@ from transformers import AutoTokenizer, AutoModel, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, required=True)
+parser.add_argument('--model', type=str, nargs='+', required=True)
 parser.add_argument('--offline', action='store_true')
 
 args = parser.parse_args()
 
-tokenizer: PTT = RobertaTokenizer.from_pretrained(f'{args.model}', local_files_only=args.offline)
-model: PTM = RobertaForMaskedLM.from_pretrained(f'{args.model}', local_files_only=args.offline)
+# Load all the models
+models = {}
+tokenizers = {}
+for m in args.model:
+    models[m]: PTM = RobertaForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
+    tokenizers[m]: PTT = RobertaTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
 
 attention_width = 760
 
@@ -29,7 +33,8 @@ print(f'Loaded model: {args.model}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
-    def tokenize(self, query: str) -> List[int]:
+    def tokenize(self, query: str, model_name) -> List[int]:
+        tokenizer = tokenizers[model_name]
         padded_query = f'{tokenizer.bos_token}{query}{tokenizer.eos_token}'
         # tic = time.perf_counter()
         tokens = tokenizer.tokenize(padded_query)
@@ -37,15 +42,17 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         # print(f"Tokenized in {toc - tic:0.4f} seconds")
         return tokenizer.convert_tokens_to_ids(tokens)
 
-    def embed_sequence(self, query: str) -> np.ndarray:
+    def embed_sequence(self, query: str, model_name) -> np.ndarray:
         """
         Returns a sequence-embedded array. If smaller than attention_width, this
         will return a vector. Otherwise, this will return a matrix of sliding
         windows over the input sequence, arranged in rows.
         """
-        sequence: Tensor = torch.tensor(self.tokenize(query))
+        model = models[model_name]
+
+        sequence: Tensor = torch.tensor(self.tokenize(query, model_name))
         chunked = sequence[None, :] if len(sequence) < attention_width else \
-            sequence.unfold(0, attention_width, int(attention_width/2))
+            sequence.unfold(0, attention_width, int(attention_width / 2))
         #                        kernel size        kernel overlap
 
         # print(chunked)
@@ -61,17 +68,23 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-type", "text/html")
         self.end_headers()
 
+        model_name = self.path.split('?')[0]
+        # Remove the first and last slash
+        model_name = model_name[1:-1]
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
+        if model_name not in models or 'query' not in query_components:
+            return
 
-        if 'query' in query_components:
-            query = urllib.parse.unquote_plus(query_components["query"][0])
-            self.wfile.write(bytes(self.handle_query(query), encoding='utf8'))
-        return
+        query = urllib.parse.unquote_plus(query_components["query"][0])
+        self.wfile.write(bytes(self.handle_query(query, model_name), encoding='utf8'))
 
-    def handle_query(self, query):
+    def handle_query(self, query, model_name):
         # print(query)
+        model = models[model_name]
+        tokenizer = tokenizers[model_name]
+
         if tokenizer.mask_token in query:
             pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
             outputs = pred(query)
@@ -80,7 +93,7 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             token = "\n".join(completions)
             return token
         else:
-            array = self.embed_sequence(query)
+            array = self.embed_sequence(query, model_name)
 
             html = np.array2string(a=array,
                                    threshold=sys.maxsize,
