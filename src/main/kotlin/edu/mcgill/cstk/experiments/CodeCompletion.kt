@@ -27,7 +27,9 @@ data class CodeSnippet(
 
 val t = {
   val t = doubleArrayOf(1.0, 2.0, 3.0)
+  // https://en.wikipedia.org/wiki/One-way_analysis_of_variance#Assumptions
   OneWayAnova().anovaFValue(listOf(t,t))
+  // https://en.wikipedia.org/wiki/Student%27s_t-test#Assumptions
   TTest().pairedT(t, t)
 }
 
@@ -195,7 +197,7 @@ fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String,
 
 // Returns various maskings with the masked word
 fun String.maskIdentifiers(): List<Pair<String, String>> =
-  split(Regex("((?<=[^\\w])|(?=[^\\w]))")).let {
+  split(Regex("((?<=\\W)|(?=\\W))")).let {
     it.mapIndexed { index, maskedWord -> index to maskedWord }
       .filter { (_, token) ->
         token.length > 1
