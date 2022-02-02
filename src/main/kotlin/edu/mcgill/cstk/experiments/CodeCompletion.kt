@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
+import org.apache.commons.math3.stat.inference.OneWayAnova
+import org.apache.commons.math3.stat.inference.TTest
 import kotlin.math.round
 import kotlin.reflect.KFunction1
 
@@ -21,6 +23,12 @@ data class CodeSnippet(
   }
   override fun hashCode() = complexity.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(original, variant)
+}
+
+val t = {
+  val t = doubleArrayOf(1.0, 2.0, 3.0)
+  OneWayAnova().anovaFValue(listOf(t,t))
+  TTest().pairedT(t, t)
 }
 
 fun main() =

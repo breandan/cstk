@@ -29,7 +29,7 @@ for m in args.model:
 
 attention_width = 760
 
-print(f'Loaded model: {args.model}')
+print(f'Loaded models: {args.model}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
