@@ -105,21 +105,20 @@ object TrainSeq2Seq {
     return EncoderDecoder(simpleTextEncoder, simpleTextDecoder)
   }
 
-  fun setupTrainingConfig(): DefaultTrainingConfig {
-    val listener = SaveModelTrainingListener(".")
-    listener.setSaveModelCallback { trainer: Trainer ->
-      val result = trainer.trainingResult
-      val model = trainer.model
-      val accuracy = result.getValidateEvaluation("Accuracy")
-      model.setProperty( "Accuracy", String.format("%.5f", accuracy))
-      model.setProperty("Loss", String.format("%.5f", result.validateLoss) )
-    }
-    return DefaultTrainingConfig(MaskedSoftmaxCrossEntropyLoss())
-      .addEvaluator(Accuracy("Accuracy", 0, 2))
+  fun setupTrainingConfig() =
+    DefaultTrainingConfig(MaskedSoftmaxCrossEntropyLoss())
+      .addEvaluator(Accuracy("Accuracy", 2))
       .optDevices(arrayOf(Device.gpu()))
       .addTrainingListeners(*TrainingListener.Defaults.logging("."))
-      .addTrainingListeners(listener)
-  }
+      .addTrainingListeners(SaveModelTrainingListener(".").apply {
+        setSaveModelCallback { trainer: Trainer ->
+          val result = trainer.trainingResult
+          val model = trainer.model
+          val accuracy = result.getValidateEvaluation("Accuracy")
+          model.setProperty("Accuracy", String.format("%.5f", accuracy))
+          model.setProperty("Loss", String.format("%.5f", result.validateLoss))
+        }
+      })
 
   @Throws(IOException::class, TranslateException::class)
   fun getDataset(
