@@ -53,8 +53,9 @@ val defaultModel = MODELS.first()
 
 val EMBEDDING_SERVER: String by lazy {
   val addr = "http://localhost:8000/"
-  val test = "$addr$defaultModel?query=test"
+  val test = "$addr${defaultModel.name}?query=test"
 
+  println("Default URL: $test")
   URL(test).run {
     try {
       if (readText().isNotEmpty()) return@lazy addr
