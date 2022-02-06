@@ -82,7 +82,7 @@ fun restartServer(): Unit =
 //      "bash", "-c",
 //      "source", "venv/bin/activate", "&&",
 //      "while", "true;", "do",
-      "python", "embedding_server.py", "--models", *models//, "--offline",
+      "python", "embedding_server.py", "--models", *models, "--offline",
 //      "&&", "break;", "done"
     ).also { println("> " + it.command().joinToString(" ")) }
      .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
