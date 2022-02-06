@@ -70,11 +70,12 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
         model_name = self.path.split('?')[0]
         # Remove the first and last slash
-        model_name = model_name[1:-1]
+        model_name = model_name[1:]
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
         if model_name not in models or 'query' not in query_components:
+            print("Model " + model_name + " not in models.")
             return
 
         query = urllib.parse.unquote_plus(query_components["query"][0])
