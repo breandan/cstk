@@ -68,7 +68,7 @@ fun main() {
 
       // Only record nonzero and finite relative differences in comparison
       if (relativeDifference.run { isFinite() && absoluteValue > 0.0 }) {
-        val snippet = CodeSnippet(original = method, sct = sct, variant = refactoredCodeWithSyntheticJavadoc)
+        val snippet = CodeSnippetToEvaluate(original = method, sct = sct, variant = refactoredCodeWithSyntheticJavadoc)
         rougeScoreByCyclomaticComplexity[snippet] = relativeDifference
         println(rougeScoreByCyclomaticComplexity.toLatexTable())
       }

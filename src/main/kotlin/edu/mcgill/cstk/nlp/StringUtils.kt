@@ -132,7 +132,8 @@ fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
 fun vectorize(query: String) = matrixize(query).first()
 
 // Long sequence embedding: method level
-fun matrixize(query: String): Array<DoubleArray> = makeQuery(query).lines()
+fun matrixize(query: String): Array<DoubleArray> =
+  defaultModel.makeQuery(query).lines()
   .map { it.trim().replace("[", "").replace("]", "") }
   .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
@@ -141,7 +142,7 @@ fun matrixize(query: String): Array<DoubleArray> = makeQuery(query).lines()
 tailrec fun complete(
   query: String,
   lastToken: String = "",
-  fullCompletion: String = lastToken + makeQuery(query),
+  fullCompletion: String = lastToken + defaultModel.makeQuery(query),
   maxTokens: Int = 1,
   isStopChar: (Char) -> Boolean = { !it.isJavaIdentifierPart() }
 ): String =
@@ -152,15 +153,15 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
-fun getPredictions(query: String): List<String> =
+fun Model.getPredictions(query: String): List<String> =
   makeQuery(query) { joinToString("|") }.split("|")
 
-fun makeQuery(
+fun Model.makeQuery(
   query: String = "",
   selector: List<String>.() -> String = { first() }
 ): String =
-    URL(EMBEDDING_SERVER + URLEncoder.encode(query, "utf-8"))
-      .readText().lines().selector()
+  "$EMBEDDING_SERVER${name}?query=${URLEncoder.encode(query, "utf-8")}"
+    .let { URL(it).readText().lines().selector() }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

@@ -26,6 +26,7 @@ import ai.djl.nn.Block
 import ai.djl.nn.recurrent.LSTM
 import ai.djl.training.*
 import ai.djl.training.dataset.Dataset
+import ai.djl.training.dataset.Dataset.Usage.TRAIN
 import ai.djl.training.evaluator.Accuracy
 import ai.djl.training.listener.*
 import ai.djl.training.loss.MaskedSoftmaxCrossEntropyLoss
@@ -44,21 +45,14 @@ object TrainSeq2Seq {
     val executorService = Executors.newFixedThreadPool(8)
     Model.newInstance("seq2seqMTEn-Fr").use { model ->
       // get training and validation dataset
-      val trainingSet =
-        getDataset(Dataset.Usage.TRAIN, executorService, null, null)
-      // Fetch TextEmbedding from dataset
-      val sourceEmbedding =
-        trainingSet.getTextEmbedding(true) as TrainableTextEmbedding
-      val targetEmbedding =
-        trainingSet.getTextEmbedding(false) as TrainableTextEmbedding
+      val trainingSet = getDataset(TRAIN, executorService, null, null)
 
       // Build the model with the TextEmbedding so that embeddings can be trained
-      val block = getSeq2SeqModel(
-        sourceEmbedding,
-        targetEmbedding,
+      model.block = getSeq2SeqModel(
+        trainingSet.getTextEmbedding(true) as TrainableTextEmbedding,
+        trainingSet.getTextEmbedding(false) as TrainableTextEmbedding,
         trainingSet.getVocabulary(false).size()
       )
-      model.block = block
 
       try {
         // setup training configuration
@@ -134,8 +128,7 @@ object TrainSeq2Seq {
           .optIncludeValidLengths(true)
           .addPad(0, 0, { m: NDManager -> m.zeros(Shape(1)) }, 10)
           .build()
-      )
-      .optLabelBatchifier(
+      ).optLabelBatchifier(
         PaddingStackBatchifier.builder()
           .optIncludeValidLengths(true)
           .addPad(0, 0, { m: NDManager -> m.ones(Shape(1)) }, 10)
@@ -143,6 +136,7 @@ object TrainSeq2Seq {
       )
       .optUsage(usage)
       .optLimit(100)
+
     val sourceConfig = TextData.Configuration()
       .setTextProcessors(
         listOf(
@@ -151,7 +145,11 @@ object TrainSeq2Seq {
           PunctuationSeparator(),
           TextTruncator(10)
         )
-      )
+      ).apply {
+        if (sourceEmbedding != null) setTextEmbedding(sourceEmbedding)
+        else setEmbeddingSize(32)
+      }
+
     val targetConfig = TextData.Configuration()
       .setTextProcessors(
         listOf(
@@ -161,17 +159,11 @@ object TrainSeq2Seq {
           TextTruncator(8),
           TextTerminator()
         )
-      )
-    if (sourceEmbedding != null) {
-      sourceConfig.setTextEmbedding(sourceEmbedding)
-    } else {
-      sourceConfig.setEmbeddingSize(32)
-    }
-    if (targetEmbedding != null) {
-      targetConfig.setTextEmbedding(targetEmbedding)
-    } else {
-      targetConfig.setEmbeddingSize(32)
-    }
+      ).apply {
+        if (targetEmbedding != null) setTextEmbedding(targetEmbedding)
+        else setEmbeddingSize(32)
+      }
+
     val dataset = datasetBuilder
       .setSourceConfiguration(sourceConfig)
       .setTargetConfiguration(targetConfig)

@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.agent
 
 import ai.djl.*
+import ai.djl.Model
 import ai.djl.ndarray.types.Shape
 import ai.djl.nn.transformer.*
 import ai.djl.training.*

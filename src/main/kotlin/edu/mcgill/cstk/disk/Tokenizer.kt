@@ -101,7 +101,7 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
   }
 }
 
-class FullTokenizer(private val dic: Map<String, Int> = MODEL_DICT, doLowerCase: Boolean = false) {
+class FullTokenizer(private val dic: Map<String, Int>, doLowerCase: Boolean = false) {
   private val basicTokenizer: BasicTokenizer
   private val wordpieceTokenizer: WordpieceTokenizer
   fun tokenize(text: String?): List<String> {
@@ -125,7 +125,7 @@ class FullTokenizer(private val dic: Map<String, Int> = MODEL_DICT, doLowerCase:
 }
 
 /** Word piece tokenization to split a piece of text into its word pieces.  */
-class WordpieceTokenizer(private val dic: Map<String, Int> = MODEL_DICT) {
+class WordpieceTokenizer(private val dic: Map<String, Int>) {
   /**
    * Tokenizes a piece of text into its word pieces. This uses a greedy longest-match-first
    * algorithm to perform tokenization using the given vocabulary. For example: input = "unaffable",
@@ -212,12 +212,12 @@ fun main() {
 //      )
 //  }
 
-  println(
-     FullTokenizer().tokenize("System.out.println(\"hello world!\")")
-      .joinToString("\n"))
-
-
-  println(
-    BasicTokenizer(false).tokenize("System.out.println(\"hello world!\")")
-      .joinToString("\n"))
+//  println(
+//     FullTokenizer().tokenize("System.out.println(\"hello world!\")")
+//      .joinToString("\n"))
+//
+//
+//  println(
+//    BasicTokenizer(false).tokenize("System.out.println(\"hello world!\")")
+//      .joinToString("\n"))
 }

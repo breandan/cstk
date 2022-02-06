@@ -18,10 +18,15 @@ val VOCAB = object {}::class.java.getResource("/codebert/vocab.json")
 val DELIMITER = Regex("\\W")
 
 // https://huggingface.co/microsoft
-const val MODEL =
+val MODELS = setOf(
+  Model("microsoft/codebert-base"),
+  Model("microsoft/graphcodebert-base"),
+//  Model("dbernsohn/roberta-java")
+)
+data class Model(val name: String)
 // The following models support masking
 //"microsoft/codebert-base"
-"microsoft/graphcodebert-base"
+//"microsoft/graphcodebert-base"
 //"microsoft/codebert-base-mlm"
 //"dbernsohn/roberta-java"
 //These models do not support masking
@@ -30,24 +35,25 @@ const val MODEL =
 //"microsoft/CodeGPT-small-py"
 //"microsoft/CodeGPT-small-py-adaptedGPT2"
 
-val VOCAB_URL = "https://huggingface.co/$MODEL/resolve/main/vocab.json"
+//val VOCAB_URL = "https://huggingface.co/$MODEL/resolve/main/vocab.json"
+//val MODEL_DICT: Map<String, Int> by lazy {
+//  val vocabFile = File("model_${MODEL.replace("/", "_")}.json")
+//  val json = if (vocabFile.exists()) vocabFile.readText()
+//  else URL(VOCAB_URL).readText().also { vocabFile.run { createNewFile(); writeText(it) } }
+//
+//  json.removePrefix("{\"")
+//    .substringBeforeLast("\"")
+//    .split(Regex(", \""))
+////    .replace("Ġ", " ") //https://github.com/huggingface/transformers/issues/3867#issuecomment-616956437
+//    .mapNotNull { it.split("\": ").let { if(it.size == 2) it[0] to it[1].toInt() else null } }
+//    .toMap()
+//}
 
-val MODEL_DICT: Map<String, Int> by lazy {
-  val vocabFile = File("model_${MODEL.replace("/", "_")}.json")
-  val json = if (vocabFile.exists()) vocabFile.readText()
-  else URL(VOCAB_URL).readText().also { vocabFile.run { createNewFile(); writeText(it) } }
-
-  json.removePrefix("{\"")
-    .substringBeforeLast("\"")
-    .split(Regex(", \""))
-//    .replace("Ġ", " ") //https://github.com/huggingface/transformers/issues/3867#issuecomment-616956437
-    .mapNotNull { it.split("\": ").let { if(it.size == 2) it[0] to it[1].toInt() else null } }
-    .toMap()
-}
+val defaultModel = MODELS.first()
 
 val EMBEDDING_SERVER: String by lazy {
-  val addr = "http://localhost:8000/?query="
-  val test = addr + "test"
+  val addr = "http://localhost:8000/"
+  val test = "$addr$defaultModel?query=test"
 
   URL(test).run {
     try {
@@ -70,30 +76,32 @@ val EMBEDDING_SERVER: String by lazy {
 
 fun restartServer(): Unit =
   try {
+    val models = MODELS.map { it.name }.toTypedArray()
     ProcessBuilder(
 //      "bash", "-c",
 //      "source", "venv/bin/activate", "&&",
 //      "while", "true;", "do",
-      "python", "embedding_server.py", "--model=$MODEL", "--offline",
+      "python", "embedding_server.py", "--models", *models//, "--offline",
 //      "&&", "break;", "done"
-    )
-      .also { println("> " + it.command().joinToString(" ")) }
-      .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
-      .start().run {
-        Runtime.getRuntime().addShutdownHook(Thread {
-          println("Server went down!")
-          destroy()
-//          restartServer()
-        })
-      }
+    ).also { println("> " + it.command().joinToString(" ")) }
+     .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
+     .start().run {
+       Runtime.getRuntime().addShutdownHook(Thread {
+         println("Server went down!")
+         destroy()
+//         restartServer()
+       })
+     }
   } catch (ex: Exception) {
     ex.printStackTrace()
 //    restartServer()
   }
 
-// Returns the Cartesian product of two sets
-operator fun <T, Y> Set<T>.times(s: Set<Y>): Set<Pair<T, Y>> =
-  flatMap { l -> s.map { r -> l to r }.toSet() }.toSet()
+@JvmName("cartProdPair") operator fun <T, Z> Set<T>.times(s: Set<Z>): Set<Pair<T, Z>> =
+  flatMap { l -> s.map { r -> Pair(l, r) }.toSet() }.toSet()
+
+@JvmName("cartProdTriple") operator fun <T, Y, Z> Set<Pair<T, Y>>.times(s: Set<Z>): Set<Triple<T, Y, Z>> =
+  flatMap { (l, ll) -> s.map { r -> Triple(l, ll, r) }.toSet() }.toSet()
 
 const val UNK = "<unk>"
 const val CLS = "<cls>"

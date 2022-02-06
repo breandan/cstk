@@ -15,7 +15,7 @@ from transformers import AutoTokenizer, AutoModel, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, nargs='+', required=True)
+parser.add_argument('--models', type=str, nargs='+', required=True)
 parser.add_argument('--offline', action='store_true')
 
 args = parser.parse_args()
@@ -23,13 +23,13 @@ args = parser.parse_args()
 # Load all the models
 models = {}
 tokenizers = {}
-for m in args.model:
+for m in args.models:
     models[m]: PTM = RobertaForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
     tokenizers[m]: PTT = RobertaTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
 
 attention_width = 760
 
-print(f'Loaded models: {args.model}')
+print(f'Loaded models: {args.models}')
 
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):

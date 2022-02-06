@@ -157,13 +157,13 @@ fun String.fillFirstDoc(): String? =
 tailrec fun String.completeDocumentation(length: Int = 20): String? =
   if (length == 1) replace(FILL, "")
   else replaceFirst(FILL,
-    makeQuery(replaceFirst(FILL, MSK),
+    defaultModel.makeQuery(replaceFirst(FILL, MSK),
       selector = { first { it.any(Char::isLetterOrDigit) } } // Nonempty comment
     ) + FILL).completeDocumentation(length - 1)
 
 tailrec fun String.fillOneByOne(): String =
   if (FILL !in this) this
-  else replaceFirst(FILL, makeQuery(replaceFirst(FILL, MSK))).fillOneByOne()
+  else replaceFirst(FILL, defaultModel.makeQuery(replaceFirst(FILL, MSK))).fillOneByOne()
 
 fun String.addExtraLogging(): String =
   (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->

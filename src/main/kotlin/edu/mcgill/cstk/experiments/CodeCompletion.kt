@@ -9,19 +9,20 @@ import org.apache.commons.math3.stat.inference.TTest
 import kotlin.math.round
 import kotlin.reflect.KFunction1
 
-
-data class CodeSnippet(
+data class CodeSnippetToEvaluate(
   val original: String,
   val complexity: Int = binByComplexity(original.approxCyclomatic()),
   val sct: KFunction1<String, String>, // Source code transformation
-  val variant: String = sct(original)
+  val variant: String = sct(original),
+  val model: Model = defaultModel
 ) {
   companion object {
     const val BINSIZE = 5
     fun binByComplexity(complexity: Int) =
       round(complexity.toDouble() / BINSIZE).toInt()
   }
-  override fun hashCode() = complexity.hashCode() + sct.name.hashCode()
+  // + complexity.hashCode()
+  override fun hashCode() = model.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(original, variant)
 }
 
@@ -37,57 +38,63 @@ fun main() =
   evaluateTransformations(
     validationSet =
       DATA_DIR
-        .also { println("Evaluating code completion with $MODEL on $it...") }
+        .also { println("Evaluating code completion using $MODELS on $it...") }
         .allFilesRecursively().allMethods()
         .map { it.first.toString() }
         // Ensure tokenized method fits within attention
         //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,
-    evaluation = CodeSnippet::evaluateMultimask,
+    evaluation = CodeSnippetToEvaluate::evaluateMultimask,
     codeTxs = arrayOf(
       String::renameTokens,
       String::permuteArgumentOrder,
       String::swapMultilineNoDeps,
       String::addExtraLogging,
-      String::fuzzLoopBoundaries,
-      String::mutateSyntax,
-      String::shuffleLines
+//      String::fuzzLoopBoundaries,
+//      String::mutateSyntax,
+//      String::shuffleLines
     )
   )
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: Sequence<String>,
-  evaluation: KFunction1<CodeSnippet, Pair<Int, Int>>,
+  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Int, Int>>,
   vararg codeTxs: KFunction1<String, String>
 ) =
-  validationSet.flatMap { method -> setOf(method) * codeTxs.toSet() }
-  .map { (method, codeTx) -> CodeSnippet(original = method, sct = codeTx) }
-  .filter { it.original != it.variant }
-  .map { snippet -> snippet to evaluation(snippet) }
-  .forEach { (snippet, rightAndTotal) ->
-    csByMultimaskPrediction[snippet] = rightAndTotal
-    println(csByMultimaskPrediction.toLatexTable())
+  validationSet
+    .flatMap { method -> setOf(method) * codeTxs.toSet() * MODELS }
+    .map { (method, codeTx, model) -> CodeSnippetToEvaluate(original = method, sct = codeTx, model = model) }
+    .filter { it.original != it.variant }
+    .map { snippet -> snippet to evaluation(snippet) }
+    .forEach { (snippet, correctVsTotal) ->
+      csByMultimaskPrediction[snippet] = correctVsTotal
+      println(csByMultimaskPrediction.toLatexTable())
+    }
+
+val csByMultimaskPrediction = CodeSnippetAttributeScoresTable<Pair<Int, Int>>(
+  summarizer = {
+    it.unzip().run {
+      first.sum().toString().take(5) + " / " +
+        second.sum().toString().take(5) + " (${it.size})"
+    }
   }
+)
 
-val csByMultimaskPrediction = CodeSnippetAttributeScoresTable<Pair<Int, Int>> {
-  it.unzip().run { first.sum().toString().take(5) + " / " +
-    second.sum().toString().take(5) + " (${it.size})" }
-}
-
-class CodeSnippetAttributeScoresTable<V>(val accumulator: (List<V>) -> String) {
+class CodeSnippetAttributeScoresTable<V>(val summarizer: (List<V>) -> String) {
   val scoreByCodeSnippet = mutableMapOf<Int, MutableList<V>>()
   val complexities = mutableSetOf<Int>()
   val transformations = mutableSetOf<KFunction1<String, String>>()
 
-  operator fun set(snippet: CodeSnippet, metric: V) {
+  // Adds a given score to the table
+  operator fun set(snippet: CodeSnippetToEvaluate, metric: V) {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
-    println("Put ${metric.toString().take(6)} in (complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
+    println("Put ${metric.toString().take(6)} in (model = ${defaultModel}, complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
   }
 
-  operator fun get(snippet: CodeSnippet): List<V> =
+  operator fun get(snippet: CodeSnippetToEvaluate): List<V> =
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList()
 
   /* Example of table output:
@@ -113,10 +120,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
 \end{tabular}
 \end{table}
    */
-  fun toLatexTable(
-    colWidth: Int = 20,
-    colHeadings: List<String> = listOf("Complexity") + transformations.map { it.name }
-  ) =
+  fun toLatexTable(colWidth: Int = 20) =
     ("""
       \begin{table}[H]
       \begin{tabular}{l|${"c".repeat(transformations.size)}}
@@ -124,17 +128,28 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
       """.trimIndent() +
       transformations.joinToString(
         "& ",
-        "Complexity ".padEnd(colWidth) + "& ",
+        "Model".padEnd(colWidth) + "& ",
         "\\\\\\hline\\\\\n"
       ) { it.name.take(15).padEnd(colWidth) } +
-      complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
-        (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
+      MODELS.joinToString("\\\\\n") { model ->
+        model.name.padEnd(colWidth) + "& " +
           transformations.toSortedSet(compareBy { it.name })
             .joinToString("& ") { tx ->
-              accumulator(this[CodeSnippet("", cplx, tx, "")])
-                .padEnd(colWidth)
+              // Construct a fake code snippet with the same hash code as this cell
+              // to retrieve all matching code snippet data from this cell
+              this[CodeSnippetToEvaluate("", 0, tx, "", model)]
+                .let { summarizer(it).padEnd(colWidth) }
             }
+
       } +
+//      complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
+//        (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
+//          transformations.toSortedSet(compareBy { it.name })
+//            .joinToString("& ") { tx ->
+//              summarizer(this[CodeSnippetToEvaluate("", cplx, tx, "")])
+//                .padEnd(colWidth)
+//            }
+//      } +
       """
         
       \end{tabular}
@@ -143,17 +158,17 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
-fun CodeSnippet.evaluateMultimask(): Pair<Int, Int> =
-  (original.evaluateMultimask() to variant.evaluateMultimask())
+fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Int, Int> =
+  (model.evaluateMultimask(original) to model.evaluateMultimask(variant))
     .let { (a, b) -> (a.first - b.first) to a.second }
 
 val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
-fun String.evaluateMultimask(SAMPLES: Int = 200): Pair<Int, Int> =
-  dists.get(this) {
-    maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
+fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
+  dists.get(code) {
+    code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
 //        logDiffs(this, maskedMethod, trueToken, completion)
@@ -181,7 +196,10 @@ fun logDiffs(original: String, maskedSequence: String,
   }
 }
 
-fun completeAndScore(correctToken: String, maskedSeqeunce: String): Pair<String, Int> =
+fun Model.completeAndScore(
+  correctToken: String,
+  maskedSeqeunce: String,
+): Pair<String, Int> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
   getPredictions(maskedSeqeunce).let {
     // Sometimes the source code token starts with the correct sequence, but
