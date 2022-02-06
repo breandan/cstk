@@ -86,8 +86,8 @@ val csByMultimaskPrediction =
     },
     summarizer = {
       it.unzip().let { (a, b) ->
-        a.joinToString(",", "[", "]") + "," +
-          b.joinToString(",", "[", "]")
+        a.joinToString(",", "[", "]") { it.toString().take(5) } + "," +
+          b.joinToString(",", "[", "]") { it.toString().take(5) }
       }
     }
   )

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time 3:0:0
+#SBATCH --time 8:0:0
 #SBATCH --account=def-jinguo
 #SBATCH --gres=gpu:a100:1
 #SBATCH --mem=40G
