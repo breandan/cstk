@@ -69,8 +69,8 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
         model_name = self.path.split('?')[0]
-        # Remove the first and last slash
-        model_name = model_name[1:]
+        # Remove the first and last slash if present
+        model_name = model_name.strip('/')
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
@@ -86,20 +86,23 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         model = models[model_name]
         tokenizer = tokenizers[model_name]
 
-        if tokenizer.mask_token in query:
-            pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
-            outputs = pred(query)
-            completions = sorted(outputs, key=lambda s: float(s['score']))
-            completions = list(map(lambda x: x['token_str'], completions))
-            token = "\n".join(completions)
-            return token
-        else:
-            array = self.embed_sequence(query, model_name)
+        try:
+            if tokenizer.mask_token in query:
+                pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
+                outputs = pred(query)
+                completions = sorted(outputs, key=lambda s: float(s['score']))
+                completions = list(map(lambda x: x['token_str'], completions))
+                token = "\n".join(completions)
+                return token
+            else:
+                array = self.embed_sequence(query, model_name)
 
-            html = np.array2string(a=array,
-                                   threshold=sys.maxsize,
-                                   max_line_width=sys.maxsize)
-            return html
+                html = np.array2string(a=array,
+                                       threshold=sys.maxsize,
+                                       max_line_width=sys.maxsize)
+                return html
+        except:
+            return "<???>"
 
 
 my_server = HTTPServer(('', 8000), EmbeddingServer)

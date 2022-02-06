@@ -75,10 +75,12 @@ fun main() {
     }
 }
 
-val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable<Double> {
-  it.average().toString().take(5) + " ± " +
-    it.variance().toString().take(5) + " (${it.size})"
-}
+val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable<Double>(
+  significanceTest = {
+    it.average().toString().take(5) + " ± " +
+      it.variance().toString().take(5) + " (${it.size})"
+  }
+)
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()

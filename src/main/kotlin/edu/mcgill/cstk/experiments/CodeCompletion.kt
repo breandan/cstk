@@ -59,7 +59,7 @@ fun main() =
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: Sequence<String>,
-  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Int, Int>>,
+  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
@@ -72,16 +72,30 @@ fun evaluateTransformations(
       println(csByMultimaskPrediction.toLatexTable())
     }
 
-val csByMultimaskPrediction = CodeSnippetAttributeScoresTable<Pair<Int, Int>>(
-  summarizer = {
-    it.unzip().run {
-      first.sum().toString().take(5) + " / " +
-        second.sum().toString().take(5) + " (${it.size})"
+val csByMultimaskPrediction =
+  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(
+    significanceTest = {
+      it.unzip().let { (a, b) ->
+        if (2 < a.size && 2 < b.size) // t statistic requires at least two
+          TTest().pairedT(
+            a.toDoubleArray(),
+            b.toDoubleArray()
+          ).toString().take(5) + " (${it.size})"
+        else ""
+      }
+    },
+    summarizer = {
+      it.unzip().let { (a, b) ->
+        a.joinToString(",", "[", "]") + "," +
+          b.joinToString(",", "[", "]")
+      }
     }
-  }
-)
+  )
 
-class CodeSnippetAttributeScoresTable<V>(val summarizer: (List<V>) -> String) {
+class CodeSnippetAttributeScoresTable<V>(
+  val significanceTest: (List<V>) -> String,
+  val summarizer: (List<V>) -> String = { it.joinToString(",") },
+) {
   val scoreByCodeSnippet = mutableMapOf<Int, MutableList<V>>()
   val complexities = mutableSetOf<Int>()
   val transformations = mutableSetOf<KFunction1<String, String>>()
@@ -91,7 +105,7 @@ class CodeSnippetAttributeScoresTable<V>(val summarizer: (List<V>) -> String) {
     scoreByCodeSnippet.getOrPut(snippet.hashCode()) { mutableListOf() }.add(metric)
     complexities += snippet.complexity
     transformations += snippet.sct
-    println("Put ${metric.toString().take(6)} in (model = ${defaultModel}, complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
+//    println("Put ${metric.toString().take(6)} in (model = ${defaultModel}, complexity=${snippet.complexity}, SCT=${snippet.sct.name})")
   }
 
   operator fun get(snippet: CodeSnippetToEvaluate): List<V> =
@@ -120,7 +134,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
 \end{tabular}
 \end{table}
    */
-  fun toLatexTable(colWidth: Int = 20) =
+  fun toLatexTable(colWidth: Int = 30) =
     ("""
       \begin{table}[H]
       \begin{tabular}{l|${"c".repeat(transformations.size)}}
@@ -138,7 +152,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
               // Construct a fake code snippet with the same hash code as this cell
               // to retrieve all matching code snippet data from this cell
               this[CodeSnippetToEvaluate("", 0, tx, "", model)]
-                .let { summarizer(it).padEnd(colWidth) }
+                .let { significanceTest(it).padEnd(colWidth) }
             }
 
       } +
@@ -154,13 +168,18 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
         
       \end{tabular}
       \end{table}
-      """.trimIndent()).lines().joinToString("\n") { "%$it" }
+      """.trimIndent()).lines().joinToString("\n") { "%$it" } +
+      (MODELS * transformations).joinToString("\n", "\n", "\n") { (model, fn) ->
+        "% (${model.name} x ${fn.name}): " +
+          summarizer(this[CodeSnippetToEvaluate("", 0, fn, "", model)])
+      }
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
-fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Int, Int> =
+fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double> =
   (model.evaluateMultimask(original) to model.evaluateMultimask(variant))
-    .let { (a, b) -> (a.first - b.first) to a.second }
+    .let { (a, b) -> (a.first.toDouble() / a.second.toDouble().coerceAtLeast(1.0)) to
+      (b.first.toDouble() / b.second.toDouble().coerceAtLeast(1.0)) }
 
 val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 
@@ -172,7 +191,7 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
 //        logDiffs(this, maskedMethod, trueToken, completion)
-        if (completion == ERR) null else score
+        if (completion == ERR || completion.isEmpty()) null else score
       }.fold(0 to 0) { (correct, total), it ->
         if(it > 0) correct + 1 to total + 1 else correct to total + 1
       }
