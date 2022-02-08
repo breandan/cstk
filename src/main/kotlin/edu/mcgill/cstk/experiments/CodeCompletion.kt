@@ -175,8 +175,8 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
       \end{tabular}
       \end{table}
       """.trimIndent()).lines().joinToString("\n") { "%$it" } +
-      (MODELS * transformations).joinToString("\n", "\n", "\n") { (model, fn) ->
-        "% (${model.name} x ${fn.name}): " + distToString(this[CodeSnippetToEvaluate.dummy(fn, model)])
+      (MODELS * transformations).joinToString("\n", "\n", "\n") { (model, tx) ->
+        "% (${model.name} x ${tx.name}): " + distToString(this[CodeSnippetToEvaluate.dummy(tx, model)])
       }
 }
 

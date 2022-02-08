@@ -31,8 +31,8 @@ fun main() {
       val groundTruth = method.getDoc()
       val (originalCode, transformedCode) = method to sct(method)
       if (originalCode == transformedCode) return@forEach
-      val originalCodeWithSyntheticJavadoc = originalCode.fillFirstDoc() ?: return@forEach
-      val transformedCodeWithSyntheticJavadoc = transformedCode.fillFirstDoc() ?: return@forEach
+      val originalCodeWithSyntheticJavadoc = model.fillFirstDoc(originalCode) ?: return@forEach
+      val transformedCodeWithSyntheticJavadoc = model.fillFirstDoc(transformedCode) ?: return@forEach
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
       val syntheticJavadocForRefactoredCode = transformedCodeWithSyntheticJavadoc.getDoc()
       val snippet = CodeSnippetToEvaluate(

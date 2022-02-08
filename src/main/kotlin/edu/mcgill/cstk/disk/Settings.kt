@@ -24,7 +24,9 @@ val MODELS = setOf(
   "dbernsohn/roberta-java"
 ).map { Model(it) }.toSet()
 
-data class Model(val name: String)
+data class Model(val name: String) {
+  override fun hashCode() = name.hashCode()
+}
 
 // The following models support masking
 //"microsoft/codebert-base"

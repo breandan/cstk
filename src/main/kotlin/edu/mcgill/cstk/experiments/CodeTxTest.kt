@@ -3,7 +3,6 @@ package edu.mcgill.cstk.experiments
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
 import kotlin.math.min
-import kotlin.random.Random
 
 fun main() {
   val codeSnippet = """
@@ -141,25 +140,33 @@ fun String.swapMultilineNoDeps(): String =
   }.flatten().joinToString("\n")
 
 const val FILL = "<FILL>"
-fun String.fillFirstDoc(): String? =
-  lines().first { docCriteria(it) }.let { firstDoc ->
+fun Model.fillFirstDoc(snippet: String): String? =
+  snippet.lines().first { docCriteria(it) }.let { firstDoc ->
     try {
-      lines().joinToString("\n") {
+      snippet.lines().joinToString("\n") {
         if (it == firstDoc)
           it.substringBefore("//") + "// $FILL"
         else it
-      }.completeDocumentation(
-        min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
-      )
+      }.let {
+        completeDocumentation(it,
+          min(20, defaultTokenizer.tokenize(firstDoc.substringAfter("//")).size)
+        )
+      }
     } catch (exception: Exception) { null }
   }
 
-tailrec fun String.completeDocumentation(length: Int = 20): String? =
-  if (length == 1) replace(FILL, "")
-  else replaceFirst(FILL,
-    defaultModel.makeQuery(replaceFirst(FILL, MSK))
-      .first { it.any(Char::isLetterOrDigit) } // Nonempty comment
-      + FILL).completeDocumentation(length - 1)
+tailrec fun Model.completeDocumentation(
+  snippet: String,
+  length: Int = 20
+): String? =
+  if (length == 1) snippet.replace(FILL, "")
+  else completeDocumentation(
+    snippet = snippet.replaceFirst(FILL,
+      makeQuery(snippet.replaceFirst(FILL, MSK))
+        // Ensure at least one natural language character per token
+        .first { it.any(Char::isLetterOrDigit) } + FILL),
+    length =length - 1
+  )
 
 tailrec fun String.fillOneByOne(): String =
   if (FILL !in this) this
