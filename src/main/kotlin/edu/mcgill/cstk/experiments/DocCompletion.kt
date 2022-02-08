@@ -29,18 +29,19 @@ fun main() {
       val (method, origin) = methodAndOrigin
       val (sct, model) = sctAndModel
       val groundTruth = method.getDoc()
-      val originalCodeWithSyntheticJavadoc = method.fillFirstDoc() ?: return@forEach
+      val (originalCode, transformedCode) = method to sct(method)
+      if (originalCode == transformedCode) return@forEach
+      val originalCodeWithSyntheticJavadoc = originalCode.fillFirstDoc() ?: return@forEach
+      val transformedCodeWithSyntheticJavadoc = transformedCode.fillFirstDoc() ?: return@forEach
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
-      val refactoredCodeWithSyntheticJavadoc = sct(method).fillFirstDoc() ?: return@forEach
-      val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
-      val snippet = CodeSnippetToEvaluate(method = method, origin = origin, sct = sct, variant = refactoredCodeWithSyntheticJavadoc, model = model)
+      val syntheticJavadocForRefactoredCode = transformedCodeWithSyntheticJavadoc.getDoc()
+      val snippet = CodeSnippetToEvaluate(
+        method = method, origin = origin, sct = sct,
+        variant = transformedCodeWithSyntheticJavadoc, model = model
+      )
 
       val rougeScoreWithoutRefactoring = rougeSynonym(groundTruth, syntheticJavadocForOriginalCode)
       val rougeScoreWithRefactoring = rougeSynonym(groundTruth, syntheticJavadocForRefactoredCode)
-
-      val relativeDifference =
-        (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
-            max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
 
       // Original doc
       val oc = groundTruth.substringAfter("//")
@@ -60,11 +61,11 @@ fun main() {
             """.trimIndent(),
           original = method,
           synthetic = originalCodeWithSyntheticJavadoc,
-          variant = refactoredCodeWithSyntheticJavadoc,
+          variant = transformedCodeWithSyntheticJavadoc,
           discrepancy = """
             Rouge score before refactoring: $rougeScoreWithoutRefactoring
             Rouge score after refactoring: $rougeScoreWithRefactoring
-            Relative difference: $relativeDifference""".trimIndent()
+            """.trimIndent()
         )
         println("% Origin: $origin")
       }

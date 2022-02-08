@@ -22,9 +22,8 @@ data class CodeSnippetToEvaluate constructor(
     fun binByComplexity(complexity: Int) =
       round(complexity.toDouble() / BINSIZE).toInt()
     fun dummy(sct: KFunction1<String, String>, model: Model) =
-      CodeSnippetToEvaluate("", null, 0, sct, "", model)
+      CodeSnippetToEvaluate("", null, 0, sct=sct, "", model=model)
   }
-  // + complexity.hashCode()
   override fun hashCode() = model.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(method, variant)
 }
@@ -155,8 +154,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
       ) { it.name.take(15).padEnd(colWidth) } +
       MODELS.joinToString("\\\\\n") { model ->
         model.name.padEnd(colWidth) + "& " +
-          transformations.toSortedSet(compareBy { it.name })
-            .joinToString("& ") { tx ->
+          transformations.joinToString("& ") { tx ->
               // Construct a fake code snippet with the same hash code as this cell
               // to retrieve all matching code snippet data from this cell
               this[CodeSnippetToEvaluate.dummy(tx, model)]
