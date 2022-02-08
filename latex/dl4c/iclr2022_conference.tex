@@ -34,7 +34,7 @@
 
 \setmonofont{JetBrainsMono}[
   Contextuals={Alternate},
-  Path=./JetbrainsFontFiles/,
+  Path=./JetBrainsFontFiles/,
   Extension = .ttf,
   UprightFont=*-Regular,
   BoldFont=*-Bold,
@@ -370,7 +370,6 @@ Our contributions in this work are twofold: we demonstrate that SoTA neural lang
 \bibliographystyle{plain}
 \appendix
 
-
 %---------
 
 \pagebreak
@@ -378,39 +377,33 @@ Our contributions in this work are twofold: we demonstrate that SoTA neural lang
 \subsection{Summary}
 
 \begin{lstlisting}[language=kotlin]
-Generative model: dbernsohn/roberta-java
-Ground truth doc: Notify the autoscroll thread that it is time to exit
-Synth origin doc: shutdown to stop on close this stack to notifying
-Synth refact doc: clear this for all stack to stop down it of
+Generative model: microsoft/codebert-base
+Ground truth doc: convert JSON string to EIP712Message object
+Synth origin doc: anthzagaghettiaghetti Hoyli
+Synth refact doc: LEGli Lerhendeconom wid
 \end{lstlisting}
 
 \subsection{Original}
 \begin{lstlisting}[language=kotlin]
 
-/**
- * Terminate the thread that autoscrolls the text.
- */
-public void close() {
-    running = false;
-    // (*@\hlred{Notify}@*) (*@\hlred{the}@*) (*@\hlred{autoscroll}@*) (*@\hlred{thread}@*) (*@\hlred{that}@*) (*@\hlred{it}@*) (*@\hlred{is}@*) (*@\hlred{time }@*)to (*@\hlred{exit}@*)
-    synchronized(histData) {
-        histData.notify();
-    }
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{convert}@*) (*@\hlred{JSON string to EIP712Message object}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
 }
 \end{lstlisting}
 \subsection{Synthetic}
 
 \begin{lstlisting}[language=kotlin]
 
-/**
- * Terminate the thread that autoscrolls the text.
- */
-public void close() {
-    running = false;
-    //  (*@\hlred{shutdown}@*) (*@\hlred{to}@*) (*@\hlred{stop}@*) (*@\hlred{on}@*) (*@\hlred{close}@*) (*@\hlred{this}@*) (*@\hlred{stack}@*) to (*@\hlred{notifying}@*)
-    synchronized(histData) {
-        histData.notify();
-    }
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{anthzagaghettiaghetti}@*) (*@\hlred{Hoyli}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
 }
 \end{lstlisting}
 
@@ -418,15 +411,12 @@ public void close() {
 
 \begin{lstlisting}[language=kotlin]
 
-/**
- * Terminate the (*@\hlred{cerebration}@*) that autoscrolls the text.
- */
-public void close() {
-    running = false;
-    //  (*@\hlred{clear}@*) (*@\hlred{this}@*) (*@\hlred{for}@*) (*@\hlred{all}@*) (*@\hlred{stack}@*) (*@\hlred{to}@*) (*@\hlred{stop}@*) (*@\hlred{down}@*) (*@\hlred{it}@*) (*@\hlred{of}@*)
-    synchronized(histData) {
-        histData.notify();
-    }
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    //  (*@\hlred{LEGli}@*) (*@\hlred{Lerhendeconom}@*) (*@\hlred{wid}@*)
+    StructuredData.EIP712Message (*@\hlred{temporaryJSONDrivelCenter}@*) = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData((*@\hlred{temporaryJSONDrivelCenter}@*));
+    return (*@\hlred{temporaryJSONDrivelCenter;}@*)
 }
 \end{lstlisting}
 
@@ -437,11 +427,201 @@ TODO.
 \subsection{Discrepancy}
 
 \begin{lstlisting}[language=kotlin]
-Rouge score before refactoring: 0.072
-Rouge score after refactoring: 0.09333333333333334
+Rouge score before refactoring: 0.0
+Rouge score after refactoring: 0.0
 \end{lstlisting}
 
 %--------
+% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
+
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=kotlin]
+Generative model: dbernsohn/roberta-java
+Ground truth doc: convert JSON string to EIP712Message object
+Synth origin doc: Check of a null string from
+Synth refact doc: Check of default object object from
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{convert}@*) (*@\hlred{JSON}@*) (*@\hlred{string}@*) (*@\hlred{to}@*) (*@\hlred{EIP712Message}@*) (*@\hlred{object}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{from}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{default}@*) (*@\hlred{object}@*) object (*@\hlred{from}@*)
+    StructuredData.EIP712Message (*@\hlred{temporaryJSONNonsenseSouvenir}@*) = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData((*@\hlred{temporaryJSONNonsenseSouvenir}@*));
+    return (*@\hlred{temporaryJSONNonsenseSouvenir;}@*)
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=kotlin]
+Rouge score before refactoring: 0.17041800643086816
+Rouge score after refactoring: 0.3086816720257235
+\end{lstlisting}
+
+%--------
+% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
+
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=kotlin]
+Generative model: microsoft/codebert-base
+Ground truth doc: convert JSON string to EIP712Message object
+Synth origin doc: anthzagaghettiaghetti Hoyli
+Synth refact doc: anth FIGBLhend lettmond
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{convert}@*) (*@\hlred{JSON string to EIP712Message object}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{anthzagaghettiaghetti}@*) (*@\hlred{Hoyli}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{anth}@*) (*@\hlred{FIGBLhend}@*) (*@\hlred{lettmond}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(EIP712Message.class(*@\hlred{, jsonMessageInString}@*));
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=kotlin]
+Rouge score before refactoring: 0.0
+Rouge score after refactoring: 0.0
+\end{lstlisting}
+
+%--------
+% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
+
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=kotlin]
+Generative model: dbernsohn/roberta-java
+Ground truth doc: convert JSON string to EIP712Message object
+Synth origin doc: Check of a null string from
+Synth refact doc: Check of a null string in
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    // (*@\hlred{convert}@*) (*@\hlred{JSON}@*) (*@\hlred{string}@*) (*@\hlred{to}@*) (*@\hlred{EIP712Message}@*) (*@\hlred{object}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{from}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=kotlin]
+
+public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
+    ObjectMapper mapper = new ObjectMapper();
+    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{in}@*)
+    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(EIP712Message.class(*@\hlred{, jsonMessageInString}@*));
+    validateStructuredData(tempJSONMessageObject);
+    return tempJSONMessageObject;
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=kotlin]
+Rouge score before refactoring: 0.17041800643086816
+Rouge score after refactoring: 0.17041800643086816
+\end{lstlisting}
 
 
 \end{document}
