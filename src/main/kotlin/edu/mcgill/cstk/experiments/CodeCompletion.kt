@@ -43,7 +43,7 @@ fun main() {
     DATA_DIR
       .also { println("Evaluating code completion using $MODELS on $it...") }
       .allFilesRecursively().allMethods()
-      .map { it.first.toString() to it.second }
+      .map { it.first to it.second }
     // Ensure tokenized method fits within attention
     //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,

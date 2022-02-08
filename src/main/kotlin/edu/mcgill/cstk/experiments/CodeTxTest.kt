@@ -165,7 +165,7 @@ tailrec fun Model.completeDocumentation(
       makeQuery(snippet.replaceFirst(FILL, MSK))
         // Ensure at least one natural language character per token
         .first { it.any(Char::isLetterOrDigit) } + FILL),
-    length =length - 1
+    length = length - 1
   )
 
 tailrec fun String.fillOneByOne(): String =

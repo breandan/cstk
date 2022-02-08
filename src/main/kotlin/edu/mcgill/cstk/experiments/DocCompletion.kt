@@ -7,7 +7,7 @@ import edu.mcgill.cstk.nlp.*
 fun main() {
   DATA_DIR.allFilesRecursively()
     .allMethods()
-    .map { it.first.toString() to it.second }
+    .map { it.first to it.second }
     // Ensure tokenized method fits within attention
     .filter { (method, origin) ->
       defaultTokenizer.tokenize(method).size < 500 &&
@@ -19,14 +19,14 @@ fun main() {
         String::renameTokens,
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps,
-//        String::addExtraLogging,
+        String::addExtraLogging,
 //        String::swapPlusMinus
       )
       (codeTxs * MODELS).map { (sct, model) -> (method to origin) to (sct to model) }
     }
     .forEachIndexed { i, (methodAndOrigin, sctAndModel) ->
       val (method, origin) = methodAndOrigin
-      val (sct, model) = sctAndModel
+      val (sct, model: Model) = sctAndModel
       val groundTruth = method.getDoc()
       val (originalCode, transformedCode) = method to sct(method)
       if (originalCode == transformedCode) return@forEachIndexed
@@ -43,17 +43,18 @@ fun main() {
       val rougeScoreWithRefactoring = rougeSynonym(groundTruth, syntheticJavadocForRefactoredCode)
 
       // Original doc
-      val od = groundTruth.substringAfter("//")
+      val od = groundTruth.substringAfter("//").trim()
       // Synthetic doc before refactoring
-      val sd = syntheticJavadocForOriginalCode.substringAfter("//")
+      val sd = syntheticJavadocForOriginalCode.substringAfter("//").trim()
       // Synthetic doc after refactoring
-      val rd = syntheticJavadocForRefactoredCode.substringAfter("//")
+      val rd = syntheticJavadocForRefactoredCode.substringAfter("//").trim()
 
       // Only report nontrivial lines (i.e. should contain some text)
       // when there is a variance between the synthetic docs after refactoring
       if (od.length > 30 && sd.isNotBlank() && sd != rd) {
         printLatexSummary(
           summary = """
+            Generative model: $model
             Ground truth doc: $od
             Synth origin doc: $sd
             Synth refact doc: $rd

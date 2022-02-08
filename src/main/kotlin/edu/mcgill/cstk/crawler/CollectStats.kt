@@ -116,17 +116,15 @@ fun URI.collectMethodStats() {
   println("total lines, total tokens, avg line len, len comments, len code")
   allFilesRecursively().allMethods().forEach { (method, uri) ->
       try {
-        val string = method.toString()
-        val lines = string.lines()
+        val lines = method.lines()
         println(
           "" +
             lines.size + ", " +
-            defaultTokenizer.tokenize(string).size +
+            defaultTokenizer.tokenize(method).size +
             lines.size + ", " +
-            lines.map { defaultTokenizer.tokenize(it).size }.average()
-              .toInt() + ", " +
-            defaultTokenizer.tokenize(method.docComment ?: "").size + ", " +
-            defaultTokenizer.tokenize(method.body?.toString() ?: "").size
+            lines.map { defaultTokenizer.tokenize(it).size }.average().toInt()
+//            defaultTokenizer.tokenize(method.docComment ?: "").size + ", " +
+//            defaultTokenizer.tokenize(method.body?.toString() ?: "").size
         )
       } catch (_: Exception) {}
     }

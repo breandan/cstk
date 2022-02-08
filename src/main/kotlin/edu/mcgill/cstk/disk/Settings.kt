@@ -26,6 +26,7 @@ val MODELS = setOf(
 
 data class Model(val name: String) {
   override fun hashCode() = name.hashCode()
+  override fun toString() = name
 }
 
 // The following models support masking

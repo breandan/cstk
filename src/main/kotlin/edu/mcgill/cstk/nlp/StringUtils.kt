@@ -52,13 +52,15 @@ val openParens = setOf('(', '{', '[')
 val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
-fun Sequence<URI>.allMethods(where: (CtMethod<*>) -> Boolean = { true }): Sequence<Pair<CtMethod<*>, URI>> =
+fun Sequence<URI>.allMethods(
+  parser: (String) -> List<String> = { file ->
+    Launcher.parseClass(file).methods.map { it.toString() }
+  }
+): Sequence<Pair<String, URI>> =
   mapNotNull { path ->
     path.contents()?.let {
       try {
-        Launcher.parseClass(it).methods
-          .filter { where(it) }
-          .map { it to path }
+        parser(it).map { it to path }
       } catch (exception: Exception) {
         null
       }
