@@ -133,7 +133,7 @@ fun vectorize(query: String) = matrixize(query).first()
 
 // Long sequence embedding: method level
 fun matrixize(query: String): Array<DoubleArray> =
-  defaultModel.makeQuery(query).lines()
+  defaultModel.makeQuery(query).first().lines()
   .map { it.trim().replace("[", "").replace("]", "") }
   .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
@@ -153,15 +153,9 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
-fun Model.getPredictions(query: String): List<String> =
-  makeQuery(query) { joinToString("|") }.split("|")
-
-fun Model.makeQuery(
-  query: String = "",
-  selector: List<String>.() -> String = { first() }
-): String =
+fun Model.makeQuery(query: String = ""): List<String> =
   "$EMBEDDING_SERVER${name}?query=${URLEncoder.encode(query, "utf-8")}"
-    .let { URL(it).readText().lines().selector() }
+    .let { URL(it).readText().lines() }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

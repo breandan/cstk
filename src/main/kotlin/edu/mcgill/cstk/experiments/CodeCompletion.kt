@@ -4,45 +4,49 @@ import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
-import org.apache.commons.math3.stat.inference.OneWayAnova
-import org.apache.commons.math3.stat.inference.TTest
+import org.hipparchus.stat.inference.*
+import java.net.URI
 import kotlin.math.round
 import kotlin.reflect.KFunction1
 
-data class CodeSnippetToEvaluate(
-  val original: String,
-  val complexity: Int = binByComplexity(original.approxCyclomatic()),
+data class CodeSnippetToEvaluate constructor(
+  val method: String,
+  val origin: URI? = null,
+  val complexity: Int = binByComplexity(method.approxCyclomatic()),
   val sct: KFunction1<String, String>, // Source code transformation
-  val variant: String = sct(original),
+  val variant: String = sct(method),
   val model: Model = defaultModel
 ) {
   companion object {
     const val BINSIZE = 5
     fun binByComplexity(complexity: Int) =
       round(complexity.toDouble() / BINSIZE).toInt()
+    fun dummy(sct: KFunction1<String, String>, model: Model) =
+      CodeSnippetToEvaluate("", null, 0, sct, "", model)
   }
   // + complexity.hashCode()
   override fun hashCode() = model.hashCode() + sct.name.hashCode()
-  fun print() = printSideBySide(original, variant)
+  fun print() = printSideBySide(method, variant)
 }
 
 val t = {
-  val t = doubleArrayOf(1.0, 2.0, 3.0)
+  val t0 = doubleArrayOf(1.0, 2.0, 3.0)
+  val t1 = doubleArrayOf(4.0, 6.0, 8.0)
   // https://en.wikipedia.org/wiki/One-way_analysis_of_variance#Assumptions
-  OneWayAnova().anovaFValue(listOf(t,t))
+  OneWayAnova().anovaFValue(listOf(t0,t1))
   // https://en.wikipedia.org/wiki/Student%27s_t-test#Assumptions
-  TTest().pairedT(t, t)
+  TTest().pairedT(t0, t1)
 }
 
-fun main() =
+fun main() {
   evaluateTransformations(
     validationSet =
-      DATA_DIR
-        .also { println("Evaluating code completion using $MODELS on $it...") }
-        .allFilesRecursively().allMethods()
-        .map { it.first.toString() }
-        // Ensure tokenized method fits within attention
-        //.filter { defaultTokenizer.tokenize(it).size < 500 }
+    DATA_DIR
+      .also { println("Evaluating code completion using $MODELS on $it...") }
+      .allFilesRecursively().allMethods()
+      .map { it.first.toString() to it.second }
+    // Ensure tokenized method fits within attention
+    //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,
     evaluation = CodeSnippetToEvaluate::evaluateMultimask,
     codeTxs = arrayOf(
@@ -55,46 +59,50 @@ fun main() =
 //      String::shuffleLines
     )
   )
+}
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
-  validationSet: Sequence<String>,
+  validationSet: Sequence<Pair<String, URI>>,
   evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
-    .flatMap { method -> setOf(method) * codeTxs.toSet() * MODELS }
-    .map { (method, codeTx, model) -> CodeSnippetToEvaluate(original = method, sct = codeTx, model = model) }
-    .filter { it.original != it.variant }
-    .map { snippet -> snippet to evaluation(snippet) }
-    .forEach { (snippet, correctVsTotal) ->
-      csByMultimaskPrediction[snippet] = correctVsTotal
+    .flatMap { (method, origin) ->
+      (setOf(method) * codeTxs.toSet() * MODELS).map { (method, codeTx, model) ->
+        CodeSnippetToEvaluate(method = method, origin = origin, sct = codeTx, model = model)
+      }
+    }
+    .filter { it.method != it.variant }
+    .map { snippet ->
+      csByMultimaskPrediction[snippet] = evaluation(snippet)
       println(csByMultimaskPrediction.toLatexTable())
     }
 
+fun tTest(it: List<Pair<Double, Double>>): String =
+  it.unzip().let { (a, b) ->
+    if (2 < a.size && 2 < b.size) // t statistic requires at least two
+      TTest().pairedT(
+        a.toDoubleArray(),
+        b.toDoubleArray()
+      ).toString().take(5) + " (${it.size})"
+    else ""
+  }
+
+fun sideBySide(it: List<Pair<Double, Double>>) =
+  it.unzip().let { (a, b) ->
+    a.joinToString(",", "[", "]") { it.toString().take(5) } + "," +
+      b.joinToString(",", "[", "]") { it.toString().take(5) }
+  }
+
 val csByMultimaskPrediction =
-  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(
-    significanceTest = {
-      it.unzip().let { (a, b) ->
-        if (2 < a.size && 2 < b.size) // t statistic requires at least two
-          TTest().pairedT(
-            a.toDoubleArray(),
-            b.toDoubleArray()
-          ).toString().take(5) + " (${it.size})"
-        else ""
-      }
-    },
-    summarizer = {
-      it.unzip().let { (a, b) ->
-        a.joinToString(",", "[", "]") { it.toString().take(5) } + "," +
-          b.joinToString(",", "[", "]") { it.toString().take(5) }
-      }
-    }
-  )
+  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(::tTest, ::sideBySide)
 
 class CodeSnippetAttributeScoresTable<V>(
+  // Renders the significance test for a single configuration
   val significanceTest: (List<V>) -> String,
-  val summarizer: (List<V>) -> String = { it.joinToString(",") },
+  // Renders the distribution for each independent variable configuration
+  val distToString: (List<V>) -> String = { it.joinToString(",") },
 ) {
   val scoreByCodeSnippet = mutableMapOf<Int, MutableList<V>>()
   val complexities = mutableSetOf<Int>()
@@ -151,7 +159,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
             .joinToString("& ") { tx ->
               // Construct a fake code snippet with the same hash code as this cell
               // to retrieve all matching code snippet data from this cell
-              this[CodeSnippetToEvaluate("", 0, tx, "", model)]
+              this[CodeSnippetToEvaluate.dummy(tx, model)]
                 .let { significanceTest(it).padEnd(colWidth) }
             }
 
@@ -170,14 +178,13 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
       \end{table}
       """.trimIndent()).lines().joinToString("\n") { "%$it" } +
       (MODELS * transformations).joinToString("\n", "\n", "\n") { (model, fn) ->
-        "% (${model.name} x ${fn.name}): " +
-          summarizer(this[CodeSnippetToEvaluate("", 0, fn, "", model)])
+        "% (${model.name} x ${fn.name}): " + distToString(this[CodeSnippetToEvaluate.dummy(fn, model)])
       }
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
 fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double> =
-  (model.evaluateMultimask(original) to model.evaluateMultimask(variant))
+  (model.evaluateMultimask(method) to model.evaluateMultimask(variant))
     .let { (a, b) -> (a.first.toDouble() / a.second.toDouble().coerceAtLeast(1.0)) to
       (b.first.toDouble() / b.second.toDouble().coerceAtLeast(1.0)) }
 
@@ -220,7 +227,7 @@ fun Model.completeAndScore(
   maskedSeqeunce: String,
 ): Pair<String, Int> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
-  getPredictions(maskedSeqeunce).let {
+  makeQuery(maskedSeqeunce).let {
     // Sometimes the source code token starts with the correct sequence, but
     // since source code tokens can be comprised of multiple BERT tokens, we
     // assume that if the prefix matches the ground truth, it is "correct".

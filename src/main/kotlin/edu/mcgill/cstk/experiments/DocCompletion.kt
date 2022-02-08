@@ -4,7 +4,6 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 import java.lang.Double.max
-import kotlin.math.absoluteValue
 
 fun main() {
   DATA_DIR.allFilesRecursively()
@@ -16,27 +15,31 @@ fun main() {
         method.approxCyclomatic() < 15 &&
         method.lines().any { line -> docCriteria(line) }
     }
-    .flatMap {
-      setOf(
+    .flatMap { (method, origin) ->
+      val codeTxs = setOf(
         String::renameTokens,
         String::permuteArgumentOrder,
         String::swapMultilineNoDeps,
 //        String::addExtraLogging,
 //        String::swapPlusMinus
-      ).map { sct -> it to sct }
+      )
+      (codeTxs * MODELS).map { (sct, model) -> (method to origin) to (sct to model) }
     }
-    .forEach { (methodAndOrigin, sct) ->
+    .forEach { (methodAndOrigin, sctAndModel) ->
       val (method, origin) = methodAndOrigin
+      val (sct, model) = sctAndModel
       val groundTruth = method.getDoc()
       val originalCodeWithSyntheticJavadoc = method.fillFirstDoc() ?: return@forEach
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
       val refactoredCodeWithSyntheticJavadoc = sct(method).fillFirstDoc() ?: return@forEach
       val syntheticJavadocForRefactoredCode = refactoredCodeWithSyntheticJavadoc.getDoc()
+      val snippet = CodeSnippetToEvaluate(method = method, origin = origin, sct = sct, variant = refactoredCodeWithSyntheticJavadoc, model = model)
 
       val rougeScoreWithoutRefactoring = rougeSynonym(groundTruth, syntheticJavadocForOriginalCode)
       val rougeScoreWithRefactoring = rougeSynonym(groundTruth, syntheticJavadocForRefactoredCode)
 
-      val relativeDifference = (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
+      val relativeDifference =
+        (rougeScoreWithoutRefactoring - rougeScoreWithRefactoring) /
             max(rougeScoreWithRefactoring, rougeScoreWithRefactoring)
 
       // Original doc
@@ -66,21 +69,16 @@ fun main() {
         println("% Origin: $origin")
       }
 
-      // Only record nonzero and finite relative differences in comparison
-      if (relativeDifference.run { isFinite() && absoluteValue > 0.0 }) {
-        val snippet = CodeSnippetToEvaluate(original = method, sct = sct, variant = refactoredCodeWithSyntheticJavadoc)
-        rougeScoreByCyclomaticComplexity[snippet] = relativeDifference
-        println(rougeScoreByCyclomaticComplexity.toLatexTable())
-      }
+      rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
+      println(rougeScores.toLatexTable())
     }
 }
 
-val rougeScoreByCyclomaticComplexity = CodeSnippetAttributeScoresTable<Double>(
-  significanceTest = {
-    it.average().toString().take(5) + " ± " +
-      it.variance().toString().take(5) + " (${it.size})"
-  }
-)
+val rougeScores =
+  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(
+    significanceTest = ::tTest,
+    distToString = ::sideBySide
+  )
 
 val docCriteria: (String) -> Boolean = {
   val line = it.trim()

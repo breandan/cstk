@@ -4,7 +4,7 @@ import edu.mcgill.cstk.experiments.synonyms
 import org.apache.commons.lang3.StringUtils
 
 fun rouge(reference: Set<String>, candidate: Set<String>) =
-  reference.intersect(candidate).size.toDouble() / reference.size.toDouble()
+  reference.intersect(candidate).size.toDouble() / reference.size.toDouble().coerceAtLeast(1.0)
 
 fun rougeSynonym(originalDoc: String, candidateDoc: String) =
   rouge(originalDoc.synonymCloud(), candidateDoc.synonymCloud())

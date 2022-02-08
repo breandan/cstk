@@ -19,11 +19,13 @@ val DELIMITER = Regex("\\W")
 
 // https://huggingface.co/microsoft
 val MODELS = setOf(
-  Model("microsoft/codebert-base"),
-  Model("microsoft/graphcodebert-base"),
-  Model("dbernsohn/roberta-java")
-)
+  "microsoft/codebert-base",
+  "microsoft/graphcodebert-base",
+  "dbernsohn/roberta-java"
+).map { Model(it) }.toSet()
+
 data class Model(val name: String)
+
 // The following models support masking
 //"microsoft/codebert-base"
 //"microsoft/graphcodebert-base"

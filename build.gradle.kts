@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
   kotlin("jvm") version "1.6.0"
-  id("com.github.ben-manes.versions") version "0.41.0"
+  id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.0.1"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 //  idea
@@ -111,7 +111,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.57.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.58.0")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
