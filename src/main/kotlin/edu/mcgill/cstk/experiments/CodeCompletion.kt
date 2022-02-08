@@ -73,9 +73,9 @@ fun evaluateTransformations(
       }
     }
     .filter { it.method != it.variant }
-    .map { snippet ->
+    .forEachIndexed { i, snippet ->
       csByMultimaskPrediction[snippet] = evaluation(snippet)
-      println(csByMultimaskPrediction.toLatexTable())
+      if(i % 10 == 0) println(csByMultimaskPrediction.toLatexTable())
     }
 
 fun tTest(it: List<Pair<Double, Double>>): String =

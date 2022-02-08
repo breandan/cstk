@@ -3,7 +3,6 @@ package edu.mcgill.cstk.experiments
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
-import java.lang.Double.max
 
 fun main() {
   DATA_DIR.allFilesRecursively()
@@ -25,14 +24,14 @@ fun main() {
       )
       (codeTxs * MODELS).map { (sct, model) -> (method to origin) to (sct to model) }
     }
-    .forEach { (methodAndOrigin, sctAndModel) ->
+    .forEachIndexed { i, (methodAndOrigin, sctAndModel) ->
       val (method, origin) = methodAndOrigin
       val (sct, model) = sctAndModel
       val groundTruth = method.getDoc()
       val (originalCode, transformedCode) = method to sct(method)
-      if (originalCode == transformedCode) return@forEach
-      val originalCodeWithSyntheticJavadoc = model.fillFirstDoc(originalCode) ?: return@forEach
-      val transformedCodeWithSyntheticJavadoc = model.fillFirstDoc(transformedCode) ?: return@forEach
+      if (originalCode == transformedCode) return@forEachIndexed
+      val originalCodeWithSyntheticJavadoc = model.fillFirstDoc(originalCode) ?: return@forEachIndexed
+      val transformedCodeWithSyntheticJavadoc = model.fillFirstDoc(transformedCode) ?: return@forEachIndexed
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
       val syntheticJavadocForRefactoredCode = transformedCodeWithSyntheticJavadoc.getDoc()
       val snippet = CodeSnippetToEvaluate(
@@ -44,20 +43,20 @@ fun main() {
       val rougeScoreWithRefactoring = rougeSynonym(groundTruth, syntheticJavadocForRefactoredCode)
 
       // Original doc
-      val oc = groundTruth.substringAfter("//")
+      val od = groundTruth.substringAfter("//")
       // Synthetic doc before refactoring
-      val sc = syntheticJavadocForOriginalCode.substringAfter("//")
+      val sd = syntheticJavadocForOriginalCode.substringAfter("//")
       // Synthetic doc after refactoring
-      val rc = syntheticJavadocForRefactoredCode.substringAfter("//")
+      val rd = syntheticJavadocForRefactoredCode.substringAfter("//")
 
       // Only report nontrivial lines (i.e. should contain some text)
       // when there is a variance between the synthetic docs after refactoring
-      if (oc.length > 30 && sc.isNotBlank() && sc != rc) {
+      if (od.length > 30 && sd.isNotBlank() && sd != rd) {
         printLatexSummary(
           summary = """
-            Ground truth doc: $oc
-            Synth origin doc: $sc
-            Synth refact doc: $rc
+            Ground truth doc: $od
+            Synth origin doc: $sd
+            Synth refact doc: $rd
             """.trimIndent(),
           original = method,
           synthetic = originalCodeWithSyntheticJavadoc,
@@ -67,11 +66,11 @@ fun main() {
             Rouge score after refactoring: $rougeScoreWithRefactoring
             """.trimIndent()
         )
-        println("% Origin: $origin")
+         println("% Origin: $origin\n")
       }
 
       rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
-      println(rougeScores.toLatexTable())
+      if (i % 10 == 0) println(rougeScores.toLatexTable())
     }
 }
 
