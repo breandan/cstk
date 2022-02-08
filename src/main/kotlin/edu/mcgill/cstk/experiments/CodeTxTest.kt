@@ -157,14 +157,14 @@ fun Model.fillFirstDoc(snippet: String): String? =
 
 tailrec fun Model.completeDocumentation(
   snippet: String,
-  length: Int = 20
+  length: Int = 20,
+  nextToken: String? = makeQuery(snippet.replaceFirst(FILL, MSK))
+    // Ensure at least one natural language character per token
+    .firstOrNull { it.any(Char::isLetterOrDigit) }
 ): String? =
-  if (length == 1) snippet.replace(FILL, "")
+  if (length == 1 || nextToken == null) snippet.replace(FILL, "")
   else completeDocumentation(
-    snippet = snippet.replaceFirst(FILL,
-      makeQuery(snippet.replaceFirst(FILL, MSK))
-        // Ensure at least one natural language character per token
-        .first { it.any(Char::isLetterOrDigit) } + FILL),
+    snippet = nextToken.let { snippet.replaceFirst(FILL, it + FILL) },
     length = length - 1
   )
 

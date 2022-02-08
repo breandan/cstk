@@ -370,4 +370,78 @@ Our contributions in this work are twofold: we demonstrate that SoTA neural lang
 \bibliographystyle{plain}
 \appendix
 
+
+%---------
+
+\pagebreak
+\section{Example}
+\subsection{Summary}
+
+\begin{lstlisting}[language=kotlin]
+Generative model: dbernsohn/roberta-java
+Ground truth doc: Notify the autoscroll thread that it is time to exit
+Synth origin doc: shutdown to stop on close this stack to notifying
+Synth refact doc: clear this for all stack to stop down it of
+\end{lstlisting}
+
+\subsection{Original}
+\begin{lstlisting}[language=kotlin]
+
+/**
+ * Terminate the thread that autoscrolls the text.
+ */
+public void close() {
+    running = false;
+    // (*@\hlred{Notify}@*) (*@\hlred{the}@*) (*@\hlred{autoscroll}@*) (*@\hlred{thread}@*) (*@\hlred{that}@*) (*@\hlred{it}@*) (*@\hlred{is}@*) (*@\hlred{time }@*)to (*@\hlred{exit}@*)
+    synchronized(histData) {
+        histData.notify();
+    }
+}
+\end{lstlisting}
+\subsection{Synthetic}
+
+\begin{lstlisting}[language=kotlin]
+
+/**
+ * Terminate the thread that autoscrolls the text.
+ */
+public void close() {
+    running = false;
+    //  (*@\hlred{shutdown}@*) (*@\hlred{to}@*) (*@\hlred{stop}@*) (*@\hlred{on}@*) (*@\hlred{close}@*) (*@\hlred{this}@*) (*@\hlred{stack}@*) to (*@\hlred{notifying}@*)
+    synchronized(histData) {
+        histData.notify();
+    }
+}
+\end{lstlisting}
+
+\subsection{Variant}
+
+\begin{lstlisting}[language=kotlin]
+
+/**
+ * Terminate the (*@\hlred{cerebration}@*) that autoscrolls the text.
+ */
+public void close() {
+    running = false;
+    //  (*@\hlred{clear}@*) (*@\hlred{this}@*) (*@\hlred{for}@*) (*@\hlred{all}@*) (*@\hlred{stack}@*) (*@\hlred{to}@*) (*@\hlred{stop}@*) (*@\hlred{down}@*) (*@\hlred{it}@*) (*@\hlred{of}@*)
+    synchronized(histData) {
+        histData.notify();
+    }
+}
+\end{lstlisting}
+
+\subsection{Comment}
+
+TODO.
+
+\subsection{Discrepancy}
+
+\begin{lstlisting}[language=kotlin]
+Rouge score before refactoring: 0.072
+Rouge score after refactoring: 0.09333333333333334
+\end{lstlisting}
+
+%--------
+
+
 \end{document}
