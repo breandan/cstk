@@ -81,7 +81,7 @@ fun evaluateTransformations(
 fun tTest(it: List<Pair<Double, Double>>): String =
   it.unzip().let { (a, b) ->
     if (2 < a.size && 2 < b.size) // t statistic requires at least two
-      TTest().pairedT(
+      TTest().pairedTTest(
         a.toDoubleArray(),
         b.toDoubleArray()
       ).toString().take(5) + " (${it.size})"
@@ -195,7 +195,7 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
     code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
-//        logDiffs(this, maskedMethod, trueToken, completion)
+//        logDiffs(code, maskedMethod, trueToken, completion)
         if (completion == ERR || completion.isEmpty()) null else score
       }.fold(0 to 0) { (correct, total), it ->
         if(it > 0) correct + 1 to total + 1 else correct to total + 1
