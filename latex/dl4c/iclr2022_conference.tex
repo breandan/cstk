@@ -383,53 +383,49 @@ Our contributions in this work are twofold: we demonstrate that SoTA neural lang
 \bibliographystyle{plain}
 \appendix
 
-%---------
-
 \pagebreak
 \section{Example}
 \subsection{Summary}
 
-\begin{lstlisting}[language=kotlin]
-Generative model: microsoft/codebert-base
-Ground truth doc: convert JSON string to EIP712Message object
-Synth origin doc: anthzagaghettiaghetti Hoyli
-Synth refact doc: LEGli Lerhendeconom wid
+\begin{lstlisting}[language=java]
+Generative model: microsoft/codebert-base-mlm
+Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
+Synth origin doc: defaultBuilder
+Synth refact doc:
 \end{lstlisting}
 
 \subsection{Original}
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{convert}@*) (*@\hlred{JSON string to EIP712Message object}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    // (*@\hlred{TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 \subsection{Synthetic}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{anthzagaghettiaghetti}@*) (*@\hlred{Hoyli}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    //  (*@\hlred{defaultBuilder}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 
 \subsection{Variant}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    //  (*@\hlred{LEGli}@*) (*@\hlred{Lerhendeconom}@*) (*@\hlred{wid}@*)
-    StructuredData.EIP712Message (*@\hlred{temporaryJSONDrivelCenter}@*) = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData((*@\hlred{temporaryJSONDrivelCenter}@*));
-    return (*@\hlred{temporaryJSONDrivelCenter;}@*)
+public BuilderGem getBuilder() {
+    //
+
+    // specify this mandatory on @MapperConfig and @Mapper.
+(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
+    return null;
 }
 \end{lstlisting}
 
@@ -439,13 +435,13 @@ TODO.
 
 \subsection{Discrepancy}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 Rouge score before refactoring: 0.0
 Rouge score after refactoring: 0.0
 \end{lstlisting}
 
 %--------
-% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
+% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/mapstruct_mapstruct.tgz!/mapstruct-mapstruct-7064e0b/processor/src/main/java/org/mapstruct/ap/internal/model/source/DefaultOptions.java
 
 %---------
 
@@ -453,47 +449,45 @@ Rouge score after refactoring: 0.0
 \section{Example}
 \subsection{Summary}
 
-\begin{lstlisting}[language=kotlin]
-Generative model: dbernsohn/roberta-java
-Ground truth doc: convert JSON string to EIP712Message object
-Synth origin doc: Check of a null string from
-Synth refact doc: Check of default object object from
+\begin{lstlisting}[language=java]
+Generative model: microsoft/graphcodebert-base
+Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
+Synth origin doc: nothing else will do it automatically
+Synth refact doc: note here is that developers could instead have more information that should not need builder information and should also
 \end{lstlisting}
 
 \subsection{Original}
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{convert}@*) (*@\hlred{JSON}@*) (*@\hlred{string}@*) (*@\hlred{to}@*) (*@\hlred{EIP712Message}@*) (*@\hlred{object}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    // (*@\hlred{TODO:}@*) (*@\hlred{I}@*) (*@\hlred{realized}@*) (*@\hlred{this}@*) (*@\hlred{is not correct, however }@*)it (*@\hlred{needs to be null in order to keep downward compatibility}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 \subsection{Synthetic}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{from}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    //  (*@\hlred{nothing}@*) (*@\hlred{else}@*) (*@\hlred{will}@*) (*@\hlred{do}@*) it (*@\hlred{automatically}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 
 \subsection{Variant}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{default}@*) (*@\hlred{object}@*) object (*@\hlred{from}@*)
-    StructuredData.EIP712Message (*@\hlred{temporaryJSONNonsenseSouvenir}@*) = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData((*@\hlred{temporaryJSONNonsenseSouvenir}@*));
-    return (*@\hlred{temporaryJSONNonsenseSouvenir;}@*)
+public BuilderGem getBuilder() {
+    //  (*@\hlred{note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{that}@*) (*@\hlred{developers}@*) (*@\hlred{could}@*) (*@\hlred{instead}@*) (*@\hlred{have}@*) (*@\hlred{more}@*) (*@\hlred{information}@*) (*@\hlred{that}@*) (*@\hlred{should}@*) (*@\hlred{not}@*) (*@\hlred{need}@*) (*@\hlred{builder}@*) (*@\hlred{information}@*) (*@\hlred{and}@*) (*@\hlred{should}@*) (*@\hlred{also}@*)
+
+    // specify this mandatory on @MapperConfig and @Mapper.
+(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
+    return null;
 }
 \end{lstlisting}
 
@@ -503,13 +497,13 @@ TODO.
 
 \subsection{Discrepancy}
 
-\begin{lstlisting}[language=kotlin]
-Rouge score before refactoring: 0.17041800643086816
-Rouge score after refactoring: 0.3086816720257235
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.038525963149078725
+Rouge score after refactoring: 0.24204355108877723
 \end{lstlisting}
 
 %--------
-% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
+% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/mapstruct_mapstruct.tgz!/mapstruct-mapstruct-7064e0b/processor/src/main/java/org/mapstruct/ap/internal/model/source/DefaultOptions.java
 
 %---------
 
@@ -517,111 +511,45 @@ Rouge score after refactoring: 0.3086816720257235
 \section{Example}
 \subsection{Summary}
 
-\begin{lstlisting}[language=kotlin]
-Generative model: microsoft/codebert-base
-Ground truth doc: convert JSON string to EIP712Message object
-Synth origin doc: anthzagaghettiaghetti Hoyli
-Synth refact doc: anth FIGBLhend lettmond
-\end{lstlisting}
-
-\subsection{Original}
-\begin{lstlisting}[language=kotlin]
-
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{convert}@*) (*@\hlred{JSON string to EIP712Message object}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
-}
-\end{lstlisting}
-\subsection{Synthetic}
-
-\begin{lstlisting}[language=kotlin]
-
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{anthzagaghettiaghetti}@*) (*@\hlred{Hoyli}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
-}
-\end{lstlisting}
-
-\subsection{Variant}
-
-\begin{lstlisting}[language=kotlin]
-
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{anth}@*) (*@\hlred{FIGBLhend}@*) (*@\hlred{lettmond}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(EIP712Message.class(*@\hlred{, jsonMessageInString}@*));
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
-}
-\end{lstlisting}
-
-\subsection{Comment}
-
-TODO.
-
-\subsection{Discrepancy}
-
-\begin{lstlisting}[language=kotlin]
-Rouge score before refactoring: 0.0
-Rouge score after refactoring: 0.0
-\end{lstlisting}
-
-%--------
-% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/web3j_web3j.tgz!/web3j-web3j-f2d4d29/crypto/src/main/java/org/web3j/crypto/StructuredDataEncoder.java
-
-%---------
-
-\pagebreak
-\section{Example}
-\subsection{Summary}
-
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 Generative model: dbernsohn/roberta-java
-Ground truth doc: convert JSON string to EIP712Message object
-Synth origin doc: Check of a null string from
-Synth refact doc: Check of a null string in
+Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
+Synth origin doc: Check this class method to create method to return the case case this type for default type for type
+Synth refact doc: For test for a method that that's this case is an Java class class as not an instance
 \end{lstlisting}
 
 \subsection{Original}
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    // (*@\hlred{convert}@*) (*@\hlred{JSON}@*) (*@\hlred{string}@*) (*@\hlred{to}@*) (*@\hlred{EIP712Message}@*) (*@\hlred{object}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    // (*@\hlred{TODO:}@*) (*@\hlred{I}@*) (*@\hlred{realized}@*) (*@\hlred{this}@*) (*@\hlred{is}@*) (*@\hlred{not}@*) (*@\hlred{correct,}@*) (*@\hlred{however}@*) (*@\hlred{it}@*) (*@\hlred{needs}@*) (*@\hlred{to}@*) (*@\hlred{be}@*) (*@\hlred{null}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{keep}@*) (*@\hlred{downward}@*) (*@\hlred{compatibility}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 \subsection{Synthetic}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{from}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(jsonMessageInString, EIP712Message.class);
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    //  (*@\hlred{Check}@*) (*@\hlred{this}@*) (*@\hlred{class}@*) (*@\hlred{method}@*) (*@\hlred{to}@*) (*@\hlred{create}@*) (*@\hlred{method}@*) (*@\hlred{to}@*) (*@\hlred{return}@*) (*@\hlred{the}@*) (*@\hlred{case}@*) (*@\hlred{case}@*) (*@\hlred{this}@*) (*@\hlred{type}@*) (*@\hlred{for}@*) (*@\hlred{default}@*) (*@\hlred{type}@*) (*@\hlred{for}@*) (*@\hlred{type}@*)
+    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
+    // specify this mandatory on @MapperConfig and @Mapper.
+    return null;
 }
 \end{lstlisting}
 
 \subsection{Variant}
 
-\begin{lstlisting}[language=kotlin]
+\begin{lstlisting}[language=java]
 
-public EIP712Message parseJSONMessage(String jsonMessageInString) throws IOException, RuntimeException {
-    ObjectMapper mapper = new ObjectMapper();
-    //  (*@\hlred{Check}@*) (*@\hlred{of}@*) (*@\hlred{a}@*) (*@\hlred{null}@*) (*@\hlred{string}@*) (*@\hlred{in}@*)
-    StructuredData.EIP712Message tempJSONMessageObject = mapper.readValue(EIP712Message.class(*@\hlred{, jsonMessageInString}@*));
-    validateStructuredData(tempJSONMessageObject);
-    return tempJSONMessageObject;
+public BuilderGem getBuilder() {
+    //  (*@\hlred{For}@*) (*@\hlred{test}@*) (*@\hlred{for}@*) (*@\hlred{a}@*) (*@\hlred{method}@*) (*@\hlred{that}@*) (*@\hlred{that's}@*) (*@\hlred{this}@*) (*@\hlred{case}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{Java}@*) (*@\hlred{class}@*) (*@\hlred{class}@*) (*@\hlred{as}@*) (*@\hlred{not}@*) (*@\hlred{an}@*) (*@\hlred{instance}@*)
+
+    // specify this mandatory on @MapperConfig and @Mapper.
+(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
+    return null;
 }
 \end{lstlisting}
 
@@ -631,10 +559,9 @@ TODO.
 
 \subsection{Discrepancy}
 
-\begin{lstlisting}[language=kotlin]
-Rouge score before refactoring: 0.17041800643086816
-Rouge score after refactoring: 0.17041800643086816
+\begin{lstlisting}[language=java]
+Rouge score before refactoring: 0.07788944723618091
+Rouge score after refactoring: 0.20351758793969849
 \end{lstlisting}
-
 
 \end{document}
