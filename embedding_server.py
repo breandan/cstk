@@ -76,12 +76,19 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
-        if model_name not in models or 'query' not in query_components:
+        if model_name not in models :
             print("Model " + model_name + " not in models.")
             return
 
-        query = urllib.parse.unquote_plus(query_components["query"][0])
-        self.wfile.write(bytes(self.handle_query(query, model_name), encoding='utf8'))
+        if "query" in query_components:
+            query = urllib.parse.unquote_plus(query_components["query"][0])
+            self.wfile.write(bytes(self.handle_query(query, model_name), encoding='utf8'))
+        elif "tokenize" in query_components:
+            query = urllib.parse.unquote_plus(query_components["tokenize"][0])
+            self.wfile.write(bytes(str(self.tokenize(query, model_name)), encoding='utf8'))
+        else:
+            print("Unknown command" + query_components)
+            return
 
     def handle_query(self, query, model_name):
         # print(query)

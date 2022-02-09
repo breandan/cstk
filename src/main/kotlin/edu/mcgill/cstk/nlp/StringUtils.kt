@@ -155,6 +155,10 @@ tailrec fun complete(
     maxTokens = maxTokens - 1
   )
 
+fun Model.countTokens(query: String) =
+  "$EMBEDDING_SERVER${name}?tokenze=${URLEncoder.encode(query, "utf-8")}"
+    .let { URL(it).readText().count { it == ',' } }
+
 fun Model.makeQuery(query: String = ""): List<String> =
   "$EMBEDDING_SERVER${name}?query=${URLEncoder.encode(query, "utf-8")}"
     .let { URL(it).readText().lines() }
