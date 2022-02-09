@@ -13,6 +13,8 @@ from torch import Tensor
 from transformers import AutoTokenizer, AutoModel, \
     PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, \
     RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
+from transformers import AutoTokenizer, AutoModelForMaskedLM
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--models', type=str, nargs='+', required=True)
@@ -24,8 +26,8 @@ args = parser.parse_args()
 models = {}
 tokenizers = {}
 for m in args.models:
-    models[m]: PTM = RobertaForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
-    tokenizers[m]: PTT = RobertaTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
+    models[m]: PTM = AutoModelForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
+    tokenizers[m]: PTT = AutoTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
 
 attention_width = 760
 

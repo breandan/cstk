@@ -40,10 +40,10 @@ val t = {
 fun main() {
   evaluateTransformations(
     validationSet =
-    DATA_DIR
-      .also { println("Evaluating code completion using $MODELS on $it...") }
-      .allFilesRecursively().allMethods()
-      .map { it.first to it.second }
+      DATA_DIR
+        .also { println("Evaluating code completion using $MODELS on $it...") }
+        .allFilesRecursively().allMethods()
+        .map { it.first to it.second }
     // Ensure tokenized method fits within attention
     //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,

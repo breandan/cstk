@@ -19,7 +19,7 @@ val DELIMITER = Regex("\\W")
 
 // https://huggingface.co/microsoft
 val MODELS = setOf(
-  "microsoft/codebert-base",
+  "microsoft/codebert-base-mlm",
   "microsoft/graphcodebert-base",
   "dbernsohn/roberta-java"
 ).map { Model(it) }.toSet()
@@ -30,11 +30,11 @@ data class Model(val name: String) {
 }
 
 // The following models support masking
-//"microsoft/codebert-base"
 //"microsoft/graphcodebert-base"
 //"microsoft/codebert-base-mlm"
 //"dbernsohn/roberta-java"
 //These models do not support masking
+//"microsoft/codebert-base"
 //"microsoft/codeGPT-small-java"
 //"microsoft/CodeGPT-small-java-adaptedGPT2"
 //"microsoft/CodeGPT-small-py"
