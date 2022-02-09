@@ -67,7 +67,7 @@ fun main() {
             Rouge score after refactoring: $rougeScoreWithRefactoring
             """.trimIndent()
         )
-         println("% Origin: $origin\n")
+        println("% Origin: $origin\n")
       }
 
       rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring

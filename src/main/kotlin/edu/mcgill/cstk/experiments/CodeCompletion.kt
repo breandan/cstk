@@ -63,7 +63,7 @@ fun main() {
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
   validationSet: Sequence<Pair<String, URI>>,
-  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>>,
+  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>?>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
@@ -74,7 +74,8 @@ fun evaluateTransformations(
     }
     .filter { it.method != it.variant }
     .forEachIndexed { i, snippet ->
-      csByMultimaskPrediction[snippet] = evaluation(snippet)
+      evaluation(snippet)?.let { csByMultimaskPrediction[snippet] = it }
+
       if(i % 10 == 0) println(csByMultimaskPrediction.toLatexTable())
     }
 
@@ -181,10 +182,13 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
-fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double> =
+fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double>? =
   (model.evaluateMultimask(method) to model.evaluateMultimask(variant))
-    .let { (a, b) -> (a.first.toDouble() / a.second.toDouble().coerceAtLeast(1.0)) to
-      (b.first.toDouble() / b.second.toDouble().coerceAtLeast(1.0)) }
+    .let { (a, b) ->
+      if (a.second > 0 && b.second > 0)
+        (a.first.toDouble() / a.second.toDouble()) to (b.first.toDouble() / b.second.toDouble())
+      else null
+    }
 
 val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 

@@ -117,7 +117,7 @@ fun String.permuteArgumentOrder(): String =
   }
 
 fun String.fuzzLoopBoundaries(): String =
-  replace(Regex("(for|while)(.*)([0-9]+)(.*)")) { match ->
+  replace(Regex("(for|while)(.*)(\\d+)(.*)")) { match ->
     match.groupValues.let { it[1] + it[2] +
       (it[3].toInt() + (1..3).random()) + it[4] }
   }
