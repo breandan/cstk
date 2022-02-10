@@ -333,13 +333,14 @@ We ran two tasks, code synthesis and documentation synthesis. The results follow
 %  \end{table}
 %\end{center}
 
+
 \begin{center}
 \begin{table}[H]
 \begin{tabular}{l|cccc}
-Model                         & renameTokens                  & permuteArgument               & swapMultilineNo               & addExtraLogging               \\\hline\\
-microsoft/codebert-base       & 0.143 (3680)                  & 2.803 (1394)                  & 2.599 (2337)                  & 1.319 (934)                   \\
-microsoft/graphcodebert-base  & 0.0 (3666)                    & 1.886 (1367)                  & 1.261 (2337)                  & 4.101 (902)                   \\
-dbernsohn/roberta-java        & 0.0 (3676)                    & 4.436 (1355)                  & 7.641 (2337)                  & 1.315 (896)
+Model                         & renameTokens                  & swapMultilineNo               & permuteArgument               & addExtraLogging               \\\hline\\
+microsoft/codebert-base-mlm   & 0.492 (694)                   & 0.046 (633)                   & 0.562 (215)                   & 0.624 (34)                    \\
+microsoft/graphcodebert-base  & 0.009 (691)                   & 0.383 (633)                   & 0.916 (198)                   & 0.061 (51)                    \\
+dbernsohn/roberta-java        & 0.401 (697)                   & 0.002 (633)                   & 0.331 (202)                   & 0.055 (50)
 \end{tabular}
 \caption{\label{tab:doc-synth}ROUGE scores collected for document synthesis, using the ROUGE-synonym metric. Like above, we report the average relative difference in ROUGE-synonym scores alongside their variance and sample size for each SCT, complexity bucket and model.}
 \end{table}
