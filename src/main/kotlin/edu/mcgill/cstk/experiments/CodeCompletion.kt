@@ -90,9 +90,9 @@ fun tTest(it: List<Pair<Double, Double>>): String =
   }
 
 fun sideBySide(it: List<Pair<Double, Double>>) =
-  it.unzip().let { (a, b) ->
-    a.joinToString(",", "[", "]") { it.toString().take(5) } + "," +
-      b.joinToString(",", "[", "]") { it.toString().take(5) }
+  it.unzip().let { (before, after) ->
+    before.joinToString(",", "\n\tBefore: [", "]") { it.toString().take(5) }
+      after.joinToString(",", "\n\tAfter: [", "]") { it.toString().take(5) }
   }
 
 val csByMultimaskPrediction =
