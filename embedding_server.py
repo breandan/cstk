@@ -10,10 +10,8 @@ import argparse
 import numpy as np
 import torch
 from torch import Tensor
-from transformers import AutoTokenizer, AutoModel, \
-    PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, \
-    RobertaConfig, RobertaTokenizer, RobertaForMaskedLM, pipeline
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer, AutoModelForMaskedLM, \
+    PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, pipeline
 
 
 parser = argparse.ArgumentParser()
@@ -23,8 +21,8 @@ parser.add_argument('--offline', action='store_true')
 args = parser.parse_args()
 
 # Load all the models
-models = {}
-tokenizers = {}
+models: dict = {}
+tokenizers: dict = {}
 for m in args.models:
     models[m]: PTM = AutoModelForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
     tokenizers[m]: PTT = AutoTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
@@ -53,14 +51,11 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         model = models[model_name]
 
         sequence: Tensor = torch.tensor(self.tokenize(query, model_name))
-        chunked = sequence[None, :] if len(sequence) < attention_width else \
+        chunks = sequence[None, :] if len(sequence) < attention_width else \
             sequence.unfold(0, attention_width, int(attention_width / 2))
         #                        kernel size        kernel overlap
 
-        # print(chunked)
-        array = np.array([model(i[None, :])[0].detach().numpy() for i in chunked])
-        # print(array)
-        return array
+        return np.array([model(i[None, :])[0].detach().numpy() for i in chunks])
 
     def log_message(self, format, *args):
         pass
@@ -82,24 +77,29 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
         if "query" in query_components:
             query = urllib.parse.unquote_plus(query_components["query"][0])
-            self.wfile.write(bytes(self.handle_query(query, model_name), encoding='utf8'))
+            targets = query_components["target"] \
+                if "target" in query_components else None
+            self.reply(self.handle_query(query, model_name, targets))
         elif "tokenize" in query_components:
             query = urllib.parse.unquote_plus(query_components["tokenize"][0])
-            self.wfile.write(bytes(str(self.tokenize(query, model_name)), encoding='utf8'))
+            self.reply(str(self.tokenize(query, model_name)))
         else:
-            print("Unknown command" + query_components)
+            print("Unknown command" + str(query_components))
             return
 
-    def handle_query(self, query, model_name):
-        # print(query)
+    def reply(self, response: str):
+        self.wfile.write(bytes(response, encoding='utf8'))
+
+    def handle_query(self, query, model_name, targets=None) -> str:
         model = models[model_name]
         tokenizer = tokenizers[model_name]
 
         try:
             if tokenizer.mask_token in query:
-                pred = pipeline('fill-mask', model=model, tokenizer=tokenizer)
+                pred = pipeline(task='fill-mask', model=model,
+                                tokenizer=tokenizer, targets=targets)
                 outputs = pred(query)
-                completions = sorted(outputs, key=lambda s: float(s['score']))
+                completions = sorted(outputs, key=lambda s: -float(s['score']))
                 completions = list(map(lambda x: x['token_str'], completions))
                 token = "\n".join(completions)
                 return token
