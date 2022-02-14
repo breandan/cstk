@@ -55,7 +55,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.17.3"
+  val openrwVersion = "7.18.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -151,8 +151,9 @@ tasks {
     "testCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxTestKt",
     "nearestNeighbors" to "edu.mcgill.cstk.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
-    "completeCode" to "edu.mcgill.cstk.experiments.CodeCompletionKt",
-    "completeDoc" to "edu.mcgill.cstk.experiments.DocCompletionKt",
+    "completeCode" to "edu.mcgill.cstk.experiments.probing.CodeCompletionKt",
+    "completeDoc" to "edu.mcgill.cstk.experiments.probing.DocCompletionKt",
+    "varMisuse" to "edu.mcgill.cstk.experiments.probing.VariableMisuseKt",
     "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",
     "vizCodeEmbed" to "edu.mcgill.cstk.experiments.VizCodeEmbeddingsKt",

@@ -58,22 +58,18 @@ val defaultModel = MODELS.first()
 
 val EMBEDDING_SERVER: String by lazy {
   val addr = "http://localhost:8000/"
-  val test = "$addr${defaultModel.name}?query=test"
+  val url = URL("$addr${defaultModel.name}?query=test")
 
-  println("Default URL: $test")
-  URL(test).run {
-    try {
-      if (readText().isNotEmpty()) return@lazy addr
-    } catch (ex: Exception) {}
-  }
+  println("Default URL: $url")
+  if (url.runCatching { readText() }.isSuccess) return@lazy addr
 
   restartServer()
 
   println("Starting embeddings server...")
   // Spinlock until service is available
-  while (true) try {
-    if (URL(test).readText().isNotEmpty()) break
-  } catch (exception: Exception) {}
+  while (true)
+    if (url.runCatching { readText() }.getOrDefault("").isNotEmpty())
+      break
 
   println("Started embeddings server at $addr")
 

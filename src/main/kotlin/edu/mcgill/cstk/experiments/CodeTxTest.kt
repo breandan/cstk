@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments
 
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.probing.*
 import edu.mcgill.cstk.nlp.*
 import kotlin.math.min
 

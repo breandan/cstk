@@ -1,6 +1,7 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.probing
 
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 
@@ -71,7 +72,8 @@ fun main() {
       }
 
       rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
-      if (i % 10 == 0) println(rougeScores.toLatexTable())
+
+      if(i < 10 || i % 100 == 0) println(rougeScores.toLatexTable())
     }
 }
 

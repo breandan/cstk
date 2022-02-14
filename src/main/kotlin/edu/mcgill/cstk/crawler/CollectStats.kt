@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.crawler
 
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.experiments.defaultTokenizer
+import edu.mcgill.cstk.experiments.probing.defaultTokenizer
 import edu.mcgill.cstk.nlp.*
 import spoon.Launcher
 import spoon.reflect.declaration.*

@@ -1,7 +1,8 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.probing
 
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
 import org.hipparchus.stat.inference.*
@@ -76,7 +77,7 @@ fun evaluateTransformations(
     .forEachIndexed { i, snippet ->
       evaluation(snippet)?.let { csByMultimaskPrediction[snippet] = it }
 
-      if(i % 10 == 0) println(csByMultimaskPrediction.toLatexTable())
+      if(i < 20 || i % 100 == 0) println(csByMultimaskPrediction.toLatexTable())
     }
 
 fun tTest(it: List<Pair<Double, Double>>): String =
@@ -91,8 +92,11 @@ fun tTest(it: List<Pair<Double, Double>>): String =
 
 fun sideBySide(it: List<Pair<Double, Double>>) =
   it.unzip().let { (before, after) ->
-    before.joinToString(",", "\n\tBefore: [", "]") { it.toString().take(5) }
-      after.joinToString(",", "\n\tAfter: [", "]") { it.toString().take(5) }
+    before.joinToString(", ", "\n\tBefore: [", "]") {
+      it.toString().take(5).padEnd(5)
+    } + after.joinToString(", ", "\n\tAfter:  [", "]") {
+      it.toString().take(5).padEnd(5)
+    }
   }
 
 val csByMultimaskPrediction =
@@ -186,7 +190,8 @@ fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double>? =
   (model.evaluateMultimask(method) to model.evaluateMultimask(variant))
     .let { (a, b) ->
       if (a.second > 0 && b.second > 0)
-        (a.first.toDouble() / a.second.toDouble()) to (b.first.toDouble() / b.second.toDouble())
+        (a.first.toDouble() / a.second.toDouble()) to
+          (b.first.toDouble() / b.second.toDouble())
       else null
     }
 
@@ -202,7 +207,7 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
 //        logDiffs(code, maskedMethod, trueToken, completion)
         if (completion == ERR || completion.isEmpty()) null else score
       }.fold(0 to 0) { (correct, total), it ->
-        if(it > 0) correct + 1 to total + 1 else correct to total + 1
+        if (it > 0) correct + 1 to total + 1 else correct to total + 1
       }
   }
 

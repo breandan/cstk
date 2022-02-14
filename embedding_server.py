@@ -77,9 +77,9 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
         if "query" in query_components:
             query = urllib.parse.unquote_plus(query_components["query"][0])
-            targets = query_components["target"] \
-                if "target" in query_components else None
-            self.reply(self.handle_query(query, model_name, targets))
+            hints = query_components["hint"] \
+                if "hint" in query_components else None
+            self.reply(self.handle_query(query, model_name, hints))
         elif "tokenize" in query_components:
             query = urllib.parse.unquote_plus(query_components["tokenize"][0])
             self.reply(str(self.tokenize(query, model_name)))
@@ -90,14 +90,14 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def reply(self, response: str):
         self.wfile.write(bytes(response, encoding='utf8'))
 
-    def handle_query(self, query, model_name, targets=None) -> str:
+    def handle_query(self, query, model_name, hints=None) -> str:
         model = models[model_name]
         tokenizer = tokenizers[model_name]
 
         try:
             if tokenizer.mask_token in query:
                 pred = pipeline(task='fill-mask', model=model,
-                                tokenizer=tokenizer, targets=targets)
+                                tokenizer=tokenizer, targets=hints)
                 outputs = pred(query)
                 completions = sorted(outputs, key=lambda s: -float(s['score']))
                 completions = list(map(lambda x: x['token_str'], completions))
