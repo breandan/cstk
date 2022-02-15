@@ -15,6 +15,7 @@ repositories {
   mavenCentral()
   mavenLocal()
   maven("https://packages.jetbrains.team/maven/p/astminer/astminer")
+  maven("https://jitpack.io")
 }
 
 dependencies {
@@ -112,6 +113,10 @@ dependencies {
 
   // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.58.0")
+
+  // Evaluation metrics for information retrieval
+  // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
+  implementation("com.github.qcri:EvaluationMetrics:62ff519478")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75

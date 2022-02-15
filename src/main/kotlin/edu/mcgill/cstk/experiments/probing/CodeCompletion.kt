@@ -264,12 +264,7 @@ fun String.maskIdentifiers(): List<Pair<String, String>> =
   split(Regex("((?<=\\W)|(?=\\W))")).let {
     it.mapIndexed { index, maskedWord -> index to maskedWord }
       .filter { (_, token) ->
-        token.length > 1
-          && token.all(Char::isJavaIdentifierPart)
-          // Not learning syntax
-          && token !in reservedWords
-          // Singleton tokens are impossible to predict in zero-shot setting
-          && 1 < split(token).size - 1
+        token.isVariable() && 2 < split(token).size // More than two occurrences
       }.map { indexAndMask ->
         it.foldIndexed("") { i, acc, tok ->
           acc + if (i == indexAndMask.first) "<mask>" else tok
