@@ -10,7 +10,7 @@ import kotlin.reflect.KFunction1
 
 // Broadly can be considered as a multi-choice QA task
 fun main() {
-    evaluateTransformations(
+    evaluateMCTransformations(
       validationSet = DATA_DIR
         .also { println("Evaluating variable misuse detection using $MODELS on $it...") }
         .allFilesRecursively().allMethods()
