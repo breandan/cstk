@@ -30,7 +30,9 @@ fun main() {
       val (sct, model: Model) = sctAndModel
       val groundTruth = method.getDoc()
       val (originalCode, transformedCode) = method to sct(method)
+      // Do not evaluate snippets which remain unchanged after transformation
       if (originalCode == transformedCode) return@forEachIndexed
+
       val originalCodeWithSyntheticJavadoc = model.fillFirstDoc(originalCode) ?: return@forEachIndexed
       val transformedCodeWithSyntheticJavadoc = model.fillFirstDoc(transformedCode) ?: return@forEachIndexed
       val syntheticJavadocForOriginalCode = originalCodeWithSyntheticJavadoc.getDoc()
@@ -73,7 +75,7 @@ fun main() {
 
       rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
 
-      if(i < 10 || i % 100 == 0) println(rougeScores.toLatexTable())
+      if (i < 10 || i % 100 == 0) csByMultimaskPrediction.reportResults("doc_completion")
     }
 }
 

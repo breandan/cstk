@@ -6,6 +6,7 @@ import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
 import org.hipparchus.stat.inference.*
+import java.io.File
 import java.net.URI
 import kotlin.math.round
 import kotlin.reflect.KFunction1
@@ -77,7 +78,7 @@ fun evaluateTransformations(
     .forEachIndexed { i, snippet ->
       evaluation(snippet)?.let { csByMultimaskPrediction[snippet] = it }
 
-      if(i < 20 || i % 100 == 0) println(csByMultimaskPrediction.toLatexTable())
+      if (i < 20 || i % 200 == 0) csByMultimaskPrediction.reportResults("code_completion")
     }
 
 fun tTest(it: List<Pair<Double, Double>>): String =
@@ -92,9 +93,9 @@ fun tTest(it: List<Pair<Double, Double>>): String =
 
 fun sideBySide(it: List<Pair<Double, Double>>) =
   it.unzip().let { (before, after) ->
-    before.joinToString(", ", "\n\tBefore: [", "]") {
+    before.joinToString(", ", "\t\"before\": [", "],\n") {
       it.toString().take(5).padEnd(5)
-    } + after.joinToString(", ", "\n\tAfter:  [", "]") {
+    } + after.joinToString(", ", "\t\"after\":  [", "]\n") {
       it.toString().take(5).padEnd(5)
     }
   }
@@ -106,7 +107,7 @@ class CodeSnippetAttributeScoresTable<V>(
   // Renders the significance test for a single configuration
   val significanceTest: (List<V>) -> String,
   // Renders the distribution for each independent variable configuration
-  val distToString: (List<V>) -> String = { it.joinToString(",") },
+  val distToString: (List<V>) -> String = { it.joinToString() },
 ) {
   val scoreByCodeSnippet = mutableMapOf<Int, MutableList<V>>()
   val complexities = mutableSetOf<Int>()
@@ -124,27 +125,14 @@ class CodeSnippetAttributeScoresTable<V>(
     scoreByCodeSnippet[snippet.hashCode()] ?: emptyList()
 
   /* Example of table output:
-\begin{table}[H]
-\begin{tabular}{l|ccc}
-Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\hline\
-10-20      & 0.011 ± 0.003 (594) & 0.046 ± 0.016 (539) & 1.683 ± 1.680 (594) \\
-20-30      & 0.031 ± 0.003 (442) & 0.056 ± 0.012 (441) & 0.004 ± 6.042 (442) \\
-30-40      & 0.023 ± 0.003 (243) & 0.086 ± 0.016 (242) & 0.003 ± 4.389 (243) \\
-40-50      & 0.029 ± 0.003 (147) & 0.071 ± 0.016 (147) & 0.014 ± 0.001 (147) \\
-50-60      & 0.027 ± 0.003 (286) & 0.091 ± 0.011 (286) & 0.014 ± 0.002 (286) \\
-60-70      & 0.034 ± 0.004 (149) & 0.082 ± 0.009 (149) & 0.024 ± 0.003 (149) \\
-70-80      & 0.045 ± 0.005 (49)  & 0.084 ± 0.009 (49)  & 0.078 ± 0.009 (49)  \\
-80-90      & 0.054 ± 0.005 (57)  & 0.105 ± 0.016 (57)  & 0.077 ± 0.010 (57)  \\
-90-100     & 0.062 ± 0.008 (40)  & 0.085 ± 0.010 (40)  & 0.080 ± 0.007 (40)  \\
-100-110    & 0.022 ± 0.001 (22)  & 0.054 ± 0.010 (22)  & 0.036 ± 0.004 (22)  \\
-110-120    & 0.073 ± 0.009 (34)  & 0.091 ± 0.007 (34)  & 0.064 ± 0.008 (34)  \\
-120-130    & 0.032 ± 0.002 (25)  & 0.092 ± 0.011 (25)  & 0.044 ± 0.005 (25)  \\
-130-140    & 0.037 ± 0.002 (27)  & 0.055 ± 0.005 (27)  & 0.077 ± 0.007 (27)  \\
-140-150    & 0.065 ± 0.005 (23)  & 0.078 ± 0.013 (23)  & 0.095 ± 0.009 (23)  \\
-150-160    & 0.004 ± 3.840 (25)  & 0.016 ± 0.002 (25)  & 0.012 ± 0.001 (25)  \\
-160-170    & 0.030 ± 0.003 (13)  & 0.023 ± 0.001 (13)  & 0.007 ± 7.100 (13)  \\
-\end{tabular}
-\end{table}
+   %\begin{table}[H]
+   %  \begin{tabular}{l|cccc}
+   %    Model                         & renameTokens                  & permuteArgument               & swapMultilineNo               & addExtraLogging               \\\hline\\
+   %    microsoft/codebert-base-mlm   & 1.232 (3467)                  & 1.324 (1683)                  & 0.421 (2642)                  & 4.378 (1188)                  \\
+   %    microsoft/graphcodebert-base  & 2.977 (3474)                  & 0.632 (1695)                  & 0.656 (2642)                  & 5.639 (1198)                  \\
+   %    dbernsohn/roberta-java        & 0.0 (3479)                    & 1.808 (1693)                  & 0.705 (2642)                  & 2.638 (1216)
+   %  \end{tabular}
+   %\end{table}
    */
   fun toLatexTable(colWidth: Int = 30) =
     ("""
@@ -156,7 +144,7 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
         "& ",
         "Model".padEnd(colWidth) + "& ",
         "\\\\\\hline\\\\\n"
-      ) { it.name.take(15).padEnd(colWidth) } +
+      ) { tx -> tx.name.take(15).padEnd(colWidth) } +
       MODELS.joinToString("\\\\\n") { model ->
         model.name.padEnd(colWidth) + "& " +
           transformations.joinToString("& ") { tx ->
@@ -165,7 +153,6 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
               this[CodeSnippetToEvaluate.dummy(tx, model)]
                 .let { significanceTest(it).padEnd(colWidth) }
             }
-
       } +
 //      complexities.toSortedSet().joinToString("\\\\\n") { cplx ->
 //        (cplx * 10).let { "$it-" + (it + 10) }.padEnd(colWidth) + "& " +
@@ -179,10 +166,36 @@ Complexity & renameTokens        & permuteArgument     & swapMultilineNo     \\\
         
       \end{tabular}
       \end{table}
-      """.trimIndent()).lines().joinToString("\n") { "%$it" } +
-      (MODELS * transformations).joinToString("\n", "\n", "\n") { (model, tx) ->
-        "% (${model.name} x ${tx.name}): " + distToString(this[CodeSnippetToEvaluate.dummy(tx, model)])
+      """.trimIndent()).lines().joinToString("\n") { "%$it" }
+
+  fun JSONify() =
+    """
+      {
+      ${
+        MODELS.joinToString(",\n") { model ->
+          """
+            "$model": {
+              ${
+                transformations.joinToString(",\n") { tx ->
+                  "\t\t\"${tx.name}\": {\n" +
+                    distToString(this[CodeSnippetToEvaluate.dummy(tx, model)]) +
+                       "}"
+                }
+              }
+            }
+          """.trimIndent().prependIndent("\t")
+        }
       }
+      }
+    """.trimIndent()
+
+  fun reportResults(filename: String) {
+    println(toLatexTable())
+    val outputFile = File("$filename.json")
+    JSONify().let { outputFile.writeText(it) }
+    val fullPath = outputFile.absolutePath
+    println("% For full distribution, see: $fullPath")
+  }
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
@@ -194,6 +207,8 @@ fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double>? =
           (b.first.toDouble() / b.second.toDouble())
       else null
     }
+
+
 
 val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 
