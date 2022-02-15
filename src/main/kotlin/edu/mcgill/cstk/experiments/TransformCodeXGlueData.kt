@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments
 
 import com.beust.klaxon.Klaxon
+import edu.mcgill.cstk.rewriting.permuteArgumentOrder
 import java.io.File
 import kotlin.reflect.KFunction
 

@@ -2,10 +2,10 @@ package edu.mcgill.cstk.nlp
 
 import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
 import spoon.Launcher
-import spoon.reflect.declaration.CtMethod
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
@@ -156,11 +156,13 @@ tailrec fun complete(
   )
 
 fun Model.countTokens(query: String) =
-  "$EMBEDDING_SERVER${name}?tokenze=${URLEncoder.encode(query, "utf-8")}"
+  "$SERVER_URL${name}?tokenze=${URLEncoder.encode(query, "utf-8")}"
     .let { URL(it).readText().count { it == ',' } }
 
-fun Model.makeQuery(query: String = ""): List<String> =
-  "$EMBEDDING_SERVER${name}?query=${URLEncoder.encode(query, "utf-8")}"
+/** Queries a model for its predictions. See [embeddingServer]. */
+fun Model.makeQuery(query: String = "", hints: List<String> = listOf()) =
+  ("$SERVER_URL${name}?query=${URLEncoder.encode(query, "utf-8")}" +
+    hints.joinToString("") { "&hint=" + URLEncoder.encode(it, "utf-8") })
     .let { URL(it).readText().lines() }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =

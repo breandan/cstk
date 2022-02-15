@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.rewriting.*
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1

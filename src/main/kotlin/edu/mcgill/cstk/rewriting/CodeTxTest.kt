@@ -1,7 +1,8 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.rewriting
 
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
+import edu.mcgill.cstk.experiments.synonymize
 import edu.mcgill.cstk.nlp.*
 import kotlin.math.min
 
@@ -183,7 +184,7 @@ fun String.addExtraLogging(): String =
     val matchLastLine = Regex("\\s+.*?;").matchEntire(lastLine)
     val matchThisLine = Regex("\\s+.*?;").matchEntire(thisLine)
     if (
-      // Only print inside nested blocks of statements
+    // Only print inside nested blocks of statements
       matchLastLine != null && matchThisLine != null &&
       // Space out print statements
       "print" !in lastLine + thisLine + nextLine
@@ -193,6 +194,12 @@ fun String.addExtraLogging(): String =
       "${toIndent}System.out.println(\"debug\");\n$thisLine"
     } else thisLine
   }.fillOneByOne()
+
+fun String.rewriteLoop(): String =
+  TODO("Convert loop with conditional to infinite loop with breakout")
+
+fun String.invertConditional(): String =
+  TODO("Reverse branching statement with !")
 
 //fun String.addExtraComments(commentFrequency: Double = 0.2): String =
 //  lines().fold("" to "") { (lastLine, prevLines), thisLine ->

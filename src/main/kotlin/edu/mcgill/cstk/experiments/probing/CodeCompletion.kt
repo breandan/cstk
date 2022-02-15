@@ -5,6 +5,7 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.rewriting.*
 import org.hipparchus.stat.inference.*
 import java.io.File
 import java.net.URI
@@ -41,8 +42,7 @@ val t = {
 
 fun main() {
   evaluateTransformations(
-    validationSet =
-      DATA_DIR
+    validationSet = DATA_DIR
         .also { println("Evaluating code completion using $MODELS on $it...") }
         .allFilesRecursively().allMethods()
         .map { it.first to it.second }
@@ -207,8 +207,6 @@ fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double>? =
           (b.first.toDouble() / b.second.toDouble())
       else null
     }
-
-
 
 val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
 

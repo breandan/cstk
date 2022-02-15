@@ -4,6 +4,7 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.rewriting.*
 
 fun main() {
   DATA_DIR.allFilesRecursively()

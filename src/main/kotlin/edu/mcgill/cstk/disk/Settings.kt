@@ -2,6 +2,7 @@ package edu.mcgill.cstk.disk
 
 import ai.djl.modality.nlp.bert.BertTokenizer
 import ai.djl.nn.transformer.BertBlock
+import edu.mcgill.cstk.experiments.probing.embeddingServer
 import org.apache.commons.vfs2.FileExtensionSelector
 import java.io.File
 import java.net.URL
@@ -56,7 +57,7 @@ data class Model(val name: String) {
 
 val defaultModel = MODELS.first()
 
-val EMBEDDING_SERVER: String by lazy {
+val SERVER_URL: String by lazy {
   val addr = "http://localhost:8000/"
   val url = URL("$addr${defaultModel.name}?query=test")
 
@@ -83,7 +84,7 @@ fun restartServer(): Unit =
 //      "bash", "-c",
 //      "source", "venv/bin/activate", "&&",
 //      "while", "true;", "do",
-      "python", "embedding_server.py", "--models", *models, "--offline",
+      "python", embeddingServer.absolutePath, "--models", *models, "--offline",
 //      "&&", "break;", "done"
     ).also { println("> " + it.command().joinToString(" ")) }
      .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C

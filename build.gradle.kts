@@ -148,7 +148,7 @@ tasks {
     "querySynth" to "edu.mcgill.cstk.experiments.DFAExtractionKt",
     "compareMetrics" to "edu.mcgill.cstk.experiments.CompareMetricsKt",
     "compareCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxComparisonKt",
-    "testCodeTxs" to "edu.mcgill.cstk.experiments.CodeTxTestKt",
+    "testCodeTxs" to "edu.mcgill.cstk.rewriting.CodeTxTestKt",
     "nearestNeighbors" to "edu.mcgill.cstk.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
     "completeCode" to "edu.mcgill.cstk.experiments.probing.CodeCompletionKt",

@@ -1,4 +1,10 @@
+package edu.mcgill.cstk.experiments.probing
 
+import org.intellij.lang.annotations.Language
+import java.io.File
+
+@Language("py")
+val embeddingServer = """
 import http.server
 import sys
 import urllib
@@ -116,3 +122,4 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 my_server = HTTPServer(('', 8000), EmbeddingServer)
 # Star the server
 my_server.serve_forever()
+""".let { File("embedding_server.py").apply { writeText(it) } }
