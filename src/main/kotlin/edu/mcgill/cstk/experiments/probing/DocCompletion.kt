@@ -76,7 +76,7 @@ fun main() {
 
       rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
 
-      if (i < 10 || i % 100 == 0) csByMultimaskPrediction.reportResults("doc_completion")
+      if (i < 20 || i % 100 == 0) rougeScores.reportResults("doc_completion")
     }
 }
 
