@@ -79,7 +79,8 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
 // Returns distractors
 fun String.getDistractors(trueToken: String): List<String> =
   split(Regex("((?<=\\W)|(?=\\W))"))
-    .filter { it.isVariable() && it != trueToken }
+    // only use distractors where first char differs in case token not in vocab
+    .filter { it.isVariable() && it.first() != trueToken.first() }
     .groupingBy { it }.eachCount().entries
     .sortedBy { (_, v) -> v }.map { it.key }.take(5)
 
