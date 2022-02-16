@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.disk
 
-import edu.mcgill.cstk.indices.KWIndex
+import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.nlp.allLines
 import java.io.Serializable
 import java.net.URI

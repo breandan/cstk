@@ -2,7 +2,6 @@ package edu.mcgill.cstk.experiments.probing
 
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.experiments.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
@@ -29,15 +28,6 @@ data class CodeSnippetToEvaluate constructor(
   }
   override fun hashCode() = model.hashCode() + sct.name.hashCode()
   fun print() = printSideBySide(method, variant)
-}
-
-val t = {
-  val t0 = doubleArrayOf(1.0, 2.0, 3.0)
-  val t1 = doubleArrayOf(4.0, 6.0, 8.0)
-  // https://en.wikipedia.org/wiki/One-way_analysis_of_variance#Assumptions
-  OneWayAnova().anovaFValue(listOf(t0,t1))
-  // https://en.wikipedia.org/wiki/Student%27s_t-test#Assumptions
-  TTest().pairedT(t0, t1)
 }
 
 fun main() {

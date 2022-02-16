@@ -5,7 +5,6 @@ import spoon.Launcher
 import spoon.reflect.declaration.CtClass
 import spoon.support.compiler.FileSystemFolder
 import java.io.File
-import java.net.URI
 
 fun main() {
   val l =

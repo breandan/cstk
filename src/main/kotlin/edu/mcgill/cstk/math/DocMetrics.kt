@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.math
 
-import edu.mcgill.cstk.experiments.synonyms
+import edu.mcgill.cstk.nlp.synonyms
 import org.apache.commons.lang3.StringUtils
 
 fun rouge(reference: Set<String>, candidate: Set<String>) =

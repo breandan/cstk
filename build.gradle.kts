@@ -1,11 +1,10 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.6.0"
+  kotlin("jvm") version "1.6.20-M1"
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.0.1"
   id("com.github.johnrengelman.shadow") version "7.1.2"
-//  idea
 }
 
 group = "com.github.breandan"
@@ -137,7 +136,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-2")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-4")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.0")

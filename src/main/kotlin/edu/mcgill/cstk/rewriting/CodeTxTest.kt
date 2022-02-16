@@ -2,7 +2,7 @@ package edu.mcgill.cstk.rewriting
 
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
-import edu.mcgill.cstk.experiments.synonymize
+import edu.mcgill.cstk.nlp.synonymize
 import edu.mcgill.cstk.nlp.*
 import kotlin.math.min
 
@@ -42,7 +42,7 @@ fun main() {
   println(codeSnippet.swapPlusMinus())
 
   TEST_DIR.allFilesRecursively().allMethods()
-    .map { it.first.toString() to it.second }
+    .map { it.first to it.second }
     .take(1000)
     .map { (method, origin) ->
       val variant = method.renameTokens()

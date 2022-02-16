@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.nlp
 
 import edu.mcgill.cstk.disk.RESERVED_TOKENS
 import net.sf.extjwnl.data.PointerUtils.*

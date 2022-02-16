@@ -45,8 +45,8 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
     def embed_sequence(self, query: str, model_name) -> np.ndarray:
         # Returns a sequence-embedded array. If the query is shorter than
-        # attention_width, this will return a vector. Otherwise, this will return
-        # a matrix of sliding windows over the input sequence, arranged in rows.
+        # attention_width, this will return a vector. Otherwise, return a 
+        # matrix of sliding windows over the input sequence, arranged in rows.
         model = models[model_name]
 
         sequence: Tensor = torch.tensor(self.tokenize(query, model_name))

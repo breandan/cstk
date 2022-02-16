@@ -57,7 +57,7 @@ val csByMRR =
 // https://en.wikipedia.org/wiki/Mean_reciprocal_rank
 fun CodeSnippetToEvaluate.evaluateMRR(): Pair<Double, Double>? =
   (model.evaluateMultimaskMC(method) to model.evaluateMultimaskMC(variant))
-    .let { (a, b) -> if(a.isNaN() || b.isNaN()) null else a to b }
+    .let { (a, b) -> if((a + b).isNaN()) null else a to b }
 
 val mrrDists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 

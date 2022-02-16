@@ -1,5 +1,6 @@
-package edu.mcgill.cstk.disk
+package edu.mcgill.cstk.indices
 
+import edu.mcgill.cstk.disk.Concordance
 import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.nlp.vectorize
 
