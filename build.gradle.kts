@@ -155,6 +155,7 @@ tasks {
     "testCodeTxs" to "edu.mcgill.cstk.rewriting.CodeTxTestKt",
     "nearestNeighbors" to "edu.mcgill.cstk.experiments.NearestNeighborsKt",
     "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
+    "allTasks" to "edu.mcgill.cstk.experiments.probing.AllTasksKt",
     "completeCode" to "edu.mcgill.cstk.experiments.probing.CodeCompletionKt",
     "completeDoc" to "edu.mcgill.cstk.experiments.probing.DocCompletionKt",
     "varMisuse" to "edu.mcgill.cstk.experiments.probing.VariableMisuseKt",

@@ -15,7 +15,7 @@ fun main() {
     // Ensure tokenized method fits within attention
     .filter { (method, origin) ->
       defaultTokenizer.tokenize(method).size < 500 &&
-        method.approxCyclomatic() < 15 &&
+//        method.approxCyclomatic() < 15 &&
         method.lines().any { line -> docCriteria(line) }
     }
     .flatMap { (method, origin) ->

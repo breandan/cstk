@@ -72,7 +72,7 @@ fun evaluateTransformations(
     .forEachIndexed { i, snippet ->
       evaluation(snippet)?.let { csByMultimaskPrediction[snippet] = it }
 
-      if (i < 20 || i % 200 == 0) csByMultimaskPrediction.reportResults("code_completion")
+      if (i < 20 || i % 10 == 0) csByMultimaskPrediction.reportResults("code_completion")
     }
 
 fun tTest(it: List<Pair<Double, Double>>): String =
