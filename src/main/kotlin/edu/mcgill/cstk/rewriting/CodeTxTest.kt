@@ -160,7 +160,7 @@ fun Model.fillFirstDoc(snippet: String): String? =
 tailrec fun Model.completeDocumentation(
   snippet: String,
   length: Int = 20,
-  nextToken: String? = makeQuery(snippet.replaceFirst(FILL, MSK))
+  nextToken: String? = makeQuery(snippet.replaceFirst(FILL, mask))
     // Ensure at least one natural language character per token
     .firstOrNull { it.any(Char::isLetterOrDigit) }
 ): String? =
@@ -172,7 +172,7 @@ tailrec fun Model.completeDocumentation(
 
 tailrec fun String.fillOneByOne(): String =
   if (FILL !in this) this
-  else replaceFirst(FILL, defaultModel.makeQuery(replaceFirst(FILL, MSK)).first()).fillOneByOne()
+  else replaceFirst(FILL, defaultModel.makeQuery(replaceFirst(FILL, defaultModel.mask)).first()).fillOneByOne()
 
 fun String.addExtraLogging(): String =
   (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->

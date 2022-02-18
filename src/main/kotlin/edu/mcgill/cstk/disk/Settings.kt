@@ -21,11 +21,14 @@ val DELIMITER = Regex("\\W")
 // https://huggingface.co/microsoft
 val MODELS = setOf(
   "microsoft/codebert-base-mlm",
+  "huggingface/CodeBERTa-small-v1",
   "microsoft/graphcodebert-base",
-  "dbernsohn/roberta-java"
+  "dbernsohn/roberta-java",
+  "CAUKiel/JavaBERT-uncased"
 ).map { Model(it) }.toSet()
 
 data class Model(val name: String) {
+  val mask = if(name == "CAUKiel/JavaBERT-uncased") "[MASK]" else "<mask>"
   override fun hashCode() = name.hashCode()
   override fun toString() = name
 }
@@ -140,11 +143,8 @@ const val MAX_GPUS = 1
 const val EPOCHS = 100000
 const val MAX_VOCAB = 35000
 
-val RESERVED_TOKENS = listOf(UNK, CLS, SEP, MSK)
+val RESERVED_TOKENS = listOf(UNK, CLS, SEP, MSK, "[MASK]")
 val UNK_ID = RESERVED_TOKENS.indexOf(UNK)
-val CLS_ID = RESERVED_TOKENS.indexOf(CLS)
-val SEP_ID = RESERVED_TOKENS.indexOf(SEP)
-val MSK_ID = RESERVED_TOKENS.indexOf(MSK)
 val BERT_BUILDER = BertBlock.builder().micro()
 val ROOT_DIR = File("").absoluteFile.toURI()
 val DATA_DIR = File("data").absoluteFile.toURI()

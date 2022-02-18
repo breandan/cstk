@@ -207,24 +207,24 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
     code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
-//        logDiffs(code, maskedMethod, trueToken, completion)
+        logDiffs(this, code, maskedMethod, trueToken, completion)
         if (completion == ERR || completion.isEmpty()) null else score
       }.fold(0 to 0) { (correct, total), it ->
         if (it > 0) correct + 1 to total + 1 else correct to total + 1
       }
   }
 
-fun logDiffs(original: String, maskedSequence: String,
+fun logDiffs(model: Model, original: String, maskedSequence: String,
              correctToken: String, completion: String) {
   // only compare line of masked token
   val maskedLines = maskedSequence.lines()
 
   // Show some examples which are reasonably sized for CLI
   if (maskedLines.all { it.length < 80 } && maskedLines.size in 3..10) {
-    val maskedLineNo = maskedLines.indexOfFirst { MSK in it }
+    val maskedLineNo = maskedLines.indexOfFirst { model.mask in it }
     val maskedLine = maskedLines[maskedLineNo].trimStart()
-    val actualLine = maskedLine.replace(MSK, correctToken)
-    val predictedLine = maskedLine.replace(MSK, completion)
+    val actualLine = maskedLine.replace(model.mask, correctToken)
+    val predictedLine = maskedLine.replace(model.mask, completion)
 
     printSideBySide(original, maskedSequence, "original", "masked")
     printSideBySide(actualLine, predictedLine, "ground truth", "prediction")

@@ -60,11 +60,13 @@ pip install torch==1.5.1 -f https://download.pytorch.org/whl/torch_stable.html &
 pip install transformers
 ```
 
-Prefetch the models from the login node (requires internet access). Once the model has been loaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd>. This should only need to be run once and will be cached on disk.
+Prefetch the models you wish to evaluate from the login node -- this will require internet access. Each model must provide a [`fill-mask` pipeline](https://huggingface.co/docs/transformers/v4.16.2/en/main_classes/pipelines#transformers.FillMaskPipeline) (see here for a list of [compatible models](https://huggingface.co/models?pipeline_tag=fill-mask&sort=downloads&search=code)).
 
 ```bash
-python embedding_server.py --model microsoft/codebert-base microsoft/graphcodebert-base
+python embedding_server.py --model microsoft/codebert-base microsoft/graphcodebert-base dbernsohn/roberta-java huggingface/CodeBERTa-small-v1
 ```
+
+Once all models have been downloaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd> (this step should only need to be run once). Confirm that `~/.cache/huggingface/transformers` is not empty.
 
 Then, make sure the project builds correctly on a login node and download the dataset. This make take a few minutes the first time it is run:
 
