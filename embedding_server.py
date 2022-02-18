@@ -24,7 +24,7 @@ args = parser.parse_args()
 # Load all the models
 models: dict = {}
 tokenizers: dict = {}
-for m in args.models:
+for m in [m for m in args.models if m]:
     models[m]: PTM = AutoModelForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
     tokenizers[m]: PTT = AutoTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
 
