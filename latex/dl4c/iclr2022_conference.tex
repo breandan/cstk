@@ -28,7 +28,7 @@
 \usepackage{multicol}
 
 \usepackage{bussproofs}
-\usepackage{emoji}
+\usepackage{stackengine}
 \usepackage{amssymb}
 
 % Packages
@@ -106,44 +106,64 @@
 
   \section{Introduction}\label{sec:introduction}
 
-  Modern neural language models are hole-filling machines.
+%  Modern neural language models are hole-filling machines.
 
-  Describe the transformer model and CodeBERT/GraphCodeBERT adaptations.
+%  Describe the transformer model and CodeBERT/GraphCodeBERT adaptations.
 
-  We test the robustness of these models under rewrites. Prior work does too. Ours is better.
+%  We test the robustness of these models under rewrites. Prior work does too. Ours is better.
 
   The following rewrite rules are allowed in our framework.
 
-  \frame{
+  \begin{center}
       \begin{prooftree}
-        \AxiomC{Γ \vdash \texttt{function(arguments)}}
+        \AxiomC{Γ \vdash \:\texttt{function(args)}}
         \AxiomC{\texttt{function} is user-defined}
         \RightLabel{\textsc{PermuteArguments}}
-        \BinaryInfC{\texttt{function(}\emoji{shuffle-tracks-button}\texttt{arguments)}}
-        \DisplayProof
-        \vskip 1em
+        \BinaryInfC{Γ \vdash \:\textsc{Code}\:\{\texttt{function(args)} \rightarrow\:\texttt{function(}\faRandom\texttt{args)}\}}
+      \end{prooftree}
 
-        \AxiomC{Γ \vdash \texttt{line\_1; line\_2}}
-        \AxiomC{identifiers(\texttt{line\_1}) \cap identifiers(\texttt{line\_2}) = \varnothing}
-        \RightLabel{\textsc{SwapLines}}
-        \BinaryInfC{\texttt{line\_2; line\_1}}
-        \DisplayProof
-        \vskip 1em
+      \begin{prooftree}
+        \AxiomC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
+        \AxiomC{\textsc{Tokens}(\texttt{line\_1}) \cap\:\textsc{Tokens}(\texttt{line\_2}) = \varnothing}
+        \RightLabel{\textsc{SwapIndepLines}}
+        \BinaryInfC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_2;}}{\textvisiblespace\texttt{line\_1;}}}
+      \end{prooftree}
 
-        \AxiomC{Γ \vdash \texttt{var}, \texttt{line\_1; line\_2}}
-        \AxiomC{\texttt{print} \not\in tokens(\texttt{line\_1} \oplus \texttt{line\_2})}
-        \RightLabel{\textsc{InsertLogging}}
-        \BinaryInfC{\texttt{line\_1; print(var); line\_2}}
-        \DisplayProof
-        \vskip 1em
+      \begin{prooftree}
+        \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
+        \AxiomC{\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
+%        \AxiomC{\texttt{print} \not\in\:\textsc{Tokens}(\texttt{line\_1} \:\oplus\, \texttt{line\_2})}
+        \RightLabel{\textsc{AddExtraLogging}}
+        \BinaryInfC{\Shortstack[l]{{\vphantom{\texttt{line\_1;}}} {Γ \vdash} {\vphantom{\texttt{line\_1;}}}}  \:\Shortstack[l]{{\textvisiblespace\texttt{line\_1;}} {\textvisiblespace\texttt{println("var: \$var");}} {\textvisiblespace\texttt{line\_3;}}}}
+      \end{prooftree}
 
-        \AxiomC{Γ \vdash \texttt{var} \in vars(\texttt{method})}
-        \AxiomC{\texttt{renamed} \in synonyms(\texttt{var}) \setminus vars(\texttt{method})}
-        \RightLabel{\textsc{RenameVar}}
-        \BinaryInfC{\texttt{method(var→renamed)}}
+      \begin{prooftree}
+        \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
+        \AxiomC{\texttt{fresh} \in\:\textsc{Synonyms}(\texttt{var}) \setminus\:\textsc{ScopedNames}}
+        \RightLabel{\textsc{Rename}}
+        \BinaryInfC{Γ \vdash \,\,\textsc{Code}\:\{\:\texttt{var} \rightarrow\:\texttt{fresh}\:\}}
     \end{prooftree}
-  }
+  \end{center}
 
+  Each task is performed using a special hole-filling strategy and models are scored using a task-appropriate metric.
+  We can simulate various kinds of tasks by conditioning on the masked tokens in various ways.
+  For single-token completion, we use:
+
+\begin{equation}
+  \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{token}\in \textsc{Tokens}}\operatorname{argmax}[\textsc{Model}(\:\texttt{code}\{\texttt{token}\:\rightarrow\:\texttt{<mask>}\:\})] = \:\texttt{token}}
+\end{equation}
+
+  For document synthesis, we use:
+
+\begin{equation}
+\text{ROUGE-Synonym} = \Delta(\textsc{Model}^{k}(\:\texttt{code}\:\{\texttt{//[Comment]}\:\rightarrow\:\texttt{<mask>}\:\}), \:\texttt{//[Comment]})
+\end{equation}
+
+  For question answering, e.g., variable misuse, we use:
+
+\begin{equation}
+\text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{i=1}^{|\textsc{Tokens}|} \textsc{rank}(\texttt{token}, \textsc{Model}(\:\texttt{code}\{\texttt{token}\:\rightarrow\:\texttt{<mask>}\:\}, \textsc{hints}))^{-1}.
+\end{equation}
 % Neural language models play an increasingly synergetic role in software engineering, and are featured prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a development perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a completion. This client-server architecture can be seen as a black-box or \textit{extensional} function. Could there be a way to evaluate the behavior of neural language models in this setting?
 
 % First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
@@ -266,6 +286,10 @@
       \end{lstlisting}\\\hline
     \end{tabular}
   \end{center}
+
+  Finally for variable misuse:
+
+  ...
 
   Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this idea in great depth.
 
