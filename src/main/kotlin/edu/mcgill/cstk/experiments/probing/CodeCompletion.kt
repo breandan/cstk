@@ -9,6 +9,7 @@ import org.hipparchus.stat.inference.*
 import java.io.File
 import java.net.URI
 import kotlin.math.round
+import kotlin.random.Random
 import kotlin.reflect.KFunction1
 
 data class CodeSnippetToEvaluate constructor(
@@ -30,6 +31,9 @@ data class CodeSnippetToEvaluate constructor(
   fun print() = printSideBySide(method, variant)
 }
 
+/**
+./gradlew completeCode
+ */
 fun main() {
   evaluateTransformations(
     validationSet = DATA_DIR
@@ -215,18 +219,27 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
   }
 
 fun logDiffs(model: Model, original: String, maskedSequence: String,
-             correctToken: String, completion: String) {
+             correctToken: String, completion: String,
+             hints: Set<String> = setOf()) {
+  if (Random.nextDouble() < 0.9) return
+  val maskedSequenceWithOptionalHints =
+    maskedSequence.replace(
+      model.mask, if (hints.isNotEmpty())
+        "<mask hints=[${hints.joinToString()}]>"
+      else model.mask
+    )
   // only compare line of masked token
-  val maskedLines = maskedSequence.lines()
+  val maskedLines = maskedSequenceWithOptionalHints.lines()
 
   // Show some examples which are reasonably sized for CLI
   if (maskedLines.all { it.length < 80 } && maskedLines.size in 3..10) {
-    val maskedLineNo = maskedLines.indexOfFirst { model.mask in it }
+    val maskPattern = Regex("<mask( hints=\\[.*])?>")
+    val maskedLineNo = maskedLines.indexOfFirst { maskPattern.containsMatchIn(it) }
     val maskedLine = maskedLines[maskedLineNo].trimStart()
-    val actualLine = maskedLine.replace(model.mask, correctToken)
-    val predictedLine = maskedLine.replace(model.mask, completion)
+    val actualLine = maskedLine.replace(maskPattern, correctToken)
+    val predictedLine = maskedLine.replace(maskPattern, completion)
 
-    printSideBySide(original, maskedSequence, "original", "masked")
+    printSideBySide(original, maskedSequenceWithOptionalHints, "original", "masked")
     printSideBySide(actualLine, predictedLine, "ground truth", "prediction")
     println("".padEnd(167, '=') + "\n\n")
   }

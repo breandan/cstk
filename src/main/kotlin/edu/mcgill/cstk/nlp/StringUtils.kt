@@ -160,7 +160,7 @@ fun Model.countTokens(query: String) =
     .let { URL(it).readText().count { it == ',' } }
 
 /** Queries a model for its predictions. See [embeddingServer]. */
-fun Model.makeQuery(query: String = "", hints: List<String> = listOf()) =
+fun Model.makeQuery(query: String = "", hints: Collection<String> = listOf()) =
   ("$SERVER_URL${name}?query=${URLEncoder.encode(query, "utf-8")}" +
     // http://localhost:8000/microsoft/graphcodebert-base?query=System.%3Cmask%3E.println()&hint=test&hint=err&hint=out
     hints.joinToString("") { "&hint=" + URLEncoder.encode(it, "utf-8") })

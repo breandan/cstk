@@ -5,6 +5,9 @@ import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
 
+/**
+./gradlew completeDoc
+ */
 fun main() {
   DATA_DIR.allFilesRecursively()
     .allMethods()

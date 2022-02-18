@@ -84,7 +84,7 @@ salloc --time 3:0:0 --account=[YOUR_ADVISOR] --gres=gpu:a100:1 --mem=40G
 
 Compute nodes have no internet, so future commands will require need to occur offline.
 
-```bash
+```sh
 # Default CUDA version may not work, use older version
 export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core/cudacore/10.2.89/targets/x86_64-linux/lib/
 # Disable 🤗 from phoning home on a Compute node
@@ -93,7 +93,7 @@ module load python/3.8
 module load java
 source bin/activate
 # Use --offline for all Gradle commands on Compute nodes
-./gradlew --offline [...] | tee logfile.txt
+./gradlew --offline [completeCode] [completeDoc] [varMisuse]
 ```
 
 Once you have confirmed the experiment runs smoothly and are ready to submit a longer job, edit [`submit_job.sh`](submit_job.sh) and run the following command to submit it to Slurm:
@@ -1048,7 +1048,7 @@ Interface:
 
 # Deployment
 
-Need to build a fat JAR locally then deploy, CC dislikes Gradle for some reason.
+If, for some reason Gradle does not work on Compute Canada, you can build a fat JAR locally then deploy.
 
 ```bash
 ./gradlew shadowJar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@beluga.calculquebec.ca:/home/breandan/projects/def-jinguo/breandan/gym-fs
@@ -1064,7 +1064,7 @@ module load python/3.8 && \
 module load java && \
 source venv/bin/activate && \
 python embedding_server.py --model microsoft/graphcodebert-base --offline & && \
-java -jar gym-fs-fat-1.0-SNAPSHOT.jar | tee logfile.txt
+java -jar gym-fs-fat-1.0-SNAPSHOT.jar
 ```
 
 # Research Questions

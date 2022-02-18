@@ -27,11 +27,9 @@ tokenizers: dict = {}
 for m in [m for m in args.models if m]:
     models[m]: PTM = AutoModelForMaskedLM.from_pretrained(f'{m}', local_files_only=args.offline)
     tokenizers[m]: PTT = AutoTokenizer.from_pretrained(f'{m}', local_files_only=args.offline)
+    print(f'Loaded model: {m}')
 
 attention_width = 760
-
-print(f'Loaded models: {args.models}')
-
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def tokenize(self, query: str, model_name) -> List[int]:

@@ -8,6 +8,9 @@ import qa.qf.qcri.iyas.evaluation.ir.MeanReciprocalRank
 import java.net.URI
 import kotlin.reflect.KFunction1
 
+/**
+./gradlew varMisuse
+ */
 // Broadly can be considered as a multi-choice QA task
 fun main() {
     evaluateMCTransformations(
@@ -67,8 +70,9 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
     code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val distractors = code.getDistractors(trueToken)
-        val choices = (distractors + trueToken).toSet().toList()
+        val choices = (distractors + trueToken).toSet()
         val results = makeQuery(maskedMethod, choices)
+        logDiffs(this, code, maskedMethod, trueToken, results.first(), choices)
         val gold = results.associateWith { (it == trueToken) }
         if (results.isEmpty()) null else results to gold
       }.let {

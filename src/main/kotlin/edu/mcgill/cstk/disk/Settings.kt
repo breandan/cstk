@@ -24,11 +24,10 @@ val MODELS = setOf(
   "huggingface/CodeBERTa-small-v1",
   "microsoft/graphcodebert-base",
   "dbernsohn/roberta-java",
-  "CAUKiel/JavaBERT-uncased"
 ).map { Model(it) }.toSet()
 
 data class Model(val name: String) {
-  val mask = if(name == "CAUKiel/JavaBERT-uncased") "[MASK]" else "<mask>"
+  val mask = "<mask>"
   override fun hashCode() = name.hashCode()
   override fun toString() = name
 }
@@ -127,6 +126,7 @@ fun restartServer(): Unit =
 @JvmName("cartProdTriple") operator fun <T, Y, Z> Set<Pair<T, Y>>.times(s: Set<Z>): Set<Triple<T, Y, Z>> =
   flatMap { (l, ll) -> s.map { r -> Triple(l, ll, r) }.toSet() }.toSet()
 
+/** Defaults, configure custom special tokens in [Model] */
 const val UNK = "<unk>"
 const val CLS = "<cls>"
 const val SEP = "<sep>"
