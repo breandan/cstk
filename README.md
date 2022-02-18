@@ -47,8 +47,7 @@ First clone this repo and initialize the submodule:
 ```bash
 git clone git@github.com:breandan/cstk.git && \
 cd cstk && \
-git submodule init && \
-git submodule update
+git submodule update --init --recursive --remote
 ```
 
 The following instructions assume you are running experiments on Compute Canada such as Narval or a similar cluster. Create a virtual environment and install the following dependencies:
@@ -70,7 +69,7 @@ python embedding_server.py --model microsoft/codebert-base microsoft/graphcodebe
 Then, make sure the project builds correctly on a login node and download the dataset. This make take a few minutes the first time it is run:
 
 ```bash
-module load java && \
+module load java/13.0.2 && \
 ./gradlew build && \
 ./gradlew cloneRepos
 ```

@@ -77,14 +77,32 @@ val SERVER_URL: String by lazy {
   addr
 }
 
+fun shouldBeOffline(): String =
+  try {
+    if (URL("https://huggingface.co/").readText().isNotEmpty()) {
+      println("Connected to HuggingFace successfully.")
+    }
+    System.getenv("TRANSFORMERS_OFFLINE")
+      .takeUnless { it.isNullOrEmpty() }
+      ?.let {
+        if (it == "1")
+          "--offline".also { println("Using $it due to environment variable") }
+        else ""
+      } ?: ""
+  } catch (exception: Exception) {
+    "--offline"
+  }
+
 fun restartServer(): Unit =
   try {
     val models = MODELS.map { it.name }.toTypedArray()
+    val offline = shouldBeOffline()
+
     ProcessBuilder(
 //      "bash", "-c",
 //      "source", "venv/bin/activate", "&&",
 //      "while", "true;", "do",
-      "python", embeddingServer.absolutePath, "--models", *models, "--offline",
+      "python", embeddingServer.absolutePath, "--models", *models, offline
 //      "&&", "break;", "done"
     ).also { println("> " + it.command().joinToString(" ")) }
      .run { inheritIO() } // Process will die after a while if this isn't enabled, but it also survives after Ctrl+C
