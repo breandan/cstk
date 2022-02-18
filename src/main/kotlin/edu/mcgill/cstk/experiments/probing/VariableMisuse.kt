@@ -72,7 +72,7 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
         val distractors = code.getDistractors(trueToken)
         val choices = (distractors + trueToken).toSet()
         val results = makeQuery(maskedMethod, choices)
-        logDiffs(this, code, maskedMethod, trueToken, results.first(), choices)
+        logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 0.5)
         val gold = results.associateWith { (it == trueToken) }
         if (results.isEmpty()) null else results to gold
       }.let {
