@@ -50,7 +50,7 @@ fun evaluateMCTransformations(
     .forEachIndexed { i, snippet ->
       evaluation(snippet)?.let { csByMRR[snippet] = it }
 
-      if (i < 20 || i % 200 == 0) csByMRR.reportResults("variable_misuse")
+      if (i < 20 || i % 20 == 0) csByMRR.reportResults("variable_misuse")
     }
 
 
@@ -70,10 +70,13 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
     code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val distractors = code.getDistractors(trueToken)
-        val choices = (distractors + trueToken).toSet()
+        if (distractors.size < 3) return@mapNotNull null
+        val choices = (distractors + trueToken).shuffled()
         val results = makeQuery(maskedMethod, choices)
-        logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 0.5)
-        val gold = results.associateWith { (it == trueToken) }
+        println("Hints: " + choices.joinToString(",", "[", "]") { if(it == trueToken) "*$it*" else it})
+        println("Results" + results.joinToString(",", "[", "]") { if(trueToken.startsWith(it)) "*$it*" else it})
+        logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 1.0)
+        val gold = results.associateWith { (trueToken.startsWith(it)) }
         if (results.isEmpty()) null else results to gold
       }.let {
         val (rankings, gold) = it.unzip()

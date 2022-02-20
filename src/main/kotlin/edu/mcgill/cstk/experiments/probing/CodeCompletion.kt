@@ -221,7 +221,7 @@ fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
 fun logDiffs(
   model: Model, original: String, maskedSequence: String,
   correctToken: String, completion: String,
-  hints: Set<String> = setOf(),
+  hints: Collection<String> = listOf(),
   logFrequency: Double = 0.1,
 ) {
   if (Random.nextDouble() < (1.0 - logFrequency)) return

@@ -190,13 +190,13 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
   For single-token completion, we use:
 
 \begin{equation}
-  \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{tok}\in \textsc{Tokens}}\textsc{Model}(\:\textsc{Code}\:\{\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}) = \:\textsc{Code}
+  \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{tok}\in \textsc{Tokens}}\textsc{Model}(\textsc{Code}\:\{\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}) = \:\textsc{Code}
 \end{equation}
 
   For document synthesis, we use the following score:
 
 \begin{equation}
-\text{ROUGE-Synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\:\textsc{Code}\:\{\texttt{//[...]}\:\rightarrow\:\texttt{<mask>}\:\}), \:\texttt{//[...]})
+\text{ROUGE-Synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\textsc{Code}\:\{\texttt{//[...]}\:\rightarrow\:\texttt{<mask>}\:\}), \:\texttt{//[...]})
 \end{equation}
 
   where $\textsc{Model}^{k}$ denotes autoregressively sampling $k$ consecutive tokens, and $\Delta_\text{Syn}$ denotes the synonym overlap between the original and synthetic comments.
@@ -364,15 +364,15 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
         dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
       \end{tabular}
       }
-      \caption{\label{tab:code-synth}Mean and standard deviation ROUGE-score for document synthesis.}
+      \caption{\label{tab:doc-synth}Mean and standard deviation ROUGE-score for document synthesis.}
     \end{table}
   \end{center}
   }
 
   \vspace{-10pt}\begin{figure}[H]
                   \centering
-                  \includegraphics[width=0.48\textwidth]{figs/Code Completion.png}
-                  \includegraphics[width=0.48\textwidth]{figs/Document Synthesis.png}
+                  \includegraphics[width=0.48\textwidth]{figs/Code Completion}
+                  \includegraphics[width=0.48\textwidth]{figs/Document Synthesis}
                   \caption{Semantic shift across all models and transformations.}
                   \label{fig:dataflow}
   \end{figure}
