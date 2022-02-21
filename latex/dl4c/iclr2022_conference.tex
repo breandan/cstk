@@ -102,7 +102,7 @@
   \maketitle
 
   \begin{abstract}
-    Neural language models hold great promise as tools for computer-aided programming, but come with certain risks. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A more methodical examination of neural language models is needed to understand their behavior on programming-related tasks. In this work, we develop a methodology for systematically evaluating neural code completion models using common source code transformations. Applying these synthetic transformations to a dataset of handwritten source code fragments, we obtain results for four pretrained models, which exhibit varying degrees of robustness. We give preliminary results from those experiments and discuss our approach to testing pretrained neural code completion models.
+    Neural language models hold great promise as tools for computer-aided programming, but come with certain risks. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A more methodical examination of neural language models is necessary to understand their behavior on programming-related tasks. In this work, we develop a methodology for systematically evaluating neural code completion models using common source code rewrites. Applying these synthetic rewrites to a dataset of handwritten source code fragments, we obtain results for four pretrained models, which exhibit varying degrees of robustness under transformation. We give preliminary results from those experiments and discuss our approach to testing pretrained neural code completion models.
   \end{abstract}
 
   \section{Introduction}\label{sec:introduction}
@@ -135,7 +135,7 @@ The paper is structured as follows. In Sec.~\ref{sec:background}, we give some b
 
 Neural language models play an increasingly synergistic role in software engineering, and are featured prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a development perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a completion. This client-server architecture can be seen as a black-box or \textit{extensional} function. Could there be a way to evaluate the behavior of neural language models in this setting?
 
-First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
+First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations in an orderly manner. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
 
   \section{Related Work}\label{sec:related_work}
 
@@ -152,12 +152,12 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
 
   \section{Method}\label{sec:method}
 
-  The following rewrite rules are allowed in our framework.
+  We define the following four transformations and examine their effect on language models.
 
   \begin{center}
       \begin{prooftree}
         \AxiomC{Γ \vdash \:\texttt{function(args)}}
-        \AxiomC{\texttt{function} is user-defined}
+        \AxiomC{$\texttt{function} \not\in \textsc{StandardLibrary}$}
         \RightLabel{\textsc{PermuteArguments}}
         \BinaryInfC{Γ \vdash \:\textsc{Code}\:\{\texttt{function(args)} \rightarrow\:\texttt{function(}\faRandom\texttt{args)}\}}
       \end{prooftree}
@@ -189,23 +189,23 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
   We can simulate various kinds of tasks by conditioning on the masked tokens in various ways.
   For single-token completion, we use:
 
-\begin{equation}
-  \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{tok}\in \textsc{Tokens}}\textsc{Model}(\textsc{Code}\:\{\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}) = \:\textsc{Code}
-\end{equation}
+\begin{equation*}
+  \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{tok}\in \textsc{Tokens}}\textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}) = \:\textsc{Code}
+\end{equation*}
 
   For document synthesis, we use the following score:
 
-\begin{equation}
-\text{ROUGE-Synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\textsc{Code}\:\{\texttt{//[...]}\:\rightarrow\:\texttt{<mask>}\:\}), \:\texttt{//[...]})
-\end{equation}
+\begin{equation*}
+\text{ROUGE-Synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\textsc{Code}\:\{\:\texttt{//[...]}\:\rightarrow\:\texttt{<mask>}\:\}), \:\texttt{//[...]})
+\end{equation*}
 
   where $\textsc{Model}^{k}$ denotes autoregressively sampling $k$ consecutive tokens, and $\Delta_\text{Syn}$ denotes the synonym overlap between the original and synthetic comments.
 
   For question answering, e.g., variable misuse, we use mean reciprocal rank (MRR):
 
-\begin{equation}
-\text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{rank}\big(\texttt{tok}, \textsc{Model}(\:\textsc{Code}\{\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}, \textsc{hints})\big)^{-1}
-\end{equation}
+\begin{equation*}
+\text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{Rank}\big(\texttt{tok}, \textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}, \textsc{hints})\big)^{-1}
+\end{equation*}
 
   Our dataset consists of a hundred of the highest-starred Java repositories hosted by GitHub organizations with over 100 forks and between 1 and 10 MB in size. This ensures a diverse dataset of active repositories with reasonable quality and stylistic diversity.
 
@@ -229,7 +229,7 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
 
 Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied) are considered invalid and discarded. Although (3) and (4) may produce semantic variants, strictly speaking, we cannot eliminate the possibility that any of the SCTs are always semantically-invariant, however we have manually validated their admissibility for a large fraction of cases. A more principled macro system would help to alleviate these concerns, however such a framework for rewriting partial Java code snippets with flexible error recovery is, to the best of our knowledge, presently unavailable.
 
-  Our framework is capable of evaluating both code completion and document synthesis using the same end-to-end strategy. In principle, this measurement can be done inside the model's latent space using a sensitivity margin or via some metric on the raw data. In practice, we decided to focus on the input domain and consider two metrics: masked token completion accuracy for code completion and ROUGE-synonym score for document synthesis.
+  % Our framework is capable of evaluating both code completion and document synthesis using the same end-to-end strategy. In principle, this measurement can be done inside the model's latent space using a sensitivity margin or via some metric on the raw data. In practice, we decided to focus on the input domain and consider two metrics: masked token completion accuracy for code completion and ROUGE-synonym score for document synthesis.
 
   For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code snippet for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code snippet. An example of this procedure may be found in the table below.
 
@@ -276,7 +276,7 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
 
 % The model correctly predicted $\frac{2}{3}$ masked tokens in the original snippet, and $\frac{1}{3}$ after renaming, so the relative accuracy is $\frac{\frac{2}{3} - \frac{1}{3}}{\frac{2}{3}} = \frac{1}{2}$.
 
-  Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. In the following example, we apply the \lstinline|renameTokens| SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, before and after applying the SCT.
+  Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. In the following example, we apply the \textsc{Rename} SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, before and after applying the SCT.
 
   \begin{center}
     \begin{tabular}{|p{7.5cm}|}
@@ -310,13 +310,9 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
     \end{tabular}
   \end{center}
 
-  Finally for variable misuse:
-
-  ...
-
 % Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this idea in great depth.
 
-  Our experimental architecture is to our knowledge, unique, and merits some discussion. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. The evaluation pipeline can be described succinctly as follows. Given a code completion model \lstinline|cc: String->String|, a list of code snippets, \lstinline|snps: List<String>|, a masking procedure, \lstinline|msk: String->String|, an SCT, \lstinline|sct: String->String|, and a single metric over code snippets, \lstinline|mtr: (String, String)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
+  Our experimental architecture is to our knowledge, unique. The entire pipeline from data mining to preprocessing, evaluation and table generation is implemented as a pure functional program in the point-free style. Given a code completion model \lstinline|cc: String->String|, a list of code snippets, \lstinline|snps: List<String>|, a masking procedure, \lstinline|msk: String->String|, an SCT, \lstinline|sct: String->String|, and a single metric over code snippets, \lstinline|mtr: (String, String)->Float|, we measure the average relative discrepancy before and after applying \lstinline|sct| to \lstinline|snps|:
 
   \noindent\begin{lstlisting}[basicstyle=\footnotesize\ttfamily, language=kotlin,label={lst:lstlisting}]
   fun evaluate(cc, snps, msk, sct, mtr) = Δ(
@@ -325,31 +321,28 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
   )
   \end{lstlisting}
 
-  \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across five different SCTs, various complexity code buckets, and two separate metrics, representing downstream tasks (i.e., code and document synthesis). Those results are reported in \S~\ref{sec:results}.
+  \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across four different SCTs, and three separate tasks. Those results are reported in \S~\ref{sec:results}.
 
   Using our framework, it is possible view the marginals of a rank-n tensor, representing an n-dimensional hyperdistribution formed by the Cartesian product of all variables under investigation (e.g., code complexity, metric, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is useful when running on preemptible infrastructure and can easily be parallelized to increase the experiment's statistical power or explore larger subspaces of the experimental design space.
-
-  \section{Experiments}\label{sec:experiments}
-
 
   We design a full factorial experiment across nine categories of code complexity, four SCTs, three state-of-the-art pretrained models (GraphCodeBERT, CodeBERT and RoBERTa) and two downstream tasks (code completion and document synthesis). While the number of samples may vary per model and per bucket, we provide the same wall clock time (180 minutes) and hardware resources (NVIDIA Tesla V100) to each model. The number of code snippets each can evaluate in the allotted time varies depending on the architecture, but in each case, the significant figures have mostly converged.
 
   \section{Results}\label{sec:results}
 
-  We ran two tasks, code synthesis and documentation synthesis. The results follow below.
+  We ran three tasks, code completion, documentation synthesis and variable misuse.
 
-    {\tiny
   \begin{center}
   \begin{table}[H]
     \resizebox{\textwidth}{!}{%
   \begin{tabular}{r|cccc}
-  Pretrained Language Model  ($\mu$, $\sigma$)                       & renameTokens                  & permuteArgument               & swapMultilineNo               & addExtraLogging               \\\hline\\
+  Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
   microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
   microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
+  huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
   dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
   \end{tabular}
     }
-  \caption{\label{tab:code-synth}Mean and standard deviation for code completion accuracy.}
+  \caption{\label{tab:code-comp}Mean and standard deviation for single-token code completion accuracy.}
   \end{table}
   \end{center}
 
@@ -358,21 +351,37 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
     \begin{table}[H]
       \resizebox{\textwidth}{!}{%
         \begin{tabular}{r|cccc}
-        Pretrained Language Model  ($\mu$, $\sigma$)                       & renameTokens                  & permuteArgument               & swapMultilineNo               & addExtraLogging               \\\hline\\
+          Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
         microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
         microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
+        huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
         dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
       \end{tabular}
       }
       \caption{\label{tab:doc-synth}Mean and standard deviation ROUGE-score for document synthesis.}
     \end{table}
   \end{center}
-  }
+
+  \begin{center}
+    \begin{table}[H]
+      \resizebox{\textwidth}{!}{%
+        \begin{tabular}{r|cccc}
+          Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
+          microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
+          microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
+          huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
+          dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
+        \end{tabular}
+      }
+      \caption{\label{tab:var-misuse}Mean and standard deviation MRR for variable misuse detection.}
+    \end{table}
+  \end{center}
 
   \vspace{-10pt}\begin{figure}[H]
-                  \centering
-                  \includegraphics[width=0.48\textwidth]{figs/Code Completion}
-                  \includegraphics[width=0.48\textwidth]{figs/Document Synthesis}
+                  \centering\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Code Completion}\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Document Synthesis}\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Variable Misuse}
                   \caption{Semantic shift across all models and transformations.}
                   \label{fig:dataflow}
   \end{figure}
@@ -395,7 +404,7 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
 
   Although we currently only use average mutlimask accuracy and ROUGE-synonym metrics, it would be useful to incorporate various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG). In addition to their utility as yardstick for evaluating model robustness, these metrics can be used to retrain those same models, a direction we hope to explore in future work.
 
-  Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \lstinline|addExtraLogging| SCT, in which the model synthesizes a single token to log, and the \lstinline|insertComment| SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
+  Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \textsc{AddExtraLogging} SCT, in which the model synthesizes a single token to log, and the \textsc{InsertComment} SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
 
   Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
 
@@ -403,183 +412,4 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
   \pagebreak\bibliography{iclr2022_conference}
   \bibliographystyle{plain}
   \appendix
-
-  \pagebreak
-  \section{Example}
-  \subsection{Summary}
-
-  \begin{lstlisting}[language=java]
-Generative model: microsoft/codebert-base-mlm
-Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
-Synth origin doc: defaultBuilder
-Synth refact doc:
-  \end{lstlisting}
-
-  \subsection{Original}
-  \begin{lstlisting}[language=java]
-  public BuilderGem getBuilder() {
-      // (*@\hlred{TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility}@*)
-      // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-      // specify this mandatory on @MapperConfig and @Mapper.
-      return null;
-  }
-  \end{lstlisting}
-  \subsection{Synthetic}
-
-  \begin{lstlisting}[language=java]
-  public BuilderGem getBuilder() {
-      //  (*@\hlred{defaultBuilder}@*)
-      // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-      // specify this mandatory on @MapperConfig and @Mapper.
-      return null;
-  }
-  \end{lstlisting}
-
-  \subsection{Variant}
-
-  \begin{lstlisting}[language=java]
-public BuilderGem getBuilder() {
-    //
-
-    // specify this mandatory on @MapperConfig and @Mapper.
-(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
-    return null;
-}
-  \end{lstlisting}
-
-  \subsection{Comment}
-
-  TODO.
-
-  \subsection{Discrepancy}
-
-  \begin{lstlisting}[language=java]
-Rouge score before refactoring: 0.0
-Rouge score after refactoring: 0.0
-  \end{lstlisting}
-
-%--------
-% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/mapstruct_mapstruct.tgz!/mapstruct-mapstruct-7064e0b/processor/src/main/java/org/mapstruct/ap/internal/model/source/DefaultOptions.java
-
-%---------
-
-  \pagebreak
-  \section{Example}
-  \subsection{Summary}
-
-  \begin{lstlisting}[language=java]
-Generative model: microsoft/graphcodebert-base
-Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
-Synth origin doc: nothing else will do it automatically
-Synth refact doc: note here is that developers could instead have more information that should not need builder information and should also
-  \end{lstlisting}
-
-  \subsection{Original}
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    // (*@\hlred{TODO:}@*) (*@\hlred{I}@*) (*@\hlred{realized}@*) (*@\hlred{this}@*) (*@\hlred{is not correct, however }@*)it (*@\hlred{needs to be null in order to keep downward compatibility}@*)
-    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-    // specify this mandatory on @MapperConfig and @Mapper.
-    return null;
-}
-  \end{lstlisting}
-  \subsection{Synthetic}
-
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    //  (*@\hlred{nothing}@*) (*@\hlred{else}@*) (*@\hlred{will}@*) (*@\hlred{do}@*) it (*@\hlred{automatically}@*)
-    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-    // specify this mandatory on @MapperConfig and @Mapper.
-    return null;
-}
-  \end{lstlisting}
-
-  \subsection{Variant}
-
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    //  (*@\hlred{note}@*) (*@\hlred{here}@*) (*@\hlred{is}@*) (*@\hlred{that}@*) (*@\hlred{developers}@*) (*@\hlred{could}@*) (*@\hlred{instead}@*) (*@\hlred{have}@*) (*@\hlred{more}@*) (*@\hlred{information}@*) (*@\hlred{that}@*) (*@\hlred{should}@*) (*@\hlred{not}@*) (*@\hlred{need}@*) (*@\hlred{builder}@*) (*@\hlred{information}@*) (*@\hlred{and}@*) (*@\hlred{should}@*) (*@\hlred{also}@*)
-
-    // specify this mandatory on @MapperConfig and @Mapper.
-(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
-    return null;
-}
-  \end{lstlisting}
-
-  \subsection{Comment}
-
-  TODO.
-
-  \subsection{Discrepancy}
-
-  \begin{lstlisting}[language=java]
-Rouge score before refactoring: 0.038525963149078725
-Rouge score after refactoring: 0.24204355108877723
-  \end{lstlisting}
-
-%--------
-% Origin: tgz:file:///Users/breandan/IdeaProjects/gym-fs/data/mapstruct_mapstruct.tgz!/mapstruct-mapstruct-7064e0b/processor/src/main/java/org/mapstruct/ap/internal/model/source/DefaultOptions.java
-
-%---------
-
-  \pagebreak
-  \section{Example}
-  \subsection{Summary}
-
-  \begin{lstlisting}[language=java]
-Generative model: dbernsohn/roberta-java
-Ground truth doc: TODO: I realized this is not correct, however it needs to be null in order to keep downward compatibility
-Synth origin doc: Check this class method to create method to return the case case this type for default type for type
-Synth refact doc: For test for a method that that's this case is an Java class class as not an instance
-  \end{lstlisting}
-
-  \subsection{Original}
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    // (*@\hlred{TODO:}@*) (*@\hlred{I}@*) (*@\hlred{realized}@*) (*@\hlred{this}@*) (*@\hlred{is}@*) (*@\hlred{not}@*) (*@\hlred{correct,}@*) (*@\hlred{however}@*) (*@\hlred{it}@*) (*@\hlred{needs}@*) (*@\hlred{to}@*) (*@\hlred{be}@*) (*@\hlred{null}@*) (*@\hlred{in}@*) (*@\hlred{order}@*) (*@\hlred{to}@*) (*@\hlred{keep}@*) (*@\hlred{downward}@*) (*@\hlred{compatibility}@*)
-    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-    // specify this mandatory on @MapperConfig and @Mapper.
-    return null;
-}
-  \end{lstlisting}
-  \subsection{Synthetic}
-
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    //  (*@\hlred{Check}@*) (*@\hlred{this}@*) (*@\hlred{class}@*) (*@\hlred{method}@*) (*@\hlred{to}@*) (*@\hlred{create}@*) (*@\hlred{method}@*) (*@\hlred{to}@*) (*@\hlred{return}@*) (*@\hlred{the}@*) (*@\hlred{case}@*) (*@\hlred{case}@*) (*@\hlred{this}@*) (*@\hlred{type}@*) (*@\hlred{for}@*) (*@\hlred{default}@*) (*@\hlred{type}@*) (*@\hlred{for}@*) (*@\hlred{type}@*)
-    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to
-    // specify this mandatory on @MapperConfig and @Mapper.
-    return null;
-}
-  \end{lstlisting}
-
-  \subsection{Variant}
-
-  \begin{lstlisting}[language=java]
-
-public BuilderGem getBuilder() {
-    //  (*@\hlred{For}@*) (*@\hlred{test}@*) (*@\hlred{for}@*) (*@\hlred{a}@*) (*@\hlred{method}@*) (*@\hlred{that}@*) (*@\hlred{that's}@*) (*@\hlred{this}@*) (*@\hlred{case}@*) (*@\hlred{is}@*) (*@\hlred{an}@*) (*@\hlred{Java}@*) (*@\hlred{class}@*) (*@\hlred{class}@*) (*@\hlred{as}@*) (*@\hlred{not}@*) (*@\hlred{an}@*) (*@\hlred{instance}@*)
-
-    // specify this mandatory on @MapperConfig and @Mapper.
-(*@\hlred{    // but assuming a default @Builder will make testcases fail. Not having a default means that you need to}@*)
-    return null;
-}
-  \end{lstlisting}
-
-  \subsection{Comment}
-
-  TODO.
-
-  \subsection{Discrepancy}
-
-  \begin{lstlisting}[language=java]
-Rouge score before refactoring: 0.07788944723618091
-Rouge score after refactoring: 0.20351758793969849
-  \end{lstlisting}
-
 \end{document}

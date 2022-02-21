@@ -53,7 +53,6 @@ fun evaluateMCTransformations(
       if (i < 20 || i % 20 == 0) csByMRR.reportResults("variable_misuse")
     }
 
-
 val csByMRR =
   CodeSnippetAttributeScoresTable<Pair<Double, Double>>(::tTest, ::sideBySide)
 

@@ -59,8 +59,9 @@ def box_visual(data: pd.DataFrame, task_name, img_dir):
     seaborn.set_theme(style="whitegrid")
     sns_plot = seaborn.boxplot(data=data, x='sct', y='score', hue='model',  showfliers = False) \
         .set_title(task_name, fontsize=30)
-    plt.legend(bbox_to_anchor=(-0.1, 1.05), loc='upper left', borderaxespad=0)
-    plt.xticks(rotation=20)
+    plt.legend(bbox_to_anchor=(0.7, 0.24), loc='upper left', borderaxespad=0)
+    plt.xlabel("Source Code Transformation", fontsize = 14)
+    plt.ylabel("Mean Reciprocal Rank", fontsize = 14)
     # plt.show()
 
     # save graphs
@@ -74,23 +75,33 @@ def box_visual(data: pd.DataFrame, task_name, img_dir):
 
 if __name__ == '__main__':
     img_dir = './figs/'
-    data_file = './doc_completion.json'
+    data_file = './variable_misuse.json'
 
-    models = ['microsoft/codebert-base-mlm', 'microsoft/graphcodebert-base', 'dbernsohn/roberta-java']
-    scts = ['renameTokens', 'permuteArgumentOrder', 'swapMultilineNoDeps', 'addExtraLogging']
+    models = [
+        'microsoft/codebert-base-mlm',
+        'microsoft/graphcodebert-base',
+        'dbernsohn/roberta-java',
+        'huggingface/CodeBERTa-small-v1'
+    ]
+    scts = [
+        'renameTokens',
+        'permuteArgumentOrder',
+        'swapMultilineNoDeps',
+        'addExtraLogging'
+    ]
 
     # Read data
     data = None
     with open(data_file) as json_file:
         data = json.load(json_file)
 
-    ############################### Histgram visualization ########################################
+    ############### Histgram visualization ###################################
     # for m in models:
     #     for sct in scts:
     #         hist_visual(data[m][sct], m, sct, img_dir)
 
-    ################################### Box Visualization ########################################
-    task_name = 'Document Synthesis'
+    ############### Box Visualization ########################################
+    task_name = 'Variable Misuse'
 
     df = {'model': [], 'sct': [], 'score': []}
     for model in models:
