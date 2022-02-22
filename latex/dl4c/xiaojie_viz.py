@@ -105,7 +105,15 @@ if __name__ == '__main__':
 
     df = {'model': [], 'sct': [], 'score': []}
     for model in models:
+        print('microsoft/codebert-base-mlm \stackanchor{Before}{After}  ', end='')
         for sct in scts:
+            before = data[model][sct]['before']
+            bavg = '{:.4f}'.format(np.mean(before))
+            bstd = '{:.4f}'.format(np.std(before))
+            after = data[model][sct]['after']
+            aavg = '{:.4f}'.format(np.mean(after))
+            astd = '{:.4f}'.format(np.std(after))
+            print(f' & \stackanchor{{({bavg}, {bstd})}}{{({aavg}, {astd})}}', end='')
             bl = len(data[model][sct]['before'])
             df['model'].extend([model + '(before)'] * bl)
             df['sct'].extend([sct] * bl)
@@ -114,7 +122,14 @@ if __name__ == '__main__':
             df['model'].extend([model + '(after)'] * al)
             df['sct'].extend([sct] * al)
             df['score'].extend(data[model][sct]['after'])
+        print('\\\\\\\\')
+        print('')
 
 
     df = pd.DataFrame(data=df)
     box_visual(df, task_name, img_dir)
+
+def mean_std_dev(model, l1, l2):
+    print(f'{np.mean(l1)}, {np.std(l2)}')
+
+    # microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
