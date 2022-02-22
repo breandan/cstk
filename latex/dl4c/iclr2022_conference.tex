@@ -336,10 +336,10 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
     \resizebox{\textwidth}{!}{%
   \begin{tabular}{r|cccc}
   Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
-  microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-  microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-  huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-  dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
+  microsoft/codebert-base-mlm \stackanchor{Before}{After}   & \stackanchor{(0.7224, 0.2768)}{(0.6100, 0.3085)} & \stackanchor{(0.7194, 0.2191)}{(0.6978, 0.2227)} & \stackanchor{(0.7089, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6996, 0.2077)}{(0.7122, 0.2001)}\\\\
+  microsoft/graphcodebert-base \stackanchor{Before}{After}   & \stackanchor{(0.7230, 0.2767)}{(0.6410, 0.2998)} & \stackanchor{(0.7227, 0.2173)}{(0.7154, 0.2169)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7050, 0.2047)}{(0.7382, 0.1932)}\\\\
+  dbernsohn/roberta-java \stackanchor{Before}{After}   & \stackanchor{(0.7219, 0.2773)}{(0.4951, 0.3165)} & \stackanchor{(0.7196, 0.2188)}{(0.5995, 0.2632)} & \stackanchor{(0.7087, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6958, 0.2095)}{(0.5479, 0.2577)}\\\\
+  huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.7226, 0.2771)}{(0.5953, 0.3134)} & \stackanchor{(0.7216, 0.2149)}{(0.7096, 0.2249)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7004, 0.2095)}{(0.7113, 0.2119)}\\\\
   \end{tabular}
     }
   \caption{\label{tab:code-comp}Mean and standard deviation for single-token code completion accuracy.}
@@ -352,11 +352,14 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
       \resizebox{\textwidth}{!}{%
         \begin{tabular}{r|cccc}
           Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
-        microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-        microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-        huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-        dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
-      \end{tabular}
+          microsoft/codebert-base-mlm \stackanchor{Before}{After}   & \stackanchor{(0.0385, 0.2684)}{(0.0430, 0.2996)} & \stackanchor{(0.0427, 0.3500)}{(0.0411, 0.3091)} & \stackanchor{(0.0309, 0.2477)}{(0.0419, 0.2959)} & \stackanchor{(0.0545, 0.4637)}{(0.0510, 0.3839)}\\\\
+
+          microsoft/graphcodebert-base \stackanchor{Before}{After}   & \stackanchor{(0.0987, 0.3826)}{(0.1026, 0.3590)} & \stackanchor{(0.0983, 0.3214)}{(0.0982, 0.3212)} & \stackanchor{(0.0891, 0.4181)}{(0.0989, 0.3549)} & \stackanchor{(0.0850, 0.3000)}{(0.0974, 0.2221)}\\\\
+
+          dbernsohn/roberta-java \stackanchor{Before}{After}   & \stackanchor{(0.0827, 0.5086)}{(0.0891, 0.5484)} & \stackanchor{(0.0727, 0.4453)}{(0.0781, 0.4792)} & \stackanchor{(0.0793, 0.4769)}{(0.0845, 0.5428)} & \stackanchor{(0.0680, 0.5349)}{(0.0733, 0.4994)}\\\\
+
+          huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.1101, 0.3932)}{(0.1143, 0.3645)} & \stackanchor{(0.1205, 0.4148)}{(0.1170, 0.3668)} & \stackanchor{(0.0997, 0.3912)}{(0.1125, 0.3811)} & \stackanchor{(0.1252, 0.5175)}{(0.1230, 0.3891)}\\\\
+        \end{tabular}
       }
       \caption{\label{tab:doc-synth}Mean and standard deviation ROUGE-score for document synthesis.}
     \end{table}
@@ -367,10 +370,13 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
       \resizebox{\textwidth}{!}{%
         \begin{tabular}{r|cccc}
           Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
-          microsoft/codebert-base-mlm \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-          microsoft/graphcodebert-base \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-          huggingface/codeberta-small \stackanchor{Before}{After}  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   \\\\
-          dbernsohn/roberta-java  \stackanchor{Before}{After} & \stackanchor{(1.366, 998)}{(1.366, 998)}                  & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}                   & \stackanchor{(1.366, 998)}{(1.366, 998)}
+          microsoft/codebert-base-mlm \stackanchor{Before}{After}   & \stackanchor{(0.8150, 0.2502)}{(0.7508, 0.2663)} & \stackanchor{(0.7692, 0.2947)}{(0.7574, 0.2992)} & \stackanchor{(0.7935, 0.2683)}{(0.7861, 0.2720)} & \stackanchor{(0.7568, 0.3086)}{(0.7412, 0.3297)}\\\\
+
+          microsoft/graphcodebert-base \stackanchor{Before}{After}   & \stackanchor{(0.8196, 0.2478)}{(0.7638, 0.2638)} & \stackanchor{(0.7758, 0.2873)}{(0.7673, 0.2919)} & \stackanchor{(0.7952, 0.2670)}{(0.7861, 0.2720)} & \stackanchor{(0.7529, 0.3071)}{(0.7378, 0.3376)}\\\\
+
+          dbernsohn/roberta-java \stackanchor{Before}{After}   & \stackanchor{(0.8149, 0.2486)}{(0.6708, 0.2282)} & \stackanchor{(0.7727, 0.2947)}{(0.7148, 0.2399)} & \stackanchor{(0.7952, 0.2670)}{(0.7861, 0.2720)} & \stackanchor{(0.7620, 0.3053)}{(0.6797, 0.2580)}\\\\
+
+          huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.8182, 0.2480)}{(0.7569, 0.2334)} & \stackanchor{(0.7736, 0.2934)}{(0.8023, 0.2318)} & \stackanchor{(0.7954, 0.2670)}{(0.7861, 0.2720)} & \stackanchor{(0.7578, 0.3053)}{(0.8137, 0.2413)}\\\\
         \end{tabular}
       }
       \caption{\label{tab:var-misuse}Mean and standard deviation MRR for variable misuse detection.}

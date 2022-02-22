@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     df = {'model': [], 'sct': [], 'score': []}
     for model in models:
-        print('microsoft/codebert-base-mlm \stackanchor{Before}{After}  ', end='')
+        print(f'{model} \stackanchor{{Before}}{{After}}  ', end='')
         for sct in scts:
             before = data[model][sct]['before']
             bavg = '{:.4f}'.format(np.mean(before))
