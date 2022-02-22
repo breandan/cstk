@@ -412,4 +412,12 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
   \pagebreak\bibliography{iclr2022_conference}
   \bibliographystyle{plain}
   \appendix
+  \section{Tokenization}
+  Let $\Sigma$ be any alphabet (in practice, CodeBERT uses UTF-8 although it is possible to encode Chinese by switching to UTF-16).
+  Let $\texttt{dict} \subset \Sigma^*\leftrightarrow\mathbb Z$ be a bijection between certain strings over $\Sigma$ and the integers.
+  Let bpe: $\Sigma^*\rightarrow\mathbb{Z}^*$ be an encoder that maps strings $\Sigma^*$ to a list of integers $\mathbb{Z}^*$.
+  \texttt{bpe} is defined as follows: $\texttt{bpe(s)} := \texttt{dict(s[1:p])} \oplus \texttt{bpe(s[p+1:|s|])}$ where $p = max \{ i \in \texttt{(1,|p|]} | \texttt{s[1:i]} \in \texttt{dict} \}$, $\oplus$ denotes list concatenation and $s[a:b]$ denotes the substring of s between indices a and b using 1-based indexing.
+  dict has the following property: $\forall s \in \Sigma^*, bpe(s) = [i_1, i_2, \ldots, i_n]$ implies $\texttt{dict}^{-1}(i_1) \oplus \texttt{dict}^{-1}(i_2) \oplus \texttt{dict}^{-1}(\ldots) \oplus \texttt{dict}^{-1}(i_n) = s$, i.e., bpe is a lossless compression scheme.
+  Furthermore, dict typically has the property that $\mathbb{E}[|bpe(s)|] \ll \mathbb{E}[|s|]$ over $s \in L \subset \Sigma^*$ where L is a language (e.g., NL or PL) in $\Sigma^*$, n.b. this is untrue if $\Sigma^*$ due to the pigeonhole principle.
+%  \section{Appendix}
 \end{document}
