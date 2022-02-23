@@ -102,10 +102,18 @@
   \maketitle
 
   \begin{abstract}
-    Neural language models hold great promise as tools for computer-aided programming, but come with certain risks. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A more methodical examination of neural language models is necessary to understand their behavior on programming-related tasks. In this work, we develop a methodology for systematically evaluating neural code completion models using common source code rewrites. Applying these synthetic rewrites to a dataset of handwritten source code fragments, we obtain results for four pretrained models, which exhibit varying degrees of robustness under transformation. We give preliminary results from those experiments and discuss our approach to testing pretrained neural code completion models.
+    Neural language models hold great promise as tools for computer-aided programming, but come with certain risks. In the domain of natural language, prior work has revealed these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways. A more methodical examination of neural language models is necessary to understand their behavior on programming-related tasks. In this work, we develop a methodology for systematically evaluating neural code completion models using common source code rewrites. Applying these synthetic rewrites to a dataset of handwritten source code fragments, we obtain results for four pretrained models, which exhibit varying degrees of robustness under transformation. We give preliminary results from those experiments and discuss our approach to testing pretrained neural code completion models. Our analysis provides insights into the strengths and weaknesses of different models, and can serve as a foundation for future work for improving the accuracy and robustness of neural code completion models.
   \end{abstract}
 
   \section{Introduction}\label{sec:introduction}
+
+  Neural language models play an increasingly synergistic role in software engineering, and are featured prominently in recent work on neural code completion~\cite{chen2021evaluating}. Code completion is the task of automatically providing a list of potential completions for some hole in source code. By training a general purpose language model on a large corpus of source code, one can automatically learn programming language syntax, stylistic elements like common variable names as well as more complex features like idioms and natural language documentation. These same models can be adapted to a variety of source-code analysis tasks, such as document synthesis and variable misuse, by strategically placing the holes and conditioning the model's predictions on an appropriate sample space.
+
+  However, there are known risks associated with using neural language models. In the domain of natural language, these models can be sensitive to naturally-occurring variance and malfunction in unpredictable ways when applied to tasks such as interactive dialog and machine translation. In the case of code completion, a model may perform well on a training corpus that is syntactically well-formed and free of errors, but struggle when applied to a corpus containing errors or unfamiliar design patterns. This phenomena is broadly known as `domain mismatch' or `overfitting', and can be quantified by various robustness metrics.
+
+  The robustness of neural language models has been well-studied through the lens of natural language processing (NLP). However, there has been relatively little work on understanding how these models perform on programming-related tasks. In this paper, we aim to fill this gap by developing a methodology for systematically evaluating neural code completion models using semantically-preserving source code transformations. We define a set of code transformations that are commonly used in programming, and measure the distributional shift introduced by applying them to a dataset of handwritten source code fragments. We evaluate the same set of transformations across four pretrained language models and three downstream tasks. Our results provide insights into the strengths and weaknesses of those models, and serve as a foundation for future work towards improving the accuracy and robustness of neural code completion via dataset engineering.
+
+  \section{Background}\label{sec:background}
 
   The same program can be written in many possible ways. Often, those variants contain superficial changes to the source code, but do not meaningfully alter the behavior of the underlying program. In the same way that skilled programmers should be flexible to rewriting, one would expect a code completion model in a language semantically invariant to certain rewrites to exhibit invariance under those same rewrites. As we will demonstrate, this property may not necessarily hold in general.
 
@@ -131,15 +139,13 @@ As documented by prior literature, neural language models can be prone to semant
 
 The paper is structured as follows. In Sec.~\ref{sec:background}, we give some background on the methods and problem at hand. In Sec.~\ref{sec:related_work} we give some related work. In Sec.~\ref{sec:method}, we describe our method. In Sec.~\ref{sec:results} we give some results and discuss their implications. Finally, in Sec. ~\ref{sec:conclusion} we give some concluding remarks. Our results are fully reproducible and can be found at: \url{https://anonymous.4open.science/r/cstk-1458}.
 
-\section{Background}\label{sec:background}
 
-Neural language models play an increasingly synergistic role in software engineering, and are featured prominently in recent work on neural code completion~\cite{chen2021evaluating}. Yet from a development perspective, the behavior of these models is opaque: partially completed source code written inside an editor is sent to a remote server, which returns a completion. This client-server architecture can be seen as a black-box or \textit{extensional} function. Could there be a way to evaluate the behavior of neural language models in this setting?
 
 First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations in an orderly manner. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
 
   \section{Related Work}\label{sec:related_work}
 
- Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their sensitivity to noise in the input space~\cite{sun2020adv}. Similar studies have been undertaken to study the robustness of pretrained language models of source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from an engineering standpoint: we investigate how neural code completion models respond to plausible cosmetic variation. Applying synthetic transformations to a datatset of naturally-occurring code snippets, we compare the robustness of four SoTA neural language models on three downstream tasks: code completion, document completion, and variable misuse. %We have identified three high-level categories of source code transformations:
+ Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their inability to represent long-term dependencies and their sensitivity to noise in the input space~\cite{sun2020adv}. Similar studies have been undertaken to study the robustness of pretrained language models of source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from an engineering standpoint: we investigate how neural code completion models respond to plausible cosmetic variation. Applying synthetic transformations to a datatset of naturally-occurring code snippets, we compare the robustness of four SoTA neural language models on three downstream tasks: code completion, document completion, and variable misuse. %We have identified three high-level categories of source code transformations:
 
 %  \begin{enumerate}[itemsep=1ex]
 %    \item \textbf{Syntactic}, which may be valid (i.e., parsable) or invalid (e.g., typos, imbalanced parentheses, unparsable code)
@@ -329,21 +335,57 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
 
   \section{Results}\label{sec:results}
 
+  \vspace{-10pt}\begin{figure}[H]
+                  \centering\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Code Completion}\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Document Synthesis}\hspace*{-0.6cm}
+                  \includegraphics[width=0.38\textwidth]{figs/Variable Misuse}
+                  \caption{Semantic shift across all models and transformations.}
+                  \label{fig:dataflow}
+  \end{figure}
+
+  Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. The \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
+
+  In both cases, we observe a clear trend across method complexity: SCTs in low complexity code have a larger effect on completion quality than similar transformations in high-complexity code. We hypothesize this phenomenon can be explained by the fact that the same transformation can have a comparatively larger effect on a shorter code snippet than a longer one, which contains more contextual information and is thus more stable to minor perturbations.
+
+  Examining the source code transformations, we notice that renaming can have a significant effect on document synthesis. As the model frequently copies tokens from the source code to the document and vis-versa, renaming tends to have a deleterious effect on document quality. Likewise, swapping multiline statements appears to have a significant negative effect on document quality.
+
+  \section{Conclusion}\label{sec:conclusion}
+
+  The work described herein is primarily an empirical study, but also showcases a framework and a systematic approach to evaluating neural code completion models. It offers a number of advantages from a software engineering standpoint: due to its functional implementation, it is efficient, parallelizable and highly modular, allowing others to easily reuse and extend our work with new benchmarks.
+
+  Despite its simplicity, the regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
+
+  Our SCTs can be viewed as ``possible worlds'' in the tradition of modal logic: the original author plausibly could have chosen an alternate form of expressing the same procedure. Although we are unable to access all these worlds, we can posit the existence and likelihood of some, and given a dataset of alternate code snippets, begin to probe a candidate model's predictions.
+
+  One intriguing avenue for future work would be to consider combinations of source code transformations. This would vastly expand the cardinality of the validation set, enabling us to access a much larger space of possible worlds, albeit potentially at the risk of lower semantic admissibility, as arbitrary combinations of SCTs can quickly produce invalid code. This presents an interesting engineering challenge and possible extension to this work.
+
+  Although we currently only use average mutlimask accuracy and ROUGE-synonym metrics, it would be useful to incorporate various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG). In addition to their utility as yardstick for evaluating model robustness, these metrics can be used to retrain those same models, a direction we hope to explore in future work.
+
+  Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \textsc{AddExtraLogging} SCT, in which the model synthesizes a single token to log, and the \textsc{InsertComment} SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
+
+  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
+
+  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations.
+  \pagebreak\bibliography{iclr2022_conference}
+  \bibliographystyle{plain}
+  \appendix
+  \section{Detailed Results}\label{sec:detailed_results}
   We ran three tasks, code completion, documentation synthesis and variable misuse.
 
   \begin{center}
-  \begin{table}[H]
-    \resizebox{\textwidth}{!}{%
-  \begin{tabular}{r|cccc}
-  Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
-  microsoft/codebert-base-mlm \stackanchor{Before}{After}   & \stackanchor{(0.7224, 0.2768)}{(0.6100, 0.3085)} & \stackanchor{(0.7194, 0.2191)}{(0.6978, 0.2227)} & \stackanchor{(0.7089, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6996, 0.2077)}{(0.7122, 0.2001)}\\\\
-  microsoft/graphcodebert-base \stackanchor{Before}{After}   & \stackanchor{(0.7230, 0.2767)}{(0.6410, 0.2998)} & \stackanchor{(0.7227, 0.2173)}{(0.7154, 0.2169)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7050, 0.2047)}{(0.7382, 0.1932)}\\\\
-  dbernsohn/roberta-java \stackanchor{Before}{After}   & \stackanchor{(0.7219, 0.2773)}{(0.4951, 0.3165)} & \stackanchor{(0.7196, 0.2188)}{(0.5995, 0.2632)} & \stackanchor{(0.7087, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6958, 0.2095)}{(0.5479, 0.2577)}\\\\
-  huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.7226, 0.2771)}{(0.5953, 0.3134)} & \stackanchor{(0.7216, 0.2149)}{(0.7096, 0.2249)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7004, 0.2095)}{(0.7113, 0.2119)}\\\\
-  \end{tabular}
-    }
-  \caption{\label{tab:code-comp}Mean and standard deviation for single-token code completion accuracy.}
-  \end{table}
+    \begin{table}[H]
+      \resizebox{\textwidth}{!}{%
+        \begin{tabular}{r|cccc}
+          Pretrained Language Model  ($\mu$, $\sigma$)                       & \textsc{Rename}                  & \textsc{PermuteArgument}               & \textsc{SwapIndepLines}               & \textsc{AddExtraLogging}               \\\hline\\
+          microsoft/codebert-base-mlm \stackanchor{Before}{After}   & \stackanchor{(0.7224, 0.2768)}{(0.6100, 0.3085)} & \stackanchor{(0.7194, 0.2191)}{(0.6978, 0.2227)} & \stackanchor{(0.7089, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6996, 0.2077)}{(0.7122, 0.2001)}\\\\
+          microsoft/graphcodebert-base \stackanchor{Before}{After}   & \stackanchor{(0.7230, 0.2767)}{(0.6410, 0.2998)} & \stackanchor{(0.7227, 0.2173)}{(0.7154, 0.2169)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7050, 0.2047)}{(0.7382, 0.1932)}\\\\
+          dbernsohn/roberta-java \stackanchor{Before}{After}   & \stackanchor{(0.7219, 0.2773)}{(0.4951, 0.3165)} & \stackanchor{(0.7196, 0.2188)}{(0.5995, 0.2632)} & \stackanchor{(0.7087, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.6958, 0.2095)}{(0.5479, 0.2577)}\\\\
+          huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.7226, 0.2771)}{(0.5953, 0.3134)} & \stackanchor{(0.7216, 0.2149)}{(0.7096, 0.2249)} & \stackanchor{(0.7088, 0.2624)}{(0.7058, 0.2607)} & \stackanchor{(0.7004, 0.2095)}{(0.7113, 0.2119)}\\\\
+        \end{tabular}
+      }
+      \caption{\label{tab:code-comp}Mean and standard deviation for single-token code completion accuracy.}
+    \end{table}
   \end{center}
 
 
@@ -383,41 +425,6 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
     \end{table}
   \end{center}
 
-  \vspace{-10pt}\begin{figure}[H]
-                  \centering\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Code Completion}\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Document Synthesis}\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Variable Misuse}
-                  \caption{Semantic shift across all models and transformations.}
-                  \label{fig:dataflow}
-  \end{figure}
-
-  Our results support the relative model rankings as reported by prior literature: RoBERTa $\ll$ CodeBERT $<$ GraphCodeBERT. As we can see, RoBERTa is considerably more sensitive to cosmetic variance than CodeBERT and GraphCodeBERT, which are relatively close contenders. The \lstinline|swapMultilineNo| and \lstinline|permuteArgument| SCTs exhibit a more detrimental effect than the other SCTs. Unexpectedly, it appears that token renaming tends to improve completion accuracy across all models on average.
-
-  In both cases, we observe a clear trend across method complexity: SCTs in low complexity code have a larger effect on completion quality than similar transformations in high-complexity code. We hypothesize this phenomenon can be explained by the fact that the same transformation can have a comparatively larger effect on a shorter code snippet than a longer one, which contains more contextual information and is thus more stable to minor perturbations.
-
-  Examining the source code transformations, we notice that renaming can have a significant effect on document synthesis. As the model frequently copies tokens from the source code to the document and vis-versa, renaming tends to have a deleterious effect on document quality. Likewise, swapping multiline statements appears to have a significant negative effect on document quality.
-
-  \section{Conclusion}\label{sec:conclusion}
-
-  The work described herein is primarily an empirical study, but also showcases a framework and a systematic approach to evaluating neural code completion models. It offers a number of advantages from a software engineering standpoint: due to its functional implementation, it is efficient, parallelizable and highly modular, allowing others to easily reuse and extend our work with new benchmarks.
-
-  Despite its simplicity, the regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
-
-  Our SCTs can be viewed as ``possible worlds'' in the tradition of modal logic: the original author plausibly could have chosen an alternate form of expressing the same procedure. Although we are unable to access all these worlds, we can posit the existence and likelihood of some, and given a dataset of alternate code snippets, begin to probe a candidate model's predictions.
-
-  One intriguing avenue for future work would be to consider combinations of source code transformations. This would vastly expand the cardinality of the validation set, enabling us to access a much larger space of possible worlds, albeit potentially at the risk of lower semantic admissibility, as arbitrary combinations of SCTs can quickly produce invalid code. This presents an interesting engineering challenge and possible extension to this work.
-
-  Although we currently only use average mutlimask accuracy and ROUGE-synonym metrics, it would be useful to incorporate various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG). In addition to their utility as yardstick for evaluating model robustness, these metrics can be used to retrain those same models, a direction we hope to explore in future work.
-
-  Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \textsc{AddExtraLogging} SCT, in which the model synthesizes a single token to log, and the \textsc{InsertComment} SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
-
-  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
-
-  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations.
-  \pagebreak\bibliography{iclr2022_conference}
-  \bibliographystyle{plain}
-  \appendix
   \section{Tokenization}
   Let $\Sigma$ be any alphabet (in practice, CodeBERT uses UTF-8 although it is possible to encode Chinese by switching to UTF-16).
   Let $\texttt{dict} \subset \Sigma^*\leftrightarrow\mathbb Z$ be a bijection between certain strings over $\Sigma$ and the integers.
