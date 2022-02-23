@@ -113,9 +113,62 @@
 
   The robustness of neural language models has been well-studied through the lens of natural language processing (NLP). However, there has been relatively little work on understanding how these models perform on programming-related tasks. In this paper, we aim to fill this gap by developing a methodology for systematically evaluating neural code completion models using semantically-preserving source code transformations. We define a set of code transformations that are commonly used in programming, and measure the distributional shift introduced by applying them to a dataset of handwritten source code fragments. We evaluate the same set of transformations across four pretrained language models and three downstream tasks. Our results provide insights into the strengths and weaknesses of those models, and serve as a foundation for future work towards improving the accuracy and robustness of neural code completion via dataset engineering.
 
-  \section{Background}\label{sec:background}
+  \section{Related Work}\label{sec:related_work}
+
+  Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their inability to represent long-term dependencies and their sensitivity to noise in the input space~\cite{sun2020adv}. Similar studies have been undertaken to study the robustness of pretrained language models of source code~\citep{bielik2020adversarial, zhou2021adversarial}.
+
+  First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations in an orderly manner. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
+
+  Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from an engineering standpoint: we investigate how neural code completion models respond to plausible cosmetic variation. Applying synthetic transformations to a datatset of naturally-occurring code snippets, we compare the robustness of four SoTA neural language models on three downstream tasks: code completion, document completion, and variable misuse.
+
+
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi id odio rutrum, laoreet ex quis, sodales odio. Vivamus lobortis mauris elit, vitae faucibus mi porttitor et. Suspendisse quis euismod ipsum, et cursus turpis. Mauris congue sodales tortor luctus pellentesque. Nulla sed magna finibus, scelerisque est ut, maximus leo. Duis sed luctus erat. Cras nec mauris porttitor libero elementum euismod eu sit amet lectus. Integer convallis magna quis massa dignissim ultricies. Nunc non metus pretium nulla tempor fermentum. Nulla pulvinar aliquam ante, vitae sagittis lorem lacinia ut. Quisque imperdiet ac libero sit amet molestie. Nunc libero velit, blandit quis nisl a, iaculis rhoncus libero. Donec quis ultrices libero. Suspendisse et placerat odio. Nulla facilisi.
+
+  Curabitur non erat sed nunc accumsan viverra. Suspendisse ipsum lectus, pharetra vel magna et, scelerisque vulputate augue. Duis ultricies ipsum et condimentum placerat. Maecenas vel sapien ac ipsum vestibulum pellentesque eget vel quam. Etiam sodales quis elit ac finibus. Nullam at sagittis sapien, at vulputate lacus. Vestibulum hendrerit enim eget eleifend hendrerit. Interdum et malesuada fames ac ante ipsum primis in faucibus.
+
+  Sed non dictum tortor. Phasellus ornare nisl eget consequat eleifend. Nam ultricies tincidunt nulla, at posuere enim dapibus ac. Vivamus quis erat blandit, cursus felis at, sodales elit. Pellentesque vel odio vel metus blandit ultrices. Curabitur sagittis nec enim non varius. Donec eros urna, semper at ligula in, ornare venenatis nibh.
+
+  Vestibulum ultrices enim ut odio placerat pretium. Duis tincidunt, magna ut bibendum posuere, purus est molestie purus, a fringilla massa libero in elit. Donec enim tellus, hendrerit ac dignissim id, suscipit eget est. Pellentesque quis leo rutrum, cursus nunc vitae, accumsan enim. Fusce mi justo, venenatis sed neque interdum, tempus suscipit urna. Vivamus mollis tristique odio ut commodo. Sed non ullamcorper nulla. Pellentesque elementum eros erat, nec rhoncus augue accumsan non. Sed eu neque gravida, dapibus orci sed, aliquam nisl. Praesent quis congue orci, et viverra massa.
+
+  Nulla sit amet tempor ipsum. Nunc tincidunt dictum posuere. Curabitur faucibus venenatis erat quis maximus. Phasellus ut turpis nec lectus porttitor accumsan. Fusce malesuada justo sed velit consectetur fermentum. In egestas lacus sit amet dui porttitor dignissim. Phasellus finibus vel ipsum sed venenatis. Proin placerat auctor augue, sit amet sagittis magna mattis
+
+  \pagebreak\section{Background}\label{sec:background}
 
   The same program can be written in many possible ways. Often, those variants contain superficial changes to the source code, but do not meaningfully alter the behavior of the underlying program. In the same way that skilled programmers should be flexible to rewriting, one would expect a code completion model in a language semantically invariant to certain rewrites to exhibit invariance under those same rewrites. As we will demonstrate, this property may not necessarily hold in general.
+
+  Let us define the following four transformations and examine their effect on language models.
+
+  \begin{center}
+      \begin{prooftree}
+      \AxiomC{Γ \vdash \:\texttt{function(args)}}
+      \AxiomC{$\texttt{function} \not\in \textsc{StandardLibrary}$}
+      \RightLabel{\textsc{PermuteArguments}}
+      \BinaryInfC{Γ \vdash \:\textsc{Code}\:\{\texttt{function(args)} \rightarrow\:\texttt{function(}\faRandom\texttt{args)}\}}
+    \end{prooftree}
+
+    \begin{prooftree}
+      \AxiomC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
+      \AxiomC{\textsc{Tokens}(\texttt{line\_1}) \cap\:\textsc{Tokens}(\texttt{line\_2}) = \varnothing}
+      \RightLabel{\textsc{SwapIndepLines}}
+      \BinaryInfC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_2;}}{\textvisiblespace\texttt{line\_1;}}}
+    \end{prooftree}
+
+    \begin{prooftree}
+      \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
+      \AxiomC{\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
+%        \AxiomC{\texttt{print} \not\in\:\textsc{Tokens}(\texttt{line\_1} \:\oplus\, \texttt{line\_2})}
+      \RightLabel{\textsc{AddExtraLogging}}
+      \BinaryInfC{\Shortstack[l]{{\vphantom{\texttt{line\_1;}}} {Γ \vdash} {\vphantom{\texttt{line\_1;}}}}  \:\Shortstack[l]{{\textvisiblespace\texttt{line\_1;}} {\textvisiblespace\texttt{println("var: \$var");}} {\textvisiblespace\texttt{line\_3;}}}}
+    \end{prooftree}
+
+    \begin{prooftree}
+      \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
+      \AxiomC{\texttt{fresh} \in\:\textsc{Synonyms}(\texttt{var}) \setminus\:\textsc{ScopedNames}}
+      \RightLabel{\textsc{Rename}}
+      \BinaryInfC{Γ \vdash \,\,\textsc{Code}\:\{\:\texttt{var} \rightarrow\:\texttt{fresh}\:\}}
+    \end{prooftree}
+  \end{center}
+
 
   For example, let $\textsc{Code} := \lstinline|int old = 0; while (<mask> < 10) {...}|$ and assume we have a pretrained language model $\mathcal{M}_\theta: \lstinline|String|\rightarrow\lstinline|String|$ which gives the completion:
 
@@ -123,29 +176,34 @@
     \mathcal{M}_\theta[\textsc{Code}] \vdash \textsc{Code}\:\{\texttt{<mask>} \rightarrow \:\texttt{old}\}
   \end{equation}
 
-  If we then rename the variable \texttt{old} to \texttt{fresh} inside the fragment \textsc{Code}, we would expect our language model's completion to shift in kind, a property we call \textit{name equivariance}:
+  If we then rename the variable \texttt{old} to \texttt{fresh} inside the fragment \textsc{Code}, we would expect our language model's completion to shift in kind, a property we call \textit{name equivariance}. Importantly, we require fresh name generation to ensure capture-avoiding substitution:
 
   \begin{center}
     \begin{prooftree}
       \AxiomC{Γ \vdash \:$\mathcal{M}_{\theta}$}
-      \AxiomC{\textsc{Code}}
-      \AxiomC{\{\texttt{old} \rightarrow\:\texttt{fresh}\}: \lstinline|String| → \lstinline|String|}
+      \AxiomC{\texttt{code}: \textsc{Code}}
+      \AxiomC{\{\texttt{old} \rightarrow\:\texttt{fresh}\}: \textsc{Name} \rightarrow \:!\textsc{Name}}
       \RightLabel{\textsc{NameEquivariance}}
-      \TrinaryInfC{$\Gamma \vdash \mathcal{M}_{\theta}[\textsc{Code}\:\{\texttt{old} \rightarrow\:\texttt{fresh}\}] = \mathcal{M}_{\theta}[\textsc{Code}]\{\texttt{old} \rightarrow\:\texttt{fresh}\}$}
+      \TrinaryInfC{$\Gamma \vdash \mathcal{M}_{\theta}[\texttt{code}\:\{\texttt{old} \rightarrow\:\texttt{fresh}\}] = \mathcal{M}_{\theta}[\texttt{code}]\{\texttt{old} \rightarrow\:\texttt{fresh}\}$}
+    \end{prooftree}
+  \end{center}
+
+  Consider another: if we reorder the arguments of a project-local function, we would expect the model to perform identically over all masked tokens, said arguments notwithstanding:
+
+  \begin{center}
+    \begin{prooftree}
+      \AxiomC{Γ \vdash \:$\mathcal{M}_{\theta}$}
+      \AxiomC{\texttt{code}: \textsc{Code}}
+      \AxiomC{\texttt{fn(args)}: \textsc{ProjectLocal}}
+      \RightLabel{\textsc{ArgOrderInvariance}}
+      \TrinaryInfC{$\Gamma \vdash \mathcal{M}_{\theta}[\texttt{code}] = \mathcal{M}_{\theta}[\texttt{code}\:\{\texttt{fn(...)} \rightarrow\:\texttt{fn(}$\faRandom$\texttt{args)}\}]$}
     \end{prooftree}
   \end{center}
 
 As documented by prior literature, neural language models can be prone to semantic drift that is not supported by the underlying language semantics. The question becomes, how do we estimate the robustness of those models to rewrites which are known \textit{a priori} to be cosmetic in nature? In our work, we address this question by identifying four classes of cosmetic rewrites, apply them to a dataset of Java source code, and measure the relative drift of four SoTA pretrained language models across three separate code completion tasks.
 
-The paper is structured as follows. In Sec.~\ref{sec:background}, we give some background on the methods and problem at hand. In Sec.~\ref{sec:related_work} we give some related work. In Sec.~\ref{sec:method}, we describe our method. In Sec.~\ref{sec:results} we give some results and discuss their implications. Finally, in Sec. ~\ref{sec:conclusion} we give some concluding remarks. Our results are fully reproducible and can be found at: \url{https://anonymous.4open.science/r/cstk-1458}.
 
-
-
-First conceived in the software testing literature, metamorphic testing~\cite{chen1995metamorphic} is a concept known in machine learning as \textit{self-supervision}. In settings where labels are scarce but invariant to certain groups of transformation or \textit{metamorphic relations}, given a finite labeled dataset, one can generate an effectively limitless quantity of synthetic data by selecting and recombining those transformations in an orderly manner. For example, computer vision models should be invariant to shift, scale and rotation: given a small dataset of labeled images, we can apply these transformations to generate much larger training or validation set. Could similar kinds of transformations exist for code?
-
-  \section{Related Work}\label{sec:related_work}
-
- Recent work in neural language modeling has shown impressive progress in long-range sequence prediction, starting with self-attention~\citep{vaswani2017attention}, to the BERT~\citep{devlin2018bert} and RoBERTa~\citep{liu2019roberta} architectures, now widely available in neural code completion models such as CodeBERT~\citep{feng2020codebert} and GraphCodeBERT~\citep{guo2021graphcodebert}. However these models have known limitations, such as their inability to represent long-term dependencies and their sensitivity to noise in the input space~\cite{sun2020adv}. Similar studies have been undertaken to study the robustness of pretrained language models of source code~\citep{bielik2020adversarial, zhou2021adversarial}. Due to the clear distinction between syntax and semantics in programming languages, one can more precisely reason about semantically admissible perturbations, a task which is considerably more difficult in natural languages. Similar research has been undertaken~\citep{weiss2018practical, chirkova2020empirical, chen2021evaluating} to characterize the families of computational languages neural language models can recognize in practice. Our work builds on this literature from an engineering standpoint: we investigate how neural code completion models respond to plausible cosmetic variation. Applying synthetic transformations to a datatset of naturally-occurring code snippets, we compare the robustness of four SoTA neural language models on three downstream tasks: code completion, document completion, and variable misuse. %We have identified three high-level categories of source code transformations:
+%We have identified three high-level categories of source code transformations:
 
 %  \begin{enumerate}[itemsep=1ex]
 %    \item \textbf{Syntactic}, which may be valid (i.e., parsable) or invalid (e.g., typos, imbalanced parentheses, unparsable code)
@@ -155,41 +213,8 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
 
 %  In contrast with syntactic or semantic transformations, cosmetic transformations are semantically identical, syntactically valid and only superficially alter syntactic structure. We show that even in this highly restrictive space of transformations, source code has many degrees of freedom: two authors implementing the same function may select different variable names or other cosmetic features, such as whitespaces, diagnostic statements or comments.  Yet our results suggest that even in this narrow space of transformations, SoTA neural code completion models can be surprisingly sensitive to noise in the cosmetic domain space.
 
-
   \section{Method}\label{sec:method}
 
-  We define the following four transformations and examine their effect on language models.
-
-  \begin{center}
-      \begin{prooftree}
-        \AxiomC{Γ \vdash \:\texttt{function(args)}}
-        \AxiomC{$\texttt{function} \not\in \textsc{StandardLibrary}$}
-        \RightLabel{\textsc{PermuteArguments}}
-        \BinaryInfC{Γ \vdash \:\textsc{Code}\:\{\texttt{function(args)} \rightarrow\:\texttt{function(}\faRandom\texttt{args)}\}}
-      \end{prooftree}
-
-      \begin{prooftree}
-        \AxiomC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
-        \AxiomC{\textsc{Tokens}(\texttt{line\_1}) \cap\:\textsc{Tokens}(\texttt{line\_2}) = \varnothing}
-        \RightLabel{\textsc{SwapIndepLines}}
-        \BinaryInfC{Γ \vdash \,\,\stackanchor{\textvisiblespace\texttt{line\_2;}}{\textvisiblespace\texttt{line\_1;}}}
-      \end{prooftree}
-
-      \begin{prooftree}
-        \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
-        \AxiomC{\stackanchor{\textvisiblespace\texttt{line\_1;}}{\textvisiblespace\texttt{line\_2;}}}
-%        \AxiomC{\texttt{print} \not\in\:\textsc{Tokens}(\texttt{line\_1} \:\oplus\, \texttt{line\_2})}
-        \RightLabel{\textsc{AddExtraLogging}}
-        \BinaryInfC{\Shortstack[l]{{\vphantom{\texttt{line\_1;}}} {Γ \vdash} {\vphantom{\texttt{line\_1;}}}}  \:\Shortstack[l]{{\textvisiblespace\texttt{line\_1;}} {\textvisiblespace\texttt{println("var: \$var");}} {\textvisiblespace\texttt{line\_3;}}}}
-      \end{prooftree}
-
-      \begin{prooftree}
-        \AxiomC{Γ \vdash \:\texttt{var} \in\:\textsc{ScopedNames}}
-        \AxiomC{\texttt{fresh} \in\:\textsc{Synonyms}(\texttt{var}) \setminus\:\textsc{ScopedNames}}
-        \RightLabel{\textsc{Rename}}
-        \BinaryInfC{Γ \vdash \,\,\textsc{Code}\:\{\:\texttt{var} \rightarrow\:\texttt{fresh}\:\}}
-    \end{prooftree}
-  \end{center}
 
   Each task is performed using a special hole-filling strategy and models are scored using a task-appropriate metric.
   We can simulate various kinds of tasks by conditioning on the masked tokens in various ways.
@@ -207,7 +232,7 @@ First conceived in the software testing literature, metamorphic testing~\cite{ch
 
   where $\textsc{Model}^{k}$ denotes autoregressively sampling $k$ consecutive tokens, and $\Delta_\text{Syn}$ denotes the synonym overlap between the original and synthetic comments.
 
-  For question answering, e.g., variable misuse, we use mean reciprocal rank (MRR):
+  For question answering, e.g., variable misuse, we use mean reciprocal rank (MRR) with a set of \textsc{Hints}, sampled uniformly from the surrounding context:
 
 \begin{equation*}
 \text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{Rank}\big(\texttt{tok}, \textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\rightarrow\:\texttt{<mask>}\:\}, \textsc{hints})\big)^{-1}
@@ -366,7 +391,8 @@ Idempotent SCTs (i.e., snippets which remain unchanged after the SCT is applied)
 
   Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of the model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
 
-  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations.
+  Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations. Our results are fully reproducible and can be found at: \url{https://anonymous.4open.science/r/cstk-1458}.
+
   \pagebreak\bibliography{iclr2022_conference}
   \bibliographystyle{plain}
   \appendix
