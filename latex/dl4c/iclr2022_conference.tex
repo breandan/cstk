@@ -107,9 +107,9 @@
 
   Neural language models (NLMs) play an increasingly synergistic role in software engineering, and are featured prominently in recent work on neural code completion~\citep{chen2021evaluating}. Code completion is the task of automatically providing a list of potential completions for missing tokens in source code. By training on a large corpus of source code, NLMs are capable of learning syntax~\citep{chirkova2020empirical, troshin2022probing}, stylistic elements like coding conventions~\citep{parr2016towards} as well as more complex patterns like documentation~\citep{hu2018deep}. The same pretrained model can be applied to a variety of programming tasks, such as code summarization and bug detection, by strategically placing the holes and conditioning the model's predictions on an appropriate sample space.
 
-  However, there are risks associated with using NLMs. In the natural language domain, these models can be sensitive to stylistic variation, which is difficult to detect a priori and may lead users into a false sense of complacency. Likewise, applying a code completion model in an unfamiliar context may result in predictions which are misaligned with developer intent, especially when the surrounding style, idioms, or APIs depart from the model's original training set. This phenomenon, called `domain mismatch' or `overfitting', is known to affect statistical learning writ large and the specific factors responsible for its occurrence in source code can be identified using domain-specific tests such as the ones we propose herein.
+  However, there are risks associated with using NLMs~\citep{hellendoorn2017deep}. In the natural language domain, these models can be sensitive to stylistic variation, which is difficult to detect a priori and may lull users into a false sense of complacency. Likewise, applying NLMs in an unfamiliar coding context may result in predictions which are misaligned with developer intent, especially when the surrounding style, idioms, or APIs depart from the model's original training set. This phenomenon, called `domain mismatch' or `overfitting', is known to affect statistical learning writ large and the specific factors responsible for its occurrence in source code can be identified using domain-specific tests such as the ones we propose herein.
 
-  Inspired by recent work investigating the robustness of neural language models in natural language processing, we develop a methodology for systematically evaluating neural code completion models using common source code transformations (SCTs). As a demonstration, we define a set of semantics-preserving transformations, and measure the distributional shift induced by applying them to a large collection of code fragments on four pretrained models. We compare the same models and transformations across three downstream tasks, i.e., code completion, document synthesis, and variable misuse detection. Our results provide insights into the strengths and weaknesses of those models, and serve as a foundation for future work towards improving the accuracy and robustness of neural code completion.
+  Inspired by recent work investigating the robustness of NLMs in both natural language~\citep{wang2020cat} and source code~\citep{ramakrishnan2020semantic}, we develop a methodology for systematically evaluating neural code completion models using common source code transformations (SCTs). As a demonstration, we define a set of semantics-preserving transformations, and measure the distributional shift induced by applying them to a large collection of code fragments on four pretrained models. We compare the same models and transformations across three downstream tasks, i.e., code completion, document synthesis, and variable misuse detection. Our results provide insights into the strengths and weaknesses of those models, and serve as a foundation for future work towards improving the accuracy and robustness of neural code completion via retraining.
 
   \section{Related Work}\label{sec:related_work}
 
@@ -133,12 +133,12 @@
 
   As documented by prior literature, neural language models can be prone to semantic drift that is not supported by the underlying language semantics. The question becomes, how do we estimate the robustness of those models to rewrites which are known \textit{a priori} to be cosmetic in nature? Our work addresses this question by identifying four classes of cosmetic rewrites, applies them to a dataset of Java source code, and measures the relative drift of four SoTA pretrained language models across three separate code completion tasks.
 
-We have identified three high-level categories of source code transformations:
+Our work identifies three high-level categories of source code transformations:
 
   \begin{enumerate}[itemsep=1ex]
-    \item \textbf{Syntactic}, which may be valid (i.e., parsable) or invalid (e.g., typos, imbalanced parentheses, unparsable code)
-    \item \textbf{Semantic}, either preserving (functional code clones) or altering (e.g., dis-equal constant or expression rewriting)
-    \item \textbf{Cosmetic}, e.g., variable renaming, independent statement reordering, extra documentation, dead code, or logging
+    \item \textbf{Syntactic}, which may produce a valid or invalid parse tree. For example: simple refactoring, typos, imbalanced parentheses, unparsable code.
+    \item \textbf{Semantic}, which may either preserve or alter the program's meaning. For example: functional code clones, dis-equal constant or expression rewriting.
+    \item \textbf{Cosmetic}, which is strictly superficial. For example: variable renaming, independent statement reordering, extra documentation, dead code, or logging.
   \end{enumerate}
 
   In contrast with syntactic or semantic transformations, cosmetic transformations are semantically identical, syntactically valid and only superficially alter syntactic structure. We show that even in this highly restrictive space of transformations, source code has many degrees of freedom: two authors implementing the same function may select different variable names or other cosmetic features, such as whitespaces, diagnostic statements or comments.  Yet our results suggest that even in this narrow space of transformations, SoTA neural code completion models can be surprisingly sensitive to noise in the cosmetic domain.
@@ -148,13 +148,13 @@ We have identified three high-level categories of source code transformations:
   Our goal is to measure the robustness of SoTA neural code completion models on natural code fragments exposed to various cosmetic transformations. Hence, we construct one SCT from each of the following four categories of cosmetic changes:
 
   \begin{enumerate}[itemsep=1ex]
-    \item \textbf{Synonym renaming}: substitutes variable names with synonyms
-    \item \textbf{Extraneous code}: sprinkles non-essential statements into code
-    \item \textbf{Statement reordering}: reorders dataflow independent statements
-    \item \textbf{Permute argument order}: scrambles user-defined method arguments
+    \item \textbf{Synonym renaming}: substitutes variable names with synonyms.
+    \item \textbf{Extraneous code}: sprinkles non-essential statements into code.
+    \item \textbf{Statement reordering}: reorders dataflow independent statements.
+    \item \textbf{Permute argument order}: scrambles user-defined method arguments.
   \end{enumerate}
 
-  Put simply, our SCTs are implemented as follows:
+  Put simply, we use the following rewriting criteria to implement our SCTs:
 
   \begin{enumerate}[itemsep=1ex]
     \item The \textsc{RenameTokens} SCT substitutes each CamelCase subword in the most frequent user-defined token with a uniformly-sampled lemma from its WordNet hypernym ego graph up to three hops away, representing an alternately-chosen (e.g., variable or function) name of similar meaning.
@@ -163,9 +163,9 @@ We have identified three high-level categories of source code transformations:
     \item The \textsc{PermuteArguments} SCT shuffles the arguments of a user-defined function of dyadic or higher-arity, representing an alternate parameter order of a project-local function (i.e., defined outside the standard library).
   \end{enumerate}
 
-  For a more rigorous description of each of our rewrite semantics, please refer to Appendix~\ref{sec:rewrite_semantics}.
+  For a more technical description of our rewrite semantics, please refer to Appendix~\ref{sec:rewrite_semantics}.
 
-  Three tasks are considered. Each task uses a custom mask generator, allowing us to simulate multiple downstream tasks with the same test harness, only varying the mask locations and admissible completions. Each task is scored with a task-appropriate metric. For single-token completion, we compare the top-1 precision across the full vocabulary and all masks:
+  Three tasks are considered. Each task uses a custom mask generator, allowing us to simulate multiple downstream tasks with the same test harness, only modifying the mask locations and admissible completions. Each task is scored with a task-appropriate metric. For single-token completion, we compare the top-1 precision across the full vocabulary and all masks:
 
   \begin{equation*}
     \text{Precision@1} = \frac{1}{{|\textsc{Tokens}|}}\sum_{\texttt{tok}\in \textsc{Tokens}}\textsc{Model}(\textsc{Code}\:\{\:\small{\texttt{tok}}\:\mapsto\small{\texttt{<mask>}}\:\}) = \:\textsc{Code}
@@ -174,7 +174,7 @@ We have identified three high-level categories of source code transformations:
   For document synthesis, we use a variant of the ROUGE score measuring synonym overlap:
 
   \begin{equation*}
-    \text{ROUGE-Synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\textsc{Code}\:\{\:\small{\texttt{//comment}}\:\mapsto\texttt{//<mask>}\:\}), \:\texttt{//comment})
+    \text{ROUGE-synonym} = \Delta_{\text{Syn}}(\textsc{Model}^{k}(\textsc{Code}\:\{\:\small{\texttt{//comment}}\:\mapsto\texttt{//<mask>}\:\}), \:\texttt{//comment})
   \end{equation*}
 
   where $\textsc{Model}^{k}$ denotes autoregressively sampling $k$ consecutive tokens, and $\Delta_\text{Syn}$ denotes the unigram synonym overlap between the original and synthetic comments.
@@ -185,12 +185,9 @@ We have identified three high-level categories of source code transformations:
     \text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{Rank}\big(\texttt{tok}, \textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\mapsto\texttt{<mask>}\:\}, \textsc{hints})\big)^{-1}
   \end{equation*}
 
-  For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code fragment for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code fragment. An example of this procedure may be found in Fig.~\ref{fig:code_completion}.
+  For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code fragment for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code fragment. An example may be found in Fig.~\ref{fig:code_completion}.
 
-% The model correctly predicted $\frac{2}{3}$ masked tokens in the original fragment, and $\frac{1}{3}$ after renaming, so the relative accuracy is $\frac{\frac{2}{3} - \frac{1}{3}}{\frac{2}{3}} = \frac{1}{2}$.
-
-  Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. In the following example, we apply the \textsc{Rename} SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, before and after applying the SCT. An example of this procedure may be found in Fig.~\ref{fig:document_synthesis}.
-
+  Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. An example of may be found in Fig.~\ref{fig:document_synthesis}.
 
   Our dataset was constructed by cloning a hundred of the highest-starring Java repositories hosted by GitHub organizations with over 100 forks and between 1 and 10 MB in size, sorted by issue activity. Selecting projects matching these criteria will retrieve a diverse collection of active repositories with enterprise-level code quality and reasonable stylistic diversity.
 
@@ -201,18 +198,20 @@ We have identified three high-level categories of source code transformations:
   \section{Results and discussion}\label{sec:results}
 
   \vspace{-10pt}\begin{figure}[H]
-                  \centering\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Code Completion}\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Document Synthesis}\hspace*{-0.6cm}
-                  \includegraphics[width=0.38\textwidth]{figs/Variable Misuse}
-                  \caption{Semantic shift across all models and transformations.}
-                  \label{fig:semantic_drift}
+          \centering\hspace*{-0.6cm}
+          \includegraphics[width=0.38\textwidth]{figs/Code Completion}\hspace*{-0.6cm}
+          \includegraphics[width=0.38\textwidth]{figs/Document Synthesis}\hspace*{-0.6cm}
+          \includegraphics[width=0.38\textwidth]{figs/Variable Misuse}
+          \caption{Semantic shift across all tasks (code completion, document synthesis and variable misuse), models (GraphCodeBERT, CodeBERT, CodeBERT-Small, RoBERTa-Java) and SCTs (\textsc{Rename}, \textsc{AddExtraLogging}, \textsc{SwapIndepLines}, \textsc{PermuteArguments}).}
+      \label{fig:semantic_drift}
   \end{figure}
 
-  Examining the results in Fig.~\ref{fig:semantic_drift}, we make the following observations:
+
+
+  A careful examinination of the results in Fig.~\ref{fig:semantic_drift} allows us to draw the following conclusions:
 
   \begin{itemize}
-    \item The results of this study confirm that models specifically intended to handle source code, (i.e., CodeBERT and GraphCodeBERT) are generally more robust to transformation than those designed for text alone (i.e., RoBERTa).
+    \item Models specifically intended to handle source code, (i.e., CodeBERT and GraphCodeBERT) are more robust than those designed for text alone (i.e., RoBERTa).
     \item RoBERTa would appear to be uniquely sensitive to \textsc{PermuteArguments} and \textsc{AddExtraLogging}, a pathology which none of its code cousins shared.
     \item \textsc{RenameTokens} appears to have a detrimental effect across the board.
     \item \textsc{SwapIndepLines} seems to have a negligible effect. This result aligns with the word order findings reported by Sinha et al.~\citep{sinha2021masked} in natural language.
@@ -220,23 +219,23 @@ We have identified three high-level categories of source code transformations:
     \item Document synthesis has a fairly high variance. This may be due to poor alignment between the metric and the task. While comments are qualitatively passable, the $\Delta_{\text{Sym}}$ metric does poorly at discriminating between good comments and bad ones.
   \end{itemize}
 
- For further details and qualitative examples from the code and document synthesizer, we refer the reader to Appendix~\ref{sec:examples}.
+ For samples from the code and document synthesizer, we refer the reader to Appendix~\ref{sec:examples}.
 
   \section{Future work}
 
-  For simplicity's sake, we implemented our transformations using a set of ad-hoc regular expressions. Despite its simplicity, the regex-based SCT approach has some shortcomings. Although regular expressions are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one must really use full-fledged term rewriting system, such as higher-order abstract syntax or some kind of parser-combinator. Several options were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
+  % For simplicity's sake, we implemented our transformations using a set of ad-hoc regular expressions, however this approach has some shortcomings. Although RegExs are easy to implement and do support rudimentary transformations, they are a crude way to manipulate source code. In order to generate semantically valid transformations, one should really use a proper metaprogramming library. Several were evaluated, including OpenRewrite, TXL~\citep{cordy2004txl}, Refal~\citep{gurin1991refal} et al., but their features were ultimately found wanting (e.g., poor error recovery) and the complexity of using them (e.g., parsing, API integration) proved too burdensome.
 
   Our SCTs can be viewed as ``possible worlds'' in the tradition of modal logic: the original author plausibly could have written the same procedure in a slightly different form. Although we are unable to access all these worlds, we can posit the existence and likelihood of some, and given a dataset of code fragments, begin to probe a candidate model's predictions.
 
   One intriguing avenue for future work would be to consider combinations of source code transformations. This would vastly expand the cardinality of the validation set, enabling us to access a much larger space of possible worlds, albeit potentially at the risk of lower semantic admissibility, as arbitrary combinations of SCTs can quickly produce invalid code. This presents an interesting engineering challenge and possible extension to this work.
 
-  Although we currently only use average mutlimask accuracy and ROUGE-synonym metrics, it would be useful to incorporate various other metrics such as mean average precision (MAP), mean reciprocal rank (MRR), and normalized discounted cumulative gain (NDCG). In addition to their utility as yardstick for evaluating model robustness, these metrics can be used to retrain those same models, a direction we hope to explore in future work.
+  Although we currently only use average precision, ROUGE-synonym and mean reciprocal rank, it would be useful to report Kantorovich-Rubinstein distance and other probability metrics. In addition to their utility for evaluating model robustness, these metrics can also be used to retrain those same models, a direction we hope to explore in future work.
 
   Finally, one could imagine using the code completion model itself to generate code for testing the same model. We have implemented this functionality to a limited extent in the \textsc{AddExtraLogging} SCT, in which the model synthesizes a single token to log, and the \textsc{InsertComment} SCT, where the model inserts a short comment. While this approach could be a useful way to generate additional training data, it would would require careful monitoring and postprocessing to avoid introducing unintended feedback loops.
 
   \section{Conclusion}\label{sec:conclusion}
 
-  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of their model's robustness to naturally-occurring variance. Our work helps to address this use case, treating the model as a black box: it does not require direct access to the model parameters or training data.
+  Neural language models hold much promise for improved code completion, however complacency can lead to increased reviewer burden or more serious technical debt if widely adopted. While trade secrecy may prevent third-party inspection of pretrained models, users would still like some assurance of their model's robustness to naturally-occurring variance. Our work helps to address this use case by treating the model as a black box: it does not require direct access to the model parameters or training data to evaluate its generalization ability.
 
   Our contributions in this work are twofold: we demonstrate that SoTA neural language models for source code, despite their effectiveness on long-range sequence prediction tasks, are unpredictable in the presence of specifically-constructed cosmetic variation. We also describe a systematic approach and open source implementation of a newly-developed software toolkit which allows users to empirically probe a candidate model's robustness to various categories of syntactic and semantic source code transformations. Our results are fully reproducible and can be found at: \url{https://anonymous.4open.science/r/cstk-dl4c}.
 
@@ -388,6 +387,8 @@ We have identified three high-level categories of source code transformations:
 
   \section{Examples}\label{sec:examples}
 
+
+
   \begin{figure}[H]
     \begin{center}
       \begin{tabular}{|p{5cm}|p{5cm}|}
@@ -429,10 +430,9 @@ We have identified three high-level categories of source code transformations:
         \end{lstlisting} \\\hline
       \end{tabular}
     \end{center}
-    \caption{Code completion side by side.}
+    \caption{Here, we apply the \textsc{RenameTokens} SCT, then mask various tokens in the surrounding context and report the model's predictions. In this example, the model correctly predicts $\frac{2}{3}$ masks in the original method and $\frac{1}{3}$ after renaming.}
     \label{fig:code_completion}
   \end{figure}
-
 
   \begin{figure}[H]
     \begin{center}
@@ -466,11 +466,11 @@ We have identified three high-level categories of source code transformations:
         \end{lstlisting}\\\hline
       \end{tabular}
     \end{center}
-    \caption{Document synthesis example.}
+    \caption{Here, we apply the \textsc{Rename} SCT, then mask the comment on line 3 and autoregressively sample tokens from the decoder to generate two synthetic comments, one before and one after applying the SCT. The stemmed synonym overlap is \texttt{build, compile, test, } before applying the SCT and \texttt{actual, build, test} afterwards.}
     \label{fig:document_synthesis}
   \end{figure}
 
-  Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples. It is possible to construct a more sophisticated natural language filter, however we did not explore this idea in great depth.
+  Initially, we seeded the document completion using \lstinline|//<MASK>| and applied a greedy autoregressive decoding strategy, recursively sampling the softmax top-1 token and subsequently discarding all malformed comments. This strategy turns out to have a very high rejection rate, due to its tendency to produce whitespace or unnatural language tokens (e.g., greedy decoding can lead to sequences like \lstinline|// ///// //| or temporarily disabled code, e.g., \lstinline|// System.out.println("debug")|). A simple fix is to select the highest-scoring prediction with natural language characters. By conditioning the decoder on at least one alphabetic character per token, one obtains more coherent documentation and rejects fewer samples from the resulting comment. It is possible to construct a more sophisticated natural language filter, however the authors did not explore this idea in great depth.
 
 \section{Tokenization}
 
