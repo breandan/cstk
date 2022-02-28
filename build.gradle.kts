@@ -55,7 +55,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.18.2"
+  val openrwVersion = "7.19.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -132,7 +132,7 @@ dependencies {
   implementation("guru.nidi:graphviz-kotlin:0.18.1")
 
   implementation("ai.hypergraph:kaliningraph:0.1.9")
-  implementation("io.github.vovak:astminer:0.8.0")
+  implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
 
   // Source Code Transformations
