@@ -129,11 +129,11 @@
 
   \pagebreak\section{Background}\label{sec:background}
 
-  The same program can be written in many possible ways. Often, those variants contain superficial changes to the source code, but do not meaningfully alter the behavior of the underlying program. No matter the context, neural language models should not become suddenly confused when presented with a cosmetically altered program: a model trained on a language semantically invariant to certain rewrites should itself exhibit invariance under those same rewrites. However this property may not necessarily hold.
+  The same program can be written in many possible ways. Often, those variants contain superficial changes to the source code, but do not meaningfully alter the behavior of the underlying program. Regardless of the surrounding context, neural language models should not become suddenly confused when presented with a cosmetically altered program: a model trained on a language semantically invariant to certain rewrites should itself exhibit invariance under those same rewrites. However this property may not necessarily hold.
 
   As documented by prior literature, neural language models can be prone to semantic drift that is not supported by the underlying language semantics. The question becomes, how do we estimate the robustness of those models to rewrites which are known \textit{a priori} to be cosmetic in nature? Our work addresses this question by identifying four classes of cosmetic rewrites, applies them to a dataset of Java source code, and measures the relative drift of four SoTA pretrained language models across three separate code completion tasks.
 
-Our work identifies three high-level categories of source code transformations:
+We have identified three high-level categories of source code transformations:
 
   \begin{enumerate}[itemsep=1ex]
     \item \textbf{Syntactic}, which may produce a valid or invalid parse tree. For example: simple refactoring, typos, imbalanced parentheses, unparsable code.
@@ -154,7 +154,7 @@ Our work identifies three high-level categories of source code transformations:
     \item \textbf{Permute argument order}: scrambles user-defined method arguments.
   \end{enumerate}
 
-  Put simply, we use the following rewriting criteria to implement our SCTs:
+  Put simply, we use the following rewriting criteria to produce semantically admissible SCTs:
 
   \begin{enumerate}[itemsep=1ex]
     \item The \textsc{RenameTokens} SCT substitutes each CamelCase subword in the most frequent user-defined token with a uniformly-sampled lemma from its WordNet hypernym ego graph up to three hops away, representing an alternately-chosen (e.g., variable or function) name of similar meaning.
@@ -179,21 +179,21 @@ Our work identifies three high-level categories of source code transformations:
 
   where $\textsc{Model}^{k}$ denotes autoregressively sampling $k$ consecutive tokens, and $\Delta_\text{Syn}$ denotes the unigram synonym overlap between the original and synthetic comments.
 
-  For question answering, i.e., variable misuse, we use mean reciprocal rank (MRR) with a set of multiple-choice distractors sampled uniformly from the surrounding context:
+  For question answering, i.e., variable misuse, we use mean reciprocal rank (MRR) with a set of multiple-choice distractors, \textsc{Dupes}, sampled uniformly from the surrounding context:
 
   \begin{equation*}
-    \text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{Rank}\big(\texttt{tok}, \textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\mapsto\texttt{<mask>}\:\}, \textsc{hints})\big)^{-1}
+    \text{MRR} = \frac{1}{|\textsc{Tokens}|} \sum_{\texttt{tok}\in\textsc{Tokens}} \textsc{Rank}\big(\texttt{tok}, \textsc{Model}(\textsc{Code}\:\{\:\texttt{tok}\:\mapsto\texttt{<mask>}\:\}, \texttt{tok}\cup\textsc{Dupes})\big)^{-1}
   \end{equation*}
 
-  For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code fragment for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code fragment. An example may be found in Fig.~\ref{fig:code_completion}.
+  For code completion, we uniformly sample and mask $N$ individual tokens in both the original and transformed code fragment for evaluation. We then collect the model's highest-scoring predictions for each mask location, and average the completion accuracy on the original and transformed code fragment. An example of one such scenario is provided in Fig.~\ref{fig:code_completion}.
 
   Similarly, for document synthesis, we mask a naturally-occurring comment and autoregressively synthesize a new one in its place, then compare the ROUGE-scores of the synthetic documents before and after transformation. An example of may be found in Fig.~\ref{fig:document_synthesis}.
 
   Our dataset was constructed by cloning a hundred of the highest-starring Java repositories hosted by GitHub organizations with over 100 forks and between 1 and 10 MB in size, sorted by issue activity. Selecting projects matching these criteria will retrieve a diverse collection of active repositories with enterprise-level code quality and reasonable stylistic diversity.
 
-  We executed a full factorial experiment consisting of four SCTs, four state-of-the-art pretrained models (GraphCodeBERT, CodeBERT, CodeBERT-Small, RoBERTa-Java) and three downstream tasks (code completion and document synthesis). While the number of samples may vary per-model and per-bucket, we provide the same wall clock time (360 minutes) and hardware resources (nVIDIA Tesla V100) to each model. The number of code fragments each can evaluate in the allotted time varies depending on the architecture, but in each case, the significant figures have mostly converged.
+  We conducted a full-factorial randomized trial consisting of four state-of-the-art pretrained models (GraphCodeBERT, CodeBERT, CodeBERT-Small, RoBERTa-Java), four SCTs, and three downstream tasks (code completion and document synthesis). While the total samples per-model and per-task may vary, we provide the same wall clock time (360 minutes) and hardware resources (nVIDIA Tesla V100) to each model. The number of code fragments that can be evaluated in the allotted time varies depending on the architecture and task, but in each case, the significant figures have mostly converged.
 
-  Figure~\ref{fig:semantic_drift} captures the results of this process. Each table represents a 2D slice of the hypercube corresponding to a single task, with dual box-and-whisker plots for each model, before and after applying the transformation listed on the horizontal-axis. The raw data cube generated by our experimental pipeline can be found in the Appendix~\ref{sec:detailed_results}.
+  Figure~\ref{fig:semantic_drift} displays the results of this process. Each table represents a 2D slice of the hypercube corresponding to a single task, with dual box-and-whisker plots for each model, before and after applying the transformation listed on the horizontal-axis. The raw data cube generated by our experimental pipeline can be found in the Appendix~\ref{sec:detailed_results}.
 
   \section{Results and discussion}\label{sec:results}
 
@@ -205,8 +205,6 @@ Our work identifies three high-level categories of source code transformations:
           \caption{Semantic shift across all tasks (code completion, document synthesis and variable misuse), models (GraphCodeBERT, CodeBERT, CodeBERT-Small, RoBERTa-Java) and SCTs (\textsc{Rename}, \textsc{AddExtraLogging}, \textsc{SwapIndepLines}, \textsc{PermuteArguments}).}
       \label{fig:semantic_drift}
   \end{figure}
-
-
 
   A careful examinination of the results in Fig.~\ref{fig:semantic_drift} allows us to draw the following conclusions:
 
@@ -314,7 +312,7 @@ Our work identifies three high-level categories of source code transformations:
 
   \pagebreak\section{Detailed Results}\label{sec:detailed_results}
 
-  We ran three tasks, code completion, documentation synthesis and variable misuse.
+  We evaluated three tasks: code completion, documentation synthesis and variable misuse.
 
   \begin{center}
     \begin{table}[H]
@@ -329,10 +327,6 @@ Our work identifies three high-level categories of source code transformations:
       }
       \caption{\label{tab:code-comp}Mean and standard deviation for single-token code completion accuracy.}
     \end{table}
-  \end{center}
-
-
-  \begin{center}
     \begin{table}[H]
       \resizebox{\textwidth}{!}{%
         \begin{tabular}{r|cccc}
@@ -346,11 +340,8 @@ Our work identifies three high-level categories of source code transformations:
           huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.1101, 0.3932)}{(0.1143, 0.3645)} & \stackanchor{(0.1205, 0.4148)}{(0.1170, 0.3668)} & \stackanchor{(0.0997, 0.3912)}{(0.1125, 0.3811)} & \stackanchor{(0.1252, 0.5175)}{(0.1230, 0.3891)}\\\\
         \end{tabular}
       }
-      \caption{\label{tab:doc-synth}Mean and standard deviation ROUGE-score for document synthesis.}
+      \caption{\label{tab:doc-synth}Mean and standard deviation ROUGE-synonym score for document synthesis.}
     \end{table}
-  \end{center}
-
-  \begin{center}
     \begin{table}[H]
       \resizebox{\textwidth}{!}{%
         \begin{tabular}{r|cccc}
@@ -364,9 +355,11 @@ Our work identifies three high-level categories of source code transformations:
           huggingface/CodeBERTa-small-v1 \stackanchor{Before}{After}   & \stackanchor{(0.8182, 0.2480)}{(0.7569, 0.2334)} & \stackanchor{(0.7736, 0.2934)}{(0.8023, 0.2318)} & \stackanchor{(0.7954, 0.2670)}{(0.7861, 0.2720)} & \stackanchor{(0.7578, 0.3053)}{(0.8137, 0.2413)}\\\\
         \end{tabular}
       }
-      \caption{\label{tab:var-misuse}Mean and standard deviation MRR for variable misuse detection.}
+      \caption{\label{tab:var-misuse}Mean and standard deviation MRR for the variable misuse detection task.}
     \end{table}
   \end{center}
+
+  One can view each of the above tables as 2D projections of a hyperdistribution across the Cartesian product of all independent variables. To improve visual clarity and distinguish its most salient features, we apply a manual dimensionality reduction to reproject the datacube into boxplot-space, which is then colorfully rendered in Fig.~\ref{fig:semantic_drift} for the reader's convenience.
 
   \section{Experimental architecture}
 
@@ -383,11 +376,9 @@ Our work identifies three high-level categories of source code transformations:
 
   \noindent where \texttt{|} maps a function over a sequence, and \lstinline|zip| zips two sequences into a sequence of pairs. We assume \lstinline|snps| and \lstinline|msk| are fixed, and evaluate three neural code completion models across four different SCTs, and three separate tasks.
 
-  Using our framework, it is possible to view the marginals of a rank-n tensor, representing an n-dimensional hyper-distribution formed by the Cartesian product of all variables under investigation (e.g., SCT, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is indispensable when running on preemptible infrastructure and can be trivially parallelized to increase the experiment's statistical power or explore larger swaths of the experimental design space.
+  Using our framework, it is possible to view the marginals of a rank-n tensor, representing an n-dimensional hyper-distribution formed by the Cartesian product of all variables under investigation (e.g., SCT, task, model). During evaluation, we sample these independent variables uniformly using a quasirandom sequence to ensure entries are evenly populated. We then record the first and second moments of the dependent variable of interest using a sketch-based histogram. Results are continuously delivered to the user, who may preview 2D marginals of any pair and watch the error bounds grow tighter as additional samples are drawn. This feature is indispensable when running on preemptible infrastructure and can be trivially parallelized to increase the experiment's statistical power or sweep through more expansive regions of hyperparameter or experimental design space.
 
   \section{Examples}\label{sec:examples}
-
-
 
   \begin{figure}[H]
     \begin{center}
@@ -475,10 +466,10 @@ Our work identifies three high-level categories of source code transformations:
 \section{Tokenization}
 
   Let $\Sigma$ be any alphabet (in practice, CodeBERT uses UTF-8 although it is possible to encode Chinese by switching to UTF-16).
-  Let $\texttt{dict} \subset \Sigma^*\leftrightarrow\mathbb Z$ be a bijection between certain strings over $\Sigma$ and the integers.
-  Let bpe: $\Sigma^*\rightarrow\mathbb{Z}^*$ be an encoder that maps strings $\Sigma^*$ to a list of integers $\mathbb{Z}^*$.
-  \texttt{bpe} is defined as follows: $\texttt{bpe(s)} := \texttt{dict(s[1:p])} \oplus \texttt{bpe(s[p+1:|s|])}$ where $p = max \{ i \in \texttt{(1,|p|]} | \texttt{s[1:i]} \in \texttt{dict} \}$, $\oplus$ denotes list concatenation and $\texttt{s[a:b]}$ denotes the substring of \texttt{s} between indices a and b using 1-based indexing.
-  \texttt{dict} has the following property: $\forall s \in \Sigma^*, \texttt{bpe(s)} = [i_1, i_2, \ldots, i_n]$ implies $\texttt{dict}^{-1}(i_1) \oplus \texttt{dict}^{-1}(i_2) \oplus \texttt{dict}^{-1}(\ldots) \oplus \texttt{dict}^{-1}(i_n) = \texttt{s}$, i.e., \texttt{bpe} is a lossless compression scheme.
-  Furthermore, dict typically has the property that $\mathbb{E}[|\texttt{bpe(s)}|] \ll \mathbb{E}[|\texttt{s}|]$ over $\texttt{s} \in L \subset \Sigma^*$ where L is a language (e.g., NL or PL) in $\Sigma^*$, n.b., this is untrue if $\Sigma^*$ due to the pigeonhole principle.
+  Let $\texttt{dict} \subset \Sigma^*\leftrightarrow\mathbb Z$ denote a bijection between certain strings over $\Sigma$ and the integers.
+  Let $\texttt{bpe}: \Sigma^*\rightarrow\mathbb{Z}^*$ be an encoder that maps strings $\Sigma^*$ to a list of integers $\mathbb{Z}^*$.
+  \texttt{bpe} is defined as follows: $\texttt{bpe(s)} := \texttt{dict(s[1:p])}\:\oplus\:\texttt{bpe(s[p+1:|s|])}$ where $p = \max\:\{ i \in \texttt{(1,|p|]} | \texttt{s[1:i]} \in \texttt{dict} \}$, $\oplus$ denotes list concatenation and $\texttt{s[a:b]}$ denotes the substring of \texttt{s} between indices a and b using 1-based indexing.
+  \texttt{dict} has the following property: $\forall \texttt{s} \in \Sigma^*, \texttt{bpe(s)} = [i_1, i_2, \ldots, i_n]$ implies $\texttt{dict}^{-1}(i_1) \oplus \texttt{dict}^{-1}(i_2) \oplus \texttt{dict}^{-1}(\ldots) \oplus \texttt{dict}^{-1}(i_n) = \texttt{s}$, i.e., \texttt{bpe} is a lossless compression scheme.
+  Furthermore, \texttt{dict} typically has the property that $\mathbb{E}[|\texttt{bpe(s)}|] \ll \mathbb{E}[|\texttt{s}|]$ over $\texttt{s} \in L \subset \Sigma^*$ where L is a language in $\Sigma^*$ (e.g., NL or PL) -- n.b., this is untrue if $L = \Sigma^*$ due to the pigeonhole principle.
 
 \end{document}

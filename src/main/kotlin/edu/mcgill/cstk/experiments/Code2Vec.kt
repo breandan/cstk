@@ -40,8 +40,8 @@ fun Node.toKGraph() =
       successors = { flatMap { setOfNotNull(it.parent) + it.children }.toSet() }
     ).forEach { parent ->
       children.forEach { child ->
-        LGVertex(parent.token) - LGVertex(child.token)
-        LGVertex(child.token) - LGVertex(parent.token)
+        LGVertex(parent.token.toString()) - LGVertex(child.token.toString())
+        LGVertex(child.token.toString()) - LGVertex(parent.token.toString())
       }
     }
   }

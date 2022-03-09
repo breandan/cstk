@@ -86,7 +86,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.301")
+  implementation("org.kohsuke:github-api:1.303")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:4.19.0")
 
@@ -111,7 +111,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.58.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.59.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -131,12 +131,12 @@ dependencies {
   implementation("guru.nidi:graphviz-java:0.18.1")
   implementation("guru.nidi:graphviz-kotlin:0.18.1")
 
-  implementation("ai.hypergraph:kaliningraph:0.1.9")
+  implementation("ai.hypergraph:kaliningraph")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-4")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-7")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.0")
