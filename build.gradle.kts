@@ -35,6 +35,7 @@ dependencies {
   implementation("ai.djl.sentencepiece:sentencepiece:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-model-zoo:$djlVersion")
   implementation("ai.djl:model-zoo:$djlVersion")
+  implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
   val hnswlibVersion = "1.0.0"
@@ -168,6 +169,7 @@ tasks {
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",
+    "tokenize" to "edu.mcgill.cstk.utils.TokenizerKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
