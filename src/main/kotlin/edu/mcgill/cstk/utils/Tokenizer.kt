@@ -23,7 +23,8 @@ fun main() {
   )
   expected.joinToString(",").let { println(it) }
 
-  HuggingFaceTokenizer.newInstance("bert-base-cased", mapOf("addSpecialTokens" to "false"))
+  // RuntimeException: Model "microsoft/codebert-base-mlm" on the Hub doesn't have a tokenizer??
+  HuggingFaceTokenizer.newInstance("microsoft/codebert-base-mlm", mapOf("addSpecialTokens" to "false"))
     .use { tokenizer ->
       val encoding: Encoding = tokenizer.encode(inputs.asList())
       encoding.tokens.joinToString(",").let { println(it) }

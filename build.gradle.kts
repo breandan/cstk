@@ -183,8 +183,7 @@ tasks {
   }
 
   shadowJar {
-    manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.crawler.SampleGitlabKt"
+    manifest.attributes["Main-Class"] = "edu.mcgill.cstk.utils.TokenizerKt"
 //      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
