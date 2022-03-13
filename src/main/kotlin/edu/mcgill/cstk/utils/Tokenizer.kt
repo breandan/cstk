@@ -7,18 +7,8 @@ fun main() {
   val inputs = arrayOf("Hello, y'all!", "How are you 😁 ?")
 
   val expected = arrayOf(
-    "[CLS]",
-    "Hello",
-    ",",
-    "y",
-    "'",
-    "all",
-    "!",
-    "How",
-    "are",
-    "you",
-    "[UNK]",
-    "?",
+    "[CLS]", "Hello", ",", "y", "'", "all",
+    "!", "How", "are", "you", "[UNK]", "?",
     "[SEP]"
   )
   expected.joinToString(",").let { println(it) }
