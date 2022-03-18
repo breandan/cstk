@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_13
 plugins {
   kotlin("jvm") version "1.6.20-RC"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.0.1"
+  id("de.undercouch.download") version "5.0.2"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -52,7 +52,7 @@ dependencies {
   // CLI parser
   implementation("com.github.ajalt.clikt:clikt:3.4.0")
 
-  implementation("com.beust:klaxon:5.5")
+  implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
@@ -89,7 +89,7 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.303")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:4.19.0")
+  implementation("org.gitlab4j:gitlab4j-api:5.0.0")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.1.0")
 
@@ -98,7 +98,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.2.9972"
+  val ortoolsVersion = "9.3.10497"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -137,7 +137,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-7")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-8")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.0")
