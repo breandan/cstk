@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.math
 
+import ai.hypergraph.kaliningraph.types.times
 import com.github.jelmerk.knn.DistanceFunction
 import com.google.ortools.linearsolver.MPSolver
 import edu.mcgill.cstk.disk.DEFAULT_RAND
@@ -28,8 +29,9 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double =
 // https://developers.google.com/optimization/introduction/java#complete-program
 // https://developers.google.com/optimization/lp/glop#entire_program
   else MPSolver.createSolver("GLOP").run {
-    val (vars, dists) = cartProd(p1.indices, p2.indices)
-      .mapIndexed { i, (j, k) ->
+    val allPairs = p1.indices.toSet() * p2.indices.toSet()
+    val (vars, dists) =
+      allPairs.mapIndexed { i, (j, k) ->
         makeNumVar(0.0, 1.0, "x$i") to euclidDist(p1[j], p2[k])
       }.unzip()
 
@@ -40,7 +42,7 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double =
     // Ensure each row sums to 1
     makeConstraint(1.0, 1.0).apply {
       for (j in p1.indices)
-        cartProd(p1.indices, p2.indices)
+        allPairs
           .mapIndexedNotNull { i, (jj, _) -> if (j == jj) vars[i] else null }
           .forEach { setCoefficient(it, 1.0) }
     }
@@ -48,7 +50,7 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double =
     // Ensure each col sums to 1
     makeConstraint(1.0, 1.0).apply {
       for (k in p2.indices)
-        cartProd(p1.indices, p2.indices)
+        allPairs
           .mapIndexedNotNull { i, (_, kk) -> if (k == kk) vars[i] else null }
           .forEach { setCoefficient(it, 1.0) }
     }

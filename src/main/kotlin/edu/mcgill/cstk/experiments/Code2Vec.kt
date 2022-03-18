@@ -48,7 +48,7 @@ fun Node.toKGraph() =
 
 // Pad length to a common vector length for TNSE
 private fun List<DoubleMatrix>.permute(): Array<DoubleArray> =
-  maxOf { it.count { it.e3 != 0.0 } }.let { maxDim ->
+  maxOf { it.count { it.π3 != 0.0 } }.let { maxDim ->
     map { cur ->
       val data = cur.data
       val padded = DoubleArray(maxDim) { if (it < data.size) data[it] else 0.0 }

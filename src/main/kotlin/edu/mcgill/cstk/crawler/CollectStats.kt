@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.crawler
 
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.defaultTokenizer
 import edu.mcgill.cstk.nlp.*
@@ -90,7 +91,7 @@ fun URI.collectLineStats(filter: (URI) -> Boolean) {
     .groupBy { it.path.substringAfter("gcode/").substringBefore("/") }
     .entries.forEach { (repoName, uris) ->
       val licenses = mutableSetOf<String>()
-      val (totalLines, numHoles, numInherited) = uris.allTypes().fold(Triple(0, 0, 0)) { (a, b, c), it ->
+      val (totalLines, numHoles, numInherited) = uris.allTypes().fold(Π(0, 0, 0)) { (a, b, c), it ->
         val contents = it.toString()
         licenses.add(
           if ("Apache " in contents) "Apache"
@@ -102,7 +103,7 @@ fun URI.collectLineStats(filter: (URI) -> Boolean) {
         val lines = it.toString().lines()
         val holes = lines.filter { !it.isLineACommentOrEmpty() }
         val numInheritedMembers = it.numInheritedMembers()
-        Triple(a + lines.size + holes.size, b + holes.size, c + numInheritedMembers * holes.size)
+        Π(a + lines.size + holes.size, b + holes.size, c + numInheritedMembers * holes.size)
       }
 
       println("$repoName, ${licenses.joinToString("/")}, ${uris.size}, $totalLines, $numHoles, $numInherited")

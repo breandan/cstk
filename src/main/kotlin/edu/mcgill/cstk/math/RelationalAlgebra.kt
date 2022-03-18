@@ -1,10 +1,5 @@
 package edu.mcgill.cstk.math
 
-
-fun <T, U> cartProd(c1: Iterable<T>, c2: Iterable<U>): List<Pair<T, U>> =
-  c1.flatMap { lhsElem -> c2.map { rhsElem -> lhsElem to rhsElem } }
-
-
 fun <A: Any, B: Any> List<Pair<A?, B>>.filterFirstNotNull(): List<Pair<A, B>> =
   mapNotNull {
     when (val fst: A? = it.first) {

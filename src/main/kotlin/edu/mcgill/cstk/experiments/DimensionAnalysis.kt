@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments
 
+import ai.hypergraph.kaliningraph.types.times
 import edu.mcgill.cstk.math.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
@@ -10,17 +11,17 @@ fun main() {
   // Compare correlation between string metrics and learned metric along individual dimensions
   println("dim,correlation")
   (0 until data.first().second.size - 1).map { i ->
-    compareDistanceMetricsOnDim(data, (i..i + 1).toList())
+    compareDistanceMetricsOnDim(data.toSet(), (i..i + 1).toList())
   }.sortedBy { it.second }
     .forEach { println("${it.first.first()},${it.second}") }
 }
 
 private fun compareDistanceMetricsOnDim(
-  data: List<Pair<String, DoubleArray>>,
+  data: Set<Pair<String, DoubleArray>>,
   dims: Collection<Int>,
   stringMetric: MetricStringDistance = MetricCSNF,
-): Pair<Collection<Int>, Double> = cartProd(data, data)
-  .map { (s1, s2) ->
+): Pair<Collection<Int>, Double> =
+  (data * data).map { (s1, s2) ->
     stringMetric.distance(s1.first, s2.first) to
       euclidDist(s1.second.sliceArray(dims), s2.second.sliceArray(dims))
   }.map { (a, b) -> a to b }.unzip().let { (a, b) ->

@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.rewriting
 
+import ai.hypergraph.kaliningraph.types.Π
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
 import edu.mcgill.cstk.nlp.synonymize
@@ -176,7 +177,7 @@ tailrec fun String.fillOneByOne(): String =
 
 fun String.addExtraLogging(): String =
   (listOf("") + lines() + "").windowed(3, 1).joinToString("\n") { window ->
-    val (lastLine, thisLine, nextLine) = Triple(window[0], window[1], window[2])
+    val (lastLine, thisLine, nextLine) = Π(window[0], window[1], window[2])
 
     val loggingFrequency = 0.3 // Lower to decrease logging frequency
     if (loggingFrequency < DEFAULT_RAND.nextDouble()) return@joinToString thisLine

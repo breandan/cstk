@@ -120,12 +120,6 @@ fun restartServer(): Unit =
 //    restartServer()
   }
 
-@JvmName("cartProdPair") operator fun <T, Z> Set<T>.times(s: Set<Z>): Set<Pair<T, Z>> =
-  flatMap { l -> s.map { r -> Pair(l, r) }.toSet() }.toSet()
-
-@JvmName("cartProdTriple") operator fun <T, Y, Z> Set<Pair<T, Y>>.times(s: Set<Z>): Set<Triple<T, Y, Z>> =
-  flatMap { (l, ll) -> s.map { r -> Triple(l, ll, r) }.toSet() }.toSet()
-
 /** Defaults, configure custom special tokens in [Model] */
 const val UNK = "<unk>"
 const val CLS = "<cls>"
