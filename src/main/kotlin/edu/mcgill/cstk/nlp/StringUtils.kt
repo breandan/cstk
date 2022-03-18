@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.nlp
 
+import ai.hypergraph.kaliningraph.types.*
 import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
@@ -31,12 +32,12 @@ fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
     }.flatten()
 
 // Returns a list of all code fragments in all paths and their locations
-fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
+fun Sequence<URI>.allCodeFragments(): Sequence<Π2<Concordance, String>> =
   map { path ->
     path.allLines()
-      .mapIndexed { lineNum, line -> lineNum to line }
+      .mapIndexed { lineNum, line -> lineNum pp line }
       .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
-      .map { (ln, l) -> Concordance(path, ln) to l.trim() }
+      .map { (ln, l) -> Concordance(path, ln) pp l.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
@@ -56,11 +57,11 @@ fun Sequence<URI>.allMethods(
   parser: (String) -> List<String> = { file ->
     Launcher.parseClass(file).methods.map { it.toString() }
   }
-): Sequence<Pair<String, URI>> =
+): Sequence<Π2<String, URI>> =
   mapNotNull { path ->
     path.contents()?.let {
       try {
-        parser(it).map { it to path }
+        parser(it).map { it pp path }
       } catch (exception: Exception) {
         null
       }
@@ -103,12 +104,12 @@ fun Path.read(start: Int = 0, end: Int = -1): String? =
   }?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
-fun String.extractConcordances(query: String): Sequence<Pair<String, Int>> =
+fun String.extractConcordances(query: String): Sequence<Π2<String, Int>> =
   Regex(query).findAll(this).map {
     val range = 0..length
     val (matchStart, matchEnd) =
-      it.range.first.coerceIn(range) to (it.range.last + 1).coerceIn(range)
-    substring(matchStart, matchEnd) to matchStart
+      it.range.first.coerceIn(range) cc (it.range.last + 1).coerceIn(range)
+    substring(matchStart, matchEnd) pp matchStart
   }
 
 fun previewResult(query: String, loc: Concordance) =

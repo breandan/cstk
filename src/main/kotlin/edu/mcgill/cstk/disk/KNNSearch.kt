@@ -45,7 +45,7 @@ class KNNSearch: CliktCommand() {
 
   private fun generateGraphs(total: Int) {
     println("Regenerating $total graphs...")
-    fetchOrLoadSampleData().first.take(total).forEach { query ->
+    fetchOrLoadSampleData().cfs.take(total).forEach { query ->
       val id = query.hashCode().toString()
       knnIndex.edges(query)
         .toLabeledGraph()

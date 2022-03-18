@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.closure
 import ai.hypergraph.kaliningraph.graphs.*
 import ai.hypergraph.kaliningraph.tensor.DoubleMatrix
 import ai.hypergraph.kaliningraph.theory.gnn
+import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.show
 import astminer.common.model.*
 import astminer.parse.antlr.AntlrNode
@@ -81,10 +82,10 @@ private fun plot(
 fun mineASTs(
   dataDir: String = {}.javaClass.getResource("/datasets/python").path,
   parser: Parser<AntlrNode> = PythonParser()
-): Pair<List<String>, List<LabeledGraph>> =
+): Π2<List<String>, List<LabeledGraph>> =
   File(dataDir).walk().filter { it.extension == "py" }
-    .map { parser.parseFile(it).toKGraph().let { kgraph -> (kgraph.size / 10).toString() to kgraph } }
-    .toList().unzip()
+    .map { parser.parseFile(it).toKGraph().let { kgraph -> (kgraph.size / 10).toString() pp kgraph } }
+    .unzip()
 
 //fun generateASTs(
 //  heights: IntRange = 2..5, numExps: Int = 50,

@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
-import ai.hypergraph.kaliningraph.types.times
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.nlp.*
@@ -12,7 +12,7 @@ import edu.mcgill.cstk.rewriting.*
 fun main() {
   DATA_DIR.allFilesRecursively()
     .allMethods()
-    .map { it.first to it.second }
+    .map { it.first pp it.second }
     // Ensure tokenized method fits within attention
     .filter { (method, origin) ->
       defaultTokenizer.tokenize(method).size < 500 &&
@@ -27,13 +27,11 @@ fun main() {
         String::addExtraLogging,
 //        String::swapPlusMinus
       )
-      (codeTxs * MODELS).map { (sct, model) -> (method to origin) to (sct to model) }
+      (codeTxs * MODELS).map { (sct, model) -> method pp origin pp sct pp model }
     }
-    .forEachIndexed { i, (methodAndOrigin, sctAndModel) ->
-      val (method, origin) = methodAndOrigin
-      val (sct, model: Model) = sctAndModel
+    .forEachIndexed { i, (method, origin, sct, model) ->
       val groundTruth = method.getDoc()
-      val (originalCode, transformedCode) = method to sct(method)
+      val (originalCode, transformedCode) = method cc sct(method)
       // Do not evaluate snippets which remain unchanged after transformation
       if (originalCode == transformedCode) return@forEachIndexed
 
@@ -77,14 +75,14 @@ fun main() {
         println("% Origin: $origin\n")
       }
 
-      rougeScores[snippet] = rougeScoreWithRefactoring to rougeScoreWithoutRefactoring
+      rougeScores[snippet] = rougeScoreWithRefactoring cc rougeScoreWithoutRefactoring
 
       if (i < 20 || i % 100 == 0) rougeScores.reportResults("doc_completion")
     }
 }
 
 val rougeScores =
-  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(
+  CodeSnippetAttributeScoresTable<V2<Double>>(
     significanceTest = ::tTest,
     distToString = ::sideBySide
   )
@@ -98,7 +96,7 @@ val docCriteria: (String) -> Boolean = {
 
 fun String.splitDocAndCode() =
   lines().partition(docCriteria).let { (doc, code) ->
-    doc.joinToString("\n") to code.joinToString("\n")
+    doc.joinToString("\n") cc code.joinToString("\n")
   }
 
 fun String.dropDoc() = lines().filterNot(docCriteria).joinToString("\n")

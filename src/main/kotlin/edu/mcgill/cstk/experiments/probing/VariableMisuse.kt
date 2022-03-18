@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
-import ai.hypergraph.kaliningraph.types.times
+import ai.hypergraph.kaliningraph.types.*
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
@@ -18,7 +18,6 @@ fun main() {
       validationSet = DATA_DIR
         .also { println("Evaluating variable misuse detection using $MODELS on $it...") }
         .allFilesRecursively().allMethods()
-        .map { it.first to it.second }
       // Ensure tokenized method fits within attention
       //.filter { defaultTokenizer.tokenize(it).size < 500 }
       ,
@@ -37,8 +36,8 @@ fun main() {
 
 /** Multiple choice version of [evaluateTransformations]. */
 fun evaluateMCTransformations(
-  validationSet: Sequence<Pair<String, URI>>,
-  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>?>,
+  validationSet: Sequence<Π2<String, URI>>,
+  evaluation: KFunction1<CodeSnippetToEvaluate, V2<Double>?>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
@@ -55,12 +54,12 @@ fun evaluateMCTransformations(
     }
 
 val csByMRR =
-  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(::tTest, ::sideBySide)
+  CodeSnippetAttributeScoresTable<V2<Double>>(::tTest, ::sideBySide)
 
 // https://en.wikipedia.org/wiki/Mean_reciprocal_rank
-fun CodeSnippetToEvaluate.evaluateMRR(): Pair<Double, Double>? =
-  (model.evaluateMultimaskMC(method) to model.evaluateMultimaskMC(variant))
-    .let { (a, b) -> if((a + b).isNaN()) null else a to b }
+fun CodeSnippetToEvaluate.evaluateMRR(): V2<Double>? =
+  (model.evaluateMultimaskMC(method) cc model.evaluateMultimaskMC(variant))
+    .let { (a, b) -> if((a + b).isNaN()) null else a cc b }
 
 val mrrDists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 
@@ -77,7 +76,7 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
         println("Results" + results.joinToString(",", "[", "]") { if(trueToken.startsWith(it)) "*$it*" else it})
         logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 1.0)
         val gold = results.associateWith { (trueToken.startsWith(it)) }
-        if (results.isEmpty()) null else results to gold
+        if (results.isEmpty()) null else results pp gold
       }.let {
         val (rankings, gold) = it.unzip()
         MeanReciprocalRank.computeWithRankingList(rankings, gold)

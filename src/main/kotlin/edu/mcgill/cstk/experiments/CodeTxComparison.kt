@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments
 
+import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
@@ -8,6 +9,7 @@ import edu.mcgill.cstk.rewriting.*
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1
+import kotlin.sequences.unzip
 
 fun main() {
   val syntaxAlteringTransformations =
@@ -33,7 +35,7 @@ fun main() {
 // Tries to identify the dimensions most influenced by each code transformation
 private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
-      val (original, transformed) = c.getContext(4).let { it to tx(it) }
+      val (original, transformed) = c.getContext(4).let { it cc tx(it) }
       matrixize(original).average().zip(matrixize(transformed).average())
         .map { (a, b) -> (a - b).absoluteValue }.toDoubleArray()
     }.toList().toTypedArray().average().normalize()
@@ -41,8 +43,8 @@ private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
 private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
-      val (original, transformed) = c.getContext(4).let { it to tx(it) }
-      listOf(matrixize(original).average() to "o", matrixize(transformed).average() to "t")
+      val (original, transformed) = c.getContext(4).let { it cc tx(it) }
+      listOf(matrixize(original).average() pp "o", matrixize(transformed).average() pp "t")
     }.flatten().unzip()
   val d2vecs = vecs.toTypedArray().reduceDim()
   val plot = plotTsneEmbeddingsWithLabels(d2vecs, labels)
@@ -55,7 +57,7 @@ private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
 private fun compareDistributionalShift(txs: List<KFunction1<String, String>>) {
   DATA_DIR.allFilesRecursively().allCodeFragments().map { (c, s) ->
     txs.mapNotNull { tx ->
-      val (original, transformed) = c.getContext(4).let { it to tx(it) }
+      val (original, transformed) = c.getContext(4).let { it cc tx(it) }
       if (original == transformed) return@mapNotNull null
 //      val distance = kantorovich(matrixize(original), matrixize(transformed))
       val distance = euclidDist(
@@ -63,7 +65,7 @@ private fun compareDistributionalShift(txs: List<KFunction1<String, String>>) {
         matrixize(transformed).average()
       )
       println("${tx.name}:".padEnd(20, ' ') + distance)
-      tx to distance
+      tx pp distance
     }
   }.flatten().groupBy { it.first }
     // Average embedding distance across code transformation

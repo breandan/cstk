@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.indices
 
+import ai.hypergraph.kaliningraph.types.*
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.cstk.disk.*
@@ -23,8 +24,8 @@ tailrec fun VecIndex.edges(
   queries: List<String> = if (seed == null) emptyList() else listOf(seed),
   depth: Int = 10,
   width: Int = 5,
-  edges: List<Pair<String, String>> = emptyList(),
-): List<Pair<String, String>> =
+  edges: List<V2<String>> = emptyList(),
+): List<V2<String>> =
   if (queries.isEmpty() || depth == 0) edges
   else {
     val query = seed ?: queries.first()
@@ -33,7 +34,7 @@ tailrec fun VecIndex.edges(
       .filter { it.isNotEmpty() && it != query }
       .take(width)
 
-    val newEdges = nearestResults.map { query to it }
+    val newEdges = nearestResults.map { query cc it }
 
     edges(
       null,

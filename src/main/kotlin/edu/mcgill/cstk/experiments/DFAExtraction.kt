@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments
 
+import ai.hypergraph.kaliningraph.types.*
 import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.indices.*
@@ -40,7 +41,7 @@ private fun calculuatePrecisionAndRecall(
   strings: List<String>,
   knnIndex: VecIndex,
   vecMap: Map<String, DoubleArray>
-): Pair<Double, Double> {
+): V2<Double> {
   val neighbors = knnIndex.knn(vector, 100000)
   val neighborhood = Neighborhood(query, vector, neighbors)
   println("\nQuery:\n======\n${neighborhood.origin}")
@@ -82,7 +83,7 @@ private fun calculuatePrecisionAndRecall(
   val recall = truePositives.size.toDouble() / testSetSize
   println("DFA-kNN Precision: ${truePositives.size}/${resultsOfDFAQuery.size} = $precision")
   println("DFA-kNN Recall:    ${truePositives.size}/$testSetSize = $recall")
-  return Pair(precision, recall)
+  return precision cc recall
 }
 
 fun List<String>.alsoSummarize(title: String) = also {

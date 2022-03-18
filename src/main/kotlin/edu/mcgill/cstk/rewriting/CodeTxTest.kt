@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.rewriting
 
-import ai.hypergraph.kaliningraph.types.Π
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
 import edu.mcgill.cstk.nlp.synonymize
@@ -43,11 +43,11 @@ fun main() {
   println(codeSnippet.swapPlusMinus())
 
   TEST_DIR.allFilesRecursively().allMethods()
-    .map { it.first to it.second }
+    .map { it.first pp it.second }
     .take(1000)
     .map { (method, origin) ->
       val variant = method.renameTokens()
-      if (variant == method) null else method to variant
+      if (variant == method) null else method cc variant
     }.toList().mapNotNull { it }.forEach { (original, variant) ->
       if (original != variant) printSideBySide(original, variant)
     }
@@ -129,7 +129,7 @@ fun String.fuzzLoopBoundaries(): String =
 fun String.swapMultilineNoDeps(): String =
   lines().chunked(2).map { lines ->
     if (lines.size != 2) return@map lines
-    val (a, b) = lines.first() to lines.last()
+    val (a, b) = lines.first() cc lines.last()
     // Same indentation
     if (a.trim().length - a.length != b.trim().length - b.length)
       return@map listOf(a, b)

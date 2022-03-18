@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.math
 
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.nlp.*
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
@@ -20,13 +21,13 @@ object MetricCSNF: MetricStringDistance {
    * CSNFΔ(SN1, SN2) := LEVΔ(NF1, NF2)
    */
   override fun distance(s1: String, s2: String) =
-    codeSnippetNormalForm(s1 to s2).let { (a, b) -> Levenshtein().distance(a, b) }
+    codeSnippetNormalForm(s1 cc s2).let { (a, b) -> Levenshtein().distance(a, b) }
 
-  fun codeSnippetNormalForm(pair: Pair<String, String>): Pair<String, String> =
-    (StringUtils.splitByCharacterTypeCamelCase(pair.first).toList() to
+  fun codeSnippetNormalForm(pair: V2<String>): V2<String> =
+    (StringUtils.splitByCharacterTypeCamelCase(pair.first).toList() cc
       StringUtils.splitByCharacterTypeCamelCase(pair.second).toList()).let { (c, d) ->
-      val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s to i }.toMap()
-      c.map { vocab[it] }.joinToString("") to d.map { vocab[it] }.joinToString("")
+      val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s pp i }.toMap()
+      c.map { vocab[it] }.joinToString("") cc d.map { vocab[it] }.joinToString("")
     }
 }
 

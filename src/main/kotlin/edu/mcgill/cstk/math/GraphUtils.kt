@@ -40,7 +40,7 @@ fun MutableGraph.show(filename: String = "temp") =
   }.show()
 
 // TODO: replace with adj list constructor
-fun <T> List<Pair<T, T>>.toLabeledGraph(
+fun <T> List<V2<T>>.toLabeledGraph(
   toVertex: T.() -> LGVertex = { LGVertex(hashCode().toString()) }
 ): LabeledGraph =
   fold(first().first.toVertex().graph) { acc, (s, t) ->

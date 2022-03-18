@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
-import ai.hypergraph.kaliningraph.types.times
+import ai.hypergraph.kaliningraph.types.*
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.approxCyclomatic
@@ -40,7 +40,6 @@ fun main() {
     validationSet = DATA_DIR
         .also { println("Evaluating code completion using $MODELS on $it...") }
         .allFilesRecursively().allMethods()
-        .map { it.first to it.second }
     // Ensure tokenized method fits within attention
     //.filter { defaultTokenizer.tokenize(it).size < 500 }
     ,
@@ -59,8 +58,8 @@ fun main() {
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
-  validationSet: Sequence<Pair<String, URI>>,
-  evaluation: KFunction1<CodeSnippetToEvaluate, Pair<Double, Double>?>,
+  validationSet: Sequence<Π2<String, URI>>,
+  evaluation: KFunction1<CodeSnippetToEvaluate, V2<Double>?>,
   vararg codeTxs: KFunction1<String, String>
 ) =
   validationSet
@@ -76,7 +75,7 @@ fun evaluateTransformations(
       if (i < 20 || i % 10 == 0) csByMultimaskPrediction.reportResults("code_completion")
     }
 
-fun tTest(it: List<Pair<Double, Double>>): String =
+fun tTest(it: List<V2<Double>>): String =
   it.unzip().let { (a, b) ->
     if (2 < a.size && 2 < b.size) // t statistic requires at least two
       TTest().pairedTTest(
@@ -86,7 +85,7 @@ fun tTest(it: List<Pair<Double, Double>>): String =
     else ""
   }
 
-fun sideBySide(it: List<Pair<Double, Double>>) =
+fun sideBySide(it: List<V2<Double>>) =
   it.unzip().let { (before, after) ->
     before.joinToString(", ", "\t\"before\": [", "],\n") {
       it.toString().take(5).padEnd(5)
@@ -95,8 +94,7 @@ fun sideBySide(it: List<Pair<Double, Double>>) =
     }
   }
 
-val csByMultimaskPrediction =
-  CodeSnippetAttributeScoresTable<Pair<Double, Double>>(::tTest, ::sideBySide)
+val csByMultimaskPrediction = CodeSnippetAttributeScoresTable(::tTest, ::sideBySide)
 
 class CodeSnippetAttributeScoresTable<V>(
   // Renders the significance test for a single configuration
@@ -194,28 +192,28 @@ class CodeSnippetAttributeScoresTable<V>(
 }
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
-fun CodeSnippetToEvaluate.evaluateMultimask(): Pair<Double, Double>? =
-  (model.evaluateMultimask(method) to model.evaluateMultimask(variant))
+fun CodeSnippetToEvaluate.evaluateMultimask(): V2<Double>? =
+  (model.evaluateMultimask(method) pp model.evaluateMultimask(variant))
     .let { (a, b) ->
       if (a.second > 0 && b.second > 0)
-        (a.first.toDouble() / a.second.toDouble()) to
+        (a.first.toDouble() / a.second.toDouble()) cc
           (b.first.toDouble() / b.second.toDouble())
       else null
     }
 
-val dists: Cache<String, Pair<Int, Int>> = Caffeine.newBuilder().maximumSize(100).build()
+val dists: Cache<String, V2<Int>> = Caffeine.newBuilder().maximumSize(100).build()
 
 // Masking all identifiers in all snippets is too expensive,
 // so instead we sample a small number of mask positions
-fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200): Pair<Int, Int> =
+fun Model.evaluateMultimask(code: String, SAMPLES: Int = 200) =
   dists.get(code) {
     code.maskIdentifiers().shuffled(DEFAULT_RAND).take(SAMPLES)
       .mapNotNull { (maskedMethod, trueToken) ->
         val (completion, score) = completeAndScore(trueToken, maskedMethod)
         logDiffs(this, code, maskedMethod, trueToken, completion)
         if (completion == ERR || completion.isEmpty()) null else score
-      }.fold(0 to 0) { (correct, total), it ->
-        if (it > 0) correct + 1 to total + 1 else correct to total + 1
+      }.fold(0 cc 0) { (correct, total), it ->
+        if (it > 0) correct + 1 cc total + 1 else correct cc total + 1
       }
   }
 
@@ -252,7 +250,7 @@ fun logDiffs(
 fun Model.completeAndScore(
   correctToken: String,
   maskedSeqeunce: String,
-): Pair<String, Int> =
+): Π2<String, Int> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
   makeQuery(maskedSeqeunce).let {
     // Sometimes the source code token starts with the correct sequence, but
@@ -262,19 +260,19 @@ fun Model.completeAndScore(
     // top-5 accuracy. This might be invalid if there are multiple tokens
     // with the same prefix.
     it.firstOrNull { correctToken.startsWith(it.trim()) }
-      ?.let { it to 1 }
-      ?: (it.first() to 0)
+      ?.let { it pp 1 }
+      ?: (it.first() pp 0)
   }
 
 // Returns various maskings with the masked word
-fun String.maskIdentifiers(): List<Pair<String, String>> =
+fun String.maskIdentifiers(): List<V2<String>> =
   split(Regex("((?<=\\W)|(?=\\W))")).let {
-    it.mapIndexed { index, maskedWord -> index to maskedWord }
+    it.mapIndexed { index, maskedWord -> index pp maskedWord }
       .filter { (_, token) ->
         token.isVariable() && 2 < split(token).size // More than two occurrences
-      }.map { indexAndMask ->
+      }.map { (index, mask) ->
         it.foldIndexed("") { i, acc, tok ->
-          acc + if (i == indexAndMask.first) "<mask>" else tok
-        } to indexAndMask.second
+          acc + if (i == index) "<mask>" else tok
+        } cc mask
       }
   }
