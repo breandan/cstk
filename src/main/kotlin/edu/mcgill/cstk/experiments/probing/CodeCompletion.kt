@@ -58,7 +58,7 @@ fun main() {
 
 val defaultTokenizer = BasicTokenizer(false)
 fun evaluateTransformations(
-  validationSet: Sequence<Π2<String, URI>>,
+  validationSet: Sequence<Pair<String, URI>>,
   evaluation: KFunction1<CodeSnippetToEvaluate, V2<Double>?>,
   vararg codeTxs: KFunction1<String, String>
 ) =
@@ -193,7 +193,7 @@ class CodeSnippetAttributeScoresTable<V>(
 
 // https://en.wikipedia.org/wiki/Relative_change_and_difference
 fun CodeSnippetToEvaluate.evaluateMultimask(): V2<Double>? =
-  (model.evaluateMultimask(method) pp model.evaluateMultimask(variant))
+  (model.evaluateMultimask(method) to model.evaluateMultimask(variant))
     .let { (a, b) ->
       if (a.second > 0 && b.second > 0)
         (a.first.toDouble() / a.second.toDouble()) cc
@@ -250,7 +250,7 @@ fun logDiffs(
 fun Model.completeAndScore(
   correctToken: String,
   maskedSeqeunce: String,
-): Π2<String, Int> =
+): Pair<String, Int> =
 //   complete(maskedSeqeunce).let { it to if (correctToken.startsWith(it.trim())) 1.0 else 0.0 }
   makeQuery(maskedSeqeunce).let {
     // Sometimes the source code token starts with the correct sequence, but
@@ -260,14 +260,14 @@ fun Model.completeAndScore(
     // top-5 accuracy. This might be invalid if there are multiple tokens
     // with the same prefix.
     it.firstOrNull { correctToken.startsWith(it.trim()) }
-      ?.let { it pp 1 }
-      ?: (it.first() pp 0)
+      ?.let { it to 1 }
+      ?: (it.first() to 0)
   }
 
 // Returns various maskings with the masked word
 fun String.maskIdentifiers(): List<V2<String>> =
   split(Regex("((?<=\\W)|(?=\\W))")).let {
-    it.mapIndexed { index, maskedWord -> index pp maskedWord }
+    it.mapIndexed { index, maskedWord -> index to maskedWord }
       .filter { (_, token) ->
         token.isVariable() && 2 < split(token).size // More than two occurrences
       }.map { (index, mask) ->

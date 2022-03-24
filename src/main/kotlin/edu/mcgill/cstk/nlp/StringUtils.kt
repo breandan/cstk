@@ -32,12 +32,12 @@ fun URI.slowGrep(query: String, glob: String = "*"): Sequence<QIC> =
     }.flatten()
 
 // Returns a list of all code fragments in all paths and their locations
-fun Sequence<URI>.allCodeFragments(): Sequence<Π2<Concordance, String>> =
+fun Sequence<URI>.allCodeFragments(): Sequence<Pair<Concordance, String>> =
   map { path ->
     path.allLines()
-      .mapIndexed { lineNum, line -> lineNum pp line }
+      .mapIndexed { lineNum, line -> lineNum to line }
       .filter { (_, l) -> l.isNotBlank() && l.any(Char::isLetterOrDigit) }
-      .map { (ln, l) -> Concordance(path, ln) pp l.trim() }
+      .map { (ln, l) -> Concordance(path, ln) to l.trim() }
 //    .chunked(5).map { it.joinToString("\n") }
   }.flatten()
 
@@ -57,11 +57,11 @@ fun Sequence<URI>.allMethods(
   parser: (String) -> List<String> = { file ->
     Launcher.parseClass(file).methods.map { it.toString() }
   }
-): Sequence<Π2<String, URI>> =
+): Sequence<Pair<String, URI>> =
   mapNotNull { path ->
     path.contents()?.let {
       try {
-        parser(it).map { it pp path }
+        parser(it).map { it to path }
       } catch (exception: Exception) {
         null
       }
@@ -104,12 +104,12 @@ fun Path.read(start: Int = 0, end: Int = -1): String? =
   }?.let { it.substring(start, if (end < 0) it.length else end) }
 
 // Returns all substrings matching the query and their immediate context
-fun String.extractConcordances(query: String): Sequence<Π2<String, Int>> =
+fun String.extractConcordances(query: String): Sequence<Pair<String, Int>> =
   Regex(query).findAll(this).map {
     val range = 0..length
     val (matchStart, matchEnd) =
       it.range.first.coerceIn(range) cc (it.range.last + 1).coerceIn(range)
-    substring(matchStart, matchEnd) pp matchStart
+    substring(matchStart, matchEnd) to matchStart
   }
 
 fun previewResult(query: String, loc: Concordance) =

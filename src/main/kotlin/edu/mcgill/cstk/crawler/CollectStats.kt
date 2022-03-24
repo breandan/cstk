@@ -54,12 +54,12 @@ fun CtType<*>?.superTypes() =
 fun CtType<*>?.allMembers(
   maxHeight: Int = 10,
   superTypes: List<CtType<*>> = superTypes()
-): Π2<Set<CtField<*>>, Set<CtMethod<*>>> =
-  if (this == null) emptySet<CtField<*>>() pp emptySet()
-  else (fields.toSet() pp methods.toSet()) +
+): Pair<Set<CtField<*>>, Set<CtMethod<*>>> =
+  if (this == null) emptySet<CtField<*>>() to emptySet()
+  else (fields.toSet() to methods.toSet()) +
     if (superTypes.isEmpty() || maxHeight == 0)
-      (emptySet<CtField<*>>() pp emptySet())
-    else superTypes.fold(emptySet<CtField<*>>() pp emptySet()) { p, it ->
+      (emptySet<CtField<*>>() to emptySet())
+    else superTypes.fold(emptySet<CtField<*>>() to emptySet()) { p, it ->
       p + it.allMembers(maxHeight - 1)
     }
 
@@ -67,8 +67,8 @@ fun CtType<*>?.numInheritedMembers() =
   if(this == null) 0
   else allMembers().let { (a, b) -> a.size + b.size - fields.size - methods.size }
 
-operator fun <A, B> Π2<Set<A>, Set<B>>.plus(other: Π2<Set<A>, Set<B>>): Π2<Set<A>, Set<B>> =
-  (first + other.first) pp (second + other.second)
+operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =
+  (first + other.first) to (second + other.second)
 
 fun List<URI>.allTypes() =
   Launcher().apply {

@@ -36,7 +36,7 @@ fun main() {
 
 /** Multiple choice version of [evaluateTransformations]. */
 fun evaluateMCTransformations(
-  validationSet: Sequence<Π2<String, URI>>,
+  validationSet: Sequence<Pair<String, URI>>,
   evaluation: KFunction1<CodeSnippetToEvaluate, V2<Double>?>,
   vararg codeTxs: KFunction1<String, String>
 ) =
@@ -76,7 +76,7 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
         println("Results" + results.joinToString(",", "[", "]") { if(trueToken.startsWith(it)) "*$it*" else it})
         logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 1.0)
         val gold = results.associateWith { (trueToken.startsWith(it)) }
-        if (results.isEmpty()) null else results pp gold
+        if (results.isEmpty()) null else results to gold
       }.let {
         val (rankings, gold) = it.unzip()
         MeanReciprocalRank.computeWithRankingList(rankings, gold)

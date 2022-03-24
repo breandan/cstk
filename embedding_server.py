@@ -11,7 +11,6 @@ import argparse
 import numpy as np
 import torch
 from torch import Tensor
-from torch.utils.data import Dataset
 from transformers import AutoTokenizer, AutoModelForMaskedLM, \
     PreTrainedTokenizerBase as PTT, PreTrainedModel as PTM, pipeline
 
@@ -31,19 +30,6 @@ for m in [m for m in args.models if m]:
     print(f'Loaded model: {m}')
 
 attention_width = 760
-
-class CodeFragments(Dataset):
-    data = []
-
-    def __init__(self, data):
-        self.data = data
-
-    def __len__(self, data):
-        return len(data)
-
-    def __getitem__(self, i):
-        return self.data[i]
-
 
 class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def tokenize(self, query: str, model_name) -> List[int]:
@@ -76,7 +62,9 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-type", "text/html")
         self.end_headers()
 
-        model_name = self.path.split('?')[0].strip('/')
+        model_name = self.path.split('?')[0]
+        # Remove the first and last slash if present
+        model_name = model_name.strip('/')
         query_components = parse_qs(urlparse(self.path).query)
         # print(query_components)
         # print("PATH: %s" % self.path)
@@ -89,9 +77,6 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             hints = query_components["hint"] \
                 if "hint" in query_components else None
             self.reply(self.handle_query(query, model_name, hints))
-        elif "batch" in query_components:
-            queries = urllib.parse.unquote_plus(query_components["batch"][0])
-            self.reply(self.handle_batch(queries, model_name))
         elif "tokenize" in query_components:
             query = urllib.parse.unquote_plus(query_components["tokenize"][0])
             self.reply(str(self.tokenize(query, model_name)))
@@ -99,26 +84,18 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             print(f'Unknown command: {query_components}')
             return
 
-    def handle_batch(self, batch, model_name) -> str:
-        model = models[model_name]
-        tokenizer = tokenizers[model_name]
-        # pad_token = tokenizer.pad_token_id
-        pipe = pipeline(task='fill-mask', batch_size=8, model=model, tokenizer=tokenizer)
-        results = pipe(CodeFragments(batch))
-        ',,,,'.join(results)
-
     def reply(self, response: str):
         self.wfile.write(bytes(response, encoding='utf8'))
 
-    def handle_query(self, query: str, model_name, hints=None) -> str:
+    def handle_query(self, query, model_name, hints=None) -> str:
         model = models[model_name]
         tokenizer = tokenizers[model_name]
 
         try:
             if tokenizer.mask_token in query:
-                pipe = pipeline(task='fill-mask', model=model,
+                pred = pipeline(task='fill-mask', model=model,
                                 tokenizer=tokenizer, targets=hints)
-                outputs = pipe(query)
+                outputs = pred(query)
                 completions = sorted(outputs, key=lambda s: -float(s['score']))
                 completions = list(map(lambda x: x['token_str'], completions))
                 token = "\n".join(completions)

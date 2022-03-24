@@ -10,7 +10,7 @@ import kotlin.text.first
 // Do certain dimensions correlate more strongly with string edit distance?
 fun main() {
   val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }
-    .map { (a, b) -> a pp b }.take(100)
+    .map { (a, b) -> a to b }.take(100)
   // Compare correlation between string metrics and learned metric along individual dimensions
   println("dim,correlation")
   (0 until data.first().second.size - 1).map { i ->
@@ -20,13 +20,13 @@ fun main() {
 }
 
 private fun compareDistanceMetricsOnDim(
-  data: Set<Π2<String, DoubleArray>>,
+  data: Set<Pair<String, DoubleArray>>,
   dims: Collection<Int>,
   stringMetric: MetricStringDistance = MetricCSNF,
-): Π2<Collection<Int>, Double> =
+): Pair<Collection<Int>, Double> =
   (data * data).map { (s1, s2) ->
     stringMetric.distance(s1.first, s2.first) cc
       euclidDist(s1.second.sliceArray(dims), s2.second.sliceArray(dims))
   }.map { (a, b) -> a cc b }.unzip().let { (a, b) ->
-    dims pp PearsonsCorrelation().correlation(a.toDoubleArray(), b.toDoubleArray())
+    dims to PearsonsCorrelation().correlation(a.toDoubleArray(), b.toDoubleArray())
   }

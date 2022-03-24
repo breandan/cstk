@@ -43,7 +43,7 @@ fun main() {
   println(codeSnippet.swapPlusMinus())
 
   TEST_DIR.allFilesRecursively().allMethods()
-    .map { it.first pp it.second }
+    .map { it.first to it.second }
     .take(1000)
     .map { (method, origin) ->
       val variant = method.renameTokens()

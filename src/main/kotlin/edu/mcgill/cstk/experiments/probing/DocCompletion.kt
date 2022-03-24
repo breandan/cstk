@@ -12,7 +12,7 @@ import edu.mcgill.cstk.rewriting.*
 fun main() {
   DATA_DIR.allFilesRecursively()
     .allMethods()
-    .map { it.first pp it.second }
+    .map { it.first to it.second }
     // Ensure tokenized method fits within attention
     .filter { (method, origin) ->
       defaultTokenizer.tokenize(method).size < 500 &&

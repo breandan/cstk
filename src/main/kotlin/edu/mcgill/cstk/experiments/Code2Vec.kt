@@ -82,9 +82,9 @@ private fun plot(
 fun mineASTs(
   dataDir: String = {}.javaClass.getResource("/datasets/python").path,
   parser: Parser<AntlrNode> = PythonParser()
-): Π2<List<String>, List<LabeledGraph>> =
+): Pair<List<String>, List<LabeledGraph>> =
   File(dataDir).walk().filter { it.extension == "py" }
-    .map { parser.parseFile(it).toKGraph().let { kgraph -> (kgraph.size / 10).toString() pp kgraph } }
+    .map { parser.parseFile(it).toKGraph().let { kgraph -> (kgraph.size / 10).toString() to kgraph } }
     .unzip()
 
 //fun generateASTs(

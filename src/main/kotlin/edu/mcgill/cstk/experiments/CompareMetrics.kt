@@ -10,20 +10,20 @@ import kotlin.math.*
 // Does edit distance correlate with embedding distance?
 fun main() {
   val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }
-    .map { (a, b) -> a pp b }.take(100)
+    .map { (a, b) -> a to b }.take(100)
   println("strdist,embdist,variance")
   println(compareDistanceMetrics(data.toSet(), MetricLCS())
     .joinToString("\n") { "" + it.first + "," + it.second + "," + it.third })
 }
 
 private fun compareDistanceMetrics(
-  data: Set<Π2<String, DoubleArray>>,
+  data: Set<Pair<String, DoubleArray>>,
   stringMetric: MetricStringDistance = Levenshtein(),
 ) = (data * data)
   .map { (s1, s2) ->
     (stringMetric.distance(s1.first, s2.first) * 100).toInt() pp
       euclidDist(s1.second, s2.second)
-  }.groupBy(Π2<Int, Double>::first)
+  }.groupBy(Pair<Int, Double>::first)
   .mapValues { (_, value) ->
     value.map { (_, euclid) -> euclid }
       .let { it.average() cc it.variance() }

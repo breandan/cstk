@@ -16,6 +16,6 @@ fun fetchOrLoadSampleData(sampleSize: Int = 1000): CodesAndVecs =
       .allCodeFragments()
       .shuffled(DEFAULT_RAND)
       .take(sampleSize)
-      .map { it.second pp vectorize(it.second) }
+      .map { it.second to vectorize(it.second) }
       .unzip().let { (l, v) -> CodesAndVecs(l, v.toTypedArray()) }
       .also { it.serializeTo(File("sample$sampleSize.data")) }

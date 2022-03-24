@@ -44,7 +44,7 @@ private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it cc tx(it) }
-      listOf(matrixize(original).average() pp "o", matrixize(transformed).average() pp "t")
+      listOf(matrixize(original).average() to "o", matrixize(transformed).average() to "t")
     }.flatten().unzip()
   val d2vecs = vecs.toTypedArray().reduceDim()
   val plot = plotTsneEmbeddingsWithLabels(d2vecs, labels)
@@ -65,7 +65,7 @@ private fun compareDistributionalShift(txs: List<KFunction1<String, String>>) {
         matrixize(transformed).average()
       )
       println("${tx.name}:".padEnd(20, ' ') + distance)
-      tx pp distance
+      tx to distance
     }
   }.flatten().groupBy { it.first }
     // Average embedding distance across code transformation

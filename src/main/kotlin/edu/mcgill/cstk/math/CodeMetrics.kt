@@ -26,7 +26,7 @@ object MetricCSNF: MetricStringDistance {
   fun codeSnippetNormalForm(pair: V2<String>): V2<String> =
     (StringUtils.splitByCharacterTypeCamelCase(pair.first).toList() cc
       StringUtils.splitByCharacterTypeCamelCase(pair.second).toList()).let { (c, d) ->
-      val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s pp i }.toMap()
+      val vocab = (c.toSet() + d.toSet()).mapIndexed { i, s -> s to i }.toMap()
       c.map { vocab[it] }.joinToString("") cc d.map { vocab[it] }.joinToString("")
     }
 }
