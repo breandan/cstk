@@ -27,7 +27,7 @@ fun main() {
         String::addExtraLogging,
 //        String::swapPlusMinus
       )
-      (codeTxs * MODELS).map { (sct, model) -> method pp origin pp sct pp model }
+      (codeTxs * MODELS).map { (sct, model) -> method to origin to sct to model }
     }
     .forEachIndexed { i, (method, origin, sct, model) ->
       val groundTruth = method.getDoc()

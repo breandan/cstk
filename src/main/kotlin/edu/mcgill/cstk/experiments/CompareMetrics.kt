@@ -21,7 +21,7 @@ private fun compareDistanceMetrics(
   stringMetric: MetricStringDistance = Levenshtein(),
 ) = (data * data)
   .map { (s1, s2) ->
-    (stringMetric.distance(s1.first, s2.first) * 100).toInt() pp
+    (stringMetric.distance(s1.first, s2.first) * 100).toInt() to
       euclidDist(s1.second, s2.second)
   }.groupBy(Pair<Int, Double>::first)
   .mapValues { (_, value) ->
