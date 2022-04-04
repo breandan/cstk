@@ -1,9 +1,9 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.6.20-RC"
+  kotlin("jvm") version "1.6.20"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.0.2"
+  id("de.undercouch.download") version "5.0.4"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.15.0"
+  val djlVersion = "0.16.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.8.0")
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.19.0"
+  val openrwVersion = "7.21.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -89,9 +89,9 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.303")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:5.0.0")
+  implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.1.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.2.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.21")
@@ -112,7 +112,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.59.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.60.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -134,7 +134,7 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.0.5")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.0.6")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.0.1-beta-8")
