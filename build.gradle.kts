@@ -60,13 +60,9 @@ dependencies {
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-//  implementation("org.jetbrains.lets-plot-kotlin:lets-plot-kotlin:1.3.0")
-
   val smileVersion = "2.6.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
-
-  implementation("com.github.breandan:markovian")
 
   // https://github.com/LearnLib/learnlib
   implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
