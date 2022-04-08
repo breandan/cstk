@@ -1,3 +1,3 @@
-[submodule "markovian"]
-	path = markovian
-	url = https://github.com/breandan/markovian
+[submodule "galoisenne"]
+	path = galoisenne
+	url = https://github.com/breandan/galoisenne.git
