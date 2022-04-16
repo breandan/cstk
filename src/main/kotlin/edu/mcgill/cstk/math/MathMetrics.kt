@@ -1,11 +1,10 @@
 package edu.mcgill.cstk.math
 
-import ai.hypergraph.kaliningraph.types.times
+import ai.hypergraph.kaliningraph.times
 import com.github.jelmerk.knn.DistanceFunction
 import com.google.ortools.linearsolver.MPSolver
 import edu.mcgill.cstk.disk.DEFAULT_RAND
 import kotlin.math.*
-import kotlin.random.Random
 import kotlin.time.*
 
 fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
@@ -29,7 +28,7 @@ fun kantorovich(p1: Array<DoubleArray>, p2: Array<DoubleArray>): Double =
 // https://developers.google.com/optimization/introduction/java#complete-program
 // https://developers.google.com/optimization/lp/glop#entire_program
   else MPSolver.createSolver("GLOP").run {
-    val allPairs = p1.indices.toSet() * p2.indices.toSet()
+    val allPairs = p1.indices * p2.indices
     val (vars, dists) =
       allPairs.mapIndexed { i, (j, k) ->
         makeNumVar(0.0, 1.0, "x$i") to euclidDist(p1[j], p2[k])
