@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.nlp
 
-import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.cc
 import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer

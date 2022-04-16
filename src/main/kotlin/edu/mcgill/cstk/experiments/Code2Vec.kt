@@ -4,7 +4,7 @@ import ai.hypergraph.kaliningraph.closure
 import ai.hypergraph.kaliningraph.graphs.*
 import ai.hypergraph.kaliningraph.tensor.DoubleMatrix
 import ai.hypergraph.kaliningraph.theory.gnn
-import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.π3
 import ai.hypergraph.kaliningraph.visualization.show
 import astminer.common.model.*
 import astminer.parse.antlr.AntlrNode

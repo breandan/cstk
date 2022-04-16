@@ -3,7 +3,6 @@ package edu.mcgill.cstk.rewriting
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
-import edu.mcgill.cstk.nlp.synonymize
 import edu.mcgill.cstk.nlp.*
 import kotlin.math.min
 

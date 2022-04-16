@@ -6,7 +6,7 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.approxCyclomatic
 import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
-import org.hipparchus.stat.inference.*
+import org.hipparchus.stat.inference.TTest
 import java.io.File
 import java.net.URI
 import kotlin.math.round

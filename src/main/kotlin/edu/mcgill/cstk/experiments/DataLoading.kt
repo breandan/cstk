@@ -1,6 +1,5 @@
 package edu.mcgill.cstk.experiments
 
-import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
 import java.io.File

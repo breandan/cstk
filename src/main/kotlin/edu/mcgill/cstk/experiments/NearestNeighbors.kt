@@ -3,7 +3,7 @@ package edu.mcgill.cstk.experiments
 import com.github.jelmerk.knn.SearchResult
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNodeFactory
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
-import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.disk.TEST_DIR
 import edu.mcgill.cstk.indices.*
 
 fun main() {

@@ -1,6 +1,5 @@
 package edu.mcgill.cstk.disk
 
-import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.nlp.allLines
 import java.io.Serializable

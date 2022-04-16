@@ -38,14 +38,15 @@ fun File.unzip(
 }
 
 @OptIn(ExperimentalTime::class)
-inline fun <reified T> T.serializeTo(path: File) = measureTimedValue {
+inline fun <reified T> T.serializeTo(path: File) =
+  measureTimedValue {
 //  Kryo().writeObject(Output(FileOutputStream(path)), this)
-  println("Writing ${T::class.java.simpleName} to $path...")
-  ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
-    .use { it.writeObject(this) }
-}.let {
-  println("Wrote $path in ${it.duration}")
-}
+    println("Writing ${T::class.java.simpleName} to $path...")
+    ObjectOutputStream(GZIPOutputStream(FileOutputStream(path)))
+      .use { it.writeObject(this) }
+  }.let {
+    println("Wrote $path in ${it.duration}")
+  }
 
 @OptIn(ExperimentalTime::class)
 inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
@@ -61,21 +62,21 @@ inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
 // Returns all files in the URI matching the extension
 fun URI.allFilesRecursively(
   ext: String? = null,
+  // Should we recurse into compressed files?
   readCompressed: Boolean = true
 ): Sequence<URI> =
   toPath().toFile().walkTopDown()
     .filter(File::isFile)
     .map(File::toURI)
-    .map {
-      if (readCompressed) readCompressedFile(it) else sequenceOf(it)
-    }.flatten()
+    .map { if (readCompressed) readCompressedFile(it) else sequenceOf(it) }
+    .flatten()
     .filter { ext == null || it.extension() == ext }.shuffled(DEFAULT_RAND)
 
 fun readCompressedFile(path: URI) =
   if (path.extension() in setOf("tgz", "zip"))
-    vfsManager.resolveFile("${path.extension()}:${path.path}").runCatching {
-      findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI)
-    }.getOrDefault(sequenceOf())
+    vfsManager.resolveFile("${path.extension()}:${path.path}")
+      .runCatching { findFiles(VFS_SELECTOR).asSequence().map(FileObject::getURI) }
+      .getOrDefault(sequenceOf())
   else sequenceOf(path)
 
 fun URI.extension() = toString().substringAfterLast('.')

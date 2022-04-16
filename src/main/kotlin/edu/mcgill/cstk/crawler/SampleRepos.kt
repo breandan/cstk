@@ -7,7 +7,7 @@ import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine
 import com.squareup.okhttp.*
 import org.gitlab4j.api.GitLabApi
 import org.kohsuke.github.*
-import java.io.*
+import java.io.File
 import java.net.URL
 import java.util.stream.Collectors
 

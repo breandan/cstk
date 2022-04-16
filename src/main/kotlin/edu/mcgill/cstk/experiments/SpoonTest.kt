@@ -2,7 +2,6 @@ package edu.mcgill.cstk.experiments
 
 import edu.mcgill.cstk.disk.*
 import spoon.Launcher
-import spoon.reflect.declaration.CtClass
 import spoon.support.compiler.FileSystemFolder
 import java.io.File
 

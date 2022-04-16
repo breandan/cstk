@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments
 
-import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.cc
 import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.*
@@ -9,7 +9,6 @@ import edu.mcgill.cstk.rewriting.*
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1
-import kotlin.sequences.unzip
 
 fun main() {
   val syntaxAlteringTransformations =

@@ -18,10 +18,9 @@ fun main() {
 
   println("Tokens: " + mc.size)
 
-  measureTimedValue {
-    mc.sample().map { it.joinToString("") }.take(200)
-  }.also {
-    println("Sample: " + it.value.joinToString(""))
-    println("Sampling time: ${it.duration}")
-  }
+  measureTimedValue { mc.sample().map { it.joinToString("") }.take(200) }
+    .also {
+      println("Sample: " + it.value.joinToString(""))
+      println("Sampling time: ${it.duration}")
+    }
 }

@@ -2,7 +2,6 @@ package edu.mcgill.cstk.disk
 
 import com.google.common.base.Ascii
 import com.google.common.collect.Iterables
-import java.util.*
 import java.lang.Character.*
 
 /** To check whether a char is whitespace/control/punctuation.  */

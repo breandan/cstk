@@ -2,7 +2,7 @@ package edu.mcgill.cstk.experiments
 
 import ai.hypergraph.kaliningraph.types.*
 import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
-import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.disk.TEST_DIR
 import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.math.euclidDist
 import edu.mcgill.cstk.nlp.filterByDFA

@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_13
 plugins {
   kotlin("jvm") version "1.6.20"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.0.4"
+  id("de.undercouch.download") version "5.0.5"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -30,7 +30,7 @@ dependencies {
   val djlVersion = "0.16.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
-  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.8.0")
+  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.0")
   implementation("ai.djl.fasttext:fasttext-engine:$djlVersion")
   implementation("ai.djl.sentencepiece:sentencepiece:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-model-zoo:$djlVersion")
@@ -133,7 +133,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.0.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.1.0")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.1.1")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.0")

@@ -1,7 +1,6 @@
 package edu.mcgill.cstk.indices
 
 import edu.mcgill.cstk.disk.Concordance
-import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.nlp.vectorize
 
 fun VecIndex.knn(query: String, k: Int = 10) = knn(vectorize(query), k)
