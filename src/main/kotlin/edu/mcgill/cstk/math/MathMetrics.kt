@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.math
 
-import ai.hypergraph.kaliningraph.times
+import ai.hypergraph.kaliningraph.types.times
 import com.github.jelmerk.knn.DistanceFunction
 import com.google.ortools.linearsolver.MPSolver
 import edu.mcgill.cstk.disk.DEFAULT_RAND

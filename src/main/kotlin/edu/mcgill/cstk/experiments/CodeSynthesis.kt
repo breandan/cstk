@@ -1,8 +1,8 @@
 package edu.mcgill.cstk.experiments
 
+import ai.hypergraph.markovian.mcmc.toMarkovChain
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.allLines
-import edu.mcgill.markovian.mcmc.toMarkovChain
 import kotlin.time.*
 
 @ExperimentalTime
