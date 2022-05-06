@@ -1,9 +1,9 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.6.20"
+  kotlin("jvm") version "1.7.0-Beta"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.0.5"
+  id("de.undercouch.download") version "5.1.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -50,13 +50,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.4.1")
+  implementation("com.github.ajalt.clikt:clikt:3.4.2")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.21.3"
+  val openrwVersion = "7.22.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -76,14 +76,14 @@ dependencies {
 //  implementation("com.github.tech-srl:prime:5fae8f309f")
 
   // Clustering for automata extraction
-  implementation("org.tribuo:tribuo-clustering-kmeans:4.2.0")
+  implementation("org.tribuo:tribuo-clustering-kmeans:4.2.1")
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.303")
+  implementation("org.kohsuke:github-api:1.306")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
@@ -108,7 +108,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.60.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.61.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -130,13 +130,13 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.0.6")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.0")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.1.1")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-4")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:2.0")
+  implementation("org.hipparchus:hipparchus-stat:2.1")
 }
 
 tasks {
