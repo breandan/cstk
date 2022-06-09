@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.0-Beta"
+  kotlin("jvm") version "1.7.0"
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.1.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.16.0"
+  val djlVersion = "0.17.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.0")
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.22.0"
+  val openrwVersion = "7.24.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -108,7 +108,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.61.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.62.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -130,7 +130,7 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.0")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-4")
