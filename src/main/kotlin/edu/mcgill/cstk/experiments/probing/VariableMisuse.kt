@@ -53,8 +53,7 @@ fun evaluateMCTransformations(
       if (i < 20 || i % 20 == 0) csByMRR.reportResults("variable_misuse")
     }
 
-val csByMRR =
-  CodeSnippetAttributeScoresTable<V2<Double>>(::tTest, ::sideBySide)
+val csByMRR = CodeSnippetAttributeScoresTable(::tTest, ::sideBySide)
 
 // https://en.wikipedia.org/wiki/Mean_reciprocal_rank
 fun CodeSnippetToEvaluate.evaluateMRR(): V2<Double>? =

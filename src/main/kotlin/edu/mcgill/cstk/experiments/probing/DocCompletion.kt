@@ -82,7 +82,7 @@ fun main() {
 }
 
 val rougeScores =
-  CodeSnippetAttributeScoresTable<V2<Double>>(
+  CodeSnippetAttributeScoresTable(
     significanceTest = ::tTest,
     distToString = ::sideBySide
   )

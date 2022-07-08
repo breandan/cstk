@@ -98,8 +98,6 @@ fun String.shuffleLines() = lines().shuffled(DEFAULT_RAND).joinToString("\n")
 fun String.swapPlusMinus() =
   map { if (it == '+') '-' else it }.joinToString("")
 
-fun String.same() = this
-
 fun String.renameTokens(): String {
   val toReplace = mostFrequentIdentifier()
   val synonym = synonymize(toReplace) // Can be a fixed token, e.g. "tt"
@@ -184,10 +182,10 @@ fun String.addExtraLogging(): String =
     val matchLastLine = Regex("\\s+.*?;").matchEntire(lastLine)
     val matchThisLine = Regex("\\s+.*?;").matchEntire(thisLine)
     if (
-    // Only print inside nested blocks of statements
+      // Only print inside nested blocks of statements
       matchLastLine != null && matchThisLine != null &&
       // Space out print statements
-      "print" !in lastLine + thisLine + nextLine
+      "print" !in "$lastLine$thisLine$nextLine"
     ) {
       val toIndent = thisLine.takeWhile { !it.isJavaIdentifierPart() }
 //      val toPrint = matchLastLine.groupValues[1]

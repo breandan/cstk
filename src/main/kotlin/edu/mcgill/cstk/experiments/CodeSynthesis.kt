@@ -2,11 +2,27 @@ package edu.mcgill.cstk.experiments
 
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.allLines
+import edu.mcgill.cstk.nlp.*
 import kotlin.time.*
 
+/**
+./gradlew synthCode
+ */
 @ExperimentalTime
 fun main() {
+  neuralCodeSynthesis()
+  markovCodeSynthesis()
+}
+
+@ExperimentalTime
+fun neuralCodeSynthesis() {
+  MODELS.forEach { model ->
+    println("Sample ($model): " + model.complete("Int t = ((<mask>", maxTokens = 200))
+  }
+}
+
+@ExperimentalTime
+fun markovCodeSynthesis() {
   val mc = measureTimedValue {
     TEST_DIR.allFilesRecursively(readCompressed = false).toList()
       .map { src ->

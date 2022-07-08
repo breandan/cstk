@@ -30,6 +30,7 @@ data class Model(val name: String) {
   val mask = "<mask>"
   override fun hashCode() = name.hashCode()
   override fun toString() = name
+  override fun equals(other: Any?) = (other as? Model)?.name == name
 }
 
 // The following models support masking

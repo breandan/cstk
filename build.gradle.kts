@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.0"
+  kotlin("jvm") version "1.7.10"
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.1.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -50,13 +50,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.4.2")
+  implementation("com.github.ajalt.clikt:clikt:3.5.0")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.24.0"
+  val openrwVersion = "7.25.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,11 +83,11 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.306")
+  implementation("org.kohsuke:github-api:1.307")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.2.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.3.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.21")
@@ -133,7 +133,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-4")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-11")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.1")
@@ -154,7 +154,9 @@ tasks {
     "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
     "allTasks" to "edu.mcgill.cstk.experiments.probing.AllTasksKt",
     "completeCode" to "edu.mcgill.cstk.experiments.probing.CodeCompletionKt",
+    "completeSyntax" to "edu.mcgill.cstk.experiments.probing.SyntaxCompletionKt",
     "completeDoc" to "edu.mcgill.cstk.experiments.probing.DocCompletionKt",
+    "synthCode" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
     "varMisuse" to "edu.mcgill.cstk.experiments.probing.VariableMisuseKt",
     "codeMetrics" to "edu.mcgill.cstk.math.CodeMetricsKt",
     "code2Vec" to "edu.mcgill.cstk.experiments.Code2VecKt",

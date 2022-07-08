@@ -1,4 +1,5 @@
 
+# This file has been generated. Do not edit directly.
 import http.server
 import sys
 import urllib
