@@ -10,6 +10,7 @@ import spoon.Launcher
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
+import kotlin.math.max
 import kotlin.text.Charsets.UTF_8
 
 
@@ -83,8 +84,16 @@ fun String.splitMethods(): List<String> =
 
 fun List<String>.put(line: String) = dropLast(1) + (last() + "\n" + line)
 
-fun String.countBalancedBrackets(): Int =
-  fold(0) { s, c -> if (c in openParens) s + 1 else if (c in closeParens) s - 1 else s }
+fun String.countBalancedBrackets(): Int = countBracketsAndMaxDepth().first
+
+fun String.countBracketsAndMaxDepth() =
+  fold(0 to 0) { (s, depth), c ->
+    when (c) {
+      in openParens -> (s + 1) to max(s, depth)
+      in closeParens -> (s - 1) to depth
+      else -> (s to depth)
+    }
+  }
 
 fun URI.contents(): String? =
   when (scheme) {
