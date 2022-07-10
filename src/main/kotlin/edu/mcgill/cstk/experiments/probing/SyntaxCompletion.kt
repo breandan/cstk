@@ -14,12 +14,12 @@ import edu.mcgill.cstk.nlp.*
  * syntactically well-formed out of the total number of samples tested:
  *
  *      Scores [model=(valid, total)]:
- *      microsoft/codebert-base-mlm=(85, 236)
- *      huggingface/CodeBERTa-small-v1=(61, 299)
- *      microsoft/graphcodebert-base=(45, 262)
- *      dbernsohn/roberta-java=(28, 201)
+ *      microsoft/codebert-base-mlm=(1423, 3559)
+ *      huggingface/CodeBERTa-small-v1=(768, 3681)
+ *      microsoft/graphcodebert-base=(1008, 3571)
+ *      dbernsohn/roberta-java=(434, 2924)
  *      ...
-*/
+ */
 
 /**
 ./gradlew completeSyntax
