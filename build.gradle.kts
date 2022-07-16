@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.17.0"
+  val djlVersion = "0.18.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.0")
@@ -38,12 +38,12 @@ dependencies {
   implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "1.0.0"
+  val hnswlibVersion = "1.0.1"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.1.1"
-  implementation("org.jetbrains.kotlinx:multik-api:$multikVersion")
+  val multikVersion = "0.2.0-dev-2"
+  implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
   // String comparison metrics
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.25.0"
+  val openrwVersion = "7.26.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -108,7 +108,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.11")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.62.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.63.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
