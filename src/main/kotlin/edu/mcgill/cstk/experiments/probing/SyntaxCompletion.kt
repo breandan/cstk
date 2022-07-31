@@ -33,7 +33,7 @@ fun main() {
     .map { it to it.constructPrompt() }
     .runningFold(MODELS.associateWith { (0 to 0) }) { scores, (groundTruth, prompt) ->
       MODELS.associateWith { model ->
-        val completion = model.complete(prompt + model.mask, maxTokens = 50)
+        val completion = model.completeUntilStopChar(prompt + model.mask, maxTokens = 50)
         scores[model]!!.let { (n, d) ->
           if (!completion.endsWith(";")) n to d
           else (n + if (completion.dyckCheck()) 1 else 0) to (d + 1)
@@ -45,10 +45,9 @@ fun main() {
 }
 
 // Can model reconstruct a syntactically valid snippet from its truncated form?
-private fun String.constructPrompt() =
-  substringBeforeLast('(').trim() + '('
+private fun String.constructPrompt() = substringBeforeLast('(').trim() + '('
 
-private fun String.isANontrivialStatementWithBalancedParentheses(
+fun String.isANontrivialStatementWithBalancedParentheses(
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
 ) =
   trim().endsWith(';')

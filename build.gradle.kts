@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.7.20-Beta"
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.1.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.26.0"
+  val openrwVersion = "7.26.3"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -105,7 +105,7 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
   // Pretty-printing string diffs
-  implementation("io.github.java-diff-utils:java-diff-utils:4.11")
+  implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.63.0")
@@ -133,10 +133,12 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-11")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-12")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.1")
+
+  implementation("com.google.testing.compile:compile-testing:0.19")
 }
 
 tasks {
@@ -154,6 +156,7 @@ tasks {
     "codeSynth" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",
     "allTasks" to "edu.mcgill.cstk.experiments.probing.AllTasksKt",
     "completeCode" to "edu.mcgill.cstk.experiments.probing.CodeCompletionKt",
+    "compilerTest" to "edu.mcgill.cstk.experiments.probing.CompileTestingKt",
     "completeSyntax" to "edu.mcgill.cstk.experiments.probing.SyntaxCompletionKt",
     "completeDoc" to "edu.mcgill.cstk.experiments.probing.DocCompletionKt",
     "synthCode" to "edu.mcgill.cstk.experiments.CodeSynthesisKt",

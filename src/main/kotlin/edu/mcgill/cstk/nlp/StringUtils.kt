@@ -153,6 +153,17 @@ fun matrixize(query: String): Array<DoubleArray> =
 // Expands MSK autoregressively until maxTokens reached or stopChar encountered
 tailrec fun Model.complete(
   query: String = mask,
+  fullCompletion: String = query.replace(mask, makeQuery(query).first()),
+  maxTokens: Int = 1,
+): String =
+  if (maxTokens <= 1) fullCompletion
+  else complete(
+    query = fullCompletion + mask,
+    maxTokens = maxTokens - 1
+  )
+
+tailrec fun Model.completeUntilStopChar(
+  query: String = mask,
   fullCompletion: String =
     // Take first probable stop sequence
     query.replace(mask, makeQuery(query).let { it.firstOrNull { ";" in it } ?: it.first() }),
@@ -160,7 +171,7 @@ tailrec fun Model.complete(
   isStopChar: (Char) -> Boolean = { it in setOf('\n', ';') }
 ): String =
   if (maxTokens <= 1 || fullCompletion.any { isStopChar(it) }) fullCompletion
-  else complete(
+  else completeUntilStopChar(
     query = fullCompletion + mask,
     maxTokens = maxTokens - 1
   )
