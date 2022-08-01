@@ -185,13 +185,11 @@ fun Model.makeQuery(query: String = "", hints: Collection<String> = listOf()): L
   ("$SERVER_URL${name}?query=${URLEncoder.encode(query, "utf-8")}" +
     // http://localhost:8000/microsoft/graphcodebert-base?query=System.%3Cmask%3E.println()&hint=test&hint=err&hint=out
     hints.joinToString("") { "&hint=" + URLEncoder.encode(it, "utf-8") })
-    .let { url -> (0..5).forEach { retryNo ->
-      try {
-        return URL(url).readText().lines()
-      } catch (ex: Exception) {
-        if (retryNo == 5) throw ex
-      }
-    }
+    .let { url ->
+      (0..5).asSequence().map {
+        try { URL(url).readText().lines() } catch (ex: Exception) { null }
+      }.first { it != null }
+    } ?: listOf()
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

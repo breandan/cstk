@@ -22,13 +22,13 @@ fun main() {
     .map { it.first.lines().joinToString("  ") }
     .filter { compilesWithoutSyntaxErrors(it) }
     .forEach { code ->
-      total.increment()
       MODELS.forEach { model ->
         val prompt = code.constructPrompt(model.mask)
         val completion = model.complete(prompt, maxTokens = 1)
         if (compilesWithoutSyntaxErrors(completion)) map.incrementAndGet(model)
       }
 
+      total.increment()
       val summary = map.asMap().entries
         .map { (k, v) -> k to "$v/$total" }.joinToString("\n")
       println("\nScores [model=(valid, total)]:\n$summary")
