@@ -97,7 +97,7 @@ fun String.countBracketsAndMaxDepth() =
 
 fun URI.contents(): String? =
   when (scheme) {
-    TGZ_SCHEME -> vfsManager.resolveFile(this).content.getString(UTF_8)
+    TGZ_SCHEME -> vfsManager.readText(this)
     FILE_SCHEME -> toPath().run { if (extension in FILE_EXTs && exists()) readText() else null }
     else -> null
   }
@@ -188,8 +188,8 @@ fun Model.makeQuery(query: String = "", hints: Collection<String> = listOf()): L
     .let { url ->
       (0..5).asSequence().map {
         try { URL(url).readText().lines() } catch (ex: Exception) { null }
-      }.first { it != null }
-    } ?: listOf()
+      }.firstOrNull { it != null }
+    } ?: listOf("")
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

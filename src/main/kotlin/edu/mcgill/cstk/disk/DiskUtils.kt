@@ -5,6 +5,7 @@ import org.apache.commons.vfs2.*
 import java.io.*
 import java.io.File
 import java.net.URI
+import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.*
 import java.nio.file.FileSystem
 import java.util.zip.*
@@ -114,3 +115,7 @@ fun indexURI(src: URI, indexFn: (String, Concordance) -> Unit): Unit =
   }
 
 val vfsManager = VFS.getManager()
+fun FileSystemManager.readText(uri: URI): String =
+  resolveFile(uri).let { f ->
+    f.content.let { c -> c.getString(UTF_8).also { c.close() } }.also { f.close() }
+  }
