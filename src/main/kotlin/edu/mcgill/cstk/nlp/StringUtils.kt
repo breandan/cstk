@@ -147,6 +147,13 @@ fun matrixize(query: String): Array<DoubleArray> =
   .map { it.split(" ").filter(String::isNotEmpty).map(String::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
 
+fun Model.score(
+  query: String,
+  tokens: List<String> = query.split(Regex("((?<=\\W)|(?=\\W))"))
+) =
+  tokens.indices.map { tokens[it] to tokens.toMutableList().apply { this[it] = mask } }
+    .map { (t, q) -> makeQueryAndScore(q.joinToString(""), listOf(t)).first() }
+
 // Expands MSK autoregressively until maxTokens reached or stopChar encountered
 tailrec fun Model.complete(
   query: String = mask,
@@ -177,16 +184,22 @@ fun Model.countTokens(query: String) =
   "$SERVER_URL${name}?tokenize=${URLEncoder.encode(query, "utf-8")}"
     .let { URL(it).readText().count { it == ',' } }
 
-/** Queries a model for its predictions. See [embeddingServer]. */
 fun Model.makeQuery(query: String = "", hints: Collection<String> = listOf()): List<String> =
+  makeQueryAndScore(query, hints).map { it.first }
+
+/** Queries a model for its predictions. See [embeddingServer]. */
+fun Model.makeQueryAndScore(query: String = "", hints: Collection<String> = listOf()): List<Pair<String, Double>> =
   ("$SERVER_URL${name}?query=${URLEncoder.encode(query, "utf-8")}" +
     // http://localhost:8000/microsoft/graphcodebert-base?query=System.%3Cmask%3E.println()&hint=test&hint=err&hint=out
     hints.joinToString("") { "&hint=" + URLEncoder.encode(it, "utf-8") })
     .let { url ->
       (0..5).asSequence().map {
-        try { URL(url).readText().lines() } catch (ex: Exception) { null }
+        try {
+          URL(url).readText().lines()
+            .map { it.substringBeforeLast(",") to it.substringAfterLast(",").toDouble() }
+        } catch (ex: Exception) { null }
       }.firstOrNull { it != null }
-    } ?: listOf("")
+    } ?: listOf("" to 0.0)
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

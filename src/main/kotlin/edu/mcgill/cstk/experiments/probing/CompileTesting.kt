@@ -10,6 +10,12 @@ import java.util.concurrent.atomic.LongAdder
 import javax.tools.*
 import kotlin.streams.asStream
 
+//Scores [model=(valid, total)]:
+//(microsoft/graphcodebert-base, 1267/1839)
+//(dbernsohn/roberta-java, 433/1839)
+//(huggingface/CodeBERTa-small-v1, 874/1839)
+//(microsoft/codebert-base-mlm, 1377/1839)
+
 fun main() {
   val map = AtomicLongMap.create<Model>()
   val total = LongAdder()
