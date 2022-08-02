@@ -1,4 +1,3 @@
-
 # This file has been generated. Do not edit directly.
 import http.server
 import sys
@@ -98,7 +97,7 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
                                 tokenizer=tokenizer, targets=hints)
                 outputs = pred(query)
                 completions = sorted(outputs, key=lambda s: -float(s['score']))
-                completions = list(map(lambda x: x['token_str'], completions))
+                completions = list(map(lambda x: f"{x['token_str']},{x['score']}", completions))
                 token = "\n".join(completions)
                 return token
             else:

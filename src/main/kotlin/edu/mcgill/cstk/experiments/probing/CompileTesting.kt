@@ -25,8 +25,7 @@ fun main() {
     .allFilesRecursively().allMethods()
     .filter { it.first.startsWith("public") && it.first.lines().size in 5..10 }
     .map { it.first.lines().joinToString("  ") }.asStream().parallel()
-    .filter { compilesWithoutSyntaxErrors(it) }
-    .forEach { code ->
+    .filter { compilesWithoutSyntaxErrors(it) }.forEach { code ->
       println("============\n$code\n===========")
       MODELS.forEach { model ->
         val prompt = code.constructPrompt(model.mask)
@@ -54,7 +53,7 @@ fun compilesWithoutSyntaxErrors(
   ),
   syntaxErrors: List<Diagnostic<out JavaFileObject>> =
     javac.compile(file).errors()
-      .filter { "cannot find symbol" !in it.getMessage(ENGLISH) }
+      .filterNot { "cannot find symbol" in it.getMessage(ENGLISH) }
 ): Boolean = syntaxErrors.isEmpty()
 
 //https://github.com/huggingface/transformers/pull/10222
