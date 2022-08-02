@@ -115,7 +115,4 @@ fun indexURI(src: URI, indexFn: (String, Concordance) -> Unit): Unit =
   }
 
 val vfsManager = VFS.getManager()
-fun FileSystemManager.readText(uri: URI): String =
-  resolveFile(uri).let { f ->
-    f.content.let { c -> c.getString(UTF_8).also { c.close() } }.also { f.close() }
-  }
+fun FileSystemManager.readText(uri: URI): String = resolveFile(uri).content.getString(UTF_8)

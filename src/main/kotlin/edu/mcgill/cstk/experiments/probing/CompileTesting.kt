@@ -17,11 +17,11 @@ fun main() {
   DATA_DIR
     .also { println("Evaluating $MODELS using compiler on $it...") }
     .allFilesRecursively().allMethods()
-    .asStream().parallel()
-    .filter { it.first.startsWith("public static") && it.first.lines().size < 10 }
-    .map { it.first.lines().joinToString("  ") }
+    .filter { it.first.startsWith("public") && it.first.lines().size in 5..10 }
+    .map { it.first.lines().joinToString("  ") }.asStream().parallel()
     .filter { compilesWithoutSyntaxErrors(it) }
     .forEach { code ->
+      println("============\n$code\n===========")
       MODELS.forEach { model ->
         val prompt = code.constructPrompt(model.mask)
         val completion = model.complete(prompt, maxTokens = 1)
@@ -38,6 +38,8 @@ fun main() {
 private fun String.constructPrompt(mask: String) =
   replaceFirst(");", "$mask;")
 
+val javac = javac()
+
 fun compilesWithoutSyntaxErrors(
   code: String,
   file: JavaFileObject? = JavaFileObjects.forSourceString(
@@ -45,12 +47,12 @@ fun compilesWithoutSyntaxErrors(
     """class CompileTest { $code }"""
   ),
   syntaxErrors: List<Diagnostic<out JavaFileObject>> =
-    javac().compile(file).errors()
+    javac.compile(file).errors()
       .filter { "cannot find symbol" !in it.getMessage(ENGLISH) }
 ): Boolean = syntaxErrors.isEmpty()
 
-/** TODO: Experiment idea
 //https://github.com/huggingface/transformers/pull/10222
+/** TODO: Experiment idea
 def fix_broken_code(code, lang_model):
     num_holes <- 1
     while [code] does not compile:

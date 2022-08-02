@@ -55,17 +55,14 @@ val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
 fun Sequence<URI>.allMethods(
-  parser: (String) -> List<String> = { file ->
-    Launcher.parseClass(file).methods.map { it.toString() }
-  }
+  parser: (String) -> List<String> =
+    { file -> Launcher.parseClass(file).methods.map { it.toString() } }
 ): Sequence<Pair<String, URI>> =
   mapNotNull { path ->
     path.contents()?.let {
       try {
         parser(it).map { it to path }
-      } catch (exception: Exception) {
-        null
-      }
+      } catch (exception: Exception) { null }
     }
   }.flatten()
 
@@ -177,7 +174,7 @@ tailrec fun Model.completeUntilStopChar(
   )
 
 fun Model.countTokens(query: String) =
-  "$SERVER_URL${name}?tokenze=${URLEncoder.encode(query, "utf-8")}"
+  "$SERVER_URL${name}?tokenize=${URLEncoder.encode(query, "utf-8")}"
     .let { URL(it).readText().count { it == ',' } }
 
 /** Queries a model for its predictions. See [embeddingServer]. */
