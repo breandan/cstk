@@ -1,11 +1,9 @@
 package edu.mcgill.cstk.experiments.probing
 
 import com.google.common.util.concurrent.AtomicLongMap
-import com.google.testing.compile.Compiler.javac
-import com.google.testing.compile.JavaFileObjects
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
-import java.util.Locale.ENGLISH
+import java.io.*
 import java.util.concurrent.atomic.LongAdder
 import javax.tools.*
 import kotlin.streams.asStream
@@ -22,15 +20,21 @@ fun main() {
 
   DATA_DIR
     .also { println("Evaluating $MODELS using compiler on $it...") }
-    .allFilesRecursively().allMethods()
-    .filter { it.first.startsWith("public") && it.first.lines().size in 5..10 }
-    .map { it.first.lines().joinToString("  ") }.asStream().parallel()
-    .filter { compilesWithoutSyntaxErrors(it) }.forEach { code ->
-      println("============\n$code\n===========")
+    .allFilesRecursively().allMethods().map { it.first }
+    .filter { it.startsWith("public") && it.lines().size < 10 }
+    .asStream().parallel()
+    .filter { !containsSyntaxError(it) }
+    .forEach { code ->
       MODELS.forEach { model ->
         val prompt = code.constructPrompt(model.mask)
         val completion = model.complete(prompt, maxTokens = 1)
-        if (compilesWithoutSyntaxErrors(completion)) map.incrementAndGet(model)
+        if (prompt.lines().all { it.length < 50 }) {
+          printSideBySide(code, prompt, "code", "prompt")
+          println("============================")
+          printSideBySide(prompt, completion, "prompt", "completion")
+        }
+        if (containsSyntaxError(completion))
+          map.incrementAndGet(model)
       }
 
       total.increment()
@@ -40,21 +44,35 @@ fun main() {
     }
 }
 
-private fun String.constructPrompt(mask: String) =
-  replaceFirst(");", "$mask;")
+private fun String.constructPrompt(
+  mask: String,
+  maskChars: String = "(){}<>[]",
+  escaped: String = Regex.escape(maskChars),
+  split: List<String> = split(Regex("((?<=[$escaped])|(?=[$escaped]))")),
+  toMask: Int = split.indices.filter { split[it] in maskChars }.random(),
+  maskedSeq: String = split.toMutableList().apply { this[toMask] = mask }.joinToString("")
+) = maskedSeq
 
-val javac = javac()
+fun containsSyntaxError(src: String): Boolean {
+  val sourceFile = File("Test_${src.hashCode()}.java")
+  sourceFile.writeText("class CompileTest { $src }")
+  val compiler = ToolProvider.getSystemJavaCompiler()
+  val output: OutputStream = object: OutputStream() {
+    private val string = StringBuilder()
 
-fun compilesWithoutSyntaxErrors(
-  code: String,
-  file: JavaFileObject? = JavaFileObjects.forSourceString(
-    "CompileTest",
-    """class CompileTest { $code }"""
-  ),
-  syntaxErrors: List<Diagnostic<out JavaFileObject>> =
-    javac.compile(file).errors()
-      .filterNot { "cannot find symbol" in it.getMessage(ENGLISH) }
-): Boolean = syntaxErrors.isEmpty()
+    @Throws(IOException::class)
+    override fun write(b: Int) {
+      string.append(b.toChar())
+    }
+
+    override fun toString(): String = string.toString()
+  }
+  compiler.run(null, null, output, sourceFile.path)
+
+  sourceFile.delete()
+  return Regex("error: (.*)").findAll(output.toString())
+    .any { it.destructured.component1() != "cannot find symbol" }
+}
 
 //https://github.com/huggingface/transformers/pull/10222
 /** TODO: Experiment idea

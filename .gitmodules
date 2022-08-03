@@ -1,7 +1,3 @@
 [submodule "galoisenne"]
 	path = galoisenne
 	url = https://github.com/breandan/galoisenne.git
-
-[submodule "tidyparse"]
-	path = tidyparse
-	url = git@github.com:breandan/tidyparse.git

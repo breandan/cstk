@@ -6,12 +6,13 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
+import org.apache.commons.vfs2.impl.DefaultFileSystemManager
 import spoon.Launcher
+import java.io.File
 import java.net.*
 import java.nio.file.*
 import kotlin.io.path.*
 import kotlin.math.max
-import kotlin.text.Charsets.UTF_8
 
 
 // Query in context
@@ -93,11 +94,11 @@ fun String.countBracketsAndMaxDepth() =
   }
 
 fun URI.contents(): String? =
-  when (scheme) {
-    TGZ_SCHEME -> vfsManager.readText(this)
-    FILE_SCHEME -> toPath().run { if (extension in FILE_EXTs && exists()) readText() else null }
-    else -> null
-  }
+    when (scheme) {
+      TGZ_SCHEME -> vfsManager.readText(this)
+      FILE_SCHEME -> if (extension() in FILE_EXTs) File(this).readText() else null
+      else -> null
+    }
 
 fun URI.allLines(): Sequence<String> =
   contents()?.lineSequence() ?: emptySequence()

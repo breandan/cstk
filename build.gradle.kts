@@ -137,8 +137,6 @@ dependencies {
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.1")
-
-  implementation("com.google.testing.compile:compile-testing:0.19")
 }
 
 tasks {
