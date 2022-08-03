@@ -150,7 +150,7 @@ fun matrixize(query: String): Array<DoubleArray> =
 
 fun Model.score(
   query: String,
-  tokens: List<String> = query.split(Regex("((?<=\\W)|(?=\\W))"))
+  tokens: List<String> = query.splitByNonWordChars()
 ) =
   tokens.indices.map { tokens[it] to tokens.toMutableList().apply { this[it] = mask } }
     .map { (t, q) -> makeQueryAndScore(q.joinToString(""), listOf(t)).first() }
@@ -313,3 +313,5 @@ fun printSideBySide(
     println("\n")
   }
 }
+
+fun String.splitByNonWordChars() = split(Regex("((?<=\\W)|(?=\\W))"))

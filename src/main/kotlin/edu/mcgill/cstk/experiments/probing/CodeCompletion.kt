@@ -266,7 +266,7 @@ fun Model.completeAndScore(
 
 // Returns various maskings with the masked word
 fun String.maskIdentifiers(): List<V2<String>> =
-  split(Regex("((?<=\\W)|(?=\\W))")).let {
+  splitByNonWordChars().let {
     it.mapIndexed { index, maskedWord -> index to maskedWord }
       .filter { (_, token) ->
         token.isVariable() && 2 < split(token).size // More than two occurrences

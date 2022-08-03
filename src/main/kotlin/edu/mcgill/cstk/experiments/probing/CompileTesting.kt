@@ -33,8 +33,8 @@ fun main() {
           println("============================")
           printSideBySide(prompt, completion, "prompt", "completion")
         }
-        if (containsSyntaxError(completion))
-          map.incrementAndGet(model)
+
+        if (containsSyntaxError(completion)) map.incrementAndGet(model)
       }
 
       total.increment()
@@ -61,9 +61,7 @@ fun containsSyntaxError(src: String): Boolean {
     private val string = StringBuilder()
 
     @Throws(IOException::class)
-    override fun write(b: Int) {
-      string.append(b.toChar())
-    }
+    override fun write(b: Int) { string.append(b.toChar()) }
 
     override fun toString(): String = string.toString()
   }
@@ -89,4 +87,3 @@ def fix_broken_code(code, lang_model):
             return code
         num_holes <- num_holes + 1
  */
-

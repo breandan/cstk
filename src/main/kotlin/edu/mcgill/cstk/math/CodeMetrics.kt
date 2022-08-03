@@ -6,13 +6,10 @@ import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.lang3.StringUtils
 
-fun String.allTokensDeduped(): List<String> =
-  split(Regex("((?<=\\W)|(?=\\W))"))
-
 // Approximates CC metric without parsing
 fun String.approxCyclomatic(
   tokens: List<String> = (openParens + closeParens).map { it.toString() }.toList() + controlFlowKeywords
-) = tokens.mapLeftJoin(allTokensDeduped()).sumOf { it.second.size }
+) = tokens.mapLeftJoin(splitByNonWordChars()).sumOf { it.second.size }
 
 
 object MetricCSNF: MetricStringDistance {
