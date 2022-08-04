@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
+import ai.hypergraph.kaliningraph.parsing.*
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.nlp.*
@@ -23,18 +24,21 @@ fun main() {
     .allFilesRecursively().allMethods().map { it.first }
     .filter { it.startsWith("public") && it.lines().size < 10 }
     .asStream().parallel()
-    .filter { !containsSyntaxError(it) }
+    .filter { !it.containsSyntaxError() }
+//    .flatMap { src -> src.constructPrompts().map { src to it }.distinct().take(3).asStream() }
     .forEach { code ->
       MODELS.forEach { model ->
         val prompt = code.constructPrompt(model.mask)
         val completion = model.complete(prompt, maxTokens = 1)
+        val annotatedCompletion =
+          if (completion.containsSyntaxError()) "$completion// Syntax error!"
+          else { map.incrementAndGet(model); completion }
         if (prompt.lines().all { it.length < 50 }) {
-          printSideBySide(code, prompt, "code", "prompt")
-          println("============================")
-          printSideBySide(prompt, completion, "prompt", "completion")
+          print(prettyDiffs(
+            listOf(code, prompt, annotatedCompletion),
+            listOf("code", "prompt", "completion")
+          ))
         }
-
-        if (containsSyntaxError(completion)) map.incrementAndGet(model)
       }
 
       total.increment()
@@ -44,31 +48,44 @@ fun main() {
     }
 }
 
+val javaCFG ="""
+    START -> D T P
+    P -> A | ( P ) | ( P ) | { P } | [ P ] | < P > | P P
+    D -> public | static | void | D D
+    A -> ε | w | . | ; | , | = | A A
+    W -> w
+    T -> W | W < T >
+  """.parseCFG()
+fun String.quickSyntaxCheck() =
+  javaCFG.isValid(
+    splitByNonWordChars().filter { it.isNotBlank() }
+      .joinToString(" ") { if (it in "(){}<>[]") it else "w" }
+      // TODO: maybe we can apply this transformation automatically using the parser
+      .replace(Regex("w( w)*"), "w")
+      .also { println("Simplified code: $it") }
+  )
+
+fun String.constructPrompts() =
+  generateSequence { constructPrompt(this) }
+
 private fun String.constructPrompt(
-  mask: String,
-  maskChars: String = "(){}<>[]",
+  mask: String = "[[MASK]]",
+  maskChars: String = "(){}<>[]", // "(){}<>[].,="
   escaped: String = Regex.escape(maskChars),
   split: List<String> = split(Regex("((?<=[$escaped])|(?=[$escaped]))")),
   toMask: Int = split.indices.filter { split[it] in maskChars }.random(),
   maskedSeq: String = split.toMutableList().apply { this[toMask] = mask }.joinToString("")
-) = maskedSeq
+): String = if(!maskedSeq.quickSyntaxCheck()) maskedSeq else constructPrompt()
 
-fun containsSyntaxError(src: String): Boolean {
-  val sourceFile = File("Test_${src.hashCode()}.java")
-  sourceFile.writeText("class CompileTest { $src }")
-  val compiler = ToolProvider.getSystemJavaCompiler()
-  val output: OutputStream = object: OutputStream() {
-    private val string = StringBuilder()
+fun String.containsSyntaxError(): Boolean {
+  val file = File.createTempFile("Test_${hashCode()}", ".java")
+  file.writeText("class CompileTest { $this }")
+  val errors = StringBuilder()
+  object: OutputStream() { override fun write(b: Int) { errors.append(b.toChar()) } }
+    .let { ToolProvider.getSystemJavaCompiler().run(null, null, it, file.path) }
+  file.delete()
 
-    @Throws(IOException::class)
-    override fun write(b: Int) { string.append(b.toChar()) }
-
-    override fun toString(): String = string.toString()
-  }
-  compiler.run(null, null, output, sourceFile.path)
-
-  sourceFile.delete()
-  return Regex("error: (.*)").findAll(output.toString())
+  return Regex("error: (.*)").findAll(errors.toString())
     .any { it.destructured.component1() != "cannot find symbol" }
 }
 

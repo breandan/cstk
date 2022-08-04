@@ -6,7 +6,6 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
-import org.apache.commons.vfs2.impl.DefaultFileSystemManager
 import spoon.Launcher
 import java.io.File
 import java.net.*
@@ -275,12 +274,23 @@ fun String.highlightDiffedTeX(
     else "$str$char" to open
   }.first
 
-fun printSideBySide(
+fun prettyDiffs(
+  list: List<String>,
+  headings: List<String>,
+  maxLen: Int = 180, maxLines: Int = 200,
+) =
+  (list.windowed(2).zip(headings.windowed(2))).let { diffs ->
+    diffs.map { prettyDiff(it.first[0], it.first[1], it.second[0], it.second[1], maxLen, maxLines) }
+      .let { it.joinToString(List(it.maxOf { it.lines().maxOf { it.length } }) { "=" }.joinToString("", "", "\n")) }
+  } + "\n\n"
+
+fun prettyDiff(
   left: String, right: String,
   leftHeading: String = "original",
   rightHeading: String = "new",
   maxLen: Int = 180, maxLines: Int = 200,
-) {
+): String {
+  val sb = StringBuilder()
   val leftLines = left.lines()
   val rightLines = right.lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
@@ -297,21 +307,21 @@ fun printSideBySide(
     val padLeft = rows.maxOf { it.oldLine.length }
     val padRight = rows.maxOf { it.newLine.length }
 
-    println(
+    sb.appendLine(
       "| $leftHeading".padEnd(padLeft + 3, ' ') +
         "| $rightHeading".padEnd(padRight + 3, ' ') + "|"
     )
     val lsep = "|".padEnd(padLeft + 3, '-')
     val rsep = "|".padEnd(padRight + 3, '-')
-    println("$lsep$rsep|")
+    sb.appendLine("$lsep$rsep|")
     rows.forEach { row ->
-      println(
+      sb.appendLine(
         "| " + row.oldLine.padEnd(padLeft, ' ') + " | " +
           row.newLine.padEnd(padRight, ' ') + " |"
       )
     }
-    println("\n")
   }
+  return sb.toString()
 }
 
 fun String.splitByNonWordChars() = split(Regex("((?<=\\W)|(?=\\W))"))
