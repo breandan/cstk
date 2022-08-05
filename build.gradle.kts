@@ -178,7 +178,6 @@ tasks {
 
   compileKotlin {
     kotlinOptions.jvmTarget = VERSION_13.toString()
-    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
   }
 
   shadowJar {
