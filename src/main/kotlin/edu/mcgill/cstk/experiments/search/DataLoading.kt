@@ -1,7 +1,7 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.search
 
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 import java.io.File
 
 data class CodesAndVecs(val cfs: List<String>, val vecs: Array<DoubleArray>)

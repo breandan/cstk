@@ -1,11 +1,12 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.rewriting
 
 import ai.hypergraph.kaliningraph.types.cc
 import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.experiments.search.*
 import edu.mcgill.cstk.math.*
-import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
+import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.math.absoluteValue
 import kotlin.reflect.KFunction1

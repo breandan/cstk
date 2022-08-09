@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.search
 
 import ai.hypergraph.kaliningraph.closure
 import ai.hypergraph.kaliningraph.graphs.*

@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.agent
+package edu.mcgill.cstk.djl
 
 import ai.djl.modality.nlp.preprocess.UnicodeNormalizer
 import ai.djl.ndarray.*

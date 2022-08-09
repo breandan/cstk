@@ -3,8 +3,8 @@ package edu.mcgill.cstk.experiments.probing
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.rougeSynonym
-import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
+import edu.mcgill.cstk.utils.*
 
 /**
 ./gradlew completeDoc

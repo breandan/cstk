@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.indices
+package edu.mcgill.cstk.disk.indices
 
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharArrayNodeFactory
 import com.googlecode.concurrenttrees.suffix.ConcurrentSuffixTree

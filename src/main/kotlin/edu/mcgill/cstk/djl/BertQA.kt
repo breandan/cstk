@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.inference
+package edu.mcgill.cstk.djl
 
 import ai.djl.Application
 import ai.djl.modality.nlp.qa.QAInput

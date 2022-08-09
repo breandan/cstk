@@ -1,11 +1,12 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.search
 
 import ai.hypergraph.kaliningraph.types.*
 import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.cstk.disk.TEST_DIR
+import edu.mcgill.cstk.disk.indices.*
 import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.math.euclidDist
-import edu.mcgill.cstk.nlp.filterByDFA
+import edu.mcgill.cstk.utils.filterByDFA
 import net.automatalib.automata.fsa.DFA
 import net.automatalib.words.*
 import net.automatalib.words.impl.Alphabets

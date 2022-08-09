@@ -3,9 +3,12 @@ package edu.mcgill.cstk.rewriting
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 import kotlin.math.min
 
+/*
+./gradlew testCodeTxs
+ */
 fun main() {
   val codeSnippet = """
     static void main(String[] args) {

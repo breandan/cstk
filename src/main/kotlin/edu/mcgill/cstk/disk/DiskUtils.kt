@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.disk
 
-import edu.mcgill.cstk.nlp.allCodeFragments
+import edu.mcgill.cstk.utils.allCodeFragments
 import org.apache.commons.vfs2.*
 import java.io.*
 import java.io.File

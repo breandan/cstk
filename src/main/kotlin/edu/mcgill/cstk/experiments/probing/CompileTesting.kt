@@ -4,7 +4,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sampling.choose
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 import java.io.*
 import java.util.concurrent.atomic.LongAdder
 import java.util.stream.Stream

@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.math
 
 import ai.hypergraph.kaliningraph.types.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 import info.debatty.java.stringsimilarity.Levenshtein
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.lang3.StringUtils

@@ -3,8 +3,8 @@ package edu.mcgill.cstk.experiments.probing
 import ai.hypergraph.kaliningraph.types.*
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
+import edu.mcgill.cstk.utils.*
 import qa.qf.qcri.iyas.evaluation.ir.MeanReciprocalRank
 import java.net.URI
 import kotlin.reflect.KFunction1

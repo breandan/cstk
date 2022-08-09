@@ -1,11 +1,11 @@
-package edu.mcgill.cstk.indices
+package edu.mcgill.cstk.disk.indices
 
 import ai.hypergraph.kaliningraph.types.*
 import com.github.jelmerk.knn.Item
 import com.github.jelmerk.knn.hnsw.HnswIndex
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.EMD
-import edu.mcgill.cstk.nlp.vectorize
+import edu.mcgill.cstk.utils.vectorize
 import java.io.File
 import java.net.URI
 import kotlin.time.*

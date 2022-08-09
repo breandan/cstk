@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments
 
 import ai.hypergraph.kaliningraph.types.*
+import edu.mcgill.cstk.experiments.search.fetchOrLoadSampleData
 import edu.mcgill.cstk.math.*
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation

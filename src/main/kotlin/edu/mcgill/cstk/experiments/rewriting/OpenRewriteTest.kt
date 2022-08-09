@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.rewriting
 
 import org.openrewrite.java.*
 

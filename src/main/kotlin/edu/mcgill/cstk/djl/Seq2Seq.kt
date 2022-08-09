@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.agent
+package edu.mcgill.cstk.djl
 
 /*
  * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.

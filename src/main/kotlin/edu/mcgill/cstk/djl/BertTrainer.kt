@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.agent
+package edu.mcgill.cstk.djl
 
 import ai.djl.*
 import ai.djl.Model

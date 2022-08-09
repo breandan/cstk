@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.search
 
 import org.tribuo.clustering.example.ClusteringDataGenerator
 import org.tribuo.clustering.kmeans.KMeansTrainer

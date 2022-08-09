@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.indices
+package edu.mcgill.cstk.disk.indices
 
 import edu.mcgill.cstk.disk.*
 import java.net.URI

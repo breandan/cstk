@@ -4,8 +4,8 @@ import ai.hypergraph.kaliningraph.types.*
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.approxCyclomatic
-import edu.mcgill.cstk.nlp.*
 import edu.mcgill.cstk.rewriting.*
+import edu.mcgill.cstk.utils.*
 import org.hipparchus.stat.inference.TTest
 import java.io.File
 import java.net.URI

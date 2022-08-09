@@ -1,11 +1,11 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.search
 
 import astminer.common.model.LabeledResult
 import astminer.parse.gumtree.GumTreeNode
 import astminer.parse.gumtree.java.srcML.*
 import astminer.storage.path.*
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.allLines
+import edu.mcgill.cstk.utils.allLines
 
 // Retrieve paths from Java files, using a GumTree parser.
 

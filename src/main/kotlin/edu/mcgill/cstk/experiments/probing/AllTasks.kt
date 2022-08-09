@@ -2,8 +2,8 @@ package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.kaliningraph.types.times
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.allMethods
 import edu.mcgill.cstk.rewriting.*
+import edu.mcgill.cstk.utils.allMethods
 
 /**
 ./gradlew allTasks

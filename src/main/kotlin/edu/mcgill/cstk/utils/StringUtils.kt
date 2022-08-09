@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.nlp
+package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.types.cc
 import com.github.difflib.text.DiffRowGenerator
@@ -6,13 +6,40 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import net.automatalib.automata.fsa.DFA
+import net.sf.extjwnl.data.PointerUtils.*
+import net.sf.extjwnl.dictionary.Dictionary
+import org.apache.commons.lang3.StringUtils
 import spoon.Launcher
 import java.io.File
 import java.net.*
 import java.nio.file.*
-import kotlin.io.path.*
+import kotlin.io.path.toPath
 import kotlin.math.max
 
+fun String.execute() =
+  ProcessBuilder( split(" ") ).start().waitFor()
+
+fun synonymize(token: String): String =
+  StringUtils.splitByCharacterTypeCamelCase(token).joinToString("") { old ->
+    old.synonyms().filter { it !in RESERVED_TOKENS }.ifEmpty { setOf(old) }
+      .random().let { new ->
+        if (old.first().isLowerCase()) new
+        else "" + new[0].uppercaseChar() + new.drop(1)
+      }
+  }
+
+val defaultDict: Dictionary = Dictionary.getDefaultResourceInstance()
+
+// Returns single-word synonyms
+fun String.synonyms(synonymDepth: Int = 3): Set<String> =
+  defaultDict.lookupAllIndexWords(this).indexWordArray.map {
+    it.senses.map { sense ->
+      (getSynonymTree(sense, synonymDepth).toList() +
+        listOf(getDirectHyponyms(sense), getDirectHypernyms(sense)))
+        .flatten().map { it.synset.words }
+        .flatten().mapNotNull { it.lemma }
+    }.flatten() + it.lemma
+  }.flatten().filter { " " !in it }.toSet()
 
 // Query in context
 data class QIC(

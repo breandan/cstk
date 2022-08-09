@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.disk
 
-import edu.mcgill.cstk.indices.*
-import edu.mcgill.cstk.nlp.allLines
+import edu.mcgill.cstk.disk.indices.*
+import edu.mcgill.cstk.utils.allLines
 import java.io.Serializable
 import java.net.URI
 

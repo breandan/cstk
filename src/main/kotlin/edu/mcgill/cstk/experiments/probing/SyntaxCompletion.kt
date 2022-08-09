@@ -2,7 +2,7 @@ package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.kaliningraph.parsing.dyckCheck
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 
 /**
  * In this experiment, we sample nontrivial single-line statements with balanced

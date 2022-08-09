@@ -1006,7 +1006,7 @@ Angle brackets enclose longest common substring up to current result
 	18.19] add(CLS)
 
 
-19.] package edu.mcgill.cstk.agent
+19.] package edu.mcgill.cstk.djl
 	19.0] package edu.mcgill.cstk.experiments
 	19.1] 《package edu.mcgill.cstk.》inference
 	19.2] 《package edu.mcgill.cstk.》disk

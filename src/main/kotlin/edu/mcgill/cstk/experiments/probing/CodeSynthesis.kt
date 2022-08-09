@@ -2,7 +2,7 @@ package edu.mcgill.cstk.experiments
 
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.nlp.*
+import edu.mcgill.cstk.utils.*
 import kotlin.time.*
 
 /**

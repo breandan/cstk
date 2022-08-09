@@ -3,7 +3,7 @@ package edu.mcgill.cstk.crawler
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.defaultTokenizer
-import edu.mcgill.cstk.nlp.allMethods
+import edu.mcgill.cstk.utils.allMethods
 import spoon.Launcher
 import spoon.reflect.declaration.*
 import java.io.File
