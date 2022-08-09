@@ -21,7 +21,7 @@ import edu.mcgill.cstk.nlp.*
  *      ...
  */
 
-/**
+/*
 ./gradlew completeSyntax
  */
 

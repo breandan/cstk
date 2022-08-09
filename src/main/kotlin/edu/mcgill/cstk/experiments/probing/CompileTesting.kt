@@ -21,7 +21,7 @@ import kotlin.time.*
 fun main() {
   DATA_DIR.also { println("Evaluating $MODELS using javac on $it...") }
     .allFilesRecursively().allMethods().map { it.first }
-    .filter { it.startsWith("public") && it.lines().size < 10 }
+    .filter { it.startsWith("public") && it.lines().size in 5..10 }
     .asStream().parallel()
     .filterValid(strict = true)
 //    .flatMap { src -> src.constructPrompts().map { src to it }.distinct().take(3).asStream() }
@@ -36,7 +36,7 @@ private fun String.constructPrompt(
   maskChars: String = specialChars,
   escaped: String = Regex.escape(maskChars),
   split: List<String> = split(Regex("((?<=[$escaped])|(?=[$escaped]))")),
-  toMask: Set<Int> = split.indices.filter { split[it] in maskChars }.toSet().choose(1).first(),
+  toMask: Set<Int> = split.indices.filter { split[it] in maskChars }.toSet().choose(3).first(),
   maskedSeq: String = split.toMutableList().apply { toMask.forEach { this[it] = mask } }.joinToString("")
 ): String = if (!maskedSeq.isValidJava()) maskedSeq else constructPrompt()
 
@@ -48,7 +48,7 @@ fun Stream<String>.evaluate(
   forEach { code ->
     models.forEach { model ->
       val prompt = code.constructPrompt(model.mask)
-      val completion = model.complete(prompt, maxTokens = 1)
+      val completion = model.fillEveryHole(prompt)
       val annotatedCompletion =
         if (completion.containsSyntaxError()) "$completion// Syntax error!"
         else { map.incrementAndGet(model); completion }

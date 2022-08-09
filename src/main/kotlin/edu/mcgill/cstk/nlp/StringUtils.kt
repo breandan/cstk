@@ -154,6 +154,16 @@ fun Model.score(
   tokens.indices.map { tokens[it] to tokens.toMutableList().apply { this[it] = mask } }
     .map { (t, q) -> makeQueryAndScore(q.joinToString(""), listOf(t)).first() }
 
+// Fill-in-the-middle training/inference: https://arxiv.org/pdf/2207.14255.pdf
+fun Model.fillEveryHole(query: String) =
+  query.split(mask).let { parts ->
+    (1 until parts.size).fold(parts.first() to parts.drop(1)) { acc, _ ->
+      val suffix = acc.second.joinToString("")
+      complete(acc.first + mask + suffix)
+        .dropLast(suffix.length) + acc.second.first() to acc.second.drop(1)
+    }.first
+  }
+
 // Expands MSK autoregressively until maxTokens reached or stopChar encountered
 tailrec fun Model.complete(
   query: String = mask,
