@@ -4,7 +4,6 @@ import ai.hypergraph.kaliningraph.types.*
 import de.learnlib.algorithms.rpni.BlueFringeRPNIDFA
 import edu.mcgill.cstk.disk.TEST_DIR
 import edu.mcgill.cstk.disk.indices.*
-import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.math.euclidDist
 import edu.mcgill.cstk.utils.filterByDFA
 import net.automatalib.automata.fsa.DFA

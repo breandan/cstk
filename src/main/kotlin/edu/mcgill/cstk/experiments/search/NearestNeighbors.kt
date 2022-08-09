@@ -5,7 +5,6 @@ import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNod
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
 import edu.mcgill.cstk.disk.TEST_DIR
 import edu.mcgill.cstk.disk.indices.*
-import edu.mcgill.cstk.indices.*
 
 fun main() {
   val (labels, vectors) = fetchOrLoadSampleData(1000)

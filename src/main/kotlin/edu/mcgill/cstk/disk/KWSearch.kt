@@ -3,7 +3,6 @@ package edu.mcgill.cstk.disk
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.cstk.disk.indices.*
-import edu.mcgill.cstk.indices.*
 import edu.mcgill.cstk.utils.previewResult
 import java.io.File
 import java.net.URI

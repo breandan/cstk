@@ -21,7 +21,7 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.0-alpha7")
+  implementation("org.slf4j:slf4j-simple:2.0.0-beta1")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.26.3"
+  val openrwVersion = "7.27.3"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -133,7 +133,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-12")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-14")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.1")
