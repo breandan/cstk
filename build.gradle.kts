@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_13
 plugins {
   kotlin("jvm") version "1.7.20-Beta"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.1.0"
+  id("de.undercouch.download") version "5.1.2"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -21,7 +21,7 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.0-beta1")
+  implementation("org.slf4j:slf4j-simple:2.0.0")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
@@ -30,7 +30,7 @@ dependencies {
   val djlVersion = "0.18.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
-  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.0")
+  implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
   implementation("ai.djl.fasttext:fasttext-engine:$djlVersion")
   implementation("ai.djl.sentencepiece:sentencepiece:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-model-zoo:$djlVersion")
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.27.3"
+  val openrwVersion = "7.28.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,7 +83,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.307")
+  implementation("org.kohsuke:github-api:1.308")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
@@ -94,7 +94,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.3.10497"
+  val ortoolsVersion = "9.4.1874"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -108,7 +108,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.63.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.64.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -133,10 +133,10 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-14")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:2.1")
+  implementation("org.hipparchus:hipparchus-stat:2.2")
 }
 
 tasks {
