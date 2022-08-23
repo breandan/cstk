@@ -68,13 +68,13 @@ fun Stream<String>.evaluate(
 
 @OptIn(ExperimentalTime::class)
 fun Stream<String>.filterValid(strict: Boolean = false, timed: Boolean = false): Stream<String> =
-  if (!timed) filter { if(strict) !it.containsSyntaxError() else it.isValidJava() }
+  if (!timed) filter { if (strict) !it.containsSyntaxError() else it.isValidJava() }
   else filter {
     val msJC = measureTimedValue { !it.containsSyntaxError() }.duration.inWholeMilliseconds
     measureTimedValue {
       it.also { println(it) }
       .isValidJava()
-      .also { println("\tis ${if(it)"in" else ""}valid!") }
+      .also { println("\tis ${if (it)"in" else ""}valid!") }
     }.also {
       val msSV = it.duration.inWholeMilliseconds
       val ratio = msJC.toDouble() / msSV.toDouble()
@@ -104,7 +104,7 @@ fun String.isValidJava() =
 //      .also { println(" Original: $it") }
       .replace(Regex("w( w)*"), "w")
 //      .also { println("Distilled: $it") }
-  )//.also { println("\tis ${if(!it) "in" else ""}valid Java!") }
+  )//.also { println("\tis ${if (!it) "in" else ""}valid Java!") }
 
 // Slower but uses gold-standard Java parser
 fun String.containsSyntaxError(): Boolean {

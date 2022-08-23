@@ -58,7 +58,7 @@ val csByMRR = CodeSnippetAttributeScoresTable(::tTest, ::sideBySide)
 // https://en.wikipedia.org/wiki/Mean_reciprocal_rank
 fun CodeSnippetToEvaluate.evaluateMRR(): V2<Double>? =
   (model.evaluateMultimaskMC(method) cc model.evaluateMultimaskMC(variant))
-    .let { (a, b) -> if((a + b).isNaN()) null else a cc b }
+    .let { (a, b) -> if ((a + b).isNaN()) null else a cc b }
 
 val mrrDists: Cache<String, Double> = Caffeine.newBuilder().maximumSize(100).build()
 
@@ -71,8 +71,8 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
         if (distractors.size < 3) return@mapNotNull null
         val choices = (distractors + trueToken).shuffled()
         val results = makeQuery(maskedMethod, choices)
-        println("Hints: " + choices.joinToString(",", "[", "]") { if(it == trueToken) "*$it*" else it})
-        println("Results" + results.joinToString(",", "[", "]") { if(trueToken.startsWith(it)) "*$it*" else it})
+        println("Hints: " + choices.joinToString(",", "[", "]") { if (it == trueToken) "*$it*" else it})
+        println("Results" + results.joinToString(",", "[", "]") { if (trueToken.startsWith(it)) "*$it*" else it})
         logDiffs(this, code, maskedMethod, trueToken, results.first(), choices, 1.0)
         val gold = results.associateWith { (trueToken.startsWith(it)) }
         if (results.isEmpty()) null else results to gold

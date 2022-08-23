@@ -36,10 +36,10 @@ typealias KWIndex = ConcurrentSuffixTree<Queue<Concordance>>
 val KWIndex.defaultFilename: String by lazy { "keyword.idx" }
 
 fun KWIndex.indexLine(line: String, location: Concordance) {
-    ConcurrentLinkedQueue(listOf(location)).let {
-      line.split(DELIMITER).filter { it.isNotBlank() }
-        .forEach { token -> putIfAbsent(token, it)?.offer(it.first()) }
-    }
+  ConcurrentLinkedQueue(listOf(location)).let {
+    line.split(DELIMITER).filter { it.isNotBlank() }
+      .forEach { token -> putIfAbsent(token, it)?.offer(it.first()) }
+  }
 }
 
 fun main() {

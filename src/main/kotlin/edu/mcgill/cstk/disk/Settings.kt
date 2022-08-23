@@ -54,7 +54,7 @@ data class Model(val name: String) {
 //    .substringBeforeLast("\"")
 //    .split(Regex(", \""))
 ////    .replace("Ġ", " ") //https://github.com/huggingface/transformers/issues/3867#issuecomment-616956437
-//    .mapNotNull { it.split("\": ").let { if(it.size == 2) it[0] to it[1].toInt() else null } }
+//    .mapNotNull { it.split("\": ").let { if (it.size == 2) it[0] to it[1].toInt() else null } }
 //    .toMap()
 //}
 

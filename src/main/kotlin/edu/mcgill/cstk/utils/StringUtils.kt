@@ -306,8 +306,8 @@ fun String.highlightDiffedTeX(
   hlOpen: String = "(*@\\hlred{",
   hlClose: String = "}@*)"
 ) = fold("" to true) { (str, open), char ->
-    if(open && char == '~') "$str$hlOpen" to false
-    else if(!open && char == '~') "$str$hlClose" to true
+    if (open && char == '~') "$str$hlOpen" to false
+    else if (!open && char == '~') "$str$hlClose" to true
     else "$str$char" to open
   }.first
 

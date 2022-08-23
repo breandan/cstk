@@ -154,7 +154,7 @@ class BertCodeDataset(
     val typeIds = IntArray(MAX_SEQUENCE_LENGTH) {
       val startIdx = originalSentencePair.sentenceA.size + 2
       val endIdx = startIdx + originalSentencePair.sentenceB.size
-      if(it in startIdx..endIdx) 1 else 0
+      if (it in startIdx..endIdx) 1 else 0
     }
 
     val tokenIds = IntArray(MAX_SEQUENCE_LENGTH)

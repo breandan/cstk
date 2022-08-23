@@ -40,7 +40,7 @@ fun URI.collectSubtypeStats() =
       "\t" + type.simpleName +
         (if (supertypes.isNotEmpty()) "<:${supertypes.joinToString(",", "{", "}")}" else "") +
         " (local: $fields fields, $methods methods) " +
-        (if(supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
+        (if (supertypes.isEmpty())"" else "/ (local+inherited: $allFields fields, $allMethods methods)") +
         "\n"
     }
   }.take(10).forEach { println("$it\n") }
@@ -64,7 +64,7 @@ fun CtType<*>?.allMembers(
     }
 
 fun CtType<*>?.numInheritedMembers() =
-  if(this == null) 0
+  if (this == null) 0
   else allMembers().let { (a, b) -> a.size + b.size - fields.size - methods.size }
 
 operator fun <A, B> Pair<Set<A>, Set<B>>.plus(other: Pair<Set<A>, Set<B>>): Pair<Set<A>, Set<B>> =

@@ -85,7 +85,6 @@ class KNNSearch: CliktCommand() {
       }
     }.inWholeMilliseconds + "ms")
   }
-
 }
 
 fun main(args: Array<String>) = KNNSearch().main(args)

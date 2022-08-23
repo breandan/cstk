@@ -10,7 +10,6 @@ import java.io.File
 import java.net.URI
 import kotlin.time.*
 
-
 fun buildOrLoadVecIndex(
   indexFile: File = File(DEFAULT_KNNINDEX_FILENAME),
   rootDir: URI = DATA_DIR

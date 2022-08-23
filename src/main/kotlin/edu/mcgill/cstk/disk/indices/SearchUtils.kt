@@ -6,7 +6,7 @@ import edu.mcgill.cstk.utils.vectorize
 fun VecIndex.knn(query: String, k: Int = 10) = knn(vectorize(query), k)
 
 fun VecIndex.knn(v: DoubleArray, i: Int, exact: Boolean = false) =
-  if(exact) exactKNNSearch(v, i + 10)
+  if (exact) exactKNNSearch(v, i + 10)
   else findNearest(v, i + 10)
     .filter { !it.item().embedding.contentEquals(v) }
     .distinctBy { it.item().toString() }.take(i)

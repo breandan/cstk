@@ -46,9 +46,7 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
     val stringBuilder = StringBuilder()
     for (token in origTokens) {
       val list = runSplitOnPunc(if (doLowerCase) { Ascii.toLowerCase(token) } else token)
-      for (subToken in list) {
-        stringBuilder.append(subToken).append(" ")
-      }
+      for (subToken in list) stringBuilder.append(subToken).append(" ")
     }
     return whitespaceTokenize(stringBuilder.toString())
   }
@@ -70,17 +68,13 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
 
     /* Runs basic whitespace cleaning and splitting on a piece of text. */
     fun whitespaceTokenize(text: String?): List<String> {
-      if (text == null) {
-        throw NullPointerException("The input String is null.")
-      }
+      if (text == null) throw NullPointerException("The input String is null.")
       return listOf(*text.split(" ").toTypedArray())
     }
 
     /* Splits punctuation on a piece of text. */
     fun runSplitOnPunc(text: String?): List<String> {
-      if (text == null) {
-        throw NullPointerException("The input String is null.")
-      }
+      if (text == null) throw NullPointerException("The input String is null.")
       val tokens = mutableListOf<String>()
       var startNewWord = true
       for (element in text) {
@@ -105,9 +99,8 @@ class FullTokenizer(private val dic: Map<String, Int>, doLowerCase: Boolean = fa
   private val wordpieceTokenizer: WordpieceTokenizer
   fun tokenize(text: String?): List<String> {
     val splitTokens: MutableList<String> = ArrayList()
-    for (token in basicTokenizer.tokenize(text)) {
+    for (token in basicTokenizer.tokenize(text))
       splitTokens.addAll(wordpieceTokenizer.tokenize(token))
-    }
     return splitTokens
   }
 
@@ -135,9 +128,7 @@ class WordpieceTokenizer(private val dic: Map<String, Int>) {
    * @return A list of wordpiece tokens.
    */
   fun tokenize(text: String?): List<String> {
-    if (text == null) {
-      throw NullPointerException("The input String is null.")
-    }
+    if (text == null) throw NullPointerException("The input String is null.")
     val outputTokens: MutableList<String> = ArrayList()
     for (token in BasicTokenizer.whitespaceTokenize(text)) {
       if (token.length > MAX_INPUTCHARS_PER_WORD) {

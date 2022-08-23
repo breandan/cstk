@@ -102,11 +102,10 @@ fun indexURI(src: URI, indexFn: (String, Concordance) -> Unit): Unit =
         }
     src.scheme == FILE_SCHEME ->
       try {
-        (if (src.toPath().isDirectory()) src.allFilesRecursively()
-        else {
-          println("Indexing $src")
-          sequenceOf(src)
-        }).allCodeFragments()
+        (
+          if (src.toPath().isDirectory()) src.allFilesRecursively()
+          else sequenceOf(src.also { println("Indexing $src") })
+        ).allCodeFragments()
           .forEach { (location, line) -> indexFn(line, location) }
       } catch (e: Exception) {
         System.err.println("Unreadable …$src due to ${e.message}")
