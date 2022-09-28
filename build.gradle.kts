@@ -1,9 +1,9 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.20-Beta"
+  kotlin("jvm") version "1.7.20-RC"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.1.2"
+  id("de.undercouch.download") version "5.2.1"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -21,13 +21,13 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.0")
+  implementation("org.slf4j:slf4j-simple:2.0.3")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.18.0"
+  val djlVersion = "0.19.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -42,7 +42,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.2.0-dev-2"
+  val multikVersion = "0.2.1"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.28.0"
+  val openrwVersion = "7.30.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,7 +83,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.308")
+  implementation("org.kohsuke:github-api:1.313")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
@@ -133,7 +133,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-21")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.2")
