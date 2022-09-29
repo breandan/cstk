@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
-import ai.hypergraph.kaliningraph.parsing.dyckCheck
+import ai.hypergraph.kaliningraph.automata.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 
@@ -53,3 +53,14 @@ fun String.isANontrivialStatementWithBalancedParentheses(
   trim().endsWith(';')
     && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
     && dyckCheck()
+
+fun String.dyckCheck() =
+  filter { it in "()[]{}<>" }.fold(Stack<Char>()) { stack, c ->
+    stack.apply { if (isNotEmpty() && c.matches(peek())) pop() else push(c) }
+  }.isEmpty()
+
+infix fun Char.matches(that: Char) =
+  if (this == ')' && that == '(') true
+  else if (this == ']' && that == '[') true
+  else if (this == '}' && that == '{') true
+  else this == '>' && that == '<'

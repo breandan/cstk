@@ -17,5 +17,5 @@ fun main() {
 
   val recipe = DeleteMethodArgument("B foo(Bar, Bar, Bar)", 1)
 
-  recipe.run(cus).forEach { println(it.after.printAll()) }
+//  recipe.run(cus).forEach { println(it.after.printAll()) }
 }

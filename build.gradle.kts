@@ -133,7 +133,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-21")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.2")
@@ -165,6 +165,7 @@ tasks {
     "astMiner" to "edu.mcgill.cstk.experiments.search.ASTMinerKt",
     "spoon" to "edu.mcgill.cstk.experiments.rewriting.SpoonTestKt",
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
+    "repairSyntax" to "edu.mcgill.cstk.experiments.repair.SyntaxRepairKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",
