@@ -1,7 +1,7 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.20-RC"
+  kotlin("jvm") version "1.7.20"
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.2.1"
   id("com.github.johnrengelman.shadow") version "7.1.2"
