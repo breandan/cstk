@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.hasBalancedBrackets
-import ai.hypergraph.kaliningraph.parsing.parseCFG
+import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sat.synthesizeIncrementally
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
@@ -48,21 +48,25 @@ fun main() {
           println("Prompt: $prompt")
           query = prompt.coarsen()
           completion = query
-            .synthesizeIncrementally(cfg, allowNTs = false, enablePruning = true, skipWhen = { 20 < it.size })
+            .synthesizeIncrementally(cfg, allowNTs = false,
+              enablePruning = true, skipWhen = { 20 < it.size })
             .firstOrNull()?.uncoarsen(prompt) ?: prompt
           println("Completion: $completion")
           scores[model]!!.let { (n, d) -> // numerator / denominator
-            if (completion.hasBalancedBrackets()) (n + 1) to (d + 1) else n to (d + 1)
+//            if (completion.hasBalancedBrackets())
+            if (completion == groundTruth)
+              (n + 1) to (d + 1) else n to (d + 1)
           }
-        } else {
-          0 to 0
+        }
+        else { 0 to 0 }
+//        else {
 //          query = prompt.replace(MSK, model.mask)
 //          completion = query.replace(model.mask, model.makeQuery(prompt).first())
 //
 //          scores[model]!!.let { (n, d) ->  // numerator / denominator
-//            if (groundTruth == completion) n to d else n to (d + 1)
+//            if (groundTruth == completion) (n + 1) to (d + 1) else n to (d + 1)
 //          }
-        }
+//        }
       }
     }
 //    .filterIndexed { i, _ -> i % 10 == 0 }
@@ -97,3 +101,35 @@ fun String.isANontrivialStatementWithBalancedBrackets(
   trim().endsWith(';')
     && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
     && hasBalancedBrackets()
+
+fun String.findRepairs(cfg: CFG, exclusions: Set<Int>, fishyLocations: List<Int>): List<String> =
+  queryModel(
+    cfg = cfg,
+    tokens = tokenizeByWhitespace().map { if (it in cfg.terminals) it else "_" },
+    variations = listOf {
+      it.multiTokenSubstitutionsAndInsertions(
+        numberOfEdits = 3,
+        exclusions = exclusions,
+        fishyLocations = fishyLocations
+      )
+    }
+  )
+
+fun String.queryModel(
+  cfg: CFG,
+  tokens: List<String> = tokenizeByWhitespace().map { if (it in cfg.terminals) it else "_" },
+  sanitized: String = tokens.joinToString(" "),
+  maxResults: Int = 20,
+  variations: List<(String) -> Sequence<String>> =
+    listOf(
+      String::everySingleHoleConfig,
+      String::increasingLengthChunks
+    ),
+): List<String> =
+  sanitized.synthesizeIncrementally(cfg = cfg, variations = variations)
+  .take(maxResults).toList().sortedWith(
+    compareBy(tokenwiseEdits(tokens)).thenBy { it.length }
+  )
+
+private fun tokenwiseEdits(tokens: List<String>): (String) -> Comparable<*> =
+  { levenshtein(tokens.filterNot { it.containsHole() }, it.tokenizeByWhitespace()) }
