@@ -1,10 +1,9 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.automata.*
+import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import ai.hypergraph.kaliningraph.parsing.parseCFG
 import ai.hypergraph.kaliningraph.sat.synthesizeIncrementally
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.experiments.probing.dyckCheck
 import edu.mcgill.cstk.utils.*
 
 /**
@@ -38,32 +37,35 @@ fun main() {
   DATA_DIR.also { println("Evaluating syntax repair using $MODELS on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
-    .filter(String::isANontrivialStatementWithBalancedParentheses)
+    .filter(String::isANontrivialStatementWithBalancedBrackets)
     .map { it to it.constructPrompt() }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
-      MODELS.associateWith { model ->
+      (MODELS + tidyparse).associateWith { model ->
         var query: String
         var completion: String
 
         if (model == tidyparse) {
-          query = prompt.replace(MSK, "_").coarsen()
-          completion = query.synthesizeIncrementally(cfg, allowNTs = false).first()
-          scores[model]!!.let { (n, d) ->
-            val checks = (completion.dyckCheck())
-            if (checks) n to d else n to (d + 1)
+          println("Prompt: $prompt")
+          query = prompt.coarsen()
+          completion = query
+            .synthesizeIncrementally(cfg, allowNTs = false, skipWhen = { 20 < it.size })
+            .firstOrNull()?.uncoarsen(prompt) ?: prompt
+          println("Completion: $completion")
+          scores[model]!!.let { (n, d) -> // numerator / denominator
+            if (completion.hasBalancedBrackets()) (n + 1) to (d + 1) else n to (d + 1)
           }
         } else {
-          query = prompt.replace(MSK, model.mask)
-          completion = query.replace(model.mask, model.makeQuery(prompt).first())
-
-          scores[model]!!.let { (n, d) ->
-            val checks = (groundTruth == completion)//completion.dyckCheck()
-            if (checks) n to d else n to (d + 1)
-          }
+          0 to 0
+//          query = prompt.replace(MSK, model.mask)
+//          completion = query.replace(model.mask, model.makeQuery(prompt).first())
+//
+//          scores[model]!!.let { (n, d) ->  // numerator / denominator
+//            if (groundTruth == completion) n to d else n to (d + 1)
+//          }
         }
       }
     }
-    .filterIndexed { i, _ -> i % 10 == 0 }
+//    .filterIndexed { i, _ -> i % 10 == 0 }
     .forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
 }
 
@@ -72,9 +74,13 @@ fun String.coarsen() =
     if (it.isBracket()) it else if (it == MSK) "_" else "w"
   }
 
+fun String.uncoarsen(originalString: String) =
+  originalString.tokenize().zip(tokenize())
+    .joinToString("") { (a, b) -> if (a == MSK) b else a }
+
 fun String.isBracket() = length == 1 && this in brackets
 
-private fun String.constructPrompt() =
+private fun String.constructPrompt(): String =
   tokenize().toMutableList().let { tokens ->
     val index = tokens.indices.filter { tokens[it].isBracket() }.random()
     tokens[index] = MSK
@@ -83,22 +89,11 @@ private fun String.constructPrompt() =
 
 val brackets = "()[]{}<>"
 fun String.tokenize() =
-  split(Regex("[\\(\\)\\[\\]{}<>]".let { "((?<=($it))|(?=($it)))" }))
+  split(Regex("[\\(\\)\\[\\]{}<>]|___".let { "((?<=($it))|(?=($it)))" }))
 
-fun String.isANontrivialStatementWithBalancedParentheses(
+fun String.isANontrivialStatementWithBalancedBrackets(
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
 ) =
   trim().endsWith(';')
     && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
-    && dyckCheck()
-
-fun String.dyckCheck() =
-  filter { it in brackets }.fold(Stack<Char>()) { stack, c ->
-    stack.apply { if (isNotEmpty() && c.matches(peek())) pop() else push(c) }
-  }.isEmpty()
-
-infix fun Char.matches(that: Char) =
-  if (this == ')' && that == '(') true
-  else if (this == ']' && that == '[') true
-  else if (this == '}' && that == '{') true
-  else this == '>' && that == '<'
+    && hasBalancedBrackets()

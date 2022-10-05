@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.probing
 
-import ai.hypergraph.kaliningraph.automata.*
+import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 
@@ -36,7 +36,7 @@ fun main() {
         val completion = model.completeUntilStopChar(prompt + model.mask, maxTokens = 50)
         scores[model]!!.let { (n, d) ->
           if (!completion.endsWith(";")) n to d
-          else (n + if (completion.dyckCheck()) 1 else 0) to (d + 1)
+          else (n + if (completion.hasBalancedBrackets()) 1 else 0) to (d + 1)
         }
       }
     }
@@ -52,15 +52,4 @@ fun String.isANontrivialStatementWithBalancedParentheses(
 ) =
   trim().endsWith(';')
     && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
-    && dyckCheck()
-
-fun String.dyckCheck() =
-  filter { it in "()[]{}<>" }.fold(Stack<Char>()) { stack, c ->
-    stack.apply { if (isNotEmpty() && c.matches(peek())) pop() else push(c) }
-  }.isEmpty()
-
-infix fun Char.matches(that: Char) =
-  if (this == ')' && that == '(') true
-  else if (this == ']' && that == '[') true
-  else if (this == '}' && that == '{') true
-  else this == '>' && that == '<'
+    && hasBalancedBrackets()
