@@ -48,7 +48,7 @@ fun main() {
           println("Prompt: $prompt")
           query = prompt.coarsen()
           completion = query
-            .synthesizeIncrementally(cfg, allowNTs = false, skipWhen = { 20 < it.size })
+            .synthesizeIncrementally(cfg, allowNTs = false, enablePruning = true, skipWhen = { 20 < it.size })
             .firstOrNull()?.uncoarsen(prompt) ?: prompt
           println("Completion: $completion")
           scores[model]!!.let { (n, d) -> // numerator / denominator
