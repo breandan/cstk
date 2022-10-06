@@ -57,16 +57,14 @@ fun main() {
             if (completion == groundTruth)
               (n + 1) to (d + 1) else n to (d + 1)
           }
+        } else {
+          query = prompt.replace(MSK, model.mask)
+          completion = model.complete(query)
+
+          scores[model]!!.let { (n, d) ->  // numerator / denominator
+            if (groundTruth == completion) (n + 1) to (d + 1) else n to (d + 1)
+          }
         }
-        else { 0 to 0 }
-//        else {
-//          query = prompt.replace(MSK, model.mask)
-//          completion = query.replace(model.mask, model.makeQuery(prompt).first())
-//
-//          scores[model]!!.let { (n, d) ->  // numerator / denominator
-//            if (groundTruth == completion) (n + 1) to (d + 1) else n to (d + 1)
-//          }
-//        }
       }
     }
 //    .filterIndexed { i, _ -> i % 10 == 0 }
