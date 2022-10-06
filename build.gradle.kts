@@ -167,6 +167,7 @@ tasks {
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
     "unlocalizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.UnlocalizedSyntaxRepairKt",
+    "bifiEval" to "edu.mcgill.cstk.experiments.repair.BIFIEvalKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",

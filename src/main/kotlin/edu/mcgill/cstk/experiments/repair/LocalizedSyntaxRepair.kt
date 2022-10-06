@@ -53,8 +53,7 @@ fun main() {
           println("Completion: $completion")
           scores[model]!!.let { (n, d) -> // numerator / denominator
 //            if (completion.hasBalancedBrackets())
-            if (completion == groundTruth)
-              (n + 1) to (d + 1) else n to (d + 1)
+            if (completion == groundTruth) (n + 1) to (d + 1) else n to (d + 1)
           }
         } else {
           query = prompt.replace(MSK, model.mask)
@@ -70,7 +69,7 @@ fun main() {
     .forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
 }
 
-fun String.coarsen() =
+fun String.coarsen(): String =
   tokenize().joinToString(" ") {
     if (it.isBracket()) it else if (it == MSK) "_" else "w"
   }
@@ -99,13 +98,14 @@ fun String.isANontrivialStatementWithBalancedBrackets(
     && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
     && hasBalancedBrackets()
 
-fun String.findRepairs(cfg: CFG, exclusions: Set<Int>, fishyLocations: List<Int>): List<String> =
+fun String.findRepairs(cfg: CFG, exclusions: Set<Int>, fishyLocations: List<Int>, maxResults: Int = 10): List<String> =
   queryModel(
     cfg = cfg,
     tokens = tokenizeByWhitespace().map { if (it in cfg.terminals) it else "_" },
+    maxResults = maxResults,
     variations = listOf {
       it.multiTokenSubstitutionsAndInsertions(
-        numberOfEdits = 3,
+        numberOfEdits = 2,
         exclusions = exclusions,
         fishyLocations = fishyLocations
       )
