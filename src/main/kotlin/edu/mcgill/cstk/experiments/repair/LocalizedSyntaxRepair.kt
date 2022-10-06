@@ -8,23 +8,22 @@ import edu.mcgill.cstk.utils.*
 
 /**
  * In this experiment, we sample nontrivial single-line statements with balanced
- * parentheses from MiniGithub, truncate after the last open parenthesis, sample
- * autoregressively from the model under test until an end of statement token is
- * emitted, then measure how many samples are syntactically well-formed.
+ * bracket from MiniGithub, delete a random bracket and feed the location to the
+ * model, ask it to predict what the deleted token was.
  *
- * This will produce scores for each model, i.e., how many samples are
- * syntactically well-formed out of the total number of samples tested:
+ * This will produce scores for each model, i.e., how many tokens it predicted
+ * correctly out of the total number of samples tested:
  *
- *      Scores [model=(valid, total)]:
- *      microsoft/codebert-base-mlm=(1423, 3559)
- *      huggingface/CodeBERTa-small-v1=(768, 3681)
- *      microsoft/graphcodebert-base=(1008, 3571)
- *      dbernsohn/roberta-java=(434, 2924)
- *      ...
+ *     Scores [model=(valid, total)]:
+ *     microsoft/codebert-base-mlm=(1225, 3510)
+ *     huggingface/CodeBERTa-small-v1=(827, 3510)
+ *     microsoft/graphcodebert-base=(1021, 3510)
+ *     dbernsohn/roberta-java=(715, 3510)
+ *     tidyparse=(1113, 3510)
  */
 
 /*
-./gradlew repairSyntax
+./gradlew localizedSyntaxRepair
  */
 
 val MSK = "___"
@@ -82,7 +81,7 @@ fun String.uncoarsen(originalString: String) =
 
 fun String.isBracket() = length == 1 && this in brackets
 
-private fun String.constructPrompt(): String =
+fun String.constructPrompt(): String =
   tokenize().toMutableList().let { tokens ->
     val index = tokens.indices.filter { tokens[it].isBracket() }.random()
     tokens[index] = MSK
