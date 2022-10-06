@@ -27,6 +27,23 @@ import edu.mcgill.cstk.utils.*
  */
 
 val MSK = "___"
+
+// Our model predicts all possible locations as well as the fix
+// Fine tune model to predict whether it is missing parentheses
+// or not (single-bit prediction for error location)
+// If results are comparable (unmodified) in terms of # of fixes,
+// binary classification task
+// Easy setting: everyone knows the location
+// Hard setting: location unknown (maybe BIFI/NLM get confused)
+
+// TODO:
+//     Design custom grammars to fix each (sub)category of errors
+//     Goal is to minimize the grammar size (no need to be complicated)
+//     Evaluate Tidyparse with grammar to compare with accuracy of BIFI
+
+// Read paper carefully and try to understand why the categories
+// do not match raw count, if cannot resolve why, write to authors
+
 fun main() {
   val tidyparse = Model("tidyparse")
   val cfg = """S -> w | ( ) | [ ] | < > | { } | ( S ) | [ S ] | < S > | { S } | S S""".parseCFG()
