@@ -1,6 +1,5 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sat.synthesizeIncrementally
 import edu.mcgill.cstk.disk.*
@@ -24,8 +23,7 @@ import edu.mcgill.cstk.utils.*
 fun main() {
   val tidyparse = Model("tidyparse")
   val cfg = """S -> w | ( ) | [ ] | < > | { } | ( S ) | [ S ] | < S > | { S } | S S""".parseCFG()
-  val modelScores: Map<Model, Pair<Int, Int>> =
-    (MODELS + tidyparse).associateWith { (0 to 0) }
+  val modelScores: Scores = (MODELS + tidyparse).associateWith { (0 to 0) }
 
   DATA_DIR.also { println("Evaluating syntax repair using $MODELS on $it...") }
     .allFilesRecursively().allMethods()
@@ -41,14 +39,15 @@ fun main() {
           println("Prompt: $prompt")
           query = prompt.coarsen()
           completion = query
-            .synthesizeIncrementally(cfg, allowNTs = false,
-              enablePruning = true, skipWhen = { 20 < it.size })
-            .firstOrNull()?.uncoarsen(prompt) ?: prompt
+            .synthesizeIncrementally(cfg,
+              allowNTs = false,
+              enablePruning = true,
+              skipWhen = { 20 < it.size }
+            ).firstOrNull()?.uncoarsen(prompt) ?: prompt
           println("Completion: $completion")
           scores[model]!!.let { (n, d) -> // numerator / denominator
 //            if (completion.hasBalancedBrackets())
-            if (completion == groundTruth)
-              (n + 1) to (d + 1) else n to (d + 1)
+            if (completion == groundTruth) (n + 1) to (d + 1) else n to (d + 1)
           }
         } else {
           query = prompt.replace(MSK, model.mask)
