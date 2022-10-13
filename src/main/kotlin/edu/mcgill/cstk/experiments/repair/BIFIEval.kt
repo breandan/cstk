@@ -5,7 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sat.synthesize
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.*
-import edu.mcgill.cstk.utils.complete
+import edu.mcgill.cstk.utils.*
 import java.io.File
 
 /*
@@ -20,19 +20,28 @@ fun main() {
   parsed!!.values.asSequence()
     .map { it["code_string"].toString().let { it to it.parseError() } }
     .filter { (code, err) -> !code.hasBalancedBrackets() && err.containsBracketIssue() }
+    .filter { it.first.lines().all { it.length < 180 } }
     .runningFold(modelScores) { scores, (code, err) ->
       (MODELS + tidyparse).associateWith { model ->
-        val repairs = code.dispatchTo(model, cfg)
-        // TODO: check whether Python parser actually accepts uncoarsened repair
+        val repair = code.dispatchTo(model, cfg)
+
         scores[model]!!.let { (n, d) -> // numerator / denominator
-          if (repairs.isEmpty()) (n + 1) to (d + 1) else n to (d + 1)
+          if (repair.firstOrNull()?.parses() == true){
+            if (model == tidyparse) println("\n\nCode:\n\n$code\n\nGood Repair:\n\n${repair.firstOrNull()}\n\n")
+            (n + 1) to (d + 1)
+          }
+          else {
+            if (model == tidyparse) println("Code:\n$code\n\nBad Repair:\n${repair.firstOrNull()}")
+            n to (d + 1)
+          }
         }
+
       }
     }.forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
 }
 
 val tidyparse = Model("tidyparse")
-val cfg = """S -> w | ( ) | [ ] | < > | { } | ( S ) | [ S ] | < S > | { S } | S S""".parseCFG()
+val cfg = """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S""".parseCFG()
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {

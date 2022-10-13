@@ -1,8 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.*
-import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.sat.synthesizeIncrementally
+import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 
@@ -73,9 +72,11 @@ fun updateScore(scores: Scores, model: Model, groundTruth: () -> Boolean) =
 fun String.coarsen(): String =
   tokenize().joinToString(" ") { if (it.isBracket()) it else if (it == MSK) "_" else "w" }
 
-fun String.uncoarsen(originalString: String): String =
-  originalString.tokenize().zip(tokenize())
-    .joinToString("") { (a, b) -> if (a == MSK) b else a }
+fun String.uncoarsen(prompt: String): String {
+  val words = prompt.tokenize().filter { it !in brackets }.toMutableList()
+  return tokenizeByWhitespace()
+    .joinToString("") { if (it in brackets) it else if (words.isEmpty()) "" else words.removeAt(0) }
+}
 
 fun String.isBracket() = length == 1 && this in brackets
 
