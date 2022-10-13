@@ -36,7 +36,7 @@ val cfg = """S -> w | ( ) | [ ] | < > | { } | ( S ) | [ S ] | < S > | { S } | S 
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
-    tidyparse -> repair(this, grammar!!, String::coarsen, String::uncoarsen, synthesizer = { a, b -> cfg.synthesize(a, b) })
+    tidyparse -> repair(this, grammar!!, String::coarsen, String::uncoarsen, synthesizer = { a, b -> synthesize(a, b) })
     else -> { if(MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
