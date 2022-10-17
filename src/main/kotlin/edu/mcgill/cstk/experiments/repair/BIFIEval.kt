@@ -26,11 +26,10 @@ fun main() {
         val repair = code.dispatchTo(model, cfg)
 
         scores[model]!!.let { (n, d) -> // numerator / denominator
-          if (repair.firstOrNull()?.parses() == true){
+          if (repair.firstOrNull()?.parses() == true) {
             if (model == tidyparse) println("\n\nCode:\n\n$code\n\nGood Repair:\n\n${repair.firstOrNull()}\n\n")
             (n + 1) to (d + 1)
-          }
-          else {
+          } else {
             if (model == tidyparse) println("Code:\n$code\n\nBad Repair:\n${repair.firstOrNull()}")
             n to (d + 1)
           }
