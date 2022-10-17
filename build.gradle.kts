@@ -3,7 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_13
 plugins {
   kotlin("jvm") version "1.7.20"
   id("com.github.ben-manes.versions") version "0.42.0"
-  id("de.undercouch.download") version "5.2.1"
+  id("de.undercouch.download") version "5.3.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.30.0"
+  val openrwVersion = "7.31.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -108,7 +108,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.64.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.65.1")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -136,7 +136,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:2.2")
+  implementation("org.hipparchus:hipparchus-stat:2.3")
 }
 
 tasks {
