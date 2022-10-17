@@ -56,3 +56,22 @@ fun String.parseError(): String =
     .substringBefore('(')
 
 fun String.parses() = parseError().isEmpty()
+
+// TODO: Handle parentheses and move onto a new category of BIFI benchmark
+//
+// - Experiment should run and compare with BIFI
+// - Devote 100% of energy to experiment pipeline
+// - Look into why so many errors
+//
+// Fix parentheses errors and push to handle other categories
+// Need to demonstrate usefulness on BIFI benchmark
+// Review criteria: (Novelty, Significance, Usefulness) = Practice, (Soundness, Completeness) = Theory
+// Benefits of using our technique vs others (e.g. lower cost)
+// Finish evaluation, do not devote much time to other things.
+// Draft needs to be very polished
+
+// Example, introduction, experiments and results skeleton should be in paper draft
+// - Method and related work (easy)
+// - Introduction and motivating example (hard, spend more time)
+    // How does it work? How does it compare to other methods?
+    // Convince readers that it is not made-up problem
