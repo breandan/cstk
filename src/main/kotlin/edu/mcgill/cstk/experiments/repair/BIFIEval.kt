@@ -62,7 +62,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
       synthesizer = { a -> synthesize(a) },
-      blockers =  setOf("w", "<S>")
+      blockers = setOf("w")
     )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }

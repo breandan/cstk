@@ -80,10 +80,10 @@ fun String.coarsen(): String =
 
 fun String.uncoarsen(prompt: String): String {
   val words = prompt.tokenize().filter { it !in brackets }.toMutableList()
-  return tokenizeByWhitespace().joinToString("") {
+  return tokenizeByWhitespace().joinToString("") {s ->
     when {
-      it.isBracket() -> it
-      words.isEmpty() -> throw Exception("IDK what happened: $this")
+      s.isBracket() -> s
+      words.isEmpty() -> throw Exception("IDK what happened:\nSynthesized:  $this")
       else -> words.removeAt(0)
     }
   } + words.joinToString("")
