@@ -70,12 +70,23 @@ fun updateScore(scores: Scores, model: Model, groundTruth: () -> Boolean) =
   }
 
 fun String.coarsen(): String =
-  tokenize().joinToString(" ") { if (it.isBracket()) it else if (it == MSK) "_" else "w" }
+  tokenize().joinToString(" ") {
+    when {
+      it.isBracket() -> it
+      it == MSK -> "_"
+      else -> "w"
+    }
+  }
 
 fun String.uncoarsen(prompt: String): String {
   val words = prompt.tokenize().filter { it !in brackets }.toMutableList()
-  return tokenizeByWhitespace()
-    .joinToString("") { if (it in brackets) it else if (words.isEmpty()) "" else words.removeAt(0) }
+  return tokenizeByWhitespace().joinToString("") {
+    when {
+      it.isBracket() -> it
+      words.isEmpty() -> throw Exception("IDK what happened: $this")
+      else -> words.removeAt(0)
+    }
+  } + words.joinToString("")
 }
 
 fun String.isBracket() = length == 1 && this in brackets
