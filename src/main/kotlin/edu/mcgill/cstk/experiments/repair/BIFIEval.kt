@@ -17,10 +17,9 @@ fun main() {
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
   val modelScores: Scores = (MODELS + tidyparse).associateWith { (0 to 0) }
 
-  parsed!!.values.asSequence()
+  parsed!!.values.shuffled().asSequence()
     .map { it["code_string"].toString().let { it to it.parseOutput() } }
     .filter { (code, err) -> !code.hasBalancedBrackets() && err.containsBracketIssue() }
-    .filter { it.first.lines().all { it.length < 180 } }
     .runningFold(modelScores) { scores, (code, originalError) ->
       (MODELS + tidyparse).associateWith { model ->
         val repair: List<String> = code.dispatchTo(model, cfg)
@@ -44,7 +43,7 @@ Original error: $originalError
 
 ${code.lines().joinToString("\n") { "   $it" }}
 
-${if(parseOutput?.isEmpty() == true || parseOutput == null) "Good Repair" else "Bad Repair, new error: $parseOutput"}:
+${if(parseOutput?.isEmpty() == true || parseOutput == null) "Good Repair" else "Bad Repair: $parseOutput"}:
 
 ${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("N/A"))
   .joinToString("\n") { (a, b) -> if (a == b) "   $b" else "** $b" }}

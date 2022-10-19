@@ -98,9 +98,9 @@ fun String.constructPrompt(): String =
     tokens
   }.joinToString("")
 
-val brackets = "()[]{}<>"
+val brackets = "()[]{}"
 fun String.tokenize(): List<String> =
-  split(Regex("[\\(\\)\\[\\]{}<>]|___".let { "((?<=($it))|(?=($it)))" }))
+  split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
 
 fun String.isANontrivialStatementWithBalancedBrackets(
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
