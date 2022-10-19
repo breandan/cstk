@@ -13,15 +13,16 @@ import java.io.File
  */
 
 fun main() {
+  val models = MODELS + tidyparse
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
-  val modelScores: Scores = (MODELS + tidyparse).associateWith { (0 to 0) }
+  val modelScores: Scores = models.associateWith { (0 to 0) }
 
   parsed!!.values.shuffled().asSequence()
     .map { it["code_string"].toString().let { it to it.parseOutput() } }
     .filter { (code, err) -> !code.hasBalancedBrackets() && err.containsBracketIssue() }
     .runningFold(modelScores) { scores, (code, originalError) ->
-      (MODELS + tidyparse).associateWith { model ->
+      models.associateWith { model ->
         val repair: List<String> = code.dispatchTo(model, cfg)
         scores[model]!!.let { (n, d) -> // numerator / denominator
           val parseOutput = repair.firstOrNull()?.parseOutput()
@@ -31,6 +32,26 @@ fun main() {
       }
     }.forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
 }
+
+val tidyparse = Model("tidyparse")
+val cfg = """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+  .parseCFG().apply { blocked.addAll(setOf("w")) }
+
+fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
+  when (model) {
+    tidyparse -> repair(this, grammar!!,
+      String::coarsen, String::uncoarsen,
+      synthesizer = { a -> synthesize(a) },
+    )
+    else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
+  }
+
+fun String.containsBracketIssue(): Boolean = listOf("parenth").any { it in this }
+
+fun String.parseOutput(): String =
+  ProcessBuilder("python", "parser.py", this)
+    .start().also { it.waitFor() }.inputStream
+    .bufferedReader().readText().lines().first()
 
 private fun printDiagnosis(
   originalError: String,
@@ -51,27 +72,6 @@ ${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("N/A"))
 """
   )
 }
-
-val tidyparse = Model("tidyparse")
-val cfg = """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
-  .parseCFG().apply { blocked.addAll(setOf("w")) }
-
-fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
-  when (model) {
-    tidyparse -> repair(this, grammar!!,
-      String::coarsen, String::uncoarsen,
-      synthesizer = { a -> synthesize(a) },
-      blockers = setOf("w")
-    )
-    else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
-  }
-
-fun String.containsBracketIssue(): Boolean = listOf("parenth").any { it in this }
-
-fun String.parseOutput(): String =
-  ProcessBuilder("python", "parser.py", this)
-    .start().also { it.waitFor() }.inputStream
-    .bufferedReader().readText().lines().first()
 
 // TODO: Handle parentheses and move onto a new category of BIFI benchmark
 //
