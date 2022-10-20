@@ -64,7 +64,7 @@ Original error: $originalError
 
 ${code.lines().joinToString("\n") { "   $it" }}
 
-${if(parseOutput?.isEmpty() == true || parseOutput == null) "Good Repair" else "Bad Repair: $parseOutput"}:
+${if(parseOutput?.isEmpty() == true && repair.isNotEmpty()) "Good Repair" else "Bad Repair: $parseOutput"}:
 
 ${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("N/A"))
   .joinToString("\n") { (a, b) -> if (a == b) "   $b" else "** $b" }}
