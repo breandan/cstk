@@ -47,15 +47,16 @@ typealias Scores = Map<Model, Pair<Int, Int>>
 
 fun main() {
   val tidyparse = Model("tidyparse")
-  val modelScores: Scores = (MODELS + tidyparse).associateWith { (0 to 0) }
+  val models = MODELS + tidyparse
+  val modelScores: Scores = models.associateWith { (0 to 0) }
 
-  DATA_DIR.also { println("Evaluating syntax repair using $MODELS on $it...") }
+  DATA_DIR.also { println("Evaluating syntax repair using $models on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .filter(String::isANontrivialStatementWithBalancedBrackets)
     .map { it to it.constructPrompt() }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
-      (MODELS + tidyparse).associateWith { model ->
+      models.associateWith { model ->
         val repairs = prompt.dispatchTo(model, cfg)
         updateScore(scores, model) { groundTruth in repairs }
       }

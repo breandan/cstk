@@ -35,8 +35,11 @@ fun main() {
     }.forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
 }
 
+// "Premature optimization is the root of all evil." -Dijkstra
+
 val tidyparse = Model("tidyparse")
-val cfg = """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+val cfg =
+  """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
   .parseCFG().apply { blocked.addAll(setOf("w")) }
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =

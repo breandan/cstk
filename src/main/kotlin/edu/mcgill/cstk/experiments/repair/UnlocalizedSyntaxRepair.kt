@@ -21,7 +21,7 @@ fun main() {
   val models = setOf(tidyparse)
   val modelScores: Scores = models.associateWith { (0 to 0) }
 
-  DATA_DIR.also { println("Evaluating syntax repair using $MODELS on $it...") }
+  DATA_DIR.also { println("Evaluating syntax repair using $models on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }
