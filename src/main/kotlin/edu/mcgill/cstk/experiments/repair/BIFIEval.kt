@@ -12,6 +12,8 @@ import java.io.File
 ./gradlew bifiEval
  */
 
+// Natural errors, unlocalized, can we get it to parse?
+
 fun main() {
   val models = setOf(tidyparse)// + MODELS
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
@@ -26,7 +28,7 @@ fun main() {
         val repair: List<String> = code.dispatchTo(model, cfg)
         scores[model]!!.let { (n, d) -> // numerator / denominator
           val parseOutput = repair.firstOrNull()?.parseOutput()
-          if (model == tidyparse) printDiagnosis(originalError, code, parseOutput, repair)
+          if (model == tidyparse) diagnoseNaturalErrorUnlocalizedRepair(originalError, code, parseOutput, repair)
           if (parseOutput?.isEmpty() == true) (n + 1) to (d + 1) else n to (d + 1)
         }
       }
@@ -53,7 +55,7 @@ fun String.parseOutput(): String =
     .start().also { it.waitFor() }.inputStream
     .bufferedReader().readText().lines().first()
 
-private fun printDiagnosis(
+private fun diagnoseNaturalErrorUnlocalizedRepair(
   originalError: String,
   code: String,
   parseOutput: String?,

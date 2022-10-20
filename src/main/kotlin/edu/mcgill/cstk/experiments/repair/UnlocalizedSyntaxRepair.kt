@@ -1,19 +1,16 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.sat.synthesizeIncrementally
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 
 /**
+ * Synthetic errors in natural data with unlocalized repair
+ *
  * In this experiment, we sample nontrivial single-line statements with balanced
  * bracket from MiniGithub, delete a random bracket without telling the location
- * to the model, and ask it to predict the repair.
- *
- * This will produce scores for each model, i.e., how many repairs it predicted
- * correctly out of the total number of samples tested:
- *
- *     TBD
+ * to the model, and ask it to predict the repair. If the ground truth is in the
+ * repair set, it gets a 1 else 0.
  */
 
 /*
@@ -21,43 +18,46 @@ import edu.mcgill.cstk.utils.*
  */
 
 fun main() {
-  val tidyparse = Model("tidyparse")
-  val cfg = """S -> w | ( ) | [ ] | < > | { } | ( S ) | [ S ] | < S > | { S } | S S""".parseCFG()
-  val modelScores: Scores = (MODELS + tidyparse).associateWith { (0 to 0) }
+  val models = setOf(tidyparse)
+  val modelScores: Scores = models.associateWith { (0 to 0) }
 
   DATA_DIR.also { println("Evaluating syntax repair using $MODELS on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
+    .map { it.trim() }
     .filter(String::isANontrivialStatementWithBalancedBrackets)
-    .map { it to it.constructPrompt() }
+    .filter { cfg.parse(it.coarsen()) != null }
+    .map { it to it.constructPrompt().replace(MSK, "") }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
-      (MODELS + tidyparse).associateWith { model ->
-        var query: String
-        var completion: String
-
-        if (model == tidyparse) {
-          println("Prompt: $prompt")
-          query = prompt.coarsen()
-          completion = query
-            .synthesizeIncrementally(cfg,
-              allowNTs = false,
-              enablePruning = true,
-            ).firstOrNull()?.uncoarsen(prompt) ?: prompt
-          println("Completion: $completion")
-          scores[model]!!.let { (n, d) -> // numerator / denominator
-//            if (completion.hasBalancedBrackets())
-            if (completion == groundTruth) (n + 1) to (d + 1) else n to (d + 1)
-          }
-        } else {
-          query = prompt.replace(MSK, model.mask)
-          completion = model.complete(query)
-
-          scores[model]!!.let { (n, d) ->  // numerator / denominator
-            if (groundTruth == completion) (n + 1) to (d + 1) else n to (d + 1)
-          }
+      models.associateWith { model ->
+        val repairs: List<String> = prompt.dispatchTo(model, cfg)
+        diagnoseSyntheticErrorUnlocalizedRepair(groundTruth, prompt, repairs)
+        scores[model]!!.let { (n, d) -> // numerator / denominator
+          if (groundTruth in repairs) (n + 1) to (d + 1) else n to (d + 1)
         }
       }
     }
-//    .filterIndexed { i, _ -> i % 10 == 0 }
     .forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
+}
+
+private fun diagnoseSyntheticErrorUnlocalizedRepair(
+  code: String,
+  prompt: String,
+  repairs: List<String>
+) {
+  println("""
+Original code:
+
+$code
+
+Prompt:
+
+$prompt
+
+Repairs:
+
+${repairs.mapIndexed { i, it -> (if(it == code) "*" else "") + "$i.) ${it.trim()}" }.joinToString("\n")}
+
+"""
+  )
 }
