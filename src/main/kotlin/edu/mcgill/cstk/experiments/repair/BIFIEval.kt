@@ -13,7 +13,7 @@ import java.io.File
  */
 
 fun main() {
-  val models = MODELS + tidyparse
+  val models = setOf(tidyparse)// + MODELS
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
   val modelScores: Scores = models.associateWith { (0 to 0) }
@@ -46,7 +46,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.containsBracketIssue(): Boolean = listOf("does not match").any { it in this }
+fun String.containsBracketIssue(): Boolean = listOf("match").any { it in this }
 
 fun String.parseOutput(): String =
   ProcessBuilder("python", "parser.py", this)
