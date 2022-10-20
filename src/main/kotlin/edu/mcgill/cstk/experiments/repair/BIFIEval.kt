@@ -46,7 +46,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.containsBracketIssue(): Boolean = listOf("parenth").any { it in this }
+fun String.containsBracketIssue(): Boolean = listOf("does not match").any { it in this }
 
 fun String.parseOutput(): String =
   ProcessBuilder("python", "parser.py", this)
@@ -66,7 +66,7 @@ ${code.lines().joinToString("\n") { "   $it" }}
 
 ${if(parseOutput?.isEmpty() == true && repair.isNotEmpty()) "Good Repair" else "Bad Repair: $parseOutput"}:
 
-${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("N/A"))
+${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("(>>>No repair!<<<)"))
   .joinToString("\n") { (a, b) -> if (a == b) "   $b" else "** $b" }}
 
 """
