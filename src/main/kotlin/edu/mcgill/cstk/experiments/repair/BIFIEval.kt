@@ -46,7 +46,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
-      synthesizer = { a -> synthesize(a) },
+      synthesizer = { a -> grammar.asCSL.synthesize(*a.toTypedArray()) },
     )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
