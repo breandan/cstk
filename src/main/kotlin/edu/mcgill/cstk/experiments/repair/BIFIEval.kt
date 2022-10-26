@@ -40,13 +40,13 @@ fun main() {
 val tidyparse = Model("tidyparse")
 val cfg =
   """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
-  .parseCFG().apply { blocked.addAll(setOf("w")) }
+    .parseCFG().apply { blocked.addAll(setOf("w")) }
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
-      synthesizer = { a -> grammar.asCSL.synthesize(*a.toTypedArray()) },
+      synthesizer = { a -> synthesize(a) },
     )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
