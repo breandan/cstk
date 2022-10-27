@@ -75,6 +75,7 @@ fun String.coarsen(): String =
     when {
       it.isBracket() -> it
       it == MSK -> "_"
+      it == "\n" -> "n"
       else -> "w"
     }
   }
@@ -84,8 +85,11 @@ fun String.uncoarsen(prompt: String): String {
   return tokenizeByWhitespace().joinToString("") {s ->
     when {
       s.isBracket() -> s
-      words.isEmpty() -> throw Exception("IDK what happened:\nSynthesized:  $this")
-      else -> words.removeAt(0)
+      s == "n" -> "\n"
+      words.isEmpty() -> { //System.err.println("IDK what happened:\nSynthesized:  $this");
+        "" }
+      s == "w" -> words.removeAt(0)
+      else -> throw Exception("Unknown token: $s")
     }
   } + words.joinToString("")
 }

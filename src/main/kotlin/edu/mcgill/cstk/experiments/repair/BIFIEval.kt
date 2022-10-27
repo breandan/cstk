@@ -28,11 +28,11 @@ fun main() {
     .filter { (code, err) -> !code.hasBalancedBrackets() && err.containsBracketIssue() }
     .runningFold(modelScores) { scores, (code, originalError) ->
       models.associateWith { model ->
-        val repair: List<String> = code.dispatchTo(model, cfg)
+        val repairs: List<String> = code.dispatchTo(model, cfg)
         scores[model]!!.let { (n, d) -> // numerator / denominator
-          val parseOutput = repair.firstOrNull()?.parseOutput()
-          if (model == tidyparse) diagnoseNaturalErrorUnlocalizedRepair(originalError, code, parseOutput, repair)
-          if (parseOutput?.isEmpty() == true) (n + 1) to (d + 1) else n to (d + 1)
+          val parseOutputs = repairs.map { it.parseOutput() }
+//          if (model == tidyparse) diagnoseNaturalErrorUnlocalizedRepair(originalError, code, parseOutput, repair)
+          if (parseOutputs.isNotEmpty() && parseOutputs.any { it.isEmpty() }) (n + 1) to (d + 1) else n to (d + 1)
         }
       }
     }.forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
@@ -42,8 +42,17 @@ fun main() {
 
 val tidyparse = Model("tidyparse")
 val cfg =
-  """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
     .parseCFG().apply { blocked.addAll(setOf("w")) }
+
+val cfg1 =
+  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+    .parseCFG().apply { blocked.addAll(setOf("w")) }
+
+val cfg2 =
+  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+    .parseCFG().apply { blocked.addAll(setOf("w")) }
+
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
