@@ -2,9 +2,10 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.sat.synthesize
+import ai.hypergraph.kaliningraph.sat.*
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.*
+import edu.mcgill.cstk.disk.Model
 import edu.mcgill.cstk.utils.*
 import java.io.File
 
@@ -19,6 +20,8 @@ fun main() {
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
   val modelScores: Scores = models.associateWith { (0 to 0) }
+
+  MAX_TOKENS = 80
 
   parsed!!.values.shuffled().asSequence()
     .map { it["code_string"].toString().let { it to it.parseOutput() } }

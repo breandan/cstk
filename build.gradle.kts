@@ -175,6 +175,8 @@ tasks {
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass.set(main)
+      minHeapSize = "4g"
+      maxHeapSize = "8g"
       classpath = sourceSets["main"].runtimeClasspath
     }
   }
