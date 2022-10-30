@@ -9,6 +9,7 @@ import edu.mcgill.cstk.disk.Model
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.*
 
 /*
 ./gradlew bifiEval
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 // Natural errors, unlocalized, can we get it to parse?
 
+@OptIn(ExperimentalTime::class)
 fun main() {
   val models = setOf(tidyparse)// + MODELS
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
@@ -24,29 +26,33 @@ fun main() {
   val numerator = AtomicInteger(0)
   val denominator = AtomicInteger(0)
 
-  MAX_TOKENS = 20
+  MAX_TOKENS = 60
   MAX_SAMPLE = 100
   TIMEOUT_MS = 10000
 
-  parsed!!.values.shuffled().parallelStream().forEach {
-    val code = it["code_string"].toString()
-    if(!code.hasBalancedBrackets()) {
-      println(code)
-      val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
-      if (repair!= null) {
-        val parseOutput = repair.parseOutput()
-        if (parseOutput.isEmpty()) {
-          numerator.incrementAndGet()
-          denominator.incrementAndGet()
-        } else {
-          denominator.incrementAndGet()
-        }
+  parsed!!.values.shuffled()
+    .map { it["code_string"].toString().let { it to it.coarsen() } }
+    .filter { it.second.length < MAX_TOKENS }.sortedBy { it.second.length }
+    .parallelStream()
+    .forEach { (code, coarsened) ->
+      if (!code.hasBalancedBrackets()) {
+        val t = TimeSource.Monotonic.markNow()
+        val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
+        if (repair != null) {
+          val parseOutput = repair.parseOutput()
+          if (parseOutput.isEmpty()) {
+            numerator.incrementAndGet()
+            denominator.incrementAndGet()
+          } else {
+            denominator.incrementAndGet()
+          }
 
-        diagnoseNaturalErrorUnlocalizedRepair("?", code, parseOutput, repair)
-        println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
+          diagnoseNaturalErrorUnlocalizedRepair("?", code, parseOutput, repair)
+          println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
+          println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
+        }
       }
     }
-  }
 }
 
 // "Premature optimization is the root of all evil." -Dijkstra
