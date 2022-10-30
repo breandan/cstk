@@ -8,6 +8,7 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.disk.Model
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 /*
 ./gradlew bifiEval
@@ -19,23 +20,33 @@ fun main() {
   val models = setOf(tidyparse)// + MODELS
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
-  val modelScores: Scores = models.associateWith { (0 to 0) }
+//  val modelScores: Scores = models.associateWith { (0 to 0) }
+  val numerator = AtomicInteger(0)
+  val denominator = AtomicInteger(0)
 
-  MAX_TOKENS = 80
+  MAX_TOKENS = 20
+  MAX_SAMPLE = 100
+  TIMEOUT_MS = 10000
 
-  parsed!!.values.shuffled().asSequence()
-    .map { it["code_string"].toString().let { it to it.parseOutput() } }
-    .filter { (code, err) -> !code.hasBalancedBrackets() && err.containsBracketIssue() }
-    .runningFold(modelScores) { scores, (code, originalError) ->
-      models.associateWith { model ->
-        val repairs: List<String> = code.dispatchTo(model, cfg)
-        scores[model]!!.let { (n, d) -> // numerator / denominator
-          val parseOutputs = repairs.map { it.parseOutput() }
-//          if (model == tidyparse) diagnoseNaturalErrorUnlocalizedRepair(originalError, code, parseOutput, repair)
-          if (parseOutputs.isNotEmpty() && parseOutputs.any { it.isEmpty() }) (n + 1) to (d + 1) else n to (d + 1)
+  parsed!!.values.shuffled().parallelStream().forEach {
+    val code = it["code_string"].toString()
+    if(!code.hasBalancedBrackets()) {
+      println(code)
+      val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
+      if (repair!= null) {
+        val parseOutput = repair.parseOutput()
+        if (parseOutput.isEmpty()) {
+          numerator.incrementAndGet()
+          denominator.incrementAndGet()
+        } else {
+          denominator.incrementAndGet()
         }
+
+        diagnoseNaturalErrorUnlocalizedRepair("?", code, parseOutput, repair)
+        println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
       }
-    }.forEach { println("\nScores [model=(valid, total)]:\n${it.entries.joinToString("\n")}") }
+    }
+  }
 }
 
 // "Premature optimization is the root of all evil." -Dijkstra
@@ -58,12 +69,13 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
-      synthesizer = { a -> synthesize(a) },
+//      synthesizer = { a -> synthesize(a) },
+      synthesizer = { a -> a.joinToString(" ").solve(this) }
     )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.containsBracketIssue(): Boolean = listOf("match").any { it in this }
+fun String.containsBracketIssue(): Boolean = listOf("match", "unbalanced").any { it in this }
 
 fun String.parseOutput(): String =
   ProcessBuilder("python", "parser.py", this)
@@ -74,16 +86,16 @@ private fun diagnoseNaturalErrorUnlocalizedRepair(
   originalError: String,
   code: String,
   parseOutput: String?,
-  repair: List<String>
+  repair: String?
 ) {
   println("""
 Original error: $originalError
 
 ${code.lines().joinToString("\n") { "   $it" }}
 
-${if(parseOutput?.isEmpty() == true && repair.isNotEmpty()) "Good Repair" else "Bad Repair: $parseOutput"}:
+${if(parseOutput?.isEmpty() == true) "Good Repair" else "Bad Repair: $parseOutput"}:
 
-${code.lines().zip(repair.firstOrNull()?.lines() ?: listOf("(>>>No repair!<<<)"))
+${code.lines().zip(repair?.lines() ?: listOf("(>>>No repair!<<<)"))
   .joinToString("\n") { (a, b) -> if (a == b) "   $b" else "** $b" }}
 
 """
