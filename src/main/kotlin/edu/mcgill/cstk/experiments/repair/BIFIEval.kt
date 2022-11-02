@@ -43,7 +43,7 @@ fun main() {
         .also { totalValidSamples = it.size.also {
           if(0 < it) proposed.incrementAndGet()
         }
-        }.firstOrNull() ?: "NO_REPAIR_PROPOSAL!"
+        }.firstOrNull() ?: NO_REPAIR
 
       val parseOutput = repair.parseOutput()
       if (parseOutput.isNotEmpty()) total.incrementAndGet()
@@ -55,6 +55,8 @@ fun main() {
       diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
     }
 }
+
+val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
 
 // "Premature optimization is the root of all evil." -Dijkstra
 
@@ -93,14 +95,13 @@ private fun diffNaturalErrorUnlocalizedRepair(
   originalError: String,
   code: String,
   parseOutput: String,
-  repair: String?
+  repair: String
 ) {
   println("""
 Original error: $originalError
 
-${if(repair == null) "(>>>No repair!<<<)"
-  else prettyDiff(code, repair, maxLen = 77, rightHeading = "repair").ifEmpty { "...\n" }}
-Python parser ${if(parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}
+${prettyDiff(code, repair, maxLen = 77, rightHeading = "repair").ifEmpty { "...\n" }}
+${if(repair == NO_REPAIR) "" else "Python parser ${if(parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
 """
   )
 }
