@@ -5,6 +5,7 @@ plugins {
   id("com.github.ben-manes.versions") version "0.42.0"
   id("de.undercouch.download") version "5.3.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
+
 }
 
 group = "com.github.breandan"
@@ -137,6 +138,9 @@ dependencies {
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
+
+//  implementation("io.github.danielnaczo:python3parser:1.0.4")
+//  implementation("org.antlr:antlr4:4.11.1")
 }
 
 tasks {

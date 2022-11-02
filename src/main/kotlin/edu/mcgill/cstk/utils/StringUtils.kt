@@ -5,16 +5,48 @@ import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
+import me.vovak.antlr.parser.Python3Lexer
+import me.vovak.antlr.parser.Python3Parser
 import net.automatalib.automata.fsa.DFA
 import net.sf.extjwnl.data.PointerUtils.*
 import net.sf.extjwnl.dictionary.Dictionary
+import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.atn.ATNConfigSet
 import org.apache.commons.lang3.StringUtils
 import spoon.Launcher
 import java.io.File
 import java.net.*
 import java.nio.file.*
+import java.util.*
 import kotlin.io.path.toPath
 import kotlin.math.max
+
+val errorListener =
+  object: BaseErrorListener() {
+    override fun syntaxError(
+      recognizer: Recognizer<*, *>?,
+      offendingSymbol: Any?,
+      line: Int,
+      charPositionInLine: Int,
+      msg: String?,
+      e: RecognitionException?
+    ) { throw Exception("$msg") }
+  }
+
+fun String.isValidPython() =
+  try {
+    Python3Parser(CommonTokenStream(lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) }))
+      .apply { removeErrorListeners(); addErrorListener(errorListener) }
+      .file_input()
+    true
+  } catch (e: Exception) {
+    false
+  }
+
+fun String.tokenizeAsPython(): List<String> =
+  lexAsPython().allTokens.map { it.text }
+fun String.lexAsPython() =
+  Python3Lexer(CharStreams.fromStream(byteInputStream()))
 
 fun String.execute() =
   ProcessBuilder( split(" ") ).start().waitFor()

@@ -20,16 +20,16 @@ import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
 fun main() {
-  val models = setOf(tidyparse)// + MODELS
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
 //  val modelScores: Scores = models.associateWith { (0 to 0) }
-  val numerator = AtomicInteger(0)
-  val denominator = AtomicInteger(0)
+  val proposed = AtomicInteger(0)
+  val accepted = AtomicInteger(0)
+  val total = AtomicInteger(0)
 
-  MAX_TOKENS = 60
+  MAX_TOKENS = 100
   MAX_SAMPLE = 100
-  TIMEOUT_MS = 10000
+  TIMEOUT_MS = 30000
 
   parsed!!.values.shuffled()
     .map { cs -> cs["code_string"].toString().let { cs["msg"].toString() to it to it.coarsen() } }
@@ -38,15 +38,21 @@ fun main() {
     .sortedBy { it.third.length }.parallelStream()
     .forEach { (errMsg, code, coarsened) ->
       val t = TimeSource.Monotonic.markNow()
-      val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
-      if (repair != null) {
-        val parseOutput = repair.parseOutput()
-        if (parseOutput.isNotEmpty()) denominator.incrementAndGet()
-        else listOf(numerator, denominator).forEach { it.incrementAndGet() }
-        diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
-        println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
-        println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
-      }
+      var totalValidSamples = 0
+      val repair = code.dispatchTo(tidyparse, cfg)
+        .also { totalValidSamples = it.size.also {
+          if(0 < it) proposed.incrementAndGet()
+        }
+        }.firstOrNull() ?: "NO_REPAIR_PROPOSAL!"
+
+      val parseOutput = repair.parseOutput()
+      if (parseOutput.isNotEmpty()) total.incrementAndGet()
+      else listOf(total, accepted).forEach { it.incrementAndGet() }
+      println("Drew $totalValidSamples samples before timeout")
+      println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
+      println("Tidyparse (proposed/total): ${proposed.get()}/${total.get()}")
+      println("Tidyparse (accepted/proposed): ${accepted.get()}/${proposed.get()}")
+      diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
     }
 }
 
@@ -54,17 +60,16 @@ fun main() {
 
 val tidyparse = Model("tidyparse")
 val cfg =
-  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
+  """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
     .parseCFG().apply { blocked.addAll(setOf("w")) }
 
-val cfg1 =
-  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
-    .parseCFG().apply { blocked.addAll(setOf("w")) }
-
-val cfg2 =
-  """S -> w | n | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
-    .parseCFG().apply { blocked.addAll(setOf("w")) }
-
+fun String.coarsenAsPython(): String =
+  tokenizeAsPython().joinToString(" ") {
+    when {
+      it.isBracket() -> it
+      else -> "w"
+    }
+  }
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
@@ -72,7 +77,8 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
       String::coarsen, String::uncoarsen,
 //      synthesizer = { a -> synthesize(a) },
       synthesizer = { a -> a.solve(this) }
-    )
+    ) { isValidPython() }
+
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
