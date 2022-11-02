@@ -41,14 +41,9 @@ fun main() {
       val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
       if (repair != null) {
         val parseOutput = repair.parseOutput()
-        if (parseOutput.isEmpty()) {
-          numerator.incrementAndGet()
-          denominator.incrementAndGet()
-        } else {
-          denominator.incrementAndGet()
-        }
-
-        diagnoseNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
+        if (parseOutput.isNotEmpty()) denominator.incrementAndGet()
+        else listOf(numerator, denominator).forEach { it.incrementAndGet() }
+        diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
         println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
         println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
       }
@@ -88,22 +83,18 @@ fun String.parseOutput(): String =
     .start().also { it.waitFor() }.inputStream
     .bufferedReader().readText().lines().first()
 
-private fun diagnoseNaturalErrorUnlocalizedRepair(
+private fun diffNaturalErrorUnlocalizedRepair(
   originalError: String,
   code: String,
-  parseOutput: String?,
+  parseOutput: String,
   repair: String?
 ) {
   println("""
 Original error: $originalError
 
-${code.lines().joinToString("\n") { "   $it" }}
-
-${if(parseOutput?.isEmpty() == true) "Good Repair" else "Bad Repair: $parseOutput"}:
-
-${code.lines().zip(repair?.lines() ?: listOf("(>>>No repair!<<<)"))
-  .joinToString("\n") { (a, b) -> if (a == b) "   $b" else "** $b" }}
-
+${if(repair == null) "(>>>No repair!<<<)"
+  else prettyDiff(code, repair, maxLen = 77, rightHeading = "repair").ifEmpty { "...\n" }}
+Repair was ${if(parseOutput.isEmpty()) "ACCEPTED" else "REJECTED"} by Python parser!
 """
   )
 }
