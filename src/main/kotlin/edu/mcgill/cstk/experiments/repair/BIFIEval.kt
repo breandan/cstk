@@ -100,7 +100,7 @@ Original error: $originalError
 
 ${if(repair == null) "(>>>No repair!<<<)"
   else prettyDiff(code, repair, maxLen = 77, rightHeading = "repair").ifEmpty { "...\n" }}
-Repair was ${if(parseOutput.isEmpty()) "ACCEPTED" else "REJECTED"} by Python parser!
+Python parser ${if(parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}
 """
   )
 }
