@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sat.*
 import com.beust.klaxon.Klaxon
@@ -31,26 +32,25 @@ fun main() {
   TIMEOUT_MS = 10000
 
   parsed!!.values.shuffled()
-    .map { it["code_string"].toString().let { it to it.coarsen() } }
-    .filter { it.second.length < MAX_TOKENS }.sortedBy { it.second.length }
-    .parallelStream()
-    .forEach { (code, coarsened) ->
-      if (!code.hasBalancedBrackets()) {
-        val t = TimeSource.Monotonic.markNow()
-        val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
-        if (repair != null) {
-          val parseOutput = repair.parseOutput()
-          if (parseOutput.isEmpty()) {
-            numerator.incrementAndGet()
-            denominator.incrementAndGet()
-          } else {
-            denominator.incrementAndGet()
-          }
-
-          diagnoseNaturalErrorUnlocalizedRepair("?", code, parseOutput, repair)
-          println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
-          println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
+    .map { cs -> cs["code_string"].toString().let { cs["msg"].toString() to it to it.coarsen() } }
+    .filter { it.third.length < MAX_TOKENS && !it.second.hasBalancedBrackets() }
+    // Sort by length so that parallel sketches all take roughly the same time
+    .sortedBy { it.third.length }.parallelStream()
+    .forEach { (errMsg, code, coarsened) ->
+      val t = TimeSource.Monotonic.markNow()
+      val repair = code.dispatchTo(tidyparse, cfg).firstOrNull()
+      if (repair != null) {
+        val parseOutput = repair.parseOutput()
+        if (parseOutput.isEmpty()) {
+          numerator.incrementAndGet()
+          denominator.incrementAndGet()
+        } else {
+          denominator.incrementAndGet()
         }
+
+        diagnoseNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
+        println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
+        println("Tidyparse (valid/total): ${numerator.get()}/${denominator.get()}")
       }
     }
 }
@@ -76,7 +76,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
 //      synthesizer = { a -> synthesize(a) },
-      synthesizer = { a -> a.joinToString(" ").solve(this) }
+      synthesizer = { a -> a.solve(this) }
     )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }

@@ -103,6 +103,7 @@ fun String.isValidJava() =
       // TODO: maybe we can apply this transformation automatically using the parser?
 //      .also { println(" Original: $it") }
       .replace(Regex("w( w)*"), "w")
+      .tokenizeByWhitespace()
 //      .also { println("Distilled: $it") }
   )//.also { println("\tis ${if (!it) "in" else ""}valid Java!") }
 
