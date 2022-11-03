@@ -363,8 +363,7 @@ const val ANSI_WHITE_BACKGROUND = "\u001B[47m"
 fun String.visibleLen() =
   replace(ANSI_RED_BACKGROUND,"")
     .replace(ANSI_GREEN_BACKGROUND,"")
-    .replace(ANSI_RESET,"")
-    .length
+    .replace(ANSI_RESET,"").length
 
 fun prettyDiff(
   left: String, right: String,
@@ -386,30 +385,28 @@ fun prettyDiff(
       .build()
       .generateDiffRows(leftLines, rightLines)
 
-    val padLeft = rows.maxOf { it.oldLine.visibleLen() }
-    val padRight = rows.maxOf { it.newLine.visibleLen() }
+    val padLeft = rows.maxOf { it.oldLine.visibleLen() } + 3
+    val padRight = rows.maxOf { it.newLine.visibleLen() } + 3
 
-    val tlsep = "┌".padEnd(padLeft + 3, '─')
-    val trsep = "┬".padEnd(padRight + 3, '─')
+    val tlsep = "┌".padEnd(padLeft, '─')
+    val trsep = "┬".padEnd(padRight, '─')
     sb.appendLine("$tlsep$trsep┐")
     sb.appendLine(
-      "│ $leftHeading".padEnd(padLeft + 3, ' ') +
-        "│ $rightHeading".padEnd(padRight + 3, ' ') + "│"
+      "│ $leftHeading".padEnd(padLeft, ' ') +
+        "│ $rightHeading".padEnd(padRight, ' ') + "│"
     )
 
-    val lsep = "├".padEnd(padLeft + 3, '─')
-    val rsep = "┼".padEnd(padRight + 3, '─')
+    val lsep = "├".padEnd(padLeft, '─')
+    val rsep = "┼".padEnd(padRight, '─')
 
+    fun String.adjust(len: Int) = padEnd(len + length - visibleLen() - 3, ' ')
     sb.appendLine("$lsep$rsep┤")
     rows.forEach { row ->
-      sb.appendLine(
-        "│ " + row.oldLine.padEnd(padLeft + (row.oldLine.length - row.oldLine.visibleLen()), ' ') + " │ " +
-          row.newLine.padEnd(padRight + (row.newLine.length - row.newLine.visibleLen()), ' ') + " │"
-      )
+      sb.appendLine("│ ${row.oldLine.adjust(padLeft)} │ ${row.newLine.adjust(padRight)} │")
     }
 
-    val blsep = "└".padEnd(padLeft + 3, '─')
-    val brsep = "┴".padEnd(padRight + 3, '─')
+    val blsep = "└".padEnd(padLeft, '─')
+    val brsep = "┴".padEnd(padRight, '─')
     sb.appendLine("$blsep$brsep┘")
   }
   return sb.toString()
