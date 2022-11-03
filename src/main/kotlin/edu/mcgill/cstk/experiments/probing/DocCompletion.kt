@@ -57,7 +57,7 @@ fun main() {
       // Only report nontrivial lines (i.e. should contain some text)
       // when there is a variance between the synthetic docs after refactoring
       if (od.length > 30 && sd.isNotBlank() && sd != rd) {
-        printLatexSummary(
+        printLaTeXSummary(
           summary = """
             Generative model: $model
             Ground truth doc: $od

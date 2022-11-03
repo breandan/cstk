@@ -5,19 +5,16 @@ import com.github.difflib.text.DiffRowGenerator
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
-import me.vovak.antlr.parser.Python3Lexer
-import me.vovak.antlr.parser.Python3Parser
+import me.vovak.antlr.parser.*
 import net.automatalib.automata.fsa.DFA
 import net.sf.extjwnl.data.PointerUtils.*
 import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
-import org.antlr.v4.runtime.atn.ATNConfigSet
 import org.apache.commons.lang3.StringUtils
 import spoon.Launcher
 import java.io.File
 import java.net.*
 import java.nio.file.*
-import java.util.*
 import kotlin.io.path.toPath
 import kotlin.math.max
 
@@ -273,7 +270,7 @@ fun Model.makeQueryAndScore(query: String = "", hints: Collection<String> = list
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }
 
-fun printLatexSummary(
+fun printLaTeXSummary(
   summary: String,
   original: String,
   synthetic: String,
@@ -293,18 +290,18 @@ $summary
 
 \subsection{Original}
 \begin{lstlisting}[language=java]
-${diffString(original, synthetic).first.highlightDiffedTeX()}
+${diffString(original, synthetic).first}
 \end{lstlisting}
 \subsection{Synthetic}
 
 \begin{lstlisting}[language=java]
-${diffString(original, synthetic).second.highlightDiffedTeX()}
+${diffString(original, synthetic).second}
 \end{lstlisting}
 
 \subsection{Variant}
 
 \begin{lstlisting}[language=java]
-${diffString(original, variant).second.highlightDiffedTeX()}
+${diffString(original, variant).second}
 \end{lstlisting}
 
 \subsection{Comment}
@@ -325,23 +322,14 @@ fun diffString(old: String, new: String) =
     .showInlineDiffs(true)
     .ignoreWhiteSpaces(true)
     .inlineDiffByWord(true)
-    .newTag { _ -> "~" }
-    .oldTag { _ -> "~" }
+    .newTag { l -> if(l) "(*@\\hlred{" else "}@*)" }
+    .oldTag { l -> if(l) "(*@\\hlred{" else "}@*)" }
     .lineNormalizer { it }
     .build()
     .generateDiffRows(old.lines(), new.lines())
     .fold("" to "") { (o, n), it ->
       "$o\n${it.oldLine}" to "$n\n${it.newLine}"
     }
-
-fun String.highlightDiffedTeX(
-  hlOpen: String = "(*@\\hlred{",
-  hlClose: String = "}@*)"
-) = fold("" to true) { (str, open), char ->
-    if (open && char == '~') "$str$hlOpen" to false
-    else if (!open && char == '~') "$str$hlClose" to true
-    else "$str$char" to open
-  }.first
 
 fun prettyDiffs(
   list: List<String>,
@@ -352,6 +340,31 @@ fun prettyDiffs(
     diffs.map { prettyDiff(it.first[0], it.first[1], it.second[0], it.second[1], maxLen, maxLines) }
       .let { it.joinToString(List(it.maxOf { it.lines().maxOf { it.length } }) { "=" }.joinToString("", "", "\n")) }
   } + "\n\n"
+
+const val ANSI_RESET = "\u001B[0m"
+const val ANSI_BLACK = "\u001B[30m"
+const val ANSI_RED = "\u001B[31m"
+const val ANSI_GREEN = "\u001B[32m"
+const val ANSI_YELLOW = "\u001B[33m"
+const val ANSI_BLUE = "\u001B[34m"
+const val ANSI_PURPLE = "\u001B[35m"
+const val ANSI_CYAN = "\u001B[36m"
+const val ANSI_WHITE = "\u001B[37m"
+
+const val ANSI_BLACK_BACKGROUND = "\u001B[40m"
+const val ANSI_RED_BACKGROUND = "\u001B[41m"
+const val ANSI_GREEN_BACKGROUND = "\u001B[42m"
+const val ANSI_YELLOW_BACKGROUND = "\u001B[43m"
+const val ANSI_BLUE_BACKGROUND = "\u001B[44m"
+const val ANSI_PURPLE_BACKGROUND = "\u001B[45m"
+const val ANSI_CYAN_BACKGROUND = "\u001B[46m"
+const val ANSI_WHITE_BACKGROUND = "\u001B[47m"
+
+fun String.visibleLen() =
+  replace(ANSI_RED_BACKGROUND,"")
+    .replace(ANSI_GREEN_BACKGROUND,"")
+    .replace(ANSI_RESET,"")
+    .length
 
 fun prettyDiff(
   left: String, right: String,
@@ -368,27 +381,36 @@ fun prettyDiff(
       .ignoreWhiteSpaces(true)
       .inlineDiffByWord(true)
       .lineNormalizer { it }
-      .oldTag { _ -> "~" }
-      .newTag { _ -> "**" }
+      .oldTag { l -> if(l) ANSI_RED_BACKGROUND else ANSI_RESET }
+      .newTag { l -> if(l) ANSI_GREEN_BACKGROUND else ANSI_RESET }
       .build()
       .generateDiffRows(leftLines, rightLines)
 
-    val padLeft = rows.maxOf { it.oldLine.length }
-    val padRight = rows.maxOf { it.newLine.length }
+    val padLeft = rows.maxOf { it.oldLine.visibleLen() }
+    val padRight = rows.maxOf { it.newLine.visibleLen() }
 
+    val tlsep = "┌".padEnd(padLeft + 3, '─')
+    val trsep = "┬".padEnd(padRight + 3, '─')
+    sb.appendLine("$tlsep$trsep┐")
     sb.appendLine(
-      "| $leftHeading".padEnd(padLeft + 3, ' ') +
-        "| $rightHeading".padEnd(padRight + 3, ' ') + "|"
+      "│ $leftHeading".padEnd(padLeft + 3, ' ') +
+        "│ $rightHeading".padEnd(padRight + 3, ' ') + "│"
     )
-    val lsep = "|".padEnd(padLeft + 3, '-')
-    val rsep = "|".padEnd(padRight + 3, '-')
-    sb.appendLine("$lsep$rsep|")
+
+    val lsep = "├".padEnd(padLeft + 3, '─')
+    val rsep = "┼".padEnd(padRight + 3, '─')
+
+    sb.appendLine("$lsep$rsep┤")
     rows.forEach { row ->
       sb.appendLine(
-        "| " + row.oldLine.padEnd(padLeft, ' ') + " | " +
-          row.newLine.padEnd(padRight, ' ') + " |"
+        "│ " + row.oldLine.padEnd(padLeft + (row.oldLine.length - row.oldLine.visibleLen()), ' ') + " │ " +
+          row.newLine.padEnd(padRight + (row.newLine.length - row.newLine.visibleLen()), ' ') + " │"
       )
     }
+
+    val blsep = "└".padEnd(padLeft + 3, '─')
+    val brsep = "┴".padEnd(padRight + 3, '─')
+    sb.appendLine("$blsep$brsep┘")
   }
   return sb.toString()
 }
