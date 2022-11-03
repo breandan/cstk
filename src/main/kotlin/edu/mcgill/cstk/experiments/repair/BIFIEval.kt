@@ -36,13 +36,13 @@ fun main() {
     .filter { it.third.length < MAX_TOKENS && !it.second.hasBalancedBrackets() }
     // Sort by length so that parallel sketches all take roughly the same time
     .sortedBy { it.third.length }.parallelStream()
+//    .filter { !it.second.isValidPython() }
     .forEach { (errMsg, code, coarsened) ->
       val t = TimeSource.Monotonic.markNow()
       var totalValidSamples = 0
       val repair = code.dispatchTo(tidyparse, cfg)
-        .also { totalValidSamples = it.size.also {
-          if(0 < it) proposed.incrementAndGet()
-        }
+        .also { totalValidSamples = it.size
+          .also { if(0 < it) proposed.incrementAndGet() }
         }.firstOrNull() ?: NO_REPAIR
 
       val parseOutput = repair.parseOutput()
@@ -84,8 +84,6 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.containsBracketIssue(): Boolean = listOf("match", "unbalanced").any { it in this }
-
 fun String.parseOutput(): String =
   ProcessBuilder("python", "parser.py", this)
     .start().also { it.waitFor() }.inputStream
@@ -100,7 +98,7 @@ private fun diffNaturalErrorUnlocalizedRepair(
   println("""
 Original error: $originalError
 
-${prettyDiff(code, repair, maxLen = 77, rightHeading = "repair").ifEmpty { "...\n" }}
+${prettyDiff(code, repair, rightHeading = "repair").ifEmpty { "...\n" }}
 ${if(repair == NO_REPAIR) "" else "Python parser ${if(parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
 """
   )
