@@ -52,12 +52,11 @@ fun Stream<String>.evaluate(
       val annotatedCompletion =
         if (completion.containsSyntaxError()) "$completion// Syntax error!"
         else { map.incrementAndGet(model); completion }
-      if (prompt.lines().all { it.length < 50 }) {
+      if (prompt.lines().all { it.length < 50 })
         print(prettyDiffs(
           listOf(code, prompt, annotatedCompletion),
           listOf("code", "prompt", "completion")
         ))
-      }
     }
 
     total.increment()

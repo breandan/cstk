@@ -17,7 +17,8 @@ fun main() {
 @ExperimentalTime
 fun neuralCodeSynthesis() {
   MODELS.forEach { model ->
-    println("Sample ($model): " + model.completeUntilStopChar("Int t = ((<mask>", maxTokens = 200))
+    println("Sample ($model): " +
+      model.completeUntilStopChar("Int t = ((<mask>", maxTokens = 200))
   }
 }
 
