@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments
+package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import edu.mcgill.cstk.disk.*
