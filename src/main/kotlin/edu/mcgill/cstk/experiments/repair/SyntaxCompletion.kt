@@ -1,4 +1,4 @@
-package edu.mcgill.cstk.experiments.probing
+package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import edu.mcgill.cstk.disk.*
@@ -26,13 +26,13 @@ import edu.mcgill.cstk.utils.*
  */
 
 fun main() {
-  DATA_DIR
-    .also { println("Evaluating syntax completion using $MODELS on $it...") }
+  val models = MODELS// + tidyparse
+  DATA_DIR.also { println("Evaluating syntax completion using $models on $it...") }
     .allFilesRecursively().allMethods().map { it.first.lineSequence() }.flatten()
     .filter(String::isANontrivialStatementWithBalancedParentheses)
-    .map { it to it.constructPrompt() }
-    .runningFold(MODELS.associateWith { (0 to 0) }) { scores, (groundTruth, prompt) ->
-      MODELS.associateWith { model ->
+    .map { it to it.constructLevelOneHalfRepair() }
+    .runningFold(models.associateWith { (0 to 0) }) { scores, (groundTruth, prompt) ->
+      models.associateWith { model ->
         val completion = model.completeUntilStopChar(prompt + model.mask, maxTokens = 50)
         scores[model]!!.let { (n, d) ->
           if (!completion.endsWith(";")) n to d
@@ -45,11 +45,10 @@ fun main() {
 }
 
 // Can model reconstruct a syntactically valid snippet from its truncated form?
-private fun String.constructPrompt() = substringBeforeLast('(').trim() + '('
+fun String.constructLevelOneHalfRepair() =
+  substringBeforeLast('(').trim() + '('
 
 fun String.isANontrivialStatementWithBalancedParentheses(
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
-) =
-  trim().endsWith(';')
-    && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
-    && hasBalancedBrackets()
+) = trim().endsWith(';') && hasBalancedBrackets() &&
+  parensAndDepth.let { (p, d) -> p == 0 && 2 < d }

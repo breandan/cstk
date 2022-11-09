@@ -14,24 +14,24 @@ import kotlin.reflect.KFunction1
  */
 // Broadly can be considered as a multi-choice QA task
 fun main() {
-    evaluateMCTransformations(
-      validationSet = DATA_DIR
-        .also { println("Evaluating variable misuse detection using $MODELS on $it...") }
-        .allFilesRecursively().allMethods()
-      // Ensure tokenized method fits within attention
-      //.filter { defaultTokenizer.tokenize(it).size < 500 }
-      ,
-      evaluation = CodeSnippetToEvaluate::evaluateMRR,
-      codeTxs = arrayOf(
-        String::renameTokens,
-        String::permuteArgumentOrder,
-        String::swapMultilineNoDeps,
-        String::addExtraLogging,
-//      String::fuzzLoopBoundaries,
-//      String::mutateSyntax,
-//      String::shuffleLines
-      )
+  evaluateMCTransformations(
+    validationSet = DATA_DIR
+      .also { println("Evaluating variable misuse detection using $MODELS on $it...") }
+      .allFilesRecursively().allMethods()
+    // Ensure tokenized method fits within attention
+    //.filter { defaultTokenizer.tokenize(it).size < 500 }
+    ,
+    evaluation = CodeSnippetToEvaluate::evaluateMRR,
+    codeTxs = arrayOf(
+      String::renameTokens,
+      String::permuteArgumentOrder,
+      String::swapMultilineNoDeps,
+      String::addExtraLogging,
+//    String::fuzzLoopBoundaries,
+//    String::mutateSyntax,
+//    String::shuffleLines
     )
+  )
 }
 
 /** Multiple choice version of [evaluateTransformations]. */

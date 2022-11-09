@@ -29,7 +29,7 @@ fun markovCodeSynthesis() {
       .map { src ->
         try { src.allLines().joinToString("\n") } catch (e: Exception) { "" }
           .asSequence().chunked(3).toMarkovChain(2)
-    }.toList().reduce { a, b -> a + b }
+      }.toList().reduce { a, b -> a + b }
     // TODO: translate identifiers to placeholders for symbolic automata
   }.also { println("Training time: ${it.duration}") }.value
 

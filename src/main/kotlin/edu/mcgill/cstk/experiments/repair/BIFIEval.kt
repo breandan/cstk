@@ -41,10 +41,9 @@ fun main() {
     .forEach { (errMsg, code, coarsened) ->
       val t = TimeSource.Monotonic.markNow()
       var totalValidSamples = 0
-      val repair = code.dispatchTo(tidyparse, cfg)
-        .also { totalValidSamples = it.size
-          .also { if(0 < it) proposed.incrementAndGet() }
-        }.firstOrNull() ?: NO_REPAIR
+      val repair = code.dispatchTo(tidyparse, cfg).also {
+        totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() }
+      }.firstOrNull() ?: NO_REPAIR
 
       val parseOutput = repair.parseOutput()
       if (parseOutput.isNotEmpty()) total.incrementAndGet()
@@ -81,7 +80,6 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
 //      synthesizer = { a -> synthesize(a) },
       synthesizer = { a -> a.solve(this) }
     ) { isValidPython() }
-
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
@@ -100,7 +98,7 @@ private fun diffNaturalErrorUnlocalizedRepair(
 Original error: $originalError
 
 ${prettyDiff(code, repair, rightHeading = "repair").ifEmpty { "...\n" }}
-${if(repair == NO_REPAIR) "" else "Python parser ${if(parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
+${if (repair == NO_REPAIR) "" else "Python parser ${if (parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
 """
   )
 }
