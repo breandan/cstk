@@ -5,7 +5,6 @@ import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sat.*
 import com.beust.klaxon.Klaxon
-import com.google.common.base.CharMatcher
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.disk.Model
 import edu.mcgill.cstk.utils.*
@@ -32,13 +31,14 @@ fun main() {
   MAX_SAMPLE = 100
   TIMEOUT_MS = 30000
 
-  parsed!!.values.shuffled()
-    .map { cs -> cs["code_string"].toString().let { cs["msg"].toString() to it to it.coarsen() } }
-    .filter { it.third.length < MAX_TOKENS && !it.second.hasBalancedBrackets() }
+  parsed!!.values.shuffled().map { cs ->
+      cs["code_string"].toString()
+        .let { CodeSnippet(it, it.coarsen(), cs["msg"].toString()) }
+    }.filter { it.tokens.size < MAX_TOKENS && !it.coarsened.hasBalancedBrackets() }
     // Sort by length so that parallel sketches all take roughly the same time
-    .sortedBy { it.third.length }.parallelStream()
+    .sortedBy { it.tokens.size }.parallelStream()
 //    .filter { !it.second.isValidPython() }
-    .forEach { (errMsg, code, coarsened) ->
+    .forEach { (code, coarsened, errMsg) ->
       val t = TimeSource.Monotonic.markNow()
       var totalValidSamples = 0
       val repair = code.dispatchTo(tidyparse, cfg).also {
@@ -54,6 +54,14 @@ fun main() {
       println("Tidyparse (accepted/proposed): ${accepted.get()}/${proposed.get()}")
       diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
     }
+}
+
+data class CodeSnippet(
+  val originalCode: String,
+  val coarsened: String,
+  val errorMsg: String
+) {
+  val tokens = coarsened.split(" ")
 }
 
 val NO_REPAIR = "NO_REPAIR_PROPOSAL!"

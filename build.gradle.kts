@@ -1,8 +1,8 @@
 import org.gradle.api.JavaVersion.VERSION_13
 
 plugins {
-  kotlin("jvm") version "1.7.20"
-  id("com.github.ben-manes.versions") version "0.42.0"
+  kotlin("jvm") version "1.8.0-Beta"
+  id("com.github.ben-manes.versions") version "0.44.0"
   id("de.undercouch.download") version "5.3.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 
@@ -57,7 +57,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.31.0"
+  val openrwVersion = "7.32.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -77,7 +77,7 @@ dependencies {
 //  implementation("com.github.tech-srl:prime:5fae8f309f")
 
   // Clustering for automata extraction
-  implementation("org.tribuo:tribuo-clustering-kmeans:4.2.1")
+  implementation("org.tribuo:tribuo-clustering-kmeans:4.3.0")
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
@@ -91,7 +91,7 @@ dependencies {
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.3.0")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.21")
+  implementation("org.apache.commons:commons-compress:1.22")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
@@ -109,7 +109,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.65.1")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.66.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -134,7 +134,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-3")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
