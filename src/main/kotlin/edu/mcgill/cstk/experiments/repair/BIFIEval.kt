@@ -9,6 +9,7 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.disk.Model
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.*
 
@@ -22,38 +23,55 @@ import kotlin.time.*
 fun main() {
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
-//  val modelScores: Scores = models.associateWith { (0 to 0) }
-  val proposed = AtomicInteger(0)
-  val accepted = AtomicInteger(0)
-  val total = AtomicInteger(0)
+
+  val strbins: MutableMap<Int, MutableList<CodeSnippet>> = mutableMapOf()
+
+  val minBinSize = 50
+  parsed!!.values.shuffled().map { cs ->
+    cs["code_string"].toString()
+      .let { CodeSnippet(it, it.coarsen(), cs["msg"].toString()) }
+  }.filter { it.coarsened.let { it.length in 22..69 } }
+    .map { it.also { strbins.getOrPut(it.coarsened.length.bin10()) { mutableListOf() }.add(it) } }
+    // Ensure each length category has at least n representatives
+    .takeWhile { strbins.size < 5 || strbins.any { it.value.size < minBinSize } }
+    .toList()
 
   MAX_TOKENS = 100
   MAX_SAMPLE = 100
-  TIMEOUT_MS = 30000
+  var pfxs = mutableListOf<String>()
+  for (i in listOf(10000, 30000, 60000)) {
+    TIMEOUT_MS = i.also { println("REEVALUATING TIMEOUT: $it ms") }
+    val lenbins = ConcurrentHashMap<Int, Π3A<AtomicInteger>>()
 
-  parsed!!.values.shuffled().map { cs ->
-      cs["code_string"].toString()
-        .let { CodeSnippet(it, it.coarsen(), cs["msg"].toString()) }
-    }.filter { it.tokens.size < MAX_TOKENS && !it.coarsened.hasBalancedBrackets() }
-    // Sort by length so that parallel sketches all take roughly the same time
-    .sortedBy { it.tokens.size }.parallelStream()
-//    .filter { !it.second.isValidPython() }
-    .forEach { (code, coarsened, errMsg) ->
-      val t = TimeSource.Monotonic.markNow()
-      var totalValidSamples = 0
-      val repair = code.dispatchTo(tidyparse, cfg).also {
-        totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() }
-      }.firstOrNull() ?: NO_REPAIR
+    strbins.values.map { it.shuffled().take(minBinSize) }.flatten()
+      .sortedBy { it.tokens.size }.parallelStream()
+      .forEach { (code, coarsened, errMsg, groundTruth) ->
+        val (proposed, accepted, total) =
+          lenbins.getOrPut(coarsened.length.bin10())
+          { AtomicInteger(0) to AtomicInteger(0) to AtomicInteger(0) }
 
-      val parseOutput = repair.parsePythonOutput()
-      if (parseOutput.isNotEmpty()) total.incrementAndGet()
-      else listOf(total, accepted).forEach { it.incrementAndGet() }
-      println("Drew $totalValidSamples samples before timeout")
-      println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
-      println("Tidyparse (proposed/total): ${proposed.get()}/${total.get()}")
-      println("Tidyparse (accepted/proposed): ${accepted.get()}/${proposed.get()}")
-      diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
-    }
+        val t = TimeSource.Monotonic.markNow()
+        var totalValidSamples = 0
+        val repair = repair(code, cfg,
+          String::coarsen, String::uncoarsen,
+          //      synthesizer = { a -> synthesize(a) },
+          synthesizer = { a -> a.solve(this) }
+        ).also { totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() } }
+          .firstOrNull() ?: NO_REPAIR
+
+        val parseOutput = repair.parsePythonOutput()
+        if (parseOutput.isNotEmpty()) total.incrementAndGet()
+        else listOf(total, accepted).forEach { it.incrementAndGet() }
+        println("Drew $totalValidSamples samples before timeout")
+        println("Synthesized repair in: ${t.elapsedNow().inWholeMilliseconds}ms")
+        println("Tidyparse (proposed/total): ${proposed.get()}/${total.get()}")
+        println("Tidyparse (accepted/proposed): ${accepted.get()}/${proposed.get()}")
+        println("len,  10_s,   30_s,   60_s")
+        println(lenbins.summarize(pfxs))
+        diffNaturalErrorUnlocalizedRepair(errMsg, code, parseOutput, repair)
+      }
+    pfxs = lenbins.summarize(pfxs).lines().toMutableList()
+  }
 }
 
 data class CodeSnippet(

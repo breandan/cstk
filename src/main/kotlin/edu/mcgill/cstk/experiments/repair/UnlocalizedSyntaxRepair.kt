@@ -39,9 +39,7 @@ fun main() {
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }
     .filter(String::isANontrivialStatementWithBalancedBrackets)
-    .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null }
-//      strbins.getOrElse(it.length.bin10()) { emptyList() }.size < 10 }
-    }
+    .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null } }
     .map {
       val prompt = it.constructPrompt().replace(MSK, "")
       val coarsened = prompt.coarsen().also { println("Coarsened: $it") }
@@ -73,7 +71,7 @@ fun main() {
 
           val t = TimeSource.Monotonic.markNow()
           var totalValidSamples = 0
-          val repair = repair(code, cfg!!,
+          val repair = repair(code, cfg,
             String::coarsen, String::uncoarsen,
   //      synthesizer = { a -> synthesize(a) },
             synthesizer = { a -> a.solve(this) }
