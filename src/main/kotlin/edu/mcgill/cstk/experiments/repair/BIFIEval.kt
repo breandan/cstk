@@ -45,7 +45,7 @@ fun main() {
         totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() }
       }.firstOrNull() ?: NO_REPAIR
 
-      val parseOutput = repair.parseOutput()
+      val parseOutput = repair.parsePythonOutput()
       if (parseOutput.isNotEmpty()) total.incrementAndGet()
       else listOf(total, accepted).forEach { it.incrementAndGet() }
       println("Drew $totalValidSamples samples before timeout")
@@ -59,7 +59,8 @@ fun main() {
 data class CodeSnippet(
   val originalCode: String,
   val coarsened: String,
-  val errorMsg: String
+  val errorMsg: String,
+  val groundTruth: String? = null
 ) {
   val tokens = coarsened.split(" ")
 }
@@ -91,12 +92,12 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.parseOutput(): String =
+fun String.parsePythonOutput(): String =
   ProcessBuilder("python", "parser.py", this)
     .start().also { it.waitFor() }.inputStream
     .bufferedReader().readText().lines().first()
 
-private fun diffNaturalErrorUnlocalizedRepair(
+fun diffNaturalErrorUnlocalizedRepair(
   originalError: String,
   code: String,
   parseOutput: String,

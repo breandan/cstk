@@ -134,13 +134,21 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-3")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
+//  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-3")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
-//  implementation("org.antlr:antlr4:4.11.1")
+  implementation("org.antlr:antlr4:4.11.1")
+}
+
+configurations.all {
+  resolutionStrategy {
+    force("org.antlr:antlr4-runtime:4.7.1")
+    force("org.antlr:antlr4-tool:4.7.1")
+  }
 }
 
 tasks {

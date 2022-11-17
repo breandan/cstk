@@ -30,6 +30,26 @@ val errorListener =
     ) { throw Exception("$msg") }
   }
 
+fun String.javac() =
+  try {
+    val context ="""
+      class Hello {
+          public static void main (String args[])
+          {
+              $this
+          }
+      }
+    """.trimIndent()
+    Java8Parser(CommonTokenStream(context.lexAsJava().apply { removeErrorListeners(); addErrorListener(errorListener) }))
+      .apply { removeErrorListeners(); addErrorListener(errorListener) }
+      .compilationUnit()
+    ""
+  } catch (e: Exception) {
+    e.stackTraceToString()
+  }
+
+fun String.isValidJava() = javac().isEmpty()
+
 fun String.isValidPython() =
   try {
     Python3Parser(CommonTokenStream(lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) }))
@@ -44,6 +64,9 @@ fun String.tokenizeAsPython(): List<String> =
   lexAsPython().allTokens.map { it.text }
 fun String.lexAsPython() =
   Python3Lexer(CharStreams.fromStream(byteInputStream()))
+
+fun String.lexAsJava() =
+  Java8Lexer(CharStreams.fromStream(byteInputStream()))
 
 fun String.execute() =
   ProcessBuilder( split(" ") ).start().waitFor()
