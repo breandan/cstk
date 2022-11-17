@@ -55,9 +55,12 @@ fun main() {
     .forEach { (code, coarsened, errMsg, groundTruth) ->
       val t = TimeSource.Monotonic.markNow()
       var totalValidSamples = 0
-      val repair = code.dispatchTo(tidyparse, cfg).also {
-        totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() }
-      }.firstOrNull() ?: NO_REPAIR
+      val repair = repair(code, cfg!!,
+        String::coarsen, String::uncoarsen,
+//      synthesizer = { a -> synthesize(a) },
+        synthesizer = { a -> a.solve(this) }
+      ).also { totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() } }
+        .firstOrNull() ?: NO_REPAIR
 
       val parseOutput = repair.javac()
       if (parseOutput.isNotEmpty()) total.incrementAndGet()

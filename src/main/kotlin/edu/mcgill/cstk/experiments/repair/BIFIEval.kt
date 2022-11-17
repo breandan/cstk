@@ -107,7 +107,7 @@ fun diffNaturalErrorUnlocalizedRepair(
 Original error: $originalError
 
 ${prettyDiff(code, repair, rightHeading = "repair").ifEmpty { "...\n" }}
-${if (repair == NO_REPAIR) "" else "Python parser ${if (parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
+${if (repair == NO_REPAIR) "" else "Parser ${if (parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
 """
   )
 }

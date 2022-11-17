@@ -44,9 +44,7 @@ fun String.javac() =
       .apply { removeErrorListeners(); addErrorListener(errorListener) }
       .compilationUnit()
     ""
-  } catch (e: Exception) {
-    e.stackTraceToString()
-  }
+  } catch (e: Exception) { e.message!! }
 
 fun String.isValidJava() = javac().isEmpty()
 
