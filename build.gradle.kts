@@ -22,7 +22,7 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.3")
+  implementation("org.slf4j:slf4j-simple:2.0.5")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
@@ -57,7 +57,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.32.1"
+  val openrwVersion = "7.33.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -109,7 +109,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.66.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -131,7 +131,7 @@ dependencies {
 
   implementation("ai.hypergraph:kaliningraph")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
@@ -178,8 +178,8 @@ tasks {
     "spoon" to "edu.mcgill.cstk.experiments.rewriting.SpoonTestKt",
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
-    "unlocalizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.UnlocalizedSyntaxRepairKt",
-    "bifiEval" to "edu.mcgill.cstk.experiments.repair.BIFIEvalKt",
+    "syntheticSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.SyntheticSyntaxRepairKt",
+    "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",

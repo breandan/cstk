@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.*
 
 /*
-./gradlew bifiEval
+./gradlew organicSyntaxRepair
  */
 
 // Natural errors, unlocalized, can we get it to parse?

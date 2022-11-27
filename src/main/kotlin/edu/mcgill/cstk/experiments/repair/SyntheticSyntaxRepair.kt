@@ -19,13 +19,12 @@ import kotlin.time.*
  */
 
 /*
-./gradlew unlocalizedSyntaxRepair
+./gradlew syntheticSyntaxRepair
  */
 
 @OptIn(ExperimentalTime::class)
 fun main() {
   val models = setOf(tidyparse)
-  val modelScores: Scores = models.associateWith { (0 to 0) }
 
 //  val proposed = AtomicInteger(0)
 //  val accepted = AtomicInteger(0)
@@ -34,7 +33,7 @@ fun main() {
   val strbins: MutableMap<Int, MutableList<CodeSnippet>> = mutableMapOf()
 
   val minBinSize = 50
-  DATA_DIR.also { println("Evaluating syntax repair using $models on $it...") }
+  DATA_DIR.also { println("Evaluating organic syntax repair using $models on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }
