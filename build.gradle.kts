@@ -1,11 +1,8 @@
-import org.gradle.api.JavaVersion.VERSION_13
-
 plugins {
-  kotlin("jvm") version "1.8.0-Beta"
+  kotlin("jvm") version "1.8.0-RC"
   id("com.github.ben-manes.versions") version "0.44.0"
   id("de.undercouch.download") version "5.3.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
-
 }
 
 group = "com.github.breandan"
@@ -22,13 +19,13 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.5")
+  implementation("org.slf4j:slf4j-simple:2.0.6")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.19.0"
+  val djlVersion = "0.20.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -57,7 +54,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.33.0"
+  val openrwVersion = "7.34.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -95,7 +92,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.4.1874"
+  val ortoolsVersion = "9.5.2237"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -194,7 +191,7 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions.jvmTarget = VERSION_13.toString()
+    kotlinOptions.jvmTarget = "17"
   }
 
   shadowJar {
