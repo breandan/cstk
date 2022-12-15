@@ -6,7 +6,7 @@ import java.io.File
 import kotlin.reflect.KFunction
 
 
-val testInput = """
+const val testInput = """
 {
   "repo": "ReactiveX/RxJava", 
   "path": "src/main/java/io/reactivex/Observable.java", 

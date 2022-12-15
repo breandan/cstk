@@ -25,7 +25,7 @@ import edu.mcgill.cstk.utils.*
 ./gradlew localizedSyntaxRepair
  */
 
-val MSK = "___"
+const val MSK = "___"
 
 // Our model predicts all possible locations as well as the fix
 // Fine tune model to predict whether it is missing parentheses
@@ -103,7 +103,7 @@ fun String.constructPrompt(): String =
     tokens
   }.joinToString("")
 
-val brackets = "()[]{}"
+const val brackets = "()[]{}"
 fun String.tokenize(): List<String> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
 

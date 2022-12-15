@@ -13,7 +13,6 @@ import kotlin.time.ExperimentalTime
 
 // TODO: DFA/RegEx or BoW query?
 
-@OptIn(ExperimentalTime::class)
 fun main() {
   val (strings, vectors) = fetchOrLoadSampleData(1000)
   val stringToVecMap = strings.zip(vectors).toMap()

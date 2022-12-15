@@ -83,7 +83,7 @@ data class CodeSnippet(
   val tokens = coarsened.split(" ")
 }
 
-val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
+const val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
 
 // "Premature optimization is the root of all evil." -Dijkstra
 

@@ -92,7 +92,7 @@ val javaCFG = """
     T -> W | W < T >
   """.parseCFG()
 
-val specialChars = "(){}<>[],=;" // .\":
+const val specialChars = "(){}<>[],=;" // .\":
 
 // Much faster than Java compiler unless code snippet is very long
 fun String.isValidJava() =
