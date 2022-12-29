@@ -1,5 +1,5 @@
 plugins {
-  kotlin("jvm") version "1.8.0-RC"
+  kotlin("jvm") version "1.8.0"
   id("com.github.ben-manes.versions") version "0.44.0"
   id("de.undercouch.download") version "5.3.0"
   id("com.github.johnrengelman.shadow") version "7.1.2"
@@ -48,17 +48,17 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.5.0")
+  implementation("com.github.ajalt.clikt:clikt:3.5.1")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.34.1"
+  val openrwVersion = "7.34.3"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "2.6.0"
+  val smileVersion = "3.0.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -106,7 +106,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.67.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.68.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -131,7 +131,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.2.0-beta-16")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-8")
 //  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-3")
 
   // Common statistical tests
