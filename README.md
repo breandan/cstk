@@ -82,7 +82,7 @@ To run an experiment interactively, request a GPU instance like so:
 salloc --time 3:0:0 --account=[YOUR_ADVISOR] --gres=gpu:a100:1 --mem=40G
 ```
 
-Compute nodes have no internet, so future commands will require need to occur offline.
+Compute nodes have no internet, so future commands will need to occur offline.
 
 ```sh
 # Default CUDA version may not work, use older version

@@ -36,7 +36,7 @@ dependencies {
   implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "1.0.1"
+  val hnswlibVersion = "1.1.0"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
@@ -54,7 +54,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.34.3"
+  val openrwVersion = "7.35.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -74,7 +74,7 @@ dependencies {
 //  implementation("com.github.tech-srl:prime:5fae8f309f")
 
   // Clustering for automata extraction
-  implementation("org.tribuo:tribuo-clustering-kmeans:4.3.0")
+  implementation("org.tribuo:tribuo-clustering-kmeans:4.3.1")
 
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
@@ -85,7 +85,7 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:3.3.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.2.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.22")
@@ -106,7 +106,7 @@ dependencies {
   implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 
   // Simulate a browser for scraping JS XML content
-  implementation("net.sourceforge.htmlunit:htmlunit:2.68.0")
+  implementation("net.sourceforge.htmlunit:htmlunit:2.70.0")
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
@@ -131,8 +131,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-8")
-//  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-3")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-12")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
