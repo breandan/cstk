@@ -12,10 +12,11 @@ import astminer.parse.antlr.python.PythonParser
 import edu.mcgill.cstk.disk.DEFAULT_RAND
 import jetbrains.datalore.base.geometry.DoubleVector
 import jetbrains.datalore.plot.PlotSvgExport
-import jetbrains.letsPlot.*
-import jetbrains.letsPlot.geom.geomPoint
-import jetbrains.letsPlot.intern.toSpec
-import jetbrains.letsPlot.label.ggtitle
+import org.jetbrains.letsPlot.*
+import org.jetbrains.letsPlot.geom.geomPoint
+import org.jetbrains.letsPlot.intern.toSpec
+import org.jetbrains.letsPlot.label.ggtitle
+import org.jetbrains.letsPlot.themes.theme
 import java.io.File
 
 fun main() {
