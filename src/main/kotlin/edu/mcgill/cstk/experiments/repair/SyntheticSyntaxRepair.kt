@@ -65,8 +65,11 @@ fun main() {
         .sortedBy { it.tokens.size }.parallelStream()
         .forEach { (code, coarsened, errMsg, groundTruth) ->
           val (proposed, accepted, total) =
-            lenbins.getOrPut(coarsened.length.bin10())
-            { AtomicInteger(0) to AtomicInteger(0) to AtomicInteger(0) }
+            lenbins.getOrPut(coarsened.length.bin10()) {
+                AtomicInteger(0) to
+                AtomicInteger(0) to
+                AtomicInteger(0)
+            }
 
           val t = TimeSource.Monotonic.markNow()
           var totalValidSamples = 0

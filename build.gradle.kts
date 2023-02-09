@@ -1,7 +1,7 @@
 plugins {
-  kotlin("jvm") version "1.8.0"
-  id("com.github.ben-manes.versions") version "0.44.0"
-  id("de.undercouch.download") version "5.3.0"
+  kotlin("jvm") version "1.8.20-Beta"
+  id("com.github.ben-manes.versions") version "0.45.0"
+  id("de.undercouch.download") version "5.3.1"
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -131,7 +131,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.2")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-12")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-14")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
