@@ -11,4 +11,8 @@ sourceControl {
   }
 }
 
-includeBuild("galoisenne")
+includeBuild("galoisenne") {
+  dependencySubstitution {
+    substitute(module("ai.hypergraph:kaliningraph")).using(project(":"))
+  }
+}
