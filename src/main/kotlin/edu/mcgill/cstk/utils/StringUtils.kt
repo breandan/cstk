@@ -16,6 +16,7 @@ import java.net.*
 import java.nio.file.*
 import kotlin.io.path.toPath
 import kotlin.math.max
+import kotlin.random.Random
 
 val errorListener =
   object: BaseErrorListener() {
@@ -265,19 +266,31 @@ fun Model.countTokens(query: String) =
 fun Model.makeQuery(query: String = "", hints: Collection<String> = listOf()): List<String> =
   makeQueryAndScore(query, hints).map { it.first }
 
+const val maxRetries = 5
+
+fun <T> retry(times: Int = maxRetries, block: () -> T): T? =
+  (0..times).asSequence()
+    .map { try { block() } catch (ex: Exception) { Thread.sleep(Random.nextLong(100, 2000)); null } }
+    .firstNotNullOfOrNull { it }
+
+fun Model.score(query: String): Float =
+  ("$SERVER_URL${name}?score=${URLEncoder.encode(query, "utf-8")}")
+    .let { url ->
+      retry(10) { URL(url).readText().toFloat() }
+        ?: Float.NaN.also { println("Error: $url") }
+    }
+
 /** Queries a model for its predictions. See [embeddingServer]. */
 fun Model.makeQueryAndScore(query: String = "", hints: Collection<String> = listOf()): List<Pair<String, Double>> =
   ("$SERVER_URL${name}?query=${URLEncoder.encode(query, "utf-8")}" +
     // http://localhost:8000/microsoft/graphcodebert-base?query=System.%3Cmask%3E.println()&hint=test&hint=err&hint=out
     hints.joinToString("") { "&hint=" + URLEncoder.encode(it, "utf-8") })
     .let { url ->
-      (0..5).asSequence().map {
-        try {
-          URL(url).readText().lines()
-            .map { it.substringBeforeLast(",") to it.substringAfterLast(",").toDouble() }
-        } catch (ex: Exception) { null }
-      }.firstOrNull { it != null }
-    } ?: listOf("" to 0.0)
+      retry {
+        URL(url).readText().lines()
+          .map { it.substringBeforeLast(",") to it.substringAfterLast(",").toDouble() }
+      } ?: listOf("" to 0.0).also { println("Error: $url") }
+    }
 
 fun List<String>.sortedByDist(query: String, metric: MetricStringDistance) =
   sortedBy { metric.distance(it, query) }

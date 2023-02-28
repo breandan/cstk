@@ -37,7 +37,7 @@ fun main() {
     .toList()
 
   MAX_TOKENS = 100
-  MAX_SAMPLE = 100
+  MAX_SAMPLE = 200
   var pfxs = mutableListOf<String>()
   for (i in listOf(10000, 30000, 60000)) {
     TIMEOUT_MS = i.also { println("REEVALUATING TIMEOUT: $it ms") }
@@ -58,7 +58,8 @@ fun main() {
         val repair = repair(code, cfg,
           String::coarsen, String::uncoarsen,
           //      synthesizer = { a -> synthesize(a) },
-          synthesizer = { a -> a.solve(this) }
+          synthesizer = { a -> a.solve(this) },
+          score = { defaultModel.score(it) },
         ).also { totalValidSamples = it.size.also { if (0 < it) proposed.incrementAndGet() } }
           .firstOrNull() ?: NO_REPAIR
 
@@ -108,8 +109,9 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
 //      synthesizer = { a -> synthesize(a) },
-      synthesizer = { a -> a.solve(this) }
-    ) { isValidPython() }
+      synthesizer = { a -> a.solve(this) },
+      filter = { isValidPython() }
+    )
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 

@@ -71,9 +71,11 @@ val SERVER_URL: String by lazy {
 
   println("Starting embeddings server...")
   // Spinlock until service is available
-  while (true)
+  while (true) {
+    Thread.sleep(1000)
     if (url.runCatching { readText() }.getOrDefault("").isNotEmpty())
       break
+  }
 
   println("Started embeddings server at $addr")
 
@@ -99,7 +101,7 @@ fun shouldBeOffline(): String =
 fun restartServer(): Unit =
   try {
     val models = MODELS.map { it.name }.toTypedArray()
-    val offline = shouldBeOffline()
+    val offline = "--offline"//shouldBeOffline()
 
     ProcessBuilder(
 //      "bash", "-c",

@@ -93,13 +93,8 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def score_sequence(self, query: str, model_name) -> float:
         model = models[model_name]
         tokenizer = tokenizers[model_name]
-
         sequence: Tensor = torch.tensor(self.tokenize(query, model_name))
-        chunks = sequence[None, :] if len(sequence) < attention_width else \
-            sequence.unfold(0, attention_width, int(attention_width / 2))
-        #                        kernel size        kernel overlap
-
-        return float(model(sequence[None, :])[0].detach().numpy())
+        return model(sequence[None, :])[0].detach().numpy().mean()
 
     def reply(self, response: str):
         self.wfile.write(bytes(response, encoding='utf8'))
