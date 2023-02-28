@@ -33,7 +33,7 @@ fun main() {
   val strbins: MutableMap<Int, MutableList<CodeSnippet>> = mutableMapOf()
 
   val minBinSize = 50
-  DATA_DIR.also { println("Evaluating organic syntax repair using $models on $it...") }
+  DATA_DIR.also { println("Evaluating synthetic syntax repair using $models on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }

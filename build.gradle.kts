@@ -1,8 +1,8 @@
 plugins {
   kotlin("jvm") version "1.8.20-Beta"
-  id("com.github.ben-manes.versions") version "0.45.0"
+  id("com.github.ben-manes.versions") version "0.46.0"
   id("de.undercouch.download") version "5.3.1"
-  id("com.github.johnrengelman.shadow") version "7.1.2"
+  id("com.github.johnrengelman.shadow") version "8.1.0"
 }
 
 group = "com.github.breandan"
@@ -25,7 +25,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.20.0"
+  val djlVersion = "0.21.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -48,13 +48,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.5.1")
+  implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.35.0"
+  val openrwVersion = "7.36.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -63,9 +63,9 @@ dependencies {
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
   // https://github.com/LearnLib/learnlib
-  implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
+//  implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
   // https://github.com/LearnLib/automatalib
-  implementation("net.automatalib.distribution:automata-distribution:0.10.0")
+//  implementation("net.automatalib.distribution:automata-distribution:0.10.0")
 
 //  https://github.com/lorisdanto/symbolicautomata
 //  implementation("com.github.lorisdanto.symbolicautomata:0da3f79677")
@@ -81,7 +81,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.313")
+  implementation("org.kohsuke:github-api:1.314")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
@@ -126,18 +126,35 @@ dependencies {
   implementation("guru.nidi:graphviz-java:0.18.1")
   implementation("guru.nidi:graphviz-kotlin:0.18.1")
 
-  implementation("ai.hypergraph:kaliningraph")
+  implementation("ai.hypergraph:kaliningraph") {
+    //  exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+//  exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-common")
+//  exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
+//    exclude(group = "guru.nidi", module = "graphviz-kotlin")
+    exclude(group = "org.graalvm.js", module = "js")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-html-jvm")
+//          exclude(group = "org.jetbrains.kotlinx", module = "multik-core")
+//          exclude(group = "org.jetbrains.kotlinx", module = "multik-default")
+    exclude(group = "org.jetbrains.lets-plot", module = "lets-plot-kotlin-jvm")
+    exclude(group = "org.apache.datasketches", module = "datasketches")
+    exclude(group = "org.apache.datasketches", module = "datasketches-java")
+    exclude(group = "ca.umontreal.iro.simul", module = "ssj")
+    exclude(group = "org.sosy-lab", module = "common")
+    exclude(group = "org.sosy-lab", module = "java-smt")
+    exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
+  }
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.3")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.4")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-14")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-17")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
-  implementation("org.antlr:antlr4:4.11.1")
+  implementation("org.antlr:antlr4:4.12.0")
 }
 
 configurations.all {

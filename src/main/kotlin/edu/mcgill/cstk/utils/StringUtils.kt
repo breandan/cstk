@@ -6,7 +6,6 @@ import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import me.vovak.antlr.parser.*
-import net.automatalib.automata.fsa.DFA
 import net.sf.extjwnl.data.PointerUtils.*
 import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
@@ -204,14 +203,6 @@ fun String.preview(query: String, window: Int = 10) =
     substring((b - window).coerceIn(range), b) + "[?]" +
       substring(b + q.length, (b + q.length + window).coerceIn(range))
   }.joinToString("…", "…", "…") { it.trim() }
-
-fun List<String>.filterByDFA(dfa: DFA<*, Char>) = filter {
-  try {
-    dfa.accepts(it.toCharArray().toList())
-  } catch (exception: Exception) {
-    false
-  }
-}
 
 //https://github.com/huggingface/transformers/issues/1950#issuecomment-558770861
 // Short sequence embedding: line-level
