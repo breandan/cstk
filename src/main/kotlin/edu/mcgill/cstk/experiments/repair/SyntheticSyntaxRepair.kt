@@ -97,7 +97,7 @@ fun main() {
   }
 }
 
-fun Int.bin10() = ((floor((this + 1).toDouble() / 10.0) * 10).toInt())
+fun Int.bin10() = (floor((this + 1).toDouble() / 10.0) * 10).toInt()
 
 fun MutableMap<Int, Π3A<AtomicInteger>>.summarize(pfxs: MutableList<String>) =
   entries.sortedBy { it.key }.mapIndexed { i, (a, b) ->

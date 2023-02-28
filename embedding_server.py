@@ -58,6 +58,8 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    # Test URL: http://localhost:8000/microsoft/codebert-base-mlm?query=The%20man%20walked%20down%20the%20street%20with%20a%20dog%20in%20his%20hand.
+    # Test URL: http://localhost:8000/microsoft/codebert-base-mlm?score=The%20man%20walked%20down%20the%20street%20with%20a%20dog%20in%20his%20hand.
     def do_GET(self) -> None:
         self.send_response(200)
         self.send_header("Content-type", "text/html")
@@ -78,12 +80,26 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
             hints = query_components["hint"] \
                 if "hint" in query_components else None
             self.reply(self.handle_query(query, model_name, hints))
+        elif "score" in query_components:
+            query = urllib.parse.unquote_plus(query_components["score"][0])
+            self.reply(str(self.score_sequence(query, model_name)))
         elif "tokenize" in query_components:
             query = urllib.parse.unquote_plus(query_components["tokenize"][0])
             self.reply(str(self.tokenize(query, model_name)))
         else:
             print(f'Unknown command: {query_components}')
             return
+
+    def score_sequence(self, query: str, model_name) -> float:
+        model = models[model_name]
+        tokenizer = tokenizers[model_name]
+
+        sequence: Tensor = torch.tensor(self.tokenize(query, model_name))
+        chunks = sequence[None, :] if len(sequence) < attention_width else \
+            sequence.unfold(0, attention_width, int(attention_width / 2))
+        #                        kernel size        kernel overlap
+
+        return float(model(sequence[None, :])[0].detach().numpy())
 
     def reply(self, response: str):
         self.wfile.write(bytes(response, encoding='utf8'))
@@ -113,5 +129,5 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 
 
 my_server = HTTPServer(('', 8000), EmbeddingServer)
-# Star the server
+# Start the server
 my_server.serve_forever()
