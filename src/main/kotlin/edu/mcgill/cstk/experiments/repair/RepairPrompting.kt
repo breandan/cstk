@@ -69,7 +69,7 @@ fun main() {
     """
 
     val answers = defaultModel.makeQueryAndScore(prompt, listOf("Y", "N"))
-    val prediction = answers.maxByOrNull { it.second }!!.first == "N"
+    val prediction = answers.maxByOrNull { it.second }!!.first == "Y"
     val accuracy = if (prediction == isValid) 1.0 else 0.0
     runningAverageAccuracy = (runningAverageAccuracy * i + accuracy) / (i + 1)
 
