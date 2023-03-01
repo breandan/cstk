@@ -150,6 +150,8 @@ dependencies {
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-17")
 
+  implementation("com.theokanning.openai-gpt3-java:api:0.10.0")
+
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
 
@@ -193,6 +195,7 @@ tasks {
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
     "syntheticSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.SyntheticSyntaxRepairKt",
     "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
+    "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",

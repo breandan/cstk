@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
+import org.apache.commons.lang3.StringUtils
 
 /**
  * In this experiment, we sample nontrivial single-line statements with balanced
@@ -75,21 +76,21 @@ fun String.coarsen(): String =
     when {
       it.isBracket() -> it
       it == MSK -> "_"
-      it == "\n" -> "n"
       else -> "w"
     }
   }
 
+fun String.isWhitespace() = trim().isEmpty()
+
 fun String.uncoarsen(prompt: String): String {
   val words = prompt.tokenize().filter { it !in brackets }.toMutableList()
-  return tokenizeByWhitespace().joinToString("") {s ->
+  return tokenizeByWhitespace().joinToString("") { token ->
     when {
-      s.isBracket() -> s
-      s == "n" -> "\n"
+      token.isBracket() -> token
       words.isEmpty() -> { //System.err.println("IDK what happened:\nSynthesized:  $this");
         "" }
-      s == "w" -> words.removeAt(0)
-      else -> throw Exception("Unknown token: $s")
+      token == "w" -> words.removeAt(0)
+      else -> throw Exception("Unknown token: $token")
     }
   } + words.joinToString("")
 }
@@ -106,6 +107,9 @@ fun String.constructPrompt(): String =
 const val brackets = "()[]{}"
 fun String.tokenize(): List<String> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
+
+fun String.tokenizeGranular() =
+  StringUtils.splitByCharacterTypeCamelCase(this).toList()
 
 fun String.isANontrivialStatementWithBalancedBrackets(
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
