@@ -195,6 +195,7 @@ tasks {
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
     "syntheticSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.SyntheticSyntaxRepairKt",
     "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
+    "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",

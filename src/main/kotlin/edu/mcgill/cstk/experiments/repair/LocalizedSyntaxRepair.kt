@@ -1,6 +1,5 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
@@ -110,10 +109,3 @@ fun String.tokenize(): List<String> =
 
 fun String.tokenizeGranular() =
   StringUtils.splitByCharacterTypeCamelCase(this).toList()
-
-fun String.isANontrivialStatementWithBalancedBrackets(
-  parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
-) =
-  trim().endsWith(';')
-    && parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
-    && hasBalancedBrackets()

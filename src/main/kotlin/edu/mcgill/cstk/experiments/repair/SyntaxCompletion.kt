@@ -29,7 +29,7 @@ fun main() {
   val models = MODELS// + tidyparse
   DATA_DIR.also { println("Evaluating syntax completion using $models on $it...") }
     .allFilesRecursively().allMethods().map { it.first.lineSequence() }.flatten()
-    .filter(String::isANontrivialStatementWithBalancedParentheses)
+    .filter(String::isANontrivialStatementWithBalancedBrackets)
     .map { it to it.constructLevelOneHalfRepair() }
     .runningFold(models.associateWith { (0 to 0) }) { scores, (groundTruth, prompt) ->
       models.associateWith { model ->
@@ -48,7 +48,8 @@ fun main() {
 fun String.constructLevelOneHalfRepair() =
   substringBeforeLast('(').trim() + '('
 
-fun String.isANontrivialStatementWithBalancedParentheses(
+fun String.isANontrivialStatementWithBalancedBrackets(
+  depth: Int = 2,
+  statementCriteria: String.() -> Boolean = { trim().endsWith(';') && hasBalancedBrackets() },
   parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
-) = trim().endsWith(';') && hasBalancedBrackets() &&
-  parensAndDepth.let { (p, d) -> p == 0 && 2 < d }
+) = statementCriteria() && parensAndDepth.let { (p, d) -> p == 0 && depth < d }
