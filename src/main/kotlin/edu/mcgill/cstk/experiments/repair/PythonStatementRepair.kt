@@ -4,6 +4,42 @@ import ai.hypergraph.kaliningraph.levenshtein
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import ai.hypergraph.kaliningraph.parsing.repair
+import org.intellij.lang.annotations.Language
+
+/*
+./gradlew pythonStatementRepair
+*/
+
+fun main() {
+  MAX_SAMPLE = 3
+  // Synthetic error correction
+//    validPythonStatements.lines().filter { it.isNotBlank() }.forEach {
+//    val original = it.tokenizeAsPython().joinToString(" ")
+//    val prompt = original.constructPromptByDeletingRandomBrackets(1)
+//    println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
+//    // Organic repairs
+//    repairPythonStatement(prompt)
+//      .also { println("Original string was ${if(original in it) "" else "NOT " }contained in repairs!") }
+//    println("\n")
+//  }
+
+  // Organic error correction
+  invalidPythonStatements.lines().filter { it.isNotBlank() }.forEach {
+    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
+    repairPythonStatement(prompt)
+    println("\n")
+  }
+}
+
+fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
+  prompt = prompt,
+  cfg = pythonStatementCFG,
+  coarsen = String::coarsenAsPython,
+  uncoarsen = String::uncoarsenAsPython,
+  synthesizer = { a -> a.solve(this) },
+  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+  filter = { isValidPython() }
+)
 
 val pythonStatementCFG: CFG = """
 S -> w | w ( S ) | ( ) | S = S | S . S | S S | ( S ) | [ S ] | { S } | : | * S
@@ -13,7 +49,8 @@ S -> S < S | S > S | S <= S | S >= S | S == S | S != S
 """.trimIndent().parseCFG()
   .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 
-val testStatements = """
+@Language("py")
+val testValidStatements = """
   values = sorted(set([(n - i - 1) * a + i * b for i in range(n)]))
   calibrated = int(self.calib[0] +(level *(self.calib[1] - self.calib[0])) / 100.0)
   mask = np.array([(o.can_init(obs) and o.pi(obs) == a) for o in self.options])
@@ -35,7 +72,8 @@ val testStatements = """
   farm[mill] = dict(farm.get(mill, {}), **{day: farm.get(mill, {}).get(day, 0) + int(prod)})
 """.trimIndent()
 
-val testInvalidStatements = """
+@Language("py")
+val invalidPythonStatements = """
 numValues = sum([len(i.cache.keys()) for i in _memoizedFunctions]),
 expectedGroupedC = [(i, [(i, i * 3 + j) for j in range(3)]) for i in range(5)]
 res2 = array(map(lambda x: int(x[1]), tmp))
@@ -119,38 +157,3 @@ checked_param.eval(feed_dict = {param: np.ones([1])})
 return 1. / thish ** self._dim * numpy.sum(numpy.tile(self._w, (x.shape[0], 1)) * thiskernel / self._lambda[: , 0] ** self._dim, axis = 1)
 T = array([[0], [0], [k * np.sum([i for i in inputs])]])
 """.trimIndent()
-
-/*
-./gradlew pythonStatementRepair
- */
-
-fun main() {
-  MAX_SAMPLE = 3
-  // Synthetic error correction
-//  testStatements.lines().filter { it.isNotBlank() }.forEach {
-//    val original = it.tokenizeAsPython().joinToString(" ")
-//    val prompt = original.constructPromptByDeletingRandomBrackets(1)
-//    println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
-//    // Organic repairs
-//    repairPythonStatement(prompt)
-//      .also { println("Original string was ${if(original in it) "" else "NOT " }contained in repairs!") }
-//    println("\n")
-//  }
-
-  // Organic error correction
-  testInvalidStatements.lines().filter { it.isNotBlank() }.forEach {
-    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
-    repairPythonStatement(prompt)
-    println("\n")
-  }
-}
-
-fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
-  prompt = prompt,
-  cfg = pythonStatementCFG,
-  coarsen = String::coarsenAsPython,
-  uncoarsen = String::uncoarsenAsPython,
-  synthesizer = { a -> a.solve(this) },
-  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
-  filter = { isValidPython() }
-)
