@@ -10,16 +10,16 @@ import java.io.File
 
 fun main() {
   var i = 0
-  val json = File("bifi/data/orig_good_code/orig.good.json")
-    .readLines().takeWhile { if (it == "  },") i++ < 20000 else true }
-    .joinToString("\n") + "\n}}"
+  val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
+//    .readLines().takeWhile { if (it == "  },") i++ < 20000 else true }
+//    .joinToString("\n") + "\n}}"
 
   val goodCode = Klaxon().parse<Map<String, Map<String, Any>>>(json)
 
   goodCode!!.values.map { cs -> cs["code_string"].toString() }.asSequence()
     .flatMap { it.lines() }
     .filter { " = " in it }
-//    .filter { "\"" !in it && "'" !in it }
+    .filter { "\"" !in it && "'" !in it }
     .filter { '(' in it && '[' in it }
     .filter { selectionCriteria(it) }
     .map { it.trim() }
