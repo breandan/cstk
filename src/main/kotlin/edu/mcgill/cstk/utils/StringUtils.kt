@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.types.cc
-import com.github.difflib.text.DiffRowGenerator
+import com.github.difflib.text.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
@@ -50,7 +50,8 @@ fun String.isValidJava() = javac().isEmpty()
 
 fun String.isValidPython() =
   try {
-    Python3Parser(CommonTokenStream(lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) }))
+    Python3Parser(CommonTokenStream((this + "\n")
+      .lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) }))
       .apply { removeErrorListeners(); addErrorListener(errorListener) }
       .file_input()
     true
@@ -362,7 +363,7 @@ fun prettyDiffs(
   maxLen: Int = 180, maxLines: Int = 200,
 ) =
   (list.windowed(2).zip(headings.windowed(2))).let { diffs ->
-    diffs.map { prettyDiff(it.first[0], it.first[1], it.second[0], it.second[1], maxLen, maxLines) }
+    diffs.map { prettyDiffHorizontal(it.first[0], it.first[1], it.second[0], it.second[1], maxLen, maxLines) }
       .let { it.joinToString(List(it.maxOf { it.lines().maxOf { it.length } }) { "=" }.joinToString("", "", "\n")) }
   } + "\n\n"
 
@@ -379,6 +380,7 @@ const val ANSI_WHITE = "\u001B[37m"
 const val ANSI_BLACK_BACKGROUND = "\u001B[40m"
 const val ANSI_RED_BACKGROUND = "\u001B[41m"
 const val ANSI_GREEN_BACKGROUND = "\u001B[42m"
+const val ANSI_ORANGE_BACKGROUND = "\u001B[43m"
 const val ANSI_YELLOW_BACKGROUND = "\u001B[43m"
 const val ANSI_BLUE_BACKGROUND = "\u001B[44m"
 const val ANSI_PURPLE_BACKGROUND = "\u001B[45m"
@@ -390,7 +392,24 @@ fun String.visibleLen() =
     .replace(ANSI_GREEN_BACKGROUND,"")
     .replace(ANSI_RESET,"").length
 
-fun prettyDiff(
+// Just print the new line with ASCII colors but no border
+fun prettyDiffNoFrills(original: String, new: String) =
+DiffRowGenerator.create()
+  .showInlineDiffs(true)
+  .inlineDiffByWord(true)
+  .newTag { l -> if(l) "<begin>" else "<end>" }
+  .oldTag { _ -> "" }
+  .build()
+  .generateDiffRows(original.split(" "), new.split(" ")).joinToString(" ") {
+    when (it.tag) {
+      DiffRow.Tag.INSERT -> it.newLine.replace("<begin>", ANSI_GREEN_BACKGROUND).replace("<end>", ANSI_RESET)
+      DiffRow.Tag.CHANGE -> it.newLine.replace("<begin>", ANSI_YELLOW_BACKGROUND).replace("<end>", ANSI_RESET)
+      DiffRow.Tag.DELETE -> it.newLine//.replace("<begin>", "$ANSI_RED_BACKGROUND _" ).replace("<end>", ANSI_RESET)
+      else -> it.newLine.replace("<begin>", "").replace("<end>", "")
+    }
+  }
+
+fun prettyDiffHorizontal(
   left: String, right: String,
   leftHeading: String = "original",
   rightHeading: String = "new",

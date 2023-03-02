@@ -51,7 +51,7 @@ fun main() {
       val variant = method.renameTokens()
       if (variant == method) null else method cc variant
     }.toList().mapNotNull { it }.forEach { (original, variant) ->
-      if (original != variant) print(prettyDiff(original, variant))
+      if (original != variant) print(prettyDiffHorizontal(original, variant))
     }
 }
 

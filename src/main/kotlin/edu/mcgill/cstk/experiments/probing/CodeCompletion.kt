@@ -29,7 +29,7 @@ data class CodeSnippetToEvaluate constructor(
       CodeSnippetToEvaluate("", null, 0, sct=sct, "", model=model)
   }
   override fun hashCode() = model.hashCode() + sct.name.hashCode()
-  fun print() = print(prettyDiff(method, variant))
+  fun print() = print(prettyDiffHorizontal(method, variant))
 }
 
 /**
@@ -241,8 +241,8 @@ fun logDiffs(
     val actualLine = maskedLine.replace(maskPattern, correctToken)
     val predictedLine = maskedLine.replace(maskPattern, completion)
 
-    print(prettyDiff(original, maskedSequenceWithOptionalHints, "original", "masked"))
-    print(prettyDiff(actualLine, predictedLine, "ground truth", "prediction"))
+    print(prettyDiffHorizontal(original, maskedSequenceWithOptionalHints, "original", "masked"))
+    print(prettyDiffHorizontal(actualLine, predictedLine, "ground truth", "prediction"))
     println("".padEnd(167, '=') + "\n\n")
   }
 }

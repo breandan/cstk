@@ -54,7 +54,7 @@ fun main() {
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .filter(String::isANontrivialStatementWithBalancedBrackets)
-    .map { it to it.constructPrompt() }
+    .map { it to it.constructPromptByMaskingRandomBrackets() }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
       models.associateWith { model ->
         val repairs = prompt.dispatchTo(model, cfg)
@@ -96,10 +96,11 @@ fun String.uncoarsen(prompt: String): String {
 
 fun String.isBracket() = length == 1 && this in brackets
 
-fun String.constructPrompt(): String =
+fun String.constructPromptByMaskingRandomBrackets(bracketsToMask: Int = 1): String =
   tokenize().toMutableList().let { tokens ->
-    val index = tokens.indices.filter { tokens[it].isBracket() }.random()
-    tokens[index] = MSK
+    tokens.indices.filter { tokens[it] in brackets }
+      .shuffled().take(bracketsToMask)
+      .forEach { tokens[it] = MSK }
     tokens
   }.joinToString("")
 

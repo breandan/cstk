@@ -19,11 +19,12 @@ fun main() {
   goodCode!!.values.map { cs -> cs["code_string"].toString() }.asSequence()
     .flatMap { it.lines() }
     .filter { " = " in it }
+//    .filter { "\"" !in it && "'" !in it }
     .filter { '(' in it && '[' in it }
     .filter { selectionCriteria(it) }
     .map { it.trim() }
     .filter { it.length < 160 }
-    .filter { !("$it\n").isValidPython() }
+    .filter { ("$it\n").isValidPython() }
     .toList()
     .forEach { println(it) }
 

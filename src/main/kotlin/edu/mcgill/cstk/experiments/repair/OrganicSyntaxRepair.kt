@@ -1,9 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.sat.*
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.disk.Model
@@ -100,9 +98,22 @@ fun String.coarsenAsPython(): String =
   tokenizeAsPython().joinToString(" ") {
     when {
       it.isBracket() -> it
+      it.none { it.isLetterOrDigit() } -> it
       else -> "w"
     }
   }
+
+fun String.uncoarsenAsPython(prompt: String): String {
+  val words = prompt.tokenizeAsPython().filter { it.any { it.isLetterOrDigit() }}.toMutableList()
+  return tokenizeByWhitespace().joinToString(" ") { token ->
+    when {
+      token.isBracket() -> token
+      token.none { it.isLetterOrDigit() } -> token
+      token == "w" -> words.removeAt(0)
+      else -> throw Exception("Unknown token: $token")
+    }
+  } + words.joinToString(" ")
+}
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
   when (model) {
@@ -129,7 +140,7 @@ fun diffNaturalErrorUnlocalizedRepair(
   println("""
 Original error: $originalError
 
-${prettyDiff(code, repair, rightHeading = "repair").ifEmpty { "...\n" }}
+${prettyDiffHorizontal(code, repair, rightHeading = "repair").ifEmpty { "...\n" }}
 ${if (repair == NO_REPAIR) "" else "Parser ${if (parseOutput.isEmpty()) "ACCEPTED repair!" else "REJECTED repair because: $parseOutput"}"}
 """
   )

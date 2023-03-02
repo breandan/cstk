@@ -40,7 +40,7 @@ fun main() {
     .filter(String::isANontrivialStatementWithBalancedBrackets)
     .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null } }
     .map {
-      val prompt = it.constructPrompt().replace(MSK, "")
+      val prompt = it.constructPromptByDeletingRandomBrackets()
       val coarsened = prompt.coarsen().also { println("Coarsened: $it") }
       println("Bin progress: " + strbins.entries.sortedBy { it.key }.joinToString(", "){ "${it.key} (${it.value.size})" })
       CodeSnippet(
@@ -96,6 +96,9 @@ fun main() {
       pfxs = lenbins.summarize(pfxs).lines().toMutableList()
   }
 }
+
+fun String.constructPromptByDeletingRandomBrackets(bracketsToDelete: Int = 1) =
+  constructPromptByMaskingRandomBrackets(bracketsToDelete).replace(MSK, "")
 
 fun Int.bin10() = (floor((this + 1).toDouble() / 10.0) * 10).toInt()
 
