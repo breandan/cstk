@@ -1,8 +1,8 @@
 plugins {
-  kotlin("jvm") version "1.8.20-Beta"
+  kotlin("jvm") version "1.8.20-RC"
   id("com.github.ben-manes.versions") version "0.46.0"
-  id("de.undercouch.download") version "5.3.1"
-  id("com.github.johnrengelman.shadow") version "8.1.0"
+  id("de.undercouch.download") version "5.4.0"
+  id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "com.github.breandan"
@@ -19,7 +19,7 @@ dependencies {
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
-  implementation("org.slf4j:slf4j-simple:2.0.6")
+  implementation("org.slf4j:slf4j-simple:2.0.7")
 
 //  implementation("ai.djl.tensorflow:tensorflow-engine:0.12.0")
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
@@ -54,7 +54,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.37.3"
+  val openrwVersion = "7.38.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -85,14 +85,14 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:5.0.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.2.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.22")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.5.2237"
+  val ortoolsVersion = "9.6.2534"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -145,12 +145,12 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.4")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.5")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0-beta-17")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0")
 
-  implementation("com.theokanning.openai-gpt3-java:api:0.10.0")
+  implementation("com.theokanning.openai-gpt3-java:api:0.11.1")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
@@ -204,7 +204,7 @@ tasks {
     "tokenize" to "edu.mcgill.cstk.utils.TokenizerKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
-      mainClass.set(main)
+      mainClass = main
       minHeapSize = "4g"
       maxHeapSize = "8g"
       classpath = sourceSets["main"].runtimeClasspath
@@ -222,6 +222,6 @@ tasks {
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.crawler.CloneReposKt"
     isZip64 = true
-    archiveFileName.set("${project.name}-fat-${project.version}.jar")
+    archiveFileName = "${project.name}-fat-${project.version}.jar"
   }
 }
