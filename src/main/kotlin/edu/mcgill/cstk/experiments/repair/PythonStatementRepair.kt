@@ -24,16 +24,16 @@ fun main() {
 //  }
 
   // Organic error correction
-//  validPythonStatements.lines().filter { it.isNotBlank() }.forEach {
-//
+  invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }.forEach {
 //    println("${it.hasBalancedBrackets()}::${it.isValidPython()}\t\t" + it)
-//    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
-//    repairPythonStatement(prompt)
-//    println("\n")
-//  }
+    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
+    println("Original:  $prompt")
+    repairPythonStatement(prompt).forEach { println("Repair:  $it") }
+    println("\n")
+  }
 
-  validPythonStatements.lines().map { it.coarsenAsPython() }
-    .forEach { println("${it.isValidPython()} : $it") }
+//  validPythonStatements.lines().map { it.coarsenAsPython() }
+//    .forEach { println("${it.isValidPython()} : $it") }
 }
 
 fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
@@ -47,10 +47,11 @@ fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
 )
 
 val pythonStatementCFG: CFG = """
-S -> w | w ( S ) | ( ) | S = S | S . S | S S | ( S ) | [ S ] | { S } | : | * S
+S -> w | S ( S ) | ( ) | S = S | S . S | S S | ( S ) | [ S ] | { S } | : | * S | [ ]
 S -> S , S | S ; S | S : S
-S -> S + S | S - S | S * S | S / S | S % S | S ** S
-S -> S < S | S > S | S <= S | S >= S | S == S | S != S
+S -> S + S | S - S | S * S | S / S | S % S | S ** S | - S
+S -> S < S | S > S | S <= S | S >= S | S == S | S != S | S >> S | S :
+S -> S ( S ) | S ( S , S ) | S ;
 """.trimIndent().parseCFG()
   .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 

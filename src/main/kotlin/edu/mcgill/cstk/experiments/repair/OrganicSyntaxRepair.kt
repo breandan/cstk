@@ -120,6 +120,7 @@ fun String.uncoarsenAsPython(prompt: String): String {
       token.isBracket() -> token
       token.none { it.isLetterOrDigit() } -> token
       token == "w" -> words.removeAt(0)
+      token in pythonKeywords -> token
       else -> throw Exception("Unknown token: $token")
     }
   } + words.joinToString(" ")
