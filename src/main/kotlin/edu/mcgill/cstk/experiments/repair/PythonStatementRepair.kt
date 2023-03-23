@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.levenshtein
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import ai.hypergraph.kaliningraph.parsing.repair
@@ -24,11 +24,16 @@ fun main() {
 //  }
 
   // Organic error correction
-  invalidPythonStatements.lines().filter { it.isNotBlank() }.forEach {
-    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
-    repairPythonStatement(prompt)
-    println("\n")
-  }
+//  validPythonStatements.lines().filter { it.isNotBlank() }.forEach {
+//
+//    println("${it.hasBalancedBrackets()}::${it.isValidPython()}\t\t" + it)
+//    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
+//    repairPythonStatement(prompt)
+//    println("\n")
+//  }
+
+  validPythonStatements.lines().map { it.coarsenAsPython() }
+    .forEach { println("${it.isValidPython()} : $it") }
 }
 
 fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
@@ -50,30 +55,46 @@ S -> S < S | S > S | S <= S | S >= S | S == S | S != S
   .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 
 @Language("py")
-val testValidStatements = """
-  values = sorted(set([(n - i - 1) * a + i * b for i in range(n)]))
-  calibrated = int(self.calib[0] +(level *(self.calib[1] - self.calib[0])) / 100.0)
-  mask = np.array([(o.can_init(obs) and o.pi(obs) == a) for o in self.options])
-  N = sum([i for(_, i) in list(corpus.items())])
-  p = [Philosopher(i, c[i], c[(i + 1) % n], butler) for i in range(n)]
-  R = np.array([[cos(angle), - sin(angle), 0], [sin(angle), cos(angle), 0], [0, 0, 1]])
-  l = sum([len(str(s)) for s in self.segments])
-  seen_authors = set(filter(proper_name, (t[0] for t in seen)))
-  pas = str((i * temps) /(len(x[: , 0])))
-  ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), os.pardir))
-  tagged_data = set([(row[0], correct_tag) for row in reader])
-  pDiffL = sum([evidence2([x], a, b) for x in s], axis = 0)
-  mask = ~(2 **(32 - int(network[1])) - 1)
-  val_deci = sng *(val_list[0] +((val_list[1] +(val_list[2] / 60.0)) / 60.0))
-  X_b = np.hstack((np.ones((X.shape[0], 1)), X))
-  __all__ = list(module for _, module, _ in pkgutil.iter_modules([os.path.split(__file__)[0]]))
-  tmpl_map = dict([(int(k), t) for k, t in tmpls])
-  return np.concatenate([np.ones([X.shape[0], 1]), X, np.square(X) / 2.0], axis = 1)
-  farm[mill] = dict(farm.get(mill, {}), **{day: farm.get(mill, {}).get(day, 0) + int(prod)})
+val invalidPythonStatements = """
+  labels = dict(map(lambda(x, y): [y, x], raw_labels))
+  zeros = zip(* filter(lambda(i, v): v == 0, enumerate(self.grid)))[0]
+  expectedReducedC = [(i, sum(map(lambda(x, y): y, xs))) for(i, xs) in expectedGroupedC]
+  A = sess.run(y_result, feed_dict = {x_image144: [inputarray], x_image: [test144]}) result = A.astype(np.uint8)
+  d = sum(map(lambda(a, b): abs(a - b), zip(stringshist[i], Sshist)))
+  rules_supercell_map = map_reduce(cell_rules_map.iteritems(), lambda(cell, rules): [(rules, cell)], set_)
+  rule_supercells_map = map_reduce(rules_supercell_map.iteritems(), lambda(rules, cell_): [(rule, cell_) for rule in rules], set_)
+  result = array(map(lambda(x, y): [x, y[0], y[1]], self.run_ids_dict.iteritems()))
+  d = sum([abs(rgb1[i] - rgb0[i]) for i in 0, 1, 2])
+  data = map(lambda(l, f): (int(l), int(f[0])), data)
+  to_apply = dict((i migrations[i]) for i in migrations if i > last_applied)
+  slices = [slice(0, old, float(old) / new) for old, new in zip(a.shape newshape)]
+  ret_prime_map = map(lambda(x, y): [x +[i] for i in y], ret_prime)
+  result = rdd.map(lambda(x, y): (x, (y, 1))).reduceByKey(lambda x, y: (x[0] + y[0], x[1] + y[1])).count()
+  a, b = [(0 if(x[0] >= 0.9) else x[0], x[1], x[2] * 0.3) for x in a, b]
+  boards = hstack([all_boards(n, 2048) for n in 0, 1, 2])
+  sorted_names = [name for name, _ in sorted(index.iteritems(), key = lambda(k, v): v)]
+  kv_pairs = map(lambda(k, v): (key_mapping[k], int(v)), kv_pairs)
+  objs = itertools.chain(*[Model.objects.filter(query) for Model in Sign, Planet, House, PlanetInSign, PlanetInHouse, HouseInSign, Aspect])
+  blockobjs = blocks.map(lambda(n, c): (n, Block.of_string(c.strip(), 0)[0]))
+  paths = [path for path in graph.getHierPathsFrom, ((cbva, ))]
+  newrdd = images.rdd.map(lambda(k, im): (k, bcTransformations.value[k].apply(im)))
+  bytes = [reduce(lambda byte, (i, state): byte | state << 2 * i, enumerate(state_group), 0) for state_group in group(state, group_size)]
+  new_other = other[] +[i for i in range(len(other), len(self))]
+  width = int(np.around((float) imgDims[0] / float(dimMax) * newSize))
+  height = int(np.around((float) imgDims[1] / float(dimMax) * newSize))
+  area = sum([float(trapezoidal_area(X[k], Y[k] X[k_minus_one], Y[k_minus_one])) for k, k_minus_one in indices_to_consider])
+  wcv = closest.map(lambda(k, v): np.sum((centroids[k] - v[0]) ** 2)).reduce(lambda x, y: x + y)
+  best_cmds = [tup for tup in sorted(self.commands.iteritems(), key = lambda(k, v): (v, k))][: MAX_CMDS]
+  countries = [(key countries[key]) for key in countries]
+  out_data[key] = array(map(lambda(l, r): r, filt_with_indices))
+  diff = [(bin[0], bin[1] - hist2[bin[0]]) for bin in hist1.items() if bin[0] in hist2] git
+  edir, edn, eup = [dfield.reshape((np.max(z) + 1, np.max(y) + 1, np.max(x) + 1)) for dfield in edir, edn, eup]
+  r = tuple([int(a[i] *(1 - v) + b[i] * v) for i in 0, 1, 2])
+  newrdd = self.rdd.map(lambda(k, v): (k[: : - 1], v)).sortByKey().map(lambda(k, v): (k[: : - 1], v))
 """.trimIndent()
 
 @Language("py")
-val invalidPythonStatements = """
+val validPythonStatements = """
 numValues = sum([len(i.cache.keys()) for i in _memoizedFunctions]),
 expectedGroupedC = [(i, [(i, i * 3 + j) for j in range(3)]) for i in range(5)]
 res2 = array(map(lambda x: int(x[1]), tmp))

@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -24,7 +25,8 @@ fun main() {
     .filter { selectionCriteria(it) }
     .map { it.trim() }
     .filter { it.length < 160 }
-    .filter { ("$it\n").isValidPython() }
+    .filter { !("$it\n").isValidPython() }
+    .filter { it.last() !in listOf(':', ',', '(', '[') }
     .toList()
     .forEach { println(it) }
 
@@ -32,4 +34,4 @@ fun main() {
 }
 
 private fun selectionCriteria(it: String) =
-  it.isANontrivialStatementWithBalancedBrackets(2, statementCriteria = { true })
+  it.isANontrivialStatementWithBalancedBrackets(1, statementCriteria = { true })
