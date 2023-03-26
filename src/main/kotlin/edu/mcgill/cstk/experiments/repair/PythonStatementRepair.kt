@@ -5,7 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import ai.hypergraph.kaliningraph.parsing.repair
 import ai.hypergraph.kaliningraph.sampling.pow
-import ai.hypergraph.kaliningraph.sat.synthesize
+import ai.hypergraph.kaliningraph.sat.*
 import org.intellij.lang.annotations.Language
 
 /*
@@ -67,6 +67,7 @@ fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
   uncoarsen = String::uncoarsenAsPython,
 //  synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
   synthesizer = { a -> a.solve(this) }, // Enumerative search
+//  synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
 //  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
   filter = { isValidPython() }
 )
