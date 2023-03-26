@@ -4,6 +4,8 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import ai.hypergraph.kaliningraph.parsing.repair
+import ai.hypergraph.kaliningraph.sampling.pow
+import ai.hypergraph.kaliningraph.sat.synthesize
 import org.intellij.lang.annotations.Language
 
 /*
@@ -23,37 +25,190 @@ fun main() {
 //    println("\n")
 //  }
 
+//  val (vp, ip) = coarsened.lines().mapIndexed { i, it -> i to it }
+//    .partition { (i, it ) -> it.isValidPython() }
+//    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
+//
+//  val (ov, oi) = coarsened.lines().mapIndexed { i, it -> i to it }
+//    .partition { (i, it ) ->  pythonStatementCFG.parse(it) != null }
+//    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
+//
+//  println("Valid Python: $vp")
+//  println("Invalid Python: $ip")
+//  println("Our Valid: $ov")
+//  println("Our Invalid: $oi")
+//  println("Both valid: ${vp.intersect(ov)}")
+//  println("Both invalid: ${oi.intersect(ip)}")
+//  println("Our valid, their invalid: ${ov - vp}")
+//  println("Their valid, our invalid: ${vp - ov}")
+
   // Organic error correction
-  invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }.forEach {
+  invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
+//    .parallelStream()
+    .filter { !it.matches(pythonStatementCFG) }
+    .forEach {
 //    println("${it.hasBalancedBrackets()}::${it.isValidPython()}\t\t" + it)
-    val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
-    println("Original:  $prompt")
-    repairPythonStatement(prompt).forEach { println("Repair:  $it") }
-    println("\n")
-  }
+      val prompt = it.tokenizeAsPython()
+        .joinToString(" ") // No need to corrupt since these are already broken
+      println("Original:  $prompt")
+      repairPythonStatement(prompt).forEach { println("Repair:  $it") }
+      println("\n")
+    }
+}
 
 //  validPythonStatements.lines().map { it.coarsenAsPython() }
 //    .forEach { println("${it.isValidPython()} : $it") }
-}
+//}
 
 fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
   prompt = prompt,
   cfg = pythonStatementCFG,
   coarsen = String::coarsenAsPython,
   uncoarsen = String::uncoarsenAsPython,
-  synthesizer = { a -> a.solve(this) },
-  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+//  synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
+  synthesizer = { a -> a.solve(this) }, // Enumerative search
+//  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
   filter = { isValidPython() }
 )
+
+val coarsened = """
+  w = w ( [ w ( w . w . w ( ) ) for w in w ] ) ,
+  w = [ ( w , [ ( w , w * w + w ) for w in w ( w ) ] ) for w in w ( w ) ]
+  w = w ( w ( lambda w : w ( w [ w ] ) , w ) )
+  w = w . w ( [ ( w - w * w ) * ( w . w ( w . w ( - w + ( w + w ) / w ) ) - w ) + w for w in w ] )
+  w = w ( w ) [ : w ( w . w ( w ( w ) * w ) ) ]
+  w = w ( ( w [ w : w [ w ] - w , : ] , w [ w [ w ] + w : w . w [ w ] - w , : ] ) )
+  w = ( w [ w ( w [ : , w ] ) , w ] if w > w * w ( w [ : , w ] ) else w )
+  w = w ( w ( ( w [ w : w - w , w ] , w [ w : w - w , w ] ) ) ) / w ( w . w [ w ] + w . w [ w ] )
+  w = w ( [ w ( w ( ) . w ( ) [ w ] ) for _ in w ( w ) ] )
+  w = w . w ( [ ( w ( w * ( ( - w ) / w + w ) ) ) * ( - w ) * ( w . w ( w . w ( w * w ) ) - w ) ** w + w for w in w ] )
+  w = w ( [ ( w [ w ] - w . w ( w ) ) ** w for w in w ( w ( w ) ) ] )
+  w = w ( [ ( w [ w ] - w ( w [ w ] , * w ) ) ** w for w in w ( w ( w ) ) ] )
+  w = w . w ( w ( w = w ( w . w [ w ( w , w . w ) ] ) ) )
+  w = w ( w [ w : w ] ) * w + w ( w . w ( w ( w [ w : w ] ) / w ) )
+  w . w = w ( w ( lambda w : ( w , w ( w [ w ] , w , w ) ) , w ) )
+  w . w = w . w ( [ w [ w ( w / w ) ] ] )
+  w = ( w . w ( [ w . w ( w <= w ) ] ) ) [ w ] [ w ] [ w ]
+  w = w ( ( ( w ( w [ w ] ) - w ( w [ w ] ) ) / w ( w [ w ] ) ) * w , w )
+  w = w ( [ w ( [ w ( w ) for w in w ( w ( w ) * w ) ] ) for w , w in w ( w ) if not w ( w ) % w ] )
+  w = w . w ( w [ w [ w - w ] ] [ w [ w [ w - w ] ] == w ] )
+  w = w ( ( w ( w . w [ w ] ) * w ( w ) ) )
+  w = w ( ( w ( w [ w ] . w ) for w in w [ w : ] ) )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w [ w ] + w [ w ] [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w [ w ] + w [ w ] [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( [ [ w . w ( ) , w . w ( ) ] for w in w + w [ w : w ] ] )
+  w = w ( w ( w ( w . w [ w ] . w ( ) [ w ] [ w ] ) , w . w ) , w . w )
+  ( w , w ) = ( w [ : w ] , w [ ( w + w ( w ) ) : ] )
+  w = w . w ( [ w ( w [ - w ] ) for w in w ] )
+  w = w . w ( [ ( w . w ( w ) , w . w ( w ) ) for w in w ] )
+  w = [ ( w ( w , w ) , w . w ( [ [ ] ] ) ) ]
+  w = w . w . w ( w ( w . w ( w [ w ] ) - w . w ( w [ w ] ) ) ) ;
+  w . w [ w ] . w = w ( [ - w , w , w ] + w ( w ( w . w [ w ] . w ) ) )
+  w = [ w ( [ w [ w ] ] + [ w . w [ w ] for w in w [ w : ] ] ) . w ( w , w ) for w in w ( w ) ]
+  w = [ [ w * ( w [ w ] - w [ w ] ) / ( w + w ) , w * ( w [ w ] - w [ w ] ) / ( w + w ) ] ]
+  w = [ [ ( w [ w ] - w [ w ] [ w ] ) , ( w [ w ] - w [ w ] [ w ] ) , w ] ]
+  w = [ [ ( w [ w ] + w [ w ] [ w ] ) , ( w [ w ] + w [ w ] [ w ] ) , w ] ]
+  w = [ [ ( w [ w ] - w [ w ] [ w ] ) , ( w [ w ] - w [ w ] [ w ] ) , w ] ]
+  w = [ [ ( w [ w ] + w [ w ] [ w ] ) , ( w [ w ] + w [ w ] [ w ] ) , w ] ]
+  w ( w ( [ w for w in w . w ( w = w . w , w = None ) ] ) )
+  w = w . w ( w ( w [ w [ w ] ] [ w ] [ w ] [ w ] ) )
+  w = w . w ( w ( w [ w [ w ] ] [ w ] [ w ] [ w ] ) )
+  w = w ( [ w ( w [ w ] [ w : ] ) for w in w ] )
+  w . w ( w ( * [ w ( w = w , w = w ) for w in w ] , w = True ) )
+  w = not w . w [ - w ] or w / ( ( w ( w . w [ - w ] ) / w ) ** w ) < w
+  if w == w : w . w ( w ( w ( w ( w [ - w - w ] . w ( ) , w = w ( w ) ) [ w ] ) ) )
+  w = w . w ( [ w . w ( ( w [ w , : ] - w [ w , : ] ) * ( w [ w , : ] - w [ w , : ] ) ) for w in w [ w [ w ] ] [ w ] ] )
+  w = w . w ( [ w . w ( ( w [ w , : ] - w [ w , : ] ) * ( w [ w , : ] - w [ w , : ] ) ) for w in w [ w [ w ] ] [ w ] ] )
+  w = w . w ( w ( [ [ w / w , w / w , w / w ] for w in w . w ( w ) ] , [ ] ) )
+  w = w ( w ( lambda w : ( w , [ ] ) , w ( w ) ) )
+  w = w ( [ w . w ( w ( w ) / ( w ) ) for w , w in w ( w [ w : : w ] , w [ w : : w ] ) ] ) / w
+  w = w . w ( w , ( ( w [ w ] - w ) / ( w - w ) ) )
+  w = w ( w ( w [ w . w ( w > w ) ] ) )
+  w = [ w for w , _ in w [ w . w ( ( w , w ) ) : ] if ( not ( w in w or w in w ) ) ]
+  w = w ( ( w - ( w * w . w [ w ] / w ) - w . w [ w ] ) / w . w [ w ] )
+  w = w . w ( w . w ( [ w . w ( w , w ) ] * w ) , w )
+  w . w [ w . w . w ( w ) ] = ( ( w [ w ] , w ( w [ w ] . w ) , w [ w ] , w [ w ] ) )
+  w = w . w ( w , w . w ( [ w [ w ] , w [ w ] , w [ w ] , w ] ) ) [ : w ]
+  w = w . w ( * ( w . w ( w , w [ w : ] ) ) )
+  w = [ ( w ( w [ w ] ) , w ( w . w - w [ w ] ) ) for w in w ( w ( w ) ) ]
+  w = w . w ( w , w , [ w for w in w ( w . w [ w ] ) ] , w = w )
+  w = w . w ( w . w ( [ w [ w ] ] ) )
+  w . w = w ( [ w ( w . w [ w ] ) for w in w ( w , w * w . w ) ] )
+  w = w ( { w [ w ] : w . w [ w [ w ] ] / w , w [ w ] : w . w [ w [ w ] ] / w } )
+  w = w + ( ( w [ ( w + w ) % w ] * w ) >> w )
+  w = w ( [ ( w . w , w [ w ] ) ] )
+  w = [ w ( ( w [ w ] * w . w + w ) * w , ( w [ w ] * w . w + w ) * w ) for w in w ]
+  w = [ ( w . w ( w [ w ] ) , w . w ( w [ w ] ) ) for w in w ]
+  w = [ ( w . w ( w [ w ] [ w ] ) , w . w ( w [ w ] [ w ] ) ) for w in w for w in w ( w ) ]
+  w = w ( [ ( w . w ( ) , w ) for w , w in w . w ( ) ] )
+  w . w ( w = { w : w . w ( [ w ] ) } )
+  return w / w ** w . w * w . w ( w . w ( w . w , ( w . w [ w ] , w ) ) * w / w . w [ : , w ] ** w . w , w = w )
+  w = w ( [ [ w ] , [ w ] , [ w * w . w ( [ w for w in w ] ) ] ] )
+
+  w = w ( w ( lambda ( w , w ) : [ w , w ] , w ) )
+  w = w ( * w ( lambda ( w , w ) : w == w , w ( w . w ) ) ) [ w ]
+  w = [ ( w , w ( w ( lambda ( w , w ) : w , w ) ) ) for ( w , w ) in w ]
+  w = w . w ( w , w = { w : [ w ] , w : [ w ] } ) w = w . w ( w . w )
+  w = w ( w ( lambda ( w , w ) : w ( w - w ) , w ( w [ w ] , w ) ) )
+  w = w ( w . w ( ) , lambda ( w , w ) : [ ( w , w ) ] , w )
+  w = w ( w . w ( ) , lambda ( w , w ) : [ ( w , w ) for w in w ] , w )
+  w = w ( w ( lambda ( w , w ) : [ w , w [ w ] , w [ w ] ] , w . w . w ( ) ) )
+  w = w ( [ w ( w [ w ] - w [ w ] ) for w in w , w , w ] )
+  w = w ( lambda ( w , w ) : ( w ( w ) , w ( w [ w ] ) ) , w )
+  w = w ( ( w w [ w ] ) for w in w if w > w )
+  w = [ w ( w , w , w ( w ) / w ) for w , w in w ( w . w w ) ]
+  w = w ( lambda ( w , w ) : [ w + [ w ] for w in w ] , w )
+  w = w . w ( lambda ( w , w ) : ( w , ( w , w ) ) ) . w ( lambda w , w : ( w [ w ] + w [ w ] , w [ w ] + w [ w ] ) ) . w ( )
+  w , w = [ ( w if ( w [ w ] >= w ) else w [ w ] , w [ w ] , w [ w ] * w ) for w in w , w ]
+  w = w ( [ w ( w , w ) for w in w , w , w ] )
+  w = [ w for w , _ in w ( w . w ( ) , w = lambda ( w , w ) : w ) ]
+  w = w ( lambda ( w , w ) : ( w [ w ] , w ( w ) ) , w )
+  w = w . w ( * [ w . w . w ( w ) for w in w , w , w , w , w , w , w ] )
+  w = w . w ( lambda ( w , w ) : ( w , w . w ( w . w ( ) , w ) [ w ] ) )
+  w = [ w for w in w . w , ( ( w , ) ) ]
+  w = w . w . w ( lambda ( w , w ) : ( w , w . w [ w ] . w ( w ) ) )
+  w = [ w ( lambda w , ( w , w ) : w | w << w * w , w ( w ) , w ) for w in w ( w , w ) ]
+  w = w [ ] + [ w for w in w ( w ( w ) , w ( w ) ) ]
+  w = w ( w . w ( ( w ) w [ w ] / w ( w ) * w ) )
+  w = w ( w . w ( ( w ) w [ w ] / w ( w ) * w ) )
+  w = w ( [ w ( w ( w [ w ] , w [ w ] w [ w ] , w [ w ] ) ) for w , w in w ] )
+  w = w . w ( lambda ( w , w ) : w . w ( ( w [ w ] - w [ w ] ) ** w ) ) . w ( lambda w , w : w + w )
+  w = [ w for w in w ( w . w . w ( ) , w = lambda ( w , w ) : ( w , w ) ) ] [ : w ]
+  w = [ ( w w [ w ] ) for w in w ]
+  w [ w ] = w ( w ( lambda ( w , w ) : w , w ) )
+  w = [ ( w [ w ] , w [ w ] - w [ w [ w ] ] ) for w in w . w ( ) if w [ w ] in w ] w
+  w , w , w = [ w . w ( ( w . w ( w ) + w , w . w ( w ) + w , w . w ( w ) + w ) ) for w in w , w , w ]
+  w = w ( [ w ( w [ w ] * ( w - w ) + w [ w ] * w ) for w in w , w , w ] )
+  w = w . w . w ( lambda ( w , w ) : ( w [ : : - w ] , w ) ) . w ( ) . w ( lambda ( w , w ) : ( w [ : : - w ] , w ) )
+""".trimIndent()
 
 val pythonStatementCFG: CFG = """
 S -> w | S ( S ) | ( ) | S = S | S . S | S S | ( S ) | [ S ] | { S } | : | * S | [ ]
 S -> S , S | S ; S | S : S
 S -> S + S | S - S | S * S | S / S | S % S | S ** S | - S
 S -> S < S | S > S | S <= S | S >= S | S == S | S != S | S >> S | S :
-S -> S ( S ) | S ( S , S ) | S ;
+S -> S ;
+S -> :
+S -> None | True | False
+S -> S ^ S | S in S
+S -> [ S : ]
+S -> S for S in S | S for S in S if S
+S -> if S | if S else S | return S
+S -> not S | S or S
+S -> lambda w : S | lambda w , w : S | lambda w , w , w : S | lambda w , w , w , w : S
 """.trimIndent().parseCFG()
-  .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
+  .apply { blocked.add("w") }
+//  .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 
 @Language("py")
 val invalidPythonStatements = """

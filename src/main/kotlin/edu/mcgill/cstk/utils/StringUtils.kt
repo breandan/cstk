@@ -48,7 +48,7 @@ fun String.javac() =
 
 fun String.isValidJava() = javac().isEmpty()
 
-fun String.isValidPython() =
+fun String.isValidPython(onErrorAction: (String?) -> Unit = {}) =
   try {
     Python3Parser(CommonTokenStream((this + "\n")
       .lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) }))
@@ -56,6 +56,7 @@ fun String.isValidPython() =
       .file_input()
     true
   } catch (e: Exception) {
+    onErrorAction(e.message)
     false
   }
 

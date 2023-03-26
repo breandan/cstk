@@ -25,10 +25,10 @@ fun main() {
     .filter { selectionCriteria(it) }
     .map { it.trim() }
     .filter { it.length < 160 }
-    .filter { !("$it\n").isValidPython() }
+    .filter { !("$it\n").isValidPython() && "lambda" !in it }
     .filter { it.last() !in listOf(':', ',', '(', '[') }
     .toList()
-    .forEach { println(it) }
+    .forEach { print(it); it.isValidPython { println(":: ${it}") } }
 
   // https://gist.github.com/breandan/07688f41441591e311e18e504c45609c
 }
