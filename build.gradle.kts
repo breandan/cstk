@@ -1,5 +1,5 @@
 plugins {
-  kotlin("jvm") version "1.8.20-RC2"
+  kotlin("jvm") version "1.8.20"
   id("com.github.ben-manes.versions") version "0.46.0"
   id("de.undercouch.download") version "5.4.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -83,12 +83,12 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.314")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:5.0.1")
+  implementation("org.gitlab4j:gitlab4j-api:5.1.0")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.22")
+  implementation("org.apache.commons:commons-compress:1.23.0")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
@@ -150,7 +150,7 @@ dependencies {
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.3.0")
 
-  implementation("com.theokanning.openai-gpt3-java:api:0.11.1")
+  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
