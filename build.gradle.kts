@@ -150,7 +150,8 @@ dependencies {
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.3.0")
 
-  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
+//  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
+  implementation("com.aallam.openai:openai-client:3.2.0")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
