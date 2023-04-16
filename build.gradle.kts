@@ -25,7 +25,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.21.0"
+  val djlVersion = "0.22.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -54,7 +54,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.38.0"
+  val openrwVersion = "7.39.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,7 +83,7 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.314")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:5.1.0")
+  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.1")
 
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
 
@@ -145,13 +145,13 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.5")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.3.0")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-1")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.2.0")
+  implementation("com.aallam.openai:openai-client:3.2.1")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
