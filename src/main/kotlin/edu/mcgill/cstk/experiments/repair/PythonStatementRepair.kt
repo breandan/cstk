@@ -16,53 +16,48 @@ import kotlin.time.*
 fun main() {
   MAX_SAMPLE = 20
   MAX_REPAIR = 2
-  // Synthetic error correction
-  validPythonStatements.lines().filter { it.isNotBlank() }.asSequence()
-  .map {
-    val original = it.tokenizeAsPython().joinToString(" ")
-    val prompt = original.constructPromptByDeletingRandomSyntax(pythonKeywords + pythonOperators + brackets, tokenizer = Σᐩ::tokenizeAsPython)
-    original to prompt
-  }
-  .forEach { (original, prompt) ->
-    println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
-    // Organic repairs
-    val clock = TimeSource.Monotonic.markNow()
+//  syntheticErrorCorrection()
+  organicErrorCorrection()
+// compareParserValidity()
+}
 
-    repair(
-      prompt = prompt,
-      cfg = pythonStatementCFG,
-      coarsen = String::coarsenAsPython,
-      uncoarsen = String::uncoarsenAsPython,
-  //synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
-      synthesizer = setRepair(clock), // Enumerative search
-  //synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
-      diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
-      filter = { isValidPython() },
-    )
-    .also {
-      val contained = original in it
-      println("Original string was ${if(contained) "#${it.indexOf(original)}" else "NOT" } in repairs!")
+@OptIn(ExperimentalTime::class)
+private fun syntheticErrorCorrection() {
+  validPythonStatements.lines()
+    .filter { it.isNotBlank() }.asSequence().map {
+      val original = it.tokenizeAsPython().joinToString(" ")
+      val prompt = original.constructPromptByDeletingRandomSyntax(
+        eligibleTokensForDeletion = pythonKeywords + pythonOperators + brackets,
+        tokensToDelete = 1,
+        tokenizer = Σᐩ::tokenizeAsPython,
+      )
+      original to prompt
     }
+    .forEach { (original, prompt) ->
+      println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
+      // Organic repairs
+      try {
+        repairPythonStatement(prompt).also {
+          val contained = original in it
+          println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
+        }
+      } catch (e: Exception) { e.printStackTrace() }
+    }
+}
 
-    println("\n")
-  }
-
-//  val (vp, ip) = coarsened.lines().mapIndexed { i, it -> i to it }
-//    .partition { (i, it ) -> it.isValidPython() }
-//    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
-//
-//  val (ov, oi) = coarsened.lines().mapIndexed { i, it -> i to it }
-//    .partition { (i, it ) ->  pythonStatementCFG.parse(it) != null }
-//    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
-//
-//  println("Valid Python: $vp")
-//  println("Invalid Python: $ip")
-//  println("Our Valid: $ov")
-//  println("Our Invalid: $oi")
-//  println("Both valid: ${vp.intersect(ov)}")
-//  println("Both invalid: ${oi.intersect(ip)}")
-//  println("Our valid, their invalid: ${ov - vp}")
-//  println("Their valid, our invalid: ${vp - ov}")
+@OptIn(ExperimentalTime::class)
+fun organicErrorCorrection() {
+  invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
+//    .parallelStream()
+//    .filter { !it.tokenizeAsPython().joinToString(" ").matches(pythonStatementCFG) }
+    .forEach {
+      it.isValidPython { println("Invalid Python: $it") }
+      val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
+      println("Original:  $prompt")
+      repairPythonStatement(prompt)
+        .forEachIndexed { i, it -> println("$i.) ${prettyDiffNoFrills(prompt, it)}") }
+      println("\n")
+    }
 }
 
 @OptIn(ExperimentalTime::class)
@@ -82,36 +77,24 @@ private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
 private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> -> a.parallelSolve(this).asSequence() }
 
-fun organicRepair() {
-  // Organic error correction
-  invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
-//    .parallelStream()
-//    .filter { !it.tokenizeAsPython().joinToString(" ").matches(pythonStatementCFG) }
-    .forEach {
-      it.isValidPython { println("Invalid Python: $it") }
-      println("${it.hasBalancedBrackets()}::${it.isValidPython()}\t\t" + it)
-      val prompt = it.tokenizeAsPython()
-        .joinToString(" ") // No need to corrupt since these are already broken
-      println("Original:  $prompt")
-      repairPythonStatement(prompt).forEach { println("Repair:  $it") }
-      println("\n")
-    }
-}
-
 //  validPythonStatements.lines().map { it.coarsenAsPython() }
 //    .forEach { println("${it.isValidPython()} : $it") }
 //}
 
-fun repairPythonStatement(prompt: String): List<Σᐩ> = repair(
+@OptIn(ExperimentalTime::class)
+fun repairPythonStatement(
+  prompt: String,
+  clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
+): List<Σᐩ> = repair(
   prompt = prompt,
   cfg = pythonStatementCFG,
   coarsen = String::coarsenAsPython,
   uncoarsen = String::uncoarsenAsPython,
-//  synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
-  synthesizer = { a -> a.solve(this) }, // Enumerative search
-//  synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
-//  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
-  filter = { isValidPython() }
+  //synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
+  synthesizer = setRepair(clock), // Enumerative search
+  //synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
+  diagnostic = { println("Δ=${ levenshtein( prompt, it ) - 1 } repair: ${prettyDiffNoFrills(prompt, it)}") },
+  filter = { isValidPython() },
 )
 
 val coarsened = """
@@ -377,3 +360,22 @@ checked_param.eval(feed_dict = {param: np.ones([1])})
 return 1. / thish ** self._dim * numpy.sum(numpy.tile(self._w, (x.shape[0], 1)) * thiskernel / self._lambda[: , 0] ** self._dim, axis = 1)
 T = array([[0], [0], [k * np.sum([i for i in inputs])]])
 """.trimIndent()
+
+private fun compareParserValidity() {
+  val (vp, ip) = coarsened.lines().mapIndexed { i, it -> i to it }
+    .partition { (i, it ) -> it.isValidPython() }
+    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
+
+  val (ov, oi) = coarsened.lines().mapIndexed { i, it -> i to it }
+    .partition { (i, it ) ->  pythonStatementCFG.parse(it) != null }
+    .let { (a, b) -> a.map { it.first + 10 } to b.map { it.first + 10 } }
+
+  println("Valid Python: $vp")
+  println("Invalid Python: $ip")
+  println("Our Valid: $ov")
+  println("Our Invalid: $oi")
+  println("Both valid: ${vp.intersect(ov)}")
+  println("Both invalid: ${oi.intersect(ip)}")
+  println("Our valid, their invalid: ${ov - vp}")
+  println("Their valid, our invalid: ${vp - ov}")
+}
