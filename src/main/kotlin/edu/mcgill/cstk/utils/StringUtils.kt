@@ -2,6 +2,7 @@ package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.types.cc
 import com.github.difflib.text.*
+import com.github.difflib.text.DiffRow.Tag.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
@@ -395,20 +396,20 @@ fun String.visibleLen() =
 
 // Just print the new line with ASCII colors but no border
 fun prettyDiffNoFrills(original: String, new: String) =
-DiffRowGenerator.create()
-  .showInlineDiffs(true)
-  .inlineDiffByWord(true)
-  .newTag { l -> if(l) "<begin>" else "<end>" }
-  .oldTag { _ -> "" }
-  .build()
-  .generateDiffRows(original.split(" "), new.split(" ")).joinToString(" ") {
-    when (it.tag) {
-      DiffRow.Tag.INSERT -> it.newLine.replace("<begin>", ANSI_GREEN_BACKGROUND).replace("<end>", ANSI_RESET)
-      DiffRow.Tag.CHANGE -> it.newLine.replace("<begin>", ANSI_YELLOW_BACKGROUND).replace("<end>", ANSI_RESET)
-      DiffRow.Tag.DELETE -> it.newLine//.replace("<begin>", "$ANSI_RED_BACKGROUND _" ).replace("<end>", ANSI_RESET)
-      else -> it.newLine.replace("<begin>", "").replace("<end>", "")
-    }
-  }
+  DiffRowGenerator.create()
+    .showInlineDiffs(true)
+    .inlineDiffByWord(true)
+    .newTag { l -> if(l) "<begin>" else "<end>" }
+    .oldTag { _ -> "" }
+    .build()
+    .generateDiffRows(original.split(" "), new.split(" ")).joinToString(" ") {
+      when (it.tag) {
+        INSERT -> it.newLine.replace("<begin>", ANSI_GREEN_BACKGROUND).replace("<end>", ANSI_RESET)
+        CHANGE -> it.newLine.replace("<begin>", ANSI_YELLOW_BACKGROUND).replace("<end>", ANSI_RESET)
+        DELETE -> "$ANSI_RED_BACKGROUND${List(it.oldLine.length){ " " }.joinToString("")}$ANSI_RESET"
+        else -> it.newLine.replace("<begin>", "").replace("<end>", "")
+      }
+    }.replace("&lt;", "<").replace("&gt;", ">")
 
 fun prettyDiffHorizontal(
   left: String, right: String,

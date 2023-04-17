@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 import org.apache.commons.lang3.StringUtils
@@ -53,8 +53,8 @@ fun main() {
   DATA_DIR.also { println("Evaluating syntax repair using $models on $it...") }
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
-    .filter(String::isANontrivialStatementWithBalancedBrackets)
-    .map { it to it.constructPromptByMaskingRandomBrackets() }
+    .filter(Σᐩ::isANontrivialStatementWithBalancedBrackets)
+    .map { it to it.constructPromptByMaskingRandomSyntax() }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
       models.associateWith { model ->
         val repairs = prompt.dispatchTo(model, cfg)
@@ -70,8 +70,8 @@ fun updateScore(scores: Scores, model: Model, groundTruth: () -> Boolean) =
     if (groundTruth()) (n + 1) to (d + 1) else n to (d + 1)
   }
 
-fun String.coarsen(): String =
-  tokenize().joinToString(" ") {
+fun Σᐩ.coarsen(): Σᐩ =
+  defaultTokenizer().joinToString(" ") {
     when {
       it.isBracket() -> it
       it == MSK -> "_"
@@ -79,10 +79,10 @@ fun String.coarsen(): String =
     }
   }
 
-fun String.isWhitespace() = trim().isEmpty()
+fun Σᐩ.isWhitespace() = trim().isEmpty()
 
-fun String.uncoarsen(prompt: String): String {
-  val words = prompt.tokenize().filter { it !in brackets }.toMutableList()
+fun Σᐩ.uncoarsen(prompt: Σᐩ): Σᐩ {
+  val words = prompt.defaultTokenizer().filter { it !in brackets }.toMutableList()
   return tokenizeByWhitespace().joinToString("") { token ->
     when {
       token.isBracket() -> token
@@ -94,19 +94,26 @@ fun String.uncoarsen(prompt: String): String {
   } + words.joinToString("")
 }
 
-fun String.isBracket() = length == 1 && this in brackets
+fun Σᐩ.isBracket() = length == 1 && this in brackets
 
-fun String.constructPromptByMaskingRandomBrackets(bracketsToMask: Int = 1): String =
-  tokenize().toMutableList().let { tokens ->
-    tokens.indices.filter { tokens[it] in brackets }
-      .shuffled().take(bracketsToMask)
-      .forEach { tokens[it] = MSK }
-    tokens
-  }.joinToString("")
+fun Σᐩ.constructPromptByMaskingRandomSyntax(
+  eligibleTokensToMask: Set<Σᐩ> = brackets,
+  numTokensToMask: Int = 1,
+  tokenize: Σᐩ.() -> List<Σᐩ> = Σᐩ::defaultTokenizer
+): Σᐩ =
+  tokenize().toMutableList().let { codeTokens ->
+//    println("Code tokens: $codeTokens")
+//    println("Eligible tokens to mask: $eligibleTokensToMask")
+    codeTokens.indices.filter { codeTokens[it].trim() in eligibleTokensToMask }
+//      .also { println("Indices of eligible tokens to mask: $it") }
+      .shuffled().take(numTokensToMask)
+      .forEach { codeTokens[it] = MSK }
+    codeTokens
+  }.joinToString(" ")
 
-const val brackets = "()[]{}"
-fun String.tokenize(): List<String> =
+val brackets = "()[]{}".map { "$it" }.toSet()
+fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
 
-fun String.tokenizeGranular() =
+fun Σᐩ.tokenizeGranular() =
   StringUtils.splitByCharacterTypeCamelCase(this).toList()

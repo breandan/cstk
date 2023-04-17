@@ -40,7 +40,7 @@ fun main() {
     .filter(String::isANontrivialStatementWithBalancedBrackets)
     .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null } }
     .map {
-      val prompt = it.constructPromptByDeletingRandomBrackets()
+      val prompt = it.constructPromptByDeletingRandomSyntax()
       val coarsened = prompt.coarsen().also { println("Coarsened: $it") }
       println("Bin progress: " + strbins.entries.sortedBy { it.key }.joinToString(", "){ "${it.key} (${it.value.size})" })
       CodeSnippet(
@@ -97,8 +97,13 @@ fun main() {
   }
 }
 
-fun String.constructPromptByDeletingRandomBrackets(bracketsToDelete: Int = 1) =
-  constructPromptByMaskingRandomBrackets(bracketsToDelete).replace(MSK, "")
+fun String.constructPromptByDeletingRandomSyntax(
+  eligibleTokensForDeletion: Set<String> = brackets,
+  tokensToDelete: Int = 1,
+  tokenizer: Σᐩ.() -> List<Σᐩ> = Σᐩ::defaultTokenizer
+) =
+  trim().constructPromptByMaskingRandomSyntax(eligibleTokensForDeletion, tokensToDelete, tokenizer)
+    .replace(Regex("\\s*$MSK\\s*"), " ")
 
 fun Int.bin10() = (floor((this + 1).toDouble() / 10.0) * 10).toInt()
 

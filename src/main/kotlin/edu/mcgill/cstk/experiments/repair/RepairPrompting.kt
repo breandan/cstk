@@ -16,7 +16,7 @@ val example_code = """
         return True
     else:
         return False
-""".tokenize()
+""".defaultTokenizer()
 
 // A very minimal CFG that can parse a subset of Python, e.g., the above code
 

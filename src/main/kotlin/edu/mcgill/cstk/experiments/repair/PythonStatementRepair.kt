@@ -4,7 +4,6 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import ai.hypergraph.kaliningraph.parsing.repair
-import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.kaliningraph.sat.*
 import org.intellij.lang.annotations.Language
 import kotlin.time.*
@@ -15,12 +14,16 @@ import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
 fun main() {
-  MAX_SAMPLE = 3
+  MAX_SAMPLE = 20
   MAX_REPAIR = 2
   // Synthetic error correction
-  validPythonStatements.lines().filter { it.isNotBlank() }.forEach {
+  validPythonStatements.lines().filter { it.isNotBlank() }.asSequence()
+  .map {
     val original = it.tokenizeAsPython().joinToString(" ")
-    val prompt = original.constructPromptByDeletingRandomBrackets(1)
+    val prompt = original.constructPromptByDeletingRandomSyntax(pythonKeywords + pythonOperators + brackets, tokenizer = Σᐩ::tokenizeAsPython)
+    original to prompt
+  }
+  .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     // Organic repairs
     val clock = TimeSource.Monotonic.markNow()
@@ -30,17 +33,16 @@ fun main() {
       cfg = pythonStatementCFG,
       coarsen = String::coarsenAsPython,
       uncoarsen = String::uncoarsenAsPython,
-//  synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
-      synthesizer = { a -> a
-//        .also { println("Solving: ${it.joinToString(" ")}") }
-        .solve(this,
-          takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
-        ) }, // Enumerative search
-//  synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
+  //synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
+      synthesizer = setRepair(clock), // Enumerative search
+  //synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
       diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
-//      filter = { isValidPython() } ,
+      filter = { isValidPython() },
     )
-      .also { println("Original string was ${if(original in it) "" else "NOT " }contained in repairs!") }
+    .also {
+      val contained = original in it
+      println("Original string was ${if(contained) "#${it.indexOf(original)}" else "NOT" } in repairs!")
+    }
 
     println("\n")
   }
@@ -61,8 +63,24 @@ fun main() {
 //  println("Both invalid: ${oi.intersect(ip)}")
 //  println("Our valid, their invalid: ${ov - vp}")
 //  println("Their valid, our invalid: ${vp - ov}")
-
 }
+
+@OptIn(ExperimentalTime::class)
+private fun satRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
+  { a: List<Σᐩ> -> asCJL.synthesize(a,
+    takeMoreWhile = {  clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
+
+@OptIn(ExperimentalTime::class)
+private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
+  { a: List<Σᐩ> -> a
+//        .also { println("Solving: ${it.joinToString(" ")}") }
+    .solve(this,
+      takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
+    ) }
+
+@OptIn(ExperimentalTime::class)
+private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
+  { a: List<Σᐩ> -> a.parallelSolve(this).asSequence() }
 
 fun organicRepair() {
   // Organic error correction
@@ -233,7 +251,7 @@ S -> not S | S or S
 S -> lambda w : S | lambda w , w : S | lambda w , w , w : S | lambda w , w , w , w : S
 """.trimIndent().parseCFG()
   .apply { blocked.add("w") }
-  .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
+//  .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 
 @Language("py")
 val invalidPythonStatements = """
