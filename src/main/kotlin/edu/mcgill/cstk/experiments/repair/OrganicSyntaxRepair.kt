@@ -114,8 +114,10 @@ fun String.coarsenAsPython(): String =
   }
 
 fun String.uncoarsenAsPython(prompt: String): String {
-  val words = prompt.tokenizeAsPython().filter { it.any { it.isLetterOrDigit() }}.toMutableList()
-  return tokenizeByWhitespace().joinToString(" ") { token ->
+//  println("Before uncoarsening: $this")
+  val words = prompt.tokenizeAsPython()
+    .filter { it !in pythonKeywords && it.any { it.isLetterOrDigit() }}.toMutableList()
+  val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
     when {
       token.isBracket() -> token
       token.none { it.isLetterOrDigit() } -> token
@@ -124,6 +126,9 @@ fun String.uncoarsenAsPython(prompt: String): String {
       else -> throw Exception("Unknown token: $token")
     }
   } + words.joinToString(" ")
+
+//  println("After uncoarsening: $uncoarsed")
+  return uncoarsed
 }
 
 fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
