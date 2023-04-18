@@ -36,12 +36,10 @@ private fun syntheticErrorCorrection() {
     .forEach { (original, prompt) ->
       println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
       // Organic repairs
-      try {
         repairPythonStatement(prompt).also {
           val contained = original in it
           println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
         }
-      } catch (e: Exception) { e.printStackTrace() }
     }
 }
 
@@ -50,9 +48,9 @@ fun organicErrorCorrection() {
   invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
 //    .parallelStream()
 //    .filter { !it.tokenizeAsPython().joinToString(" ").matches(pythonStatementCFG) }
-    .forEach {
-      it.isValidPython { println("Invalid Python: $it") }
-      val prompt = it.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
+    .forEach { statement ->
+      statement.isValidPython { println("Invalid Python: $it") }
+      val prompt = statement.tokenizeAsPython().joinToString(" ") // No need to corrupt since these are already broken
       println("Original:  $prompt")
       repairPythonStatement(prompt)
         .forEachIndexed { i, it -> println("$i.) ${prettyDiffNoFrills(prompt, it)}") }
@@ -61,17 +59,29 @@ fun organicErrorCorrection() {
 }
 
 @OptIn(ExperimentalTime::class)
+private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
+  { a: List<Σᐩ> ->
+    val timeIsLeft = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
+    if(a.count { it.isHoleTokenIn(this) } < 4)
+      a.solve(this, takeMoreWhile = timeIsLeft )
+    else asCJL.synthesize(a, takeMoreWhile = timeIsLeft)
+  }
+
+@OptIn(ExperimentalTime::class)
 private fun satRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
-  { a: List<Σᐩ> -> asCJL.synthesize(a,
-    takeMoreWhile = {  clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
+  { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = {  clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
 
 @OptIn(ExperimentalTime::class)
 private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
-  { a: List<Σᐩ> -> a
-//        .also { println("Solving: ${it.joinToString(" ")}") }
-    .solve(this,
-      takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
-    ) }
+  { a: List<Σᐩ> ->
+    try {
+      a
+  //  .also { println("Solving: ${it.joinToString(" ")}") }
+      .solve(this,
+        takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
+      )
+    } catch (e: Exception) { e.printStackTrace(); emptySequence()}
+  }
 
 @OptIn(ExperimentalTime::class)
 private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
@@ -90,9 +100,7 @@ fun repairPythonStatement(
   cfg = pythonStatementCFG,
   coarsen = String::coarsenAsPython,
   uncoarsen = String::uncoarsenAsPython,
-  //synthesizer = { a -> println(a.joinToString(" ")); synthesize(a) }, // SAT solver
-  synthesizer = setRepair(clock), // Enumerative search
-  //synthesizer = { a -> a.parallelSolve(this).asSequence() }, // Parallel search
+  synthesizer = optRepair(clock), // Enumerative search
   diagnostic = { println("Δ=${ levenshtein( prompt, it ) - 1 } repair: ${prettyDiffNoFrills(prompt, it)}") },
   filter = { isValidPython() },
 )
@@ -221,8 +229,9 @@ val coarsened = """
 val pythonStatementCFG: CFG = """
 S -> w | S ( S ) | ( ) | S = S | S . S | S S | ( S ) | [ S ] | { S } | : | * S | [ ]
 S -> S , S | S ; S | S : S
-S -> S + S | S - S | S * S | S / S | S % S | S ** S | - S
-S -> S < S | S > S | S <= S | S >= S | S == S | S != S | S >> S | S :
+S -> S IOP S | S BOP S
+IOP -> + | - | * | / | % | ** | << | >> | & | ^
+BOP -> < | > | <= | >= | == | != | in | is | not in | is not
 S -> S ;
 S -> :
 S -> None | True | False
