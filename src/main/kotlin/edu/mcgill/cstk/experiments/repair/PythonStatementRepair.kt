@@ -69,7 +69,7 @@ private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
 
 @OptIn(ExperimentalTime::class)
 private fun satRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
-  { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = {  clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
+  { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
 
 @OptIn(ExperimentalTime::class)
 private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
