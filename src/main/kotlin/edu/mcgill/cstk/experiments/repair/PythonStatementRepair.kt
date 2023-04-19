@@ -12,11 +12,10 @@ import kotlin.time.*
 ./gradlew pythonStatementRepair
 */
 
-@OptIn(ExperimentalTime::class)
 fun main() {
   MAX_SAMPLE = 20
   MAX_REPAIR = 2
-//  syntheticErrorCorrection()
+  syntheticErrorCorrection()
   organicErrorCorrection()
 // compareParserValidity()
 }
