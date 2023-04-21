@@ -61,8 +61,8 @@ fun organicErrorCorrection() {
 private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
     val timeIsLeft = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
-    if(a.count { it.isHoleTokenIn(this) } < 4)
-      a.solve(this, takeMoreWhile = timeIsLeft )
+    if(a.isSetValiantOptimalFor(this))
+      a.solve(this, takeMoreWhile = timeIsLeft)
     else asCJL.synthesize(a, takeMoreWhile = timeIsLeft)
   }
 
