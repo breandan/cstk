@@ -90,7 +90,7 @@ const val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
 // "Premature optimization is the root of all evil." -Dijkstra
 
 val tidyparse = Model("tidyparse")
-val cfg =
+val cfg: CFG =
   """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
     .parseCFG().apply { blocked.addAll(setOf("w")) }
 
@@ -120,14 +120,13 @@ fun String.coarsenAsPython(): String =
   }
 
 fun String.uncoarsenAsPython(prompt: String): String {
-//  println("Before uncoarsening: $this")
-  val words = prompt.tokenizeAsPython()
+  val words = prompt.tokenizeByWhitespace()
     .filter { it !in pythonKeywords && it.any { it.isLetterOrDigit() }}.toMutableList()
   val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
     when {
       token.isBracket() -> token
       token.none { it.isLetterOrDigit() } -> token
-      token == "w" -> words.removeAt(0)
+      token == "w" -> words.removeFirst()
       token in pythonKeywords -> token
       else -> throw Exception("Unknown token: $token")
     }

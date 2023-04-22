@@ -18,6 +18,9 @@ fun main() {
   syntheticErrorCorrection()
   organicErrorCorrection()
 // compareParserValidity()
+//  pythonStatementCFG.blocked.add("w")
+//  println(pythonStatementCFG.blocked)
+//  println((pythonStatementCFG as CFGWrapper).cfg.blocked)
 }
 
 @OptIn(ExperimentalTime::class)
