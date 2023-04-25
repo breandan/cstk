@@ -13,7 +13,7 @@ import kotlin.time.*
 */
 
 fun main() {
-  MAX_SAMPLE = 20
+  MAX_SAMPLE = 100
   MAX_REPAIR = 2
   syntheticErrorCorrection()
   organicErrorCorrection()
@@ -102,7 +102,7 @@ fun repairPythonStatement(
   cfg = pythonStatementCFG,
   coarsen = String::coarsenAsPython,
   uncoarsen = String::uncoarsenAsPython,
-  synthesizer = optRepair(clock), // Enumerative search
+  synthesizer = satRepair(clock), // Enumerative search
   diagnostic = { println("Δ=${ levenshtein( prompt, it ) - 1 } repair: ${prettyDiffNoFrills(prompt, it)}") },
   filter = { isValidPython() },
 )
@@ -235,7 +235,7 @@ S -> S IOP S | S BOP S
 IOP -> + | - | * | / | % | ** | << | >> | & | ^
 BOP -> < | > | <= | >= | == | != | in | is | not in | is not
 S -> S ;
-S -> :
+S -> S | S : | - S
 S -> None | True | False
 S -> S ^ S | S in S
 S -> [ S : ]
