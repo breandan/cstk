@@ -11,6 +11,7 @@ import net.sf.extjwnl.data.PointerUtils.*
 import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
 import org.apache.commons.lang3.StringUtils
+import org.jetbrains.kotlin.lexer.*
 import spoon.Launcher
 import java.io.File
 import java.net.*
@@ -33,7 +34,7 @@ val errorListener =
 
 fun String.javac() =
   try {
-    val context ="""
+    val context = """
       class Hello {
           public static void main (String args[])
           {
@@ -63,11 +64,26 @@ fun String.isValidPython(onErrorAction: (String?) -> Unit = {}) =
 
 fun String.tokenizeAsPython(): List<String> =
   lexAsPython().allTokens.map { it.text }
+
 fun String.lexAsPython() =
   Python3Lexer(CharStreams.fromStream(byteInputStream()))
 
-fun String.lexAsJava() =
+fun String.lexAsJava(): Java8Lexer =
   Java8Lexer(CharStreams.fromStream(byteInputStream()))
+
+val KOTLIN_LEXER = KotlinLexer()
+fun String.lexAsKotlin(): List<String>  {
+  KOTLIN_LEXER.start(this)
+  val tokens = mutableListOf<String>()
+  try {
+    while (KOTLIN_LEXER.tokenType != null) {
+      tokens.add(KOTLIN_LEXER.tokenText)
+      KOTLIN_LEXER.advance()
+    }
+  } catch (_: Exception) { }
+
+  return tokens.filter { it.isNotBlank() }
+}
 
 fun String.execute() =
   ProcessBuilder( split(" ") ).start().waitFor()
@@ -411,6 +427,8 @@ fun prettyDiffNoFrills(original: String, new: String) =
       }
     }.replace("&lt;", "<").replace("&gt;", ">")
 
+// Print the side-by-side diff with ASCII colors and a border
+// https://en.wikipedia.org/wiki/Box-drawing_character
 fun prettyDiffHorizontal(
   left: String, right: String,
   leftHeading: String = "original",
