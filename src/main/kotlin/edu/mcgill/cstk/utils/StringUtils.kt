@@ -5,6 +5,7 @@ import com.github.difflib.text.*
 import com.github.difflib.text.DiffRow.Tag.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
+import edu.mcgill.cstk.experiments.repair.isValidKotlin
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import me.vovak.antlr.parser.*
 import net.sf.extjwnl.data.PointerUtils.*
@@ -12,6 +13,7 @@ import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.kotlin.lexer.*
+import org.jetbrains.kotlin.spec.grammar.tools.tokenizeKotlinCode
 import spoon.Launcher
 import java.io.File
 import java.net.*
@@ -71,6 +73,9 @@ fun String.lexAsPython() =
 fun String.lexAsJava(): Java8Lexer =
   Java8Lexer(CharStreams.fromStream(byteInputStream()))
 
+//val KOTLIN_LEXER = KotlinLexer()
+//fun String.lexAsKotlin(): List<String> =
+//  tokenizeKotlinCode(this).map { it.text }
 val KOTLIN_LEXER = KotlinLexer()
 fun String.lexAsKotlin(): List<String>  {
   KOTLIN_LEXER.start(this)

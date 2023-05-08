@@ -54,7 +54,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.40.0"
+  val openrwVersion = "7.40.6"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -148,10 +148,10 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-2")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-4")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.2.1")
+  implementation("com.aallam.openai:openai-client:3.2.3")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
@@ -160,6 +160,8 @@ dependencies {
   implementation("org.antlr:antlr4:4.12.0")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:1.8.21")
+  // Download JAR from: https://github.com/Kotlin/grammar-tools/releases/download/v0.1-43/kotlin-grammar-tools-0.1-43.jar
+  implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
 configurations.all {
