@@ -1,3 +1,5 @@
+import de.undercouch.gradle.tasks.download.Download
+
 plugins {
   kotlin("jvm") version "1.8.21"
   id("com.github.ben-manes.versions") version "0.46.0"
@@ -160,7 +162,6 @@ dependencies {
   implementation("org.antlr:antlr4:4.12.0")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:1.8.21")
-  // Download JAR from: https://github.com/Kotlin/grammar-tools/releases/download/v0.1-43/kotlin-grammar-tools-0.1-43.jar
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
@@ -219,6 +220,7 @@ tasks {
 
   compileKotlin {
     kotlinOptions.jvmTarget = "17"
+    dependsOn("downloadKotlinGrammarTools")
   }
 
   shadowJar {
@@ -229,5 +231,12 @@ tasks {
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.crawler.CloneReposKt"
     isZip64 = true
     archiveFileName = "${project.name}-fat-${project.version}.jar"
+  }
+
+  register<Download>("downloadKotlinGrammarTools") {
+    val version = "0.1-43"
+    src("https://github.com/Kotlin/grammar-tools/releases/download/v$version/kotlin-grammar-tools-$version.jar")
+    dest("$rootDir/libs/kotlin-grammar-tools-$version.jar")
+    overwrite(false)
   }
 }

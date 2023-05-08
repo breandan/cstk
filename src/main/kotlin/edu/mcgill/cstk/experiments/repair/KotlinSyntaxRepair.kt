@@ -11,7 +11,7 @@ import java.io.File
 
 fun main() {
   """StringUtils.splitByCharacterTypeCamelCase(token).joinToString(" ") { old ->""".trimIndent()
-      .lexAsKotlin().joinToString(" ").let { println(it) }
+    .lexAsKotlin().joinToString(" ").let { println(it) }
   """listOf(getDirectHyponyms(sense), getDirectHypernyms(sense))) &&&"""
     .lexAsKotlin().joinToString(" ").let { println(it) }
 //  fetchKotlinExamples()
@@ -26,65 +26,39 @@ fun fetchKotlinExamples() =
   .filter { it.isValidKotlin() }
   .map { it.coarsenAsKotlin() }.toList()
   .filter { str -> dropKeywords.none { it in str } && str.split(" ").size in 10..40 }
-  .distinct()
-  .forEach { println(it) }
+  .distinct().forEach { println(it) }
 
 val kotlinCFG = """
-  START -> statement
+  S -> DECLARATION | EXPRESSION
 
-  statement -> declaration
-  statement -> expression
-  statement -> control_flow
-  statement -> function_call
-  statement -> assignment
-  statement -> return_statement
+  DECLARATION -> VAL_DECLARATION | FUN_DECLARATION
 
-  declaration -> val_declaration | var_declaration | function_declaration
+  VAL_DECLARATION -> val ID = EXPRESSION
+  FUN_DECLARATION -> fun GENERIC? ID . ID () TYPE? = EXPRESSION
 
-  val_declaration -> val w : type | val w : type = expression | val w = expression
-  var_declaration -> var w : type | var w : type = expression | var w = expression
+  TYPE -> : ID < * >
 
-  type -> basic_type | nullable_type
-  basic_type -> Int | Float | Double | String | Boolean | Char | Long | Short | Any | Unit
-  nullable_type -> basic_type ?
+  GENERIC -> < ID >
 
-  function_declaration -> fun w ( parameters ) : type = expression
-  parameters -> parameter | parameter , parameters
-  parameter -> w : type
+  EXPRESSION -> ATOMIC_EXPRESSION | COMPLEX_EXPRESSION | BRACKETED_EXPRESSION | BLOCK_EXPRESSION
 
-  expression -> binary_expr | unary_expr | paren_expr | w | literal | lambda_expr
-  binary_expr -> expression binary_op expression
-  binary_op -> + | - | * | / | % | && | || | == | != | > | < | >= | <= | ?: | . | ?. | ?:? | .? | ..
-  unary_expr -> unary_op expression
-  unary_op -> ! | -
+  ATOMIC_EXPRESSION -> ID | ID . ID | ID . ID ()
 
-  paren_expr -> ( expression )
+  COMPLEX_EXPRESSION -> ATOMIC_EXPRESSION OPERATOR ATOMIC_EXPRESSION | ATOMIC_EXPRESSION OPERATOR EXPRESSION
 
-  literal -> int_literal | float_literal | double_literal | string_literal | boolean_literal | char_literal
-  int_literal -> int
-  float_literal -> float
-  double_literal -> double
-  string_literal -> string
-  boolean_literal -> true | false
-  char_literal -> char
+  BRACKETED_EXPRESSION -> ( EXPRESSION ) | [ EXPRESSION ] | ID ( ARGUMENTS? ) | ID < ARGUMENTS > ( )
 
-  lambda_expr -> { lambda_parameters -> lambda_body }
-  lambda_parameters -> w | w , lambda_parameters
-  lambda_body -> expression
+  BLOCK_EXPRESSION -> { CONTENTS }
 
-  control_flow -> if_expr | when_expr
-  if_expr -> if paren_expr expression | if paren_expr expression else expression
-  when_expr -> when paren_expr { when_cases }
-  when_cases -> when_case | when_case when_cases
-  when_case -> expression -> expression | else -> expression
+  CONTENTS -> CONTENTS CONTENT | CONTENT
+  CONTENT -> EXPRESSION | ID -> EXPRESSION
 
-  function_call -> w ( function_args )
-  function_args -> expression | expression , function_args
+  ARGUMENTS -> ARGUMENTS , ARGUMENT | ARGUMENT
+  ARGUMENT -> ID | EXPRESSION
 
-  assignment -> w assignment_op expression
-  assignment_op -> = | += | -= | *= | /= | %=
+  OPERATOR -> + | - | * | / | ..
 
-  return_statement -> return expression
+  ID -> w | it
 """.trimIndent().parseCFG()
 
 val dropKeywords = setOf("import", "package", "//", "\"", "data", "_")
@@ -218,7 +192,6 @@ val coarsenedKotlinLines = """
   val w : w < w . w > = w ( )
   val w = w . w ( ) - w
   override fun w ( ) : w = w * w . w + if ( w ) w else w
-  val w = w < w && w ! ! [ w ] == '-'
   val w = w ! ! . w ( w , w ) . w ( )
   val w : w < w > = w ( )
   var w : w < w > = w ( )
@@ -458,7 +431,6 @@ val coarsenedKotlinLines = """
   fun < w , w , w : w < w > , w : w > w ( w : ( w ) -> w , w : w ) : w = w ( )
   val w = w ( w [ w ] . w ( ) )
   private fun w ( w : w ) = w [ w ] ? : w
-  val w = w ( '|' , '*' , '^' )
   inline fun < w > w < w > . w ( w : w ) = w ( w ) w
   inline fun < w > w < w > . w ( ) = w ( ) ! ! w
   fun < w > w < w > . w ( ) : w = this [ w ] ! !
@@ -505,7 +477,6 @@ val coarsenedKotlinLines = """
   val w = w [ w ] [ w ]
   val w = w + w * ( w + w * w ) + w * w
   val w = w + w * ( ( w - w ) + w * w ) + w * w + w
-  val w = ( w ( w , w ) + w ( w , w ) + w ( w , w ) + '+' + '/' ) . w ( )
   var w = this [ w ] . w ( ) w w w w w w
   var w by w ( ) ; var w by w ( ) ; var w by w ( ) ; var w by w ( )
   operator fun w . w ( w : w ) = w ( this , w ) { w , w -> w + w }
@@ -636,7 +607,6 @@ val coarsenedKotlinLines = """
   fun w . w ( w : w , w : w ) : w = w ( w , w , w )
   fun w . w ( ) : w = w in this
   fun w . w ( w : w ) = w ( ) || w ( w )
-  fun w . w ( ) = w ( ) == '<' && w ( ) == '>'
   fun w . w ( w : w ) : w = w ( ) && w ( w ) . w ( w ) in w . w
   fun w . w ( w : w ) : w = w . w . w { w ( it ) } . w { it }
   val w . w : w < w > by w { w { it . w ( ) } . w ( w ) }
@@ -880,12 +850,9 @@ val coarsenedKotlinLines = """
   val ( w , w ) = w . w { ( w , w ) -> w . w w w . w }
   val ( w , w ) = w . w . w w w . w . w
   val w = it . w ( ) . w ( )
-  val w = w ( '(' , '{' , '[' )
-  val w = w ( ')' , '}' , ']' )
   fun w . w ( ) : w = w ( ) . w
   fun w ( w : w ) = w ( w ) . w ( )
   val w = w . w { it . w . w ( ) } + w
-  fun w . w ( w : w ) = w ( w + w - w ( ) - w , ' ' )
   val w = ( w . w ( ) + w . w ( ) ) . w { w , w -> w w w } . w ( )
   val w : w < w > = w . w { w : w -> w ( w , w ) }
   fun w . w ( ) = w ( ) . w { w -> w { it / w } . w ( ) }
@@ -893,11 +860,8 @@ val coarsenedKotlinLines = """
   val ( w , w ) = w ( w ( w , w ) , w ( w , w ) )
   val w = w . w ( w ( ) ) . w { w . w ( it ) }
   val w = w ( w ( w ) )
-  fun w . w ( ) = w ( ) . w ( '.' )
-  fun w . w ( ) = w ( ) . w ( '/' )
   fun w . w ( w : w ) : w = w ( w ) . w . w ( w )
   fun w ( w : w ) = w ( w ) . w ( w )
-  fun w ( ) = w ( ) . w ( ':' )
   fun w . w ( w : w , w : w = w ) = w ( w ( w ) , w )
   val w = w . w { it . w } . w ( w . w { it . w } . w ( ) )
   val w = w ( w ( w ) , w )
