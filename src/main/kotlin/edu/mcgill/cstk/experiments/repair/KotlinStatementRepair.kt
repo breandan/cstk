@@ -1,21 +1,40 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.levenshtein
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
+import repairInParallel
 import java.io.File
+import kotlin.time.*
 
 /*
-./gradlew kotlinSyntaxRepair
+./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:"
  */
 
+@OptIn(ExperimentalTime::class)
 fun main() {
-  """StringUtils.splitByCharacterTypeCamelCase(token).joinToString(" ") { old ->""".trimIndent()
-    .lexAsKotlin().joinToString(" ").let { println(it) }
-  """listOf(getDirectHyponyms(sense), getDirectHypernyms(sense))) &&&"""
-    .lexAsKotlin().joinToString(" ").let { println(it) }
 //  fetchKotlinExamples()
-  coarsenedKotlinLines.lines().forEach { if (kotlinCFG.parse(it) != null) println(it) }
+  originalKotlinLines.lines().map {
+      val original = it.lexAsKotlin().joinToString(" ")
+      val prompt = original.constructPromptByDeletingRandomSyntax(
+        eligibleTokensForDeletion = commonKotlinKeywords,
+        tokensToDelete = 1,
+        tokenizer = Σᐩ::lexAsKotlin
+      )
+      original to prompt
+    }
+    .forEach { (original, prompt) ->
+//      parallelRepairKotlinStatement(prompt).also {
+      repairKotlinStatement(prompt).also {
+        val contained = original in it
+        it.take(10).forEach {
+          println("Repaired: ${prettyDiffNoFrills(original, it)}")
+        }
+        println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
+      }
+    }
 }
 
 // Get top level directory and all Kotlin files in all subdirectories
@@ -23,45 +42,84 @@ fun fetchKotlinExamples() =
   File(File("").absolutePath)
   .walkTopDown().filter { it.extension == "kt" }
   .flatMap { it.readLines() }
-  .filter { it.isValidKotlin() }
-  .map { it.coarsenAsKotlin() }.toList()
-  .filter { str -> dropKeywords.none { it in str } && str.split(" ").size in 10..40 }
-  .distinct().forEach { println(it) }
+  .filter { it.isValidKotlin() } .toList()
+  .filter {
+    it.coarsenAsKotlin().let { str ->
+      dropKeywords.none { it in str } && str.split(" ").size in 10..40
+    }
+  }.map { it.trim() }.distinct().forEach { println(it) }
 
-val kotlinCFG = """
-  S -> DECLARATION | EXPRESSION
+fun String.coarsenAsKotlin(): String =
+  lexAsKotlin().joinToString(" ") {
+    when {
+      it.isBracket() -> it
+      it.none { it.isLetterOrDigit() } -> it
+      it in kotlinKeywords -> it
+      else -> "w"
+    }
+  }
 
-  DECLARATION -> VAL_DECLARATION | FUN_DECLARATION
+fun String.uncoarsenAsKotlin(prompt: String): String {
+  val words = prompt.tokenizeByWhitespace()
+    .filter { it !in pythonKeywords && it.any { it.isLetterOrDigit() } }.toMutableList()
+  val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
+    when {
+      token.isBracket() -> token
+      token.none { it.isLetterOrDigit() } -> token
+      token == "w" -> words.removeFirst()
+      token in kotlinKeywords -> token
+      else -> throw Exception("Unknown token: $token")
+    }
+  } + words.joinToString(" ", " ")
 
-  VAL_DECLARATION -> val ID = EXPRESSION
-  FUN_DECLARATION -> fun GENERIC? ID . ID () TYPE? = EXPRESSION
+//  println("After uncoarsening: $uncoarsed")
+  return uncoarsed
+}
 
-  TYPE -> : ID < * >
+@OptIn(ExperimentalTime::class)
+fun parallelRepairKotlinStatement(
+  prompt: String,
+  clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
+): List<String> =
+  repairInParallel(
+    prompt = prompt,
+    cfg = permissiveKotlinCFG,
+    coarsen = String::coarsenAsKotlin,
+    uncoarsen = String::uncoarsenAsKotlin,
+    //  updateProgress = { println(it) },
+    synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
+    filter = { isValidKotlin() },
+  ).takeWhile { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }.toList()
 
-  GENERIC -> < ID >
+@OptIn(ExperimentalTime::class)
+fun repairKotlinStatement(
+  prompt: String,
+  clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
+): List<Σᐩ> =
+//  newRepair(prompt, permissiveKotlinCFG)
+  repair(
+    prompt = prompt,
+    cfg = permissiveKotlinCFG,
+    coarsen = String::coarsenAsKotlin,
+    uncoarsen = String::uncoarsenAsKotlin,
+  //  updateProgress = { println(it) },
+    synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
+    diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+    filter = { isValidKotlin() },
+  )
 
-  EXPRESSION -> ATOMIC_EXPRESSION | COMPLEX_EXPRESSION | BRACKETED_EXPRESSION | BLOCK_EXPRESSION
+@OptIn(ExperimentalTime::class)
+private fun bruteForceKotlinRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
+  { a: List<Σᐩ> ->
+    try {
+      a.genCandidates(setOf(), commonKotlinKeywords + "ε" - "w" )
+      a.solve(this, takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS })
+        //  .also { println("Solving: ${it.joinToString(" ")}") }
+    } catch (e: Exception) { e.printStackTrace(); emptySequence()}
+  }
 
-  ATOMIC_EXPRESSION -> ID | ID . ID | ID . ID ()
-
-  COMPLEX_EXPRESSION -> ATOMIC_EXPRESSION OPERATOR ATOMIC_EXPRESSION | ATOMIC_EXPRESSION OPERATOR EXPRESSION
-
-  BRACKETED_EXPRESSION -> ( EXPRESSION ) | [ EXPRESSION ] | ID ( ARGUMENTS? ) | ID < ARGUMENTS > ( )
-
-  BLOCK_EXPRESSION -> { CONTENTS }
-
-  CONTENTS -> CONTENTS CONTENT | CONTENT
-  CONTENT -> EXPRESSION | ID -> EXPRESSION
-
-  ARGUMENTS -> ARGUMENTS , ARGUMENT | ARGUMENT
-  ARGUMENT -> ID | EXPRESSION
-
-  OPERATOR -> + | - | * | / | ..
-
-  ID -> w | it
-""".trimIndent().parseCFG()
-
-val dropKeywords = setOf("import", "package", "//", "\"", "data", "_")
+val dropKeywords =
+  setOf("import", "package", "//", "/*", "\"", "\'", "data", "_")
 
 val kotlinKeywords = setOf(
   "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
@@ -74,14 +132,36 @@ val kotlinKeywords = setOf(
   "protected", "public", "reified", "sealed", "suspend", "tailrec", "vararg", "field", "it"
 )
 
-fun String.coarsenAsKotlin(): String =
-  lexAsKotlin().joinToString(" ") {
-    if (it in kotlinKeywords || it.none { it.isLetterOrDigit() }) it else "w"
-  }.trim()
-
 fun String.isValidKotlin(): Boolean =
   try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
   catch (_: Throwable) { false }
+
+@Language("kt")
+val originalKotlinLines = """
+    val common = results.map { it.uri }.intersect(results.map { it.uri }.toSet())
+    val query = seed ?: queries.first()
+    val nearestResults = findNearest(vectorize(query), 100)
+    val newEdges = nearestResults.map { query cc it }
+    typealias VecIndex = HnswIndex<Concordance, DoubleArray, CodeEmbedding, Double>
+    override fun dimensions(): Int = embedding.size
+    override fun toString() = loc.getContext(0)
+    typealias KWIndex = ConcurrentSuffixTree<Queue<Concordance>>
+    fun isInvalid(ch: Char): Boolean = ch.code == 0 || ch.code == 0xfffd
+    val list = runSplitOnPunc(if (doLowerCase) { Ascii.toLowerCase(token) } else token)
+    val splitTokens: MutableList<String> = ArrayList()
+    val outputIds: MutableList<Int?> = ArrayList()
+    val outputTokens: MutableList<String> = ArrayList()
+    val subTokens: MutableList<String> = ArrayList()
+    val knnIndex: VecIndex by lazy { buildOrLoadVecIndex(File(index), URI(path)) }
+    val id = query.hashCode().toString()
+    val mostSimilarHits = nearestNeighbors.sortedByDist(query, metric)
+    val originalIndex = nearestNeighbors.indexOf(s).toString().padStart(3)
+    fun main(args: Array<String>) = KNNSearch().main(args)
+    val trie: KWIndex by lazy { buildOrLoadKWIndex(File(index), URI(path)) }
+    fun main(args: Array<String>) = TrieSearch().main(args)
+""".trimIndent()
+
+val protected = 10
 
 val coarsenedKotlinLines = """
   val w = ( w .. w ) . w { w . w ( ) }
@@ -881,3 +961,12 @@ val coarsenedKotlinLines = """
   override fun w ( w : w ? ) = ( w as? w ) ? . w == w
   val w = w ? : w . w ( )
 """.trimIndent()
+
+val commonKotlinKeywords: Set<Σᐩ> = coarsenedKotlinLines
+  .tokenizeByWhitespace().filterNot { it.isBlank() }
+  .distinct().toSet()
+
+val permissiveKotlinCFG = """
+  START -> START START
+  START -> ${commonKotlinKeywords.joinToString(" | ") { it } }
+""".parseCFG().apply { blocked.add("w") }

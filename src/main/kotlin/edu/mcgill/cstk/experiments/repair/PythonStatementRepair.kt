@@ -107,6 +107,7 @@ fun repairPythonStatement(
   filter = { isValidPython() },
 )
 
+@Language("py")
 val coarsened = """
   w = w ( [ w ( w . w . w ( ) ) for w in w ] ) ,
   w = [ ( w , [ ( w , w * w + w ) for w in w ( w ) ] ) for w in w ( w ) ]
