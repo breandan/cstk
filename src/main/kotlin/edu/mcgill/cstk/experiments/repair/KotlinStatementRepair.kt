@@ -16,25 +16,27 @@ import kotlin.time.*
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
+  MAX_SAMPLE = 200
   originalKotlinLines.lines().map {
-      val original = it.lexAsKotlin().joinToString(" ")
-      val prompt = original.constructPromptByDeletingRandomSyntax(
-        eligibleTokensForDeletion = commonKotlinKeywords,
-        tokensToDelete = 1,
-        tokenizer = Σᐩ::lexAsKotlin
-      )
-      original to prompt
+    val original = it.lexAsKotlin().joinToString(" ").trim()
+    val prompt = original.constructPromptByDeletingRandomSyntax(
+      eligibleTokensForDeletion = officialKotlinKeywords,
+      tokensToDelete = 1,
+      tokenizer = Σᐩ::lexAsKotlin
+    )
+    original to prompt
+  }
+  .forEach { (original, prompt) ->
+    println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
+    val startTime = System.currentTimeMillis()
+    parallelRepairKotlinStatement(prompt).also {
+//    repairKotlinStatement(prompt).also {
+      val contained = original in it
+
+      println("Found ${it.size} valid repairs in ${System.currentTimeMillis() - startTime}ms")
+      println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
     }
-    .forEach { (original, prompt) ->
-//      parallelRepairKotlinStatement(prompt).also {
-      repairKotlinStatement(prompt).also {
-        val contained = original in it
-        it.take(10).forEach {
-          println("Repaired: ${prettyDiffNoFrills(original, it)}")
-        }
-        println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
-      }
-    }
+  }
 }
 
 // Get top level directory and all Kotlin files in all subdirectories
@@ -49,25 +51,25 @@ fun fetchKotlinExamples() =
     }
   }.map { it.trim() }.distinct().forEach { println(it) }
 
-fun String.coarsenAsKotlin(): String =
+fun Σᐩ.coarsenAsKotlin(): Σᐩ =
   lexAsKotlin().joinToString(" ") {
     when {
       it.isBracket() -> it
       it.none { it.isLetterOrDigit() } -> it
-      it in kotlinKeywords -> it
+      it in officialKotlinKeywords -> it
       else -> "w"
     }
   }
 
-fun String.uncoarsenAsKotlin(prompt: String): String {
+fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
   val words = prompt.tokenizeByWhitespace()
-    .filter { it !in pythonKeywords && it.any { it.isLetterOrDigit() } }.toMutableList()
+    .filter { it !in officialKotlinKeywords && it.any { it.isLetterOrDigit() } }.toMutableList()
   val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
     when {
       token.isBracket() -> token
       token.none { it.isLetterOrDigit() } -> token
       token == "w" -> words.removeFirst()
-      token in kotlinKeywords -> token
+      token in officialKotlinKeywords -> token
       else -> throw Exception("Unknown token: $token")
     }
   } + words.joinToString(" ", " ")
@@ -78,30 +80,31 @@ fun String.uncoarsenAsKotlin(prompt: String): String {
 
 @OptIn(ExperimentalTime::class)
 fun parallelRepairKotlinStatement(
-  prompt: String,
+  prompt: Σᐩ,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-): List<String> =
+): List<Σᐩ> =
   repairInParallel(
     prompt = prompt,
     cfg = permissiveKotlinCFG,
-    coarsen = String::coarsenAsKotlin,
-    uncoarsen = String::uncoarsenAsKotlin,
+    coarsen = Σᐩ::coarsenAsKotlin,
+    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     //  updateProgress = { println(it) },
     synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
     filter = { isValidKotlin() },
-  ).takeWhile { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }.toList()
+    diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+  )
 
 @OptIn(ExperimentalTime::class)
 fun repairKotlinStatement(
-  prompt: String,
+  prompt: Σᐩ,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
 ): List<Σᐩ> =
 //  newRepair(prompt, permissiveKotlinCFG)
   repair(
     prompt = prompt,
     cfg = permissiveKotlinCFG,
-    coarsen = String::coarsenAsKotlin,
-    uncoarsen = String::uncoarsenAsKotlin,
+    coarsen = Σᐩ::coarsenAsKotlin,
+    uncoarsen = Σᐩ::uncoarsenAsKotlin,
   //  updateProgress = { println(it) },
     synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
     diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
@@ -121,7 +124,7 @@ private fun bruteForceKotlinRepair(clock: TimeSource.Monotonic.ValueTimeMark): C
 val dropKeywords =
   setOf("import", "package", "//", "/*", "\"", "\'", "data", "_")
 
-val kotlinKeywords = setOf(
+val officialKotlinKeywords = setOf(
   "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
   "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this",
   "throw", "true", "try", "typealias", "val", "var", "when", "while", "by", "catch", "constructor",
@@ -132,7 +135,7 @@ val kotlinKeywords = setOf(
   "protected", "public", "reified", "sealed", "suspend", "tailrec", "vararg", "field", "it"
 )
 
-fun String.isValidKotlin(): Boolean =
+fun Σᐩ.isValidKotlin(): Boolean =
   try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
   catch (_: Throwable) { false }
 
@@ -499,7 +502,6 @@ val coarsenedKotlinLines = """
   override fun w ( w : w ? ) = ( w as? w < * , * , * > ) ? . w { w == it . w } ? : false
   interface w { fun w ( ) : w }
   abstract class w : w < w , w , w >
-  class w : w < w , w , w > { /*...*/ }
   typealias w < w > = w < w ? > ? w
   typealias w < w > = w < w > w
   fun w . w ( ) = w ( w ) { this [ it ] }
