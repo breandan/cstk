@@ -201,7 +201,7 @@ tasks {
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
     "syntheticSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.SyntheticSyntaxRepairKt",
     "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
-    "kotlinSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.KotlinSyntaxRepairKt",
+    "kotlinStatementRepair" to "edu.mcgill.cstk.experiments.repair.KotlinStatementRepairKt",
     "pythonStatementRepair" to "edu.mcgill.cstk.experiments.repair.PythonStatementRepairKt",
     "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
