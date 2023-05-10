@@ -2,10 +2,10 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.levenshtein
 import ai.hypergraph.kaliningraph.parsing.*
+import bijectiveRepair
 import edu.mcgill.cstk.utils.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
-import repairInParallel
 import java.io.File
 import kotlin.time.*
 
@@ -26,14 +26,20 @@ fun main() {
     )
     original to prompt
   }
+  .filter { !it.second.isValidKotlin() }
   .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     val startTime = System.currentTimeMillis()
     parallelRepairKotlinStatement(prompt).also {
 //    repairKotlinStatement(prompt).also {
       val contained = original in it
+      val elapsed = System.currentTimeMillis() - startTime
 
-      println("Found ${it.size} valid repairs in ${System.currentTimeMillis() - startTime}ms")
+      it.take(100).forEach {
+        println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}")
+      }
+
+      println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly ${it.size / (elapsed/1000.0)} repairs per second.")
       println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
     }
   }
@@ -83,15 +89,15 @@ fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
 ): List<Σᐩ> =
-  repairInParallel(
+  bijectiveRepair(
     prompt = prompt,
-    cfg = permissiveKotlinCFG,
-    coarsen = Σᐩ::coarsenAsKotlin,
-    uncoarsen = Σᐩ::uncoarsenAsKotlin,
+    fillers = commonKotlinKeywords + "ε" - "w",
+//    coarsen = Σᐩ::coarsenAsKotlin,
+//    uncoarsen = Σᐩ::uncoarsenAsKotlin,
+    takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     //  updateProgress = { println(it) },
-    synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
     filter = { isValidKotlin() },
-    diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+//    diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
   )
 
 @OptIn(ExperimentalTime::class)

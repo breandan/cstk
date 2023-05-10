@@ -102,8 +102,8 @@ fun String.constructPromptByDeletingRandomSyntax(
   tokensToDelete: Int = 1,
   tokenizer: Σᐩ.() -> List<Σᐩ> = Σᐩ::defaultTokenizer
 ) =
-  trim().constructPromptByMaskingRandomSyntax(eligibleTokensForDeletion, tokensToDelete, tokenizer)
-    .replace(Regex("\\s*$MSK\\s*"), " ")
+  constructPromptByMaskingRandomSyntax(eligibleTokensForDeletion, tokensToDelete, tokenizer)
+    .replace(Regex("\\s*$MSK\\s*"), " ").trim()
 
 fun Int.bin10() = (floor((this + 1).toDouble() / 10.0) * 10).toInt()
 
