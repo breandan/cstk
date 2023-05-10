@@ -1,11 +1,12 @@
 package edu.mcgill.cstk.utils
 
+import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.cc
 import com.github.difflib.text.*
 import com.github.difflib.text.DiffRow.Tag.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.experiments.probing.embeddingServer
-import edu.mcgill.cstk.experiments.repair.isValidKotlin
+import edu.mcgill.cstk.experiments.repair.defaultTokenizer
 import info.debatty.java.stringsimilarity.interfaces.MetricStringDistance
 import me.vovak.antlr.parser.*
 import net.sf.extjwnl.data.PointerUtils.*
@@ -13,7 +14,6 @@ import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.kotlin.lexer.*
-import org.jetbrains.kotlin.spec.grammar.tools.tokenizeKotlinCode
 import spoon.Launcher
 import java.io.File
 import java.net.*
@@ -339,18 +339,18 @@ $summary
 
 \subsection{Original}
 \begin{lstlisting}[language=java]
-${diffString(original, synthetic).first}
+${latexDiffMultilineStrings(original, synthetic).first}
 \end{lstlisting}
 \subsection{Synthetic}
 
 \begin{lstlisting}[language=java]
-${diffString(original, synthetic).second}
+${latexDiffMultilineStrings(original, synthetic).second}
 \end{lstlisting}
 
 \subsection{Variant}
 
 \begin{lstlisting}[language=java]
-${diffString(original, variant).second}
+${latexDiffMultilineStrings(original, variant).second}
 \end{lstlisting}
 
 \subsection{Comment}
@@ -366,7 +366,7 @@ $discrepancy
 %--------
 """.trimIndent().also { println(it) }
 
-fun diffString(old: String, new: String) =
+fun latexDiffMultilineStrings(old: String, new: String) =
   DiffRowGenerator.create()
     .showInlineDiffs(true)
     .ignoreWhiteSpaces(true)
@@ -414,6 +414,22 @@ fun String.visibleLen() =
   replace(ANSI_RED_BACKGROUND,"")
     .replace(ANSI_GREEN_BACKGROUND,"")
     .replace(ANSI_RESET,"").length
+
+fun latexDiffSingleLOC(original: String, new: String) =
+  DiffRowGenerator.create()
+    .showInlineDiffs(true)
+    .inlineDiffByWord(true)
+    .newTag { l -> if(l) "(*@<begin>" else "<end>@*)" }
+    .build()
+    .generateDiffRows(original.tokenizeByWhitespace(), new.tokenizeByWhitespace())
+    .joinToString(" ") {
+      when (it.tag) {
+        INSERT -> it.newLine.replace("<begin>", "\\hlgreen{").replace("<end>", "}")
+        CHANGE -> it.newLine.replace("<begin>", "\\hlorange{").replace("<end>", "}")
+        DELETE -> "\\hlred{${List(it.oldLine.length){ " " }.joinToString("")}}"
+        else -> it.newLine.replace("<begin>", "").replace("<end>", "")
+      }
+    }.replace("&lt;", "<").replace("&gt;", ">")
 
 // Just print the new line with ASCII colors but no border
 fun prettyDiffNoFrills(original: String, new: String) =

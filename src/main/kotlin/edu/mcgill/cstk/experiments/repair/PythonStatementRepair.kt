@@ -103,7 +103,7 @@ fun repairPythonStatement(
   coarsen = String::coarsenAsPython,
   uncoarsen = String::uncoarsenAsPython,
   synthesizer = satRepair(clock), // Enumerative search
-  diagnostic = { println("Δ=${ levenshtein( prompt, it ) - 1 } repair: ${prettyDiffNoFrills(prompt, it)}") },
+  diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
   filter = { isValidPython() },
 )
 

@@ -10,6 +10,7 @@ import java.io.File
 import kotlin.time.*
 
 /*
+./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:" | grep -v "LATEX"
 ./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:"
  */
 
@@ -41,10 +42,12 @@ fun main() {
 
       println("\nTop 100 repairs:\n")
       it.take(100).forEach {
-        println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}")
+        println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
+        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
       }
 
-      println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly ${it.size / (elapsed/1000.0)} repairs per second.")
+      println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
+        "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
       println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
     }
   }
@@ -109,6 +112,7 @@ fun parallelRepairKotlinStatement(
       val levDiff = levenshtein(prompt, it) - 1
       if (levDiff < bestRepair) {
         println("Δ=$levDiff repair: ${prettyDiffNoFrills(prompt, it)}")
+        println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
         bestRepair = levDiff
       }
     },
