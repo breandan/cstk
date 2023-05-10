@@ -16,17 +16,21 @@ import kotlin.time.*
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
-  MAX_SAMPLE = 200
-  originalKotlinLines.lines().map {
+
+  // Generate synthetic error dataset
+  List(100) { originalKotlinLines }.joinToString("\n").lines().map {
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
-      eligibleTokensForDeletion = officialKotlinKeywords,
+      eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
       tokensToDelete = 1,
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
   }
   .filter { !it.second.isValidKotlin() }
+  .distinct().shuffled()
+
+  // Run repair
   .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     val startTime = System.currentTimeMillis()
@@ -35,6 +39,7 @@ fun main() {
       val contained = original in it
       val elapsed = System.currentTimeMillis() - startTime
 
+      println("\nTop 100 repairs:\n")
       it.take(100).forEach {
         println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}")
       }
@@ -88,17 +93,27 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-): List<Σᐩ> =
-  bijectiveRepair(
-    prompt = prompt,
+): List<Σᐩ> {
+  var bestRepair = Int.MAX_VALUE
+  val delim = List(prompt.length) { "-" }.joinToString("")
+  println("$delim\nBest repairs so far:\n$delim")
+  return bijectiveRepair(
+    toRepair = prompt,
     fillers = commonKotlinKeywords + "ε" - "w",
 //    coarsen = Σᐩ::coarsenAsKotlin,
 //    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     //  updateProgress = { println(it) },
     filter = { isValidKotlin() },
-//    diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
+    diagnostic = {
+      val levDiff = levenshtein(prompt, it) - 1
+      if (levDiff < bestRepair) {
+        println("Δ=$levDiff repair: ${prettyDiffNoFrills(prompt, it)}")
+        bestRepair = levDiff
+      }
+    },
   )
+}
 
 @OptIn(ExperimentalTime::class)
 fun repairKotlinStatement(
