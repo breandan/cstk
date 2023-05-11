@@ -87,7 +87,7 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.3.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.23.0")
@@ -150,7 +150,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-4")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-5")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.2.3")
