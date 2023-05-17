@@ -7,6 +7,7 @@ import edu.mcgill.cstk.utils.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.File
+import kotlin.math.ln
 import kotlin.time.*
 
 /*
@@ -17,6 +18,8 @@ import kotlin.time.*
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
+
+  val scoreEdit: (Edit) -> Float = constructScoringFunction()
 
   // Generate synthetic error dataset
   List(100) { originalKotlinLines }.joinToString("\n").lines().map {
@@ -35,7 +38,7 @@ fun main() {
   .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     val startTime = System.currentTimeMillis()
-    parallelRepairKotlinStatement(prompt).also {
+    parallelRepairKotlinStatement(prompt, scoreEdit).also {
 //    repairKotlinStatement(prompt).also {
       val contained = original in it
       val elapsed = System.currentTimeMillis() - startTime
@@ -43,7 +46,7 @@ fun main() {
       println("\nTop 100 repairs:\n")
       it.take(100).forEach {
         println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
-        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
+//        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
       }
 
       println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
@@ -51,6 +54,26 @@ fun main() {
       println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
     }
   }
+}
+
+private fun constructScoringFunction(): (Edit) -> Float {
+  val tokenCounts: MutableMap<Σᐩ, Int> = mutableMapOf()
+  coarsenedKotlinLines.tokenizeByWhitespace()
+    .forEach { tokenCounts[it] = (tokenCounts[it] ?: 0) + 1 }
+  val normalizingConstant = tokenCounts.values.sum().toFloat()
+  val normedTokenWeights =
+    tokenCounts.mapValues { (token, count) -> count.toFloat() / normalizingConstant }
+
+  println("Top 100 most common tokens: ${tokenCounts.toList().sortedByDescending { it.second }.take(100)}\n\n")
+
+  val scoreEdit: (Edit) -> Float = {
+    val tokens = it.second
+    val tokenWeights = tokens.map { normedTokenWeights[it] ?: 0f }
+    // Tokens are t_1...t_n, we compute the score as log(p(t_1)*...*p(t_n))
+    // Edits are penalized by length, so we divide by the number of tokens
+    tokenWeights.sumOf { ln(it.toDouble()) }.toFloat() / tokens.size
+  }
+  return scoreEdit
 }
 
 // Get top level directory and all Kotlin files in all subdirectories
@@ -95,6 +118,7 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
 @OptIn(ExperimentalTime::class)
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
+  scoreEdit: ((Edit) -> Float)? = null,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
 ): List<Σᐩ> {
   var bestRepair = Int.MAX_VALUE
@@ -108,11 +132,12 @@ fun parallelRepairKotlinStatement(
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     //  updateProgress = { println(it) },
     filter = { isValidKotlin() },
+    scoreEdit = scoreEdit,
     diagnostic = {
       val levDiff = levenshtein(prompt, it) - 1
       if (levDiff < bestRepair) {
         println("Δ=$levDiff repair: ${prettyDiffNoFrills(prompt, it)}")
-        println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
+//        println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
         bestRepair = levDiff
       }
     },
