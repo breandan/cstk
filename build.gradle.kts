@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.40.6"
+  val openrwVersion = "7.40.8"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -87,7 +87,7 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.1")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.1")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.23.0")
@@ -150,7 +150,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-5")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-6")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.2.3")
