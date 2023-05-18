@@ -67,7 +67,7 @@ private fun constructScoringFunction(): (Edit) -> Float {
   println("Top 100 most common tokens: ${tokenCounts.toList().sortedByDescending { it.second }.take(100)}\n\n")
 
   val scoreEdit: (Edit) -> Float = {
-    val tokens = it.second
+    val tokens = it.values
     val tokenWeights = tokens.map { normedTokenWeights[it] ?: 0f }
     // Tokens are t_1...t_n, we compute the score as log(p(t_1)*...*p(t_n))
     // Edits are penalized by length, so we divide by the number of tokens
@@ -134,7 +134,7 @@ fun parallelRepairKotlinStatement(
     filter = { isValidKotlin() },
     scoreEdit = scoreEdit,
     diagnostic = {
-      val levDiff = levenshtein(prompt, it) - 1
+      val levDiff = levenshtein(prompt, it)
       if (levDiff < bestRepair) {
         println("Δ=$levDiff repair: ${prettyDiffNoFrills(prompt, it)}")
 //        println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")

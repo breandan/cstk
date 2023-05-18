@@ -130,7 +130,7 @@ fun String.uncoarsenAsPython(prompt: String): String {
       token in pythonKeywords -> token
       else -> throw Exception("Unknown token: $token")
     }
-  } + words.joinToString(" ")
+  } + words.joinToString(" ", " ")
 
 //  println("After uncoarsening: $uncoarsed")
   return uncoarsed
