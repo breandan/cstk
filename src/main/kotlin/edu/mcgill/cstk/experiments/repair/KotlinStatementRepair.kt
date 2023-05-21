@@ -57,13 +57,13 @@ fun main() {
 }
 
 private fun constructScoringFunction(): (Σᐩ) -> Double {
-  val P = coarsenedKotlinLines.lines().map { "BOS $it EOS" }
-    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(3) }
-    .fold(MarkovChain<Σᐩ>()) { a, b -> a + b }
+  val P = fetchKotlinExamples().map { "BOS $it EOS" }
+    .map { it.tokenizeByWhitespace().asSequence().windowed(3).toMarkovChain(3) }
+    .fold(MarkovChain<List<Σᐩ>>()) { a, b -> a + b }
 
   println("Top 10 most common tokens: ${P.topK(10)}\n\n")
 
-  return { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
+  return { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace().windowed(3)) }
 }
 
 // Get top level directory and all Kotlin files in all subdirectories
@@ -76,7 +76,7 @@ fun fetchKotlinExamples() =
     it.coarsenAsKotlin().let { str ->
       dropKeywords.none { it in str } && str.split(" ").size in 10..40
     }
-  }.map { it.trim() }.distinct().forEach { println(it) }
+  }.map { it.trim() }.distinct()
 
 fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
   (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
