@@ -15,17 +15,18 @@ import kotlin.time.*
 ./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:"
  */
 
-
 const val keywordFile = "src/main/resources/datasets/kotlin/keywords.txt"
 
 val mostCommonKotlinKeywords = File(keywordFile)
   .readLines().map { it.trim() }.filter { it.isNotBlank() }
 
+val mostCommonSymbols =
+  mostCommonKotlinKeywords.filter { it.none { it.isLetterOrDigit() } }
+
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
 //  collectMostCommonKeywords()
-//  System.exit(0)
 
   val scoreEdit: (Σᐩ) -> Double = constructScoringFunction()
 
@@ -80,35 +81,29 @@ fun collectMostCommonKeywords() {
 }
 
 private fun constructScoringFunction(): (Σᐩ) -> Double {
-  val P = fetchKotlinExamples().map { "BOS $it EOS" }
-    .map { it.coarsenAccordingToKeywords(officialKotlinKeywords + mostCommonKotlinKeywords, false)
-      .tokenizeByWhitespace().asSequence().windowed(3).toMarkovChain(3) }
-    .fold(MarkovChain<List<Σᐩ>>()) { a, b -> a + b }
+  val memory = 3
+  val windowsSize = 3
+  val P =
+    fetchKotlinExamples().map { "BOS $it EOS" }.map {
+      it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
+    }.fold(MarkovChain<Σᐩ>(memory = memory)) { a, b -> a + b }
 
-  println("Top 10 most common tokens: ${P.topK(10)}\n\n")
+  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
 
-  return { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace().windowed(3)) }
+  return { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
 }
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
-  File(File("").absolutePath).parentFile.also { println("Working directory: $it") }
-  .walkTopDown().filter { it.extension == "kt" }
-  .flatMap { it.readLines() }
-  .filter { it.isValidKotlin() }.toList()
-  .filter { it.coarsenAsKotlin().let { str -> dropKeywords.none { it in str } } }
-  .map { it.trim() }.distinct()
-
-fun Σᐩ.coarsenAccordingToKeywords(commonKeywords: Set<Σᐩ>, lex: Boolean = true): Σᐩ =
-  (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
-    when {
-      it.isBracket() -> it
-      it.none { it.isLetterOrDigit() } -> it
-      it in commonKeywords -> it
-      it.first().isUpperCase() -> "W"
-      else -> "w"
-    }
-  }
+  File(File("").absolutePath).parentFile
+    .also { println("Working directory: $it") }
+    .walkTopDown().asSequence()
+    .filter { it.extension == "kt" }
+    .flatMap { it.readLines() }
+    .filter { it.isValidKotlin() }
+    .map { it.coarsenAsKotlin() }
+    .filter { str -> dropKeywords.none { it in str } }
+    .map { it.trim() }.distinct()
 
 fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
   (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
@@ -208,7 +203,7 @@ private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequen
   }
 
 val dropKeywords =
-  setOf("import", "package", "//", "/*", "\"", "\'", "data", "_")
+  setOf("import", "package", "//", "/*", "\"", "\'", "\\`", "data", "_")
 
 val officialKotlinKeywords = setOf(
   "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
