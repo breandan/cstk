@@ -15,9 +15,17 @@ import kotlin.time.*
 ./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:"
  */
 
+
+const val keywordFile = "src/main/resources/datasets/kotlin/keywords.txt"
+
+val mostCommonKotlinKeywords = File(keywordFile)
+  .readLines().map { it.trim() }.filter { it.isNotBlank() }
+
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
+//  collectMostCommonKeywords()
+//  System.exit(0)
 
   val scoreEdit: (Σᐩ) -> Double = constructScoringFunction()
 
@@ -56,9 +64,25 @@ fun main() {
   }
 }
 
+fun collectMostCommonKeywords() {
+  File(File("").absolutePath).parentFile.also { println("Working directory: $it") }
+    .walkTopDown().filter { it.extension == "kt" }
+    .flatMap { it.readLines() }
+    .filter { it.isValidKotlin() }
+    .filter { it.coarsenAsKotlin().let { str -> dropKeywords.none { it in str } } }
+    .flatMap { it.lexAsKotlin() }
+    // Compute histogram
+    .groupingBy { it }.eachCount()
+    // Take most common 10000
+    .toList().sortedByDescending { it.second }.take(10000)
+    .joinToString("\n") { it.first }
+    .let { File(keywordFile).writeText(it) }
+}
+
 private fun constructScoringFunction(): (Σᐩ) -> Double {
   val P = fetchKotlinExamples().map { "BOS $it EOS" }
-    .map { it.tokenizeByWhitespace().asSequence().windowed(3).toMarkovChain(3) }
+    .map { it.coarsenAccordingToKeywords(officialKotlinKeywords + mostCommonKotlinKeywords, false)
+      .tokenizeByWhitespace().asSequence().windowed(3).toMarkovChain(3) }
     .fold(MarkovChain<List<Σᐩ>>()) { a, b -> a + b }
 
   println("Top 10 most common tokens: ${P.topK(10)}\n\n")
@@ -68,15 +92,23 @@ private fun constructScoringFunction(): (Σᐩ) -> Double {
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
-  File(File("").absolutePath)
+  File(File("").absolutePath).parentFile.also { println("Working directory: $it") }
   .walkTopDown().filter { it.extension == "kt" }
   .flatMap { it.readLines() }
   .filter { it.isValidKotlin() }.toList()
-  .filter {
-    it.coarsenAsKotlin().let { str ->
-      dropKeywords.none { it in str } && str.split(" ").size in 10..40
+  .filter { it.coarsenAsKotlin().let { str -> dropKeywords.none { it in str } } }
+  .map { it.trim() }.distinct()
+
+fun Σᐩ.coarsenAccordingToKeywords(commonKeywords: Set<Σᐩ>, lex: Boolean = true): Σᐩ =
+  (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
+    when {
+      it.isBracket() -> it
+      it.none { it.isLetterOrDigit() } -> it
+      it in commonKeywords -> it
+      it.first().isUpperCase() -> "W"
+      else -> "w"
     }
-  }.map { it.trim() }.distinct()
+  }
 
 fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
   (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
