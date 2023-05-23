@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.levenshtein
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
@@ -8,6 +8,7 @@ import edu.mcgill.cstk.utils.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.File
+import kotlin.random.Random
 import kotlin.time.*
 
 /*
@@ -23,6 +24,16 @@ val mostCommonKotlinKeywords = File(keywordFile)
 val mostCommonSymbols =
   mostCommonKotlinKeywords.filter { it.none { it.isLetterOrDigit() } }
 
+val memory = 3
+val windowsSize = 3
+val P by lazy {
+//  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
+//  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
+  fetchKotlinExamples().map { "BOS $it EOS" }.map {
+    it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
+  }.fold(MarkovChain<Σᐩ>(memory = memory)) { a, b -> a + b }
+}
+
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
@@ -30,12 +41,17 @@ fun main() {
 
   val scoreEdit: (Σᐩ) -> Double = constructScoringFunction()
 
+  val deck = (commonKotlinKeywords + "ε" - "w")
+    .also { println("Full deck: $it") }
+    .sortedBy { P[it] }.reversed().take(32)
+    .also { println("High frequency deck: $it") }.toSet()
+
   // Generate synthetic error dataset
   List(100) { originalKotlinLines }.joinToString("\n").lines().map {
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
       eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
-      tokensToDelete = 1,
+      tokensToDelete = Random.nextInt(2),
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
@@ -47,7 +63,7 @@ fun main() {
   .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     val startTime = System.currentTimeMillis()
-    parallelRepairKotlinStatement(prompt, scoreEdit).also {
+    parallelRepairKotlinStatement(prompt, deck, scoreEdit).also {
 //    repairKotlinStatement(prompt).also {
       val contained = original in it
       val elapsed = System.currentTimeMillis() - startTime
@@ -70,7 +86,7 @@ fun collectMostCommonKeywords() {
     .walkTopDown().filter { it.extension == "kt" }
     .flatMap { it.readLines() }
     .filter { it.isValidKotlin() }
-    .filter { it.coarsenAsKotlin().let { str -> dropKeywords.none { it in str } } }
+    .filter { it.coarsenAsKotlin().let { str -> ignoredKeywords.none { it in str } } }
     .flatMap { it.lexAsKotlin() }
     // Compute histogram
     .groupingBy { it }.eachCount()
@@ -80,18 +96,8 @@ fun collectMostCommonKeywords() {
     .let { File(keywordFile).writeText(it) }
 }
 
-private fun constructScoringFunction(): (Σᐩ) -> Double {
-  val memory = 3
-  val windowsSize = 3
-  val P =
-    fetchKotlinExamples().map { "BOS $it EOS" }.map {
-      it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
-    }.fold(MarkovChain<Σᐩ>(memory = memory)) { a, b -> a + b }
-
-  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
-
-  return { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
-}
+private fun constructScoringFunction(): (Σᐩ) -> Double =
+  { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
@@ -102,7 +108,7 @@ fun fetchKotlinExamples() =
     .flatMap { it.readLines() }
     .filter { it.isValidKotlin() }
     .map { it.coarsenAsKotlin() }
-    .filter { str -> dropKeywords.none { it in str } }
+    .filter { str -> ignoredKeywords.none { it in str } }
     .map { it.trim() }.distinct()
 
 fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
@@ -136,23 +142,28 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
 @OptIn(ExperimentalTime::class)
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
+  fillers: Set<Σᐩ>,
   scoreEdit: ((Σᐩ) -> Double)? = null,
   clock: TimeMark = TimeSource.Monotonic.markNow()
 ): List<Σᐩ> {
   var bestRepair = Double.MAX_VALUE
   val delim = List(prompt.length) { "-" }.joinToString("")
   println("$delim\nBest repairs so far:\n$delim")
+  // We intersperse the prompt with empty strings to enable the repair of the first and last token
+  // as well as insertion of tokens by the repair algorithm, which only considers substitutions
+  val promptTokens = listOf("") + prompt.tokenizeByWhitespace().intersperse() + listOf("")
+
   return bijectiveRepair(
-    toRepair = prompt,
-    fillers = commonKotlinKeywords + "ε" - "w",
+    promptTokens = promptTokens,
+    fillers = fillers,
 //    coarsen = Σᐩ::coarsenAsKotlin,
 //    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     //  updateProgress = { println(it) },
-    filter = { isValidKotlin() },
-    scoreString = scoreEdit,
+    admissibilityFilter = { isValidKotlin() },
+    scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
-      if (scoreEdit!= null) {
+      if (scoreEdit != null) {
         {
           val score = scoreEdit(it)
           if (score < bestRepair) {
@@ -202,7 +213,7 @@ private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequen
     } catch (e: Exception) { e.printStackTrace(); emptySequence()}
   }
 
-val dropKeywords =
+val ignoredKeywords =
   setOf("import", "package", "//", "/*", "\"", "\'", "\\`", "data", "_")
 
 val officialKotlinKeywords = setOf(
