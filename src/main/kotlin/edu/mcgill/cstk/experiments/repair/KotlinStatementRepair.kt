@@ -5,16 +5,13 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import edu.mcgill.cstk.utils.*
+import org.apache.commons.io.output.NullOutputStream
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
-import java.io.File
+import java.io.*
 import kotlin.random.Random
 import kotlin.time.*
 
-/*
-./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:" | grep -v "LATEX"
-./gradlew kotlinStatementRepair 2>&1 | grep -v "Parser error:"
- */
 
 const val keywordFile = "src/main/resources/datasets/kotlin/keywords.txt"
 
@@ -26,22 +23,42 @@ val mostCommonSymbols =
 
 val memory = 3
 val windowsSize = 3
-val P by lazy {
+val P: MarkovChain<Σᐩ> by lazy {
 //  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
 //  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
   fetchKotlinExamples().map { "BOS $it EOS" }.map {
     it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
-  }.fold(MarkovChain<Σᐩ>(memory = memory)) { a, b -> a + b }
+  }.fold(MarkovChain(memory = memory)) { a, b -> a + b }
 }
+
+// Output stream that rejects all lines starting with "Parser error:" or "Lex error:"
+class FilteredOutputStream(private val out: OutputStream) : PrintStream(out) {
+  override fun println(x: String?) {
+    if (x == null) return
+    if (x.toString().let {
+      it.startsWith("Parser error:") ||
+        it.startsWith("Lexer error:")
+    }) return
+    super.println(x)
+  }
+}
+
+/*
+./gradlew kotlinStatementRepair
+ */
 
 @OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
 //  collectMostCommonKeywords()
 
+  System.setErr(FilteredOutputStream(System.err))
+  System.setOut(FilteredOutputStream(System.out))
+
   val scoreEdit: (Σᐩ) -> Double = constructScoringFunction()
 
-  val deck = (commonKotlinKeywords + "ε" - "w")
+  val deck =
+    (commonKotlinKeywords + "ε" - "w")
     .also { println("Full deck: $it") }
     .sortedBy { P[it] }.reversed().take(32)
     .also { println("High frequency deck: $it") }.toSet()
@@ -68,8 +85,9 @@ fun main() {
       val contained = original in it
       val elapsed = System.currentTimeMillis() - startTime
 
-      println("\nTop 100 repairs:\n")
-      it.take(100).forEach {
+      val toTake = 20
+      println("\nTop $toTake repairs:\n")
+      it.take(toTake).forEach {
         println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
 //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
       }
