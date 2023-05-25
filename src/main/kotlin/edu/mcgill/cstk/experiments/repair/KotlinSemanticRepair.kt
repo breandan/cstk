@@ -1,7 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
 import org.apache.commons.io.output.NullPrintStream
-import javax.tools.*
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.*
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer.WITHOUT_PATHS
@@ -9,8 +8,6 @@ import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.*
 import java.io.*
 import kotlin.system.measureTimeMillis
-
-val javaCompiler: JavaCompiler = ToolProvider.getSystemJavaCompiler()
 
 /*
 ./gradlew kotlinSemanticRepair
@@ -27,7 +24,7 @@ fun main() {
   }.also { println("Total time: ${it/1000.0}s") } // About ~173ms / statement :(
 }
 
-val compiler = K2JVMCompiler()
+val kotlinc = K2JVMCompiler()
 
 val compilerArgs =
   K2JVMCompilerArguments().apply {
@@ -41,8 +38,9 @@ val compilerArgs =
     reportPerf = false
     suppressWarnings = true
   }
+
 val msgCollector = PrintingMessageCollector(NullPrintStream(), WITHOUT_PATHS, true)
 
 fun String.isCompilableKotlin(): Boolean =
   File("temp.kt").apply { delete(); writeText(this@isCompilableKotlin) }
-    .run { compiler.execImpl(msgCollector, Services.EMPTY, compilerArgs) }.code == 0
+    .run { kotlinc.execImpl(msgCollector, Services.EMPTY, compilerArgs) }.code == 0
