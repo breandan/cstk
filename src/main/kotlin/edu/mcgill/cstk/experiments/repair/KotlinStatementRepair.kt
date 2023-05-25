@@ -5,7 +5,6 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import edu.mcgill.cstk.utils.*
-import org.apache.commons.io.output.NullOutputStream
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.*
@@ -36,8 +35,9 @@ class FilteredOutputStream(private val out: OutputStream) : PrintStream(out) {
   override fun println(x: String?) {
     if (x == null) return
     if (x.toString().let {
+//      it.startsWith("logging: ") ||
       it.startsWith("Parser error:") ||
-        it.startsWith("Lexer error:")
+      it.startsWith("Lexer error:")
     }) return
     super.println(x)
   }
@@ -80,27 +80,32 @@ fun main() {
   .forEach { (original, prompt) ->
     println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
     val startTime = System.currentTimeMillis()
-    parallelRepairKotlinStatement(prompt, deck, scoreEdit).also {
-//    repairKotlinStatement(prompt).also {
-      val contained = original in it
-      val elapsed = System.currentTimeMillis() - startTime
+    parallelRepairKotlinStatement(prompt, deck, scoreEdit)
+//      .filter { it.isCompilableKotlin() }
+      .also {
+  //    repairKotlinStatement(prompt).also {
+        val contained = original in it
+        val elapsed = System.currentTimeMillis() - startTime
 
-      val toTake = 20
-      println("\nTop $toTake repairs:\n")
-      it.take(toTake).forEach {
-        println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
-//        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
+        val toTake = 20
+        println("\nTop $toTake repairs:\n")
+        it.take(toTake).forEach {
+          println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
+  //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
+        }
+
+        println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
+          "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
+        println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
       }
-
-      println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
-        "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
-      println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
     }
-  }
 }
 
+val projectDir = File(File("").absolutePath)
+val allProjectsDir = projectDir.parentFile
+
 fun collectMostCommonKeywords() {
-  File(File("").absolutePath).parentFile.also { println("Working directory: $it") }
+  projectDir.also { println("Working directory: $it") }
     .walkTopDown().filter { it.extension == "kt" }
     .flatMap { it.readLines() }
     .filter { it.isValidKotlin() }
@@ -119,15 +124,17 @@ private fun constructScoringFunction(): (Σᐩ) -> Double =
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
-  File(File("").absolutePath).parentFile
-    .also { println("Working directory: $it") }
+  allProjectsDir.also { println("Working directory: $it") }
     .walkTopDown().asSequence()
     .filter { it.extension == "kt" }
     .flatMap { it.readLines() }
     .filter { it.isValidKotlin() }
-    .map { it.coarsenAsKotlin() }
     .filter { str -> ignoredKeywords.none { it in str } }
+//    .filter { str -> str.lexAsKotlin().filter { it.isNotBlank() }.all { it in allNames } }
+//    .filter { it.isCompilableKotlin() }
+    .map { it.coarsenAsKotlin() }
     .map { it.trim() }.distinct()
+//    .take(10)
 
 fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
   (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
@@ -230,20 +237,6 @@ private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequen
         //  .also { println("Solving: ${it.joinToString(" ")}") }
     } catch (e: Exception) { e.printStackTrace(); emptySequence()}
   }
-
-val ignoredKeywords =
-  setOf("import", "package", "//", "/*", "\"", "\'", "\\`", "data", "_")
-
-val officialKotlinKeywords = setOf(
-  "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
-  "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this",
-  "throw", "true", "try", "typealias", "val", "var", "when", "while", "by", "catch", "constructor",
-  "delegate", "dynamic", "field", "file", "finally", "get", "import", "init", "param", "property",
-  "receiver", "set", "setparam", "where", "actual", "abstract", "annotation", "companion",
-  "const", "crossinline", "data", "enum", "expect", "external", "final", "infix", "inline",
-  "inner", "internal", "lateinit", "noinline", "open", "operator", "out", "override", "private",
-  "protected", "public", "reified", "sealed", "suspend", "tailrec", "vararg", "field", "it"
-)
 
 fun Σᐩ.isValidKotlin(): Boolean =
   try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
@@ -1082,3 +1075,35 @@ val permissiveKotlinCFG = """
   START -> START START
   START -> ${commonKotlinKeywords.joinToString(" | ") { it } }
 """.parseCFG().apply { blocked.add("w") }
+
+
+val ignoredKeywords =
+  setOf("import", "package", "//", "/*", "\"", "\'", "\\`", "data", "_")
+
+val officialKotlinKeywords = setOf(
+  "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
+  "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this",
+  "throw", "true", "try", "typealias", "val", "var", "when", "while", "by", "catch", "constructor",
+  "delegate", "dynamic", "field", "file", "finally", "get", "import", "init", "param", "property",
+  "receiver", "set", "setparam", "where", "actual", "abstract", "annotation", "companion",
+  "const", "crossinline", "data", "enum", "expect", "external", "final", "infix", "inline",
+  "inner", "internal", "lateinit", "noinline", "open", "operator", "out", "override", "private",
+  "protected", "public", "reified", "sealed", "suspend", "tailrec", "vararg", "field", "it"
+)
+
+val allBuiltinTypes = setOf(
+  "Any", "Boolean", "Byte", "Char", "Double", "Float", "Int", "Long", "Nothing", "Short", "String",
+  "Unit", "Array", "BooleanArray", "ByteArray", "CharArray", "DoubleArray", "FloatArray",
+  "IntArray", "LongArray", "ShortArray", "List", "Map", "MutableList", "MutableMap", "MutableSet",
+  "Set", "Sequence", "StringBuffer", "StringBuilder", "Triple", "Pair", "Exception", "Throwable",
+  "Regex", "RegexOption", "MatchGroup", "MatchGroupCollection", "MatchResult", "MatchResult.Destructured",
+)
+
+val allBuiltinNames = setOf(
+  "println", "print", "readLine", "readText", "mutableMapOf", "mapOf", "mutableListOf", "listOf",
+  "mutableSetOf", "setOf", "arrayOf", "arrayOfNulls", "sequenceOf", "emptySequence", "emptyList",
+  "listOfNotNull", "emptyMap", "mapOfNotNull", "emptySet", "setOfNotNull", "error", "require",
+  "requireNotNull", "check", "checkNotNull", "assert", "assertNotNull", "generateSequence",
+)
+
+val allNames = officialKotlinKeywords + allBuiltinNames + allBuiltinTypes + commonKotlinKeywords
