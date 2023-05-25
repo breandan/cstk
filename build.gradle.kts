@@ -1,7 +1,7 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "1.8.21"
+  kotlin("jvm") version "1.9.0-Beta"
   id("com.github.ben-manes.versions") version "0.46.0"
   id("de.undercouch.download") version "5.4.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -154,7 +154,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-6")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.2.3")
+  implementation("com.aallam.openai:openai-client:3.2.4")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
@@ -162,7 +162,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.12.0")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:1.8.21")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.0-Beta")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
