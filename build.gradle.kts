@@ -151,7 +151,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-6")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.2.4")
@@ -160,7 +160,7 @@ dependencies {
   implementation("org.hipparchus:hipparchus-stat:2.3")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
-  implementation("org.antlr:antlr4:4.12.0")
+  implementation("org.antlr:antlr4:4.13.0")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.0-Beta")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
