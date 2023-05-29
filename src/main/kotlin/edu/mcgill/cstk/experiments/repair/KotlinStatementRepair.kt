@@ -8,7 +8,6 @@ import edu.mcgill.cstk.utils.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.*
-import kotlin.random.Random
 import kotlin.time.*
 
 
@@ -54,7 +53,7 @@ fun main() {
   evaluateSyntheticRepairBenchmarkOn(originalKotlinLines)
 }
 
-fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<String>.() -> List<String> = { this }) {
+fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair>.() -> List<Repair> = { this }) {
   System.setErr(FilteredOutputStream(System.err))
   System.setOut(FilteredOutputStream(System.out))
 
@@ -71,11 +70,14 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<String
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
       eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
-      tokensToDelete = Random.nextInt(2),
+      tokensToDelete = 1,
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
-  }.filter { !it.second.isValidKotlin() }.distinct().shuffled()
+  }
+//      listOf("val query = seed ? : queries . first ( )" to "query = seed ? : queries . first ( )")
+
+    .filter { !it.second.isSyntacticallyValidKotlin() }.distinct().shuffled()
    // Run repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
@@ -83,20 +85,23 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<String
      parallelRepairKotlinStatement(prompt, deck, scoreEdit).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
-         val contained = groundTruth in it
+         val results = it.map { it.result.tokenizeByWhitespace().joinToString(" ") }
+         val contained = groundTruth.tokenizeByWhitespace().joinToString(" ") in results
          val elapsed = System.currentTimeMillis() - startTime
 
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-           println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
+           println("Δ=${it.edit.size} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
            //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
          }
 
-         println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
+         println("\nFound ${it.size} valid repairs in ${elapsed}ms, or roughly " +
            "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
-         println("Original string was ${if (contained) "#${it.indexOf(groundTruth)}" else "NOT"} in repair proposals!\n")
+         println("Original string was ${if (contained) "#${results.indexOf(groundTruth)}" else "NOT"} in repair proposals!\n")
        }
    }
 }
+
+// Clearly, there is a qualitative difference in perception and intent between a idiomatic figure of speech like, "the facts speak for themselves" and a system that is explicitly impersonating a human being. One is simply a linguistic jest or
 
 val projectDir = File(File("").absolutePath)
 val allProjectsDir = projectDir.parentFile
@@ -105,7 +110,7 @@ fun collectMostCommonKeywords() {
   projectDir.also { println("Working directory: $it") }
     .walkTopDown().filter { it.extension == "kt" }
     .flatMap { it.readLines() }
-    .filter { it.isValidKotlin() }
+    .filter { it.isSyntacticallyValidKotlin() }
     .filter { it.coarsenAsKotlin().let { str -> ignoredKeywords.none { it in str } } }
     .flatMap { it.lexAsKotlin() }
     // Compute histogram
@@ -125,7 +130,7 @@ fun fetchKotlinExamples() =
     .walkTopDown().asSequence()
     .filter { it.extension == "kt" }
     .flatMap { it.readLines() }
-    .filter { it.isValidKotlin() }
+    .filter { it.isSyntacticallyValidKotlin() }
     .filter { str -> ignoredKeywords.none { it in str } }
 //    .filter { str -> str.lexAsKotlin().filter { it.isNotBlank() }.all { it in allNames } }
 //    .filter { it.isCompilableKotlin() }
@@ -161,13 +166,12 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
   return uncoarsed
 }
 
-
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
   fillers: Set<Σᐩ>,
   scoreEdit: ((Σᐩ) -> Double)? = null,
   clock: TimeMark = TimeSource.Monotonic.markNow()
-): List<Σᐩ> {
+): List<Repair> {
   var bestRepair = Double.MAX_VALUE
   val delim = List(prompt.length) { "-" }.joinToString("")
   println("$delim\nBest repairs so far:\n$delim")
@@ -182,14 +186,14 @@ fun parallelRepairKotlinStatement(
 //    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     //  updateProgress = { println(it) },
-    admissibilityFilter = { isValidKotlin() },
+    admissibilityFilter = { isSyntacticallyValidKotlin() },
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
       if (scoreEdit != null) {
         {
-          val score = scoreEdit(it)
+          val score = scoreEdit(it.result)
           if (score < bestRepair) {
-            println("Δ=$score repair: ${prettyDiffNoFrills(prompt, it)}")
+            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
 //        println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
             bestRepair = score
           }
@@ -197,9 +201,9 @@ fun parallelRepairKotlinStatement(
       }
       else {
         {
-          val levDiff = levenshtein(prompt, it).toDouble()
+          val levDiff = it.edit.size.toDouble()
           if (levDiff < bestRepair) {
-            println("Δ=$levDiff repair: ${prettyDiffNoFrills(prompt, it)}")
+            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
 //          println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
             bestRepair = levDiff
           }
@@ -221,7 +225,7 @@ fun repairKotlinStatement(
   //  updateProgress = { println(it) },
     synthesizer = bruteForceKotlinRepair(clock), // Enumerative search
     diagnostic = { println("Δ=${levenshtein(prompt, it) - 1} repair: ${prettyDiffNoFrills(prompt, it)}") },
-    filter = { isValidKotlin() },
+    filter = { isSyntacticallyValidKotlin() },
   )
 
 private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
@@ -233,7 +237,7 @@ private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequen
     } catch (e: Exception) { e.printStackTrace(); emptySequence()}
   }
 
-fun Σᐩ.isValidKotlin(): Boolean =
+fun Σᐩ.isSyntacticallyValidKotlin(): Boolean =
   try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
   catch (_: Throwable) { false }
 

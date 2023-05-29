@@ -77,15 +77,15 @@ fun String.lexAsJava(): Java8Lexer =
 //fun String.lexAsKotlin(): List<String> =
 //  tokenizeKotlinCode(this).map { it.text }
 val KOTLIN_LEXER = KotlinLexer()
-fun String.lexAsKotlin(): List<String>  {
+fun String.lexAsKotlin(): List<String> {
   KOTLIN_LEXER.start(this)
   val tokens = mutableListOf<String>()
-  try {
     while (KOTLIN_LEXER.tokenType != null) {
-      tokens.add(KOTLIN_LEXER.tokenText)
-      KOTLIN_LEXER.advance()
+      try {
+        tokens.add(KOTLIN_LEXER.tokenText)
+        KOTLIN_LEXER.advance()
+      } catch (_: Exception) { }
     }
-  } catch (_: Exception) { }
 
   return tokens.filter { it.isNotBlank() }
 }

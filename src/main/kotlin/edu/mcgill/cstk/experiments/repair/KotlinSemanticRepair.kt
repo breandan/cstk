@@ -8,22 +8,26 @@ import org.jetbrains.kotlin.cli.common.messages.MessageRenderer.WITHOUT_PATHS
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.*
 import java.io.*
+import kotlin.system.measureTimeMillis
 
 /*
 ./gradlew kotlinSemanticRepair
  */
 
 fun main() {
-//  measureTimeMillis {
-//    standaloneCompileableKotlinStatements.lines().parallelStream().forEach {
-//      if (it.isCompilableKotlin()) println("✅ $it") else println("❌ $it")
-//    }
-//  }.also { println("Total time: ${it/1000.0}s") } // About ~173ms / statement :(
+  measureTimeMillis {
+    standaloneCompileableKotlinStatements.lines().parallelStream()
+      .forEach { println(if (it.isCompilableKotlin()) "✅ $it" else "❌ $it") }
+  }.also { println("Total time: ${it/1000.0}s") } // About ~173ms / statement :(
 
   evaluateSyntheticRepairBenchmarkOn(standaloneCompileableKotlinStatements) {
     print("Generated $size syntactic repairs")
-    parallelStream().filter { it.isCompilableKotlin() }.toList()
-      .also { println(", and ${it.size} of them could be compiled.") }
+    val time = System.currentTimeMillis()
+    parallelStream().filter { it.result.isCompilableKotlin() }.toList()
+      .also {
+        println(", and ${it.size} of them could be compiled." +
+        " (${System.currentTimeMillis() - time}ms)")
+      }
   }
 }
 
