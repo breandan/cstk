@@ -31,7 +31,7 @@ val P: MarkovChain<Σᐩ> by lazy {
 }
 
 // Output stream that rejects all lines starting with "Parser error:" or "Lex error:"
-class FilteredOutputStream(private val out: OutputStream) : PrintStream(out) {
+class FilteredOutputStream(out: OutputStream) : PrintStream(out) {
   override fun println(x: String?) {
     if (x == null) return
     if (x.toString().let {
@@ -47,11 +47,14 @@ class FilteredOutputStream(private val out: OutputStream) : PrintStream(out) {
 ./gradlew kotlinStatementRepair
  */
 
-@OptIn(ExperimentalTime::class)
 fun main() {
 //  fetchKotlinExamples()
 //  collectMostCommonKeywords()
 
+  evaluateSyntheticRepairBenchmarkOn(originalKotlinLines)
+}
+
+fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<String>.() -> List<String> = { this }) {
   System.setErr(FilteredOutputStream(System.err))
   System.setOut(FilteredOutputStream(System.out))
 
@@ -59,12 +62,12 @@ fun main() {
 
   val deck =
     (commonKotlinKeywords + "ε" - "w")
-    .also { println("Full deck: $it") }
-    .sortedBy { P[it] }.reversed().take(32)
-    .also { println("High frequency deck: $it") }.toSet()
+      .also { println("Full deck: $it") }
+      .sortedBy { P[it] }.reversed().take(32)
+      .also { println("High frequency deck: $it") }.toSet()
 
   // Generate synthetic error dataset
-  List(100) { originalKotlinLines }.joinToString("\n").lines().map {
+  List(100) { dataset }.joinToString("\n").lines().map {
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
       eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
@@ -72,33 +75,27 @@ fun main() {
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
-  }
-  .filter { !it.second.isValidKotlin() }
-  .distinct().shuffled()
+  }.filter { !it.second.isValidKotlin() }.distinct().shuffled()
+   // Run repair
+   .forEach { (groundTruth, prompt) ->
+     println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
+     val startTime = System.currentTimeMillis()
+     parallelRepairKotlinStatement(prompt, deck, scoreEdit).postprocess()
+       .also {
+         //    repairKotlinStatement(prompt).also {
+         val contained = groundTruth in it
+         val elapsed = System.currentTimeMillis() - startTime
 
-  // Run repair
-  .forEach { (original, prompt) ->
-    println("Original:  $original\nCorrupted: ${prettyDiffNoFrills(original, prompt)}")
-    val startTime = System.currentTimeMillis()
-    parallelRepairKotlinStatement(prompt, deck, scoreEdit)
-//      .filter { it.isCompilableKotlin() }
-      .also {
-  //    repairKotlinStatement(prompt).also {
-        val contained = original in it
-        val elapsed = System.currentTimeMillis() - startTime
+         it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
+           println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
+           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
+         }
 
-        val toTake = 20
-        println("\nTop $toTake repairs:\n")
-        it.take(toTake).forEach {
-          println("Δ=${levenshtein(prompt, it)} repair: ${prettyDiffNoFrills(prompt, it)}")
-  //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
-        }
-
-        println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
-          "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
-        println("Original string was ${if (contained) "#${it.indexOf(original)}" else "NOT"} in repair proposals!\n")
-      }
-    }
+         println("Found ${it.size} valid repairs in ${elapsed}ms, or roughly " +
+           "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
+         println("Original string was ${if (contained) "#${it.indexOf(groundTruth)}" else "NOT"} in repair proposals!\n")
+       }
+   }
 }
 
 val projectDir = File(File("").absolutePath)
@@ -164,7 +161,7 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
   return uncoarsed
 }
 
-@OptIn(ExperimentalTime::class)
+
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
   fillers: Set<Σᐩ>,
@@ -211,7 +208,6 @@ fun parallelRepairKotlinStatement(
   )
 }
 
-@OptIn(ExperimentalTime::class)
 fun repairKotlinStatement(
   prompt: Σᐩ,
   clock: TimeMark = TimeSource.Monotonic.markNow()
@@ -228,7 +224,6 @@ fun repairKotlinStatement(
     filter = { isValidKotlin() },
   )
 
-@OptIn(ExperimentalTime::class)
 private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
     try {

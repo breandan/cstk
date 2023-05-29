@@ -8,7 +8,6 @@ import kotlin.time.*
 object UriIndex {
   operator fun get(hashCode: Int) = hashtable[hashCode] ?: URI("MISSING")
 
-  @OptIn(ExperimentalTime::class)
   val hashtable by lazy {
     measureTimedValue {
       ROOT_DIR.allFilesRecursively()

@@ -17,7 +17,6 @@ import kotlin.time.*
 
 // Natural errors, unlocalized, can we get it to parse?
 
-@OptIn(ExperimentalTime::class)
 fun main() {
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
   val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)

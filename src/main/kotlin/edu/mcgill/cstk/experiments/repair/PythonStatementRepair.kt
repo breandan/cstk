@@ -23,7 +23,6 @@ fun main() {
 //  println((pythonStatementCFG as CFGWrapper).cfg.blocked)
 }
 
-@OptIn(ExperimentalTime::class)
 private fun syntheticErrorCorrection() {
   validPythonStatements.lines()
     .filter { it.isNotBlank() }.asSequence().map {
@@ -45,7 +44,6 @@ private fun syntheticErrorCorrection() {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 fun organicErrorCorrection() {
   invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
 //    .parallelStream()
@@ -60,7 +58,6 @@ fun organicErrorCorrection() {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
     val timeIsLeft = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
@@ -69,11 +66,9 @@ private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
     else asCJL.synthesize(a, takeMoreWhile = timeIsLeft)
   }
 
-@OptIn(ExperimentalTime::class)
 private fun satRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
 
-@OptIn(ExperimentalTime::class)
 private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
     try {
@@ -85,7 +80,6 @@ private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
     } catch (e: Exception) { e.printStackTrace(); emptySequence()}
   }
 
-@OptIn(ExperimentalTime::class)
 private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> -> a.parallelSolve(this).asSequence() }
 
@@ -93,7 +87,6 @@ private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(L
 //    .forEach { println("${it.isValidPython()} : $it") }
 //}
 
-@OptIn(ExperimentalTime::class)
 fun repairPythonStatement(
   prompt: String,
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()

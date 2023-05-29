@@ -70,7 +70,6 @@ object EMD: DistanceFunction<DoubleArray, Double> {
     kantorovich(arrayOf(u), arrayOf(v))
 }
 
-@OptIn(ExperimentalTime::class)
 fun main() {
   val (a, b) = Pair(randomMatrix(400, 768), randomMatrix(400, 768))
   println(measureTime { println(kantorovich(a, b)) })

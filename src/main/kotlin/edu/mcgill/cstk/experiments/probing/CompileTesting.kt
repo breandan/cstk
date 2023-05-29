@@ -65,7 +65,6 @@ fun Stream<String>.evaluate(
     println("\nScores [model=(valid, total)]:\n$summary")
   }
 
-@OptIn(ExperimentalTime::class)
 fun Stream<String>.filterValid(strict: Boolean = false, timed: Boolean = false): Stream<String> =
   if (!timed) filter { if (strict) !it.containsSyntaxError() else it.isValidJava() }
   else filter {

@@ -19,7 +19,6 @@ fun buildOrLoadKWIndex(
 
 // Indexes all lines in all files in the path
 
-@OptIn(ExperimentalTime::class)
 fun rebuildKWIndex(rootDir: URI): KWIndex =
   measureTimedValue {
     println("Rebuilding keyword index...")

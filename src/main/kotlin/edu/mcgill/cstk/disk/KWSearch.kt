@@ -20,7 +20,6 @@ class TrieSearch: CliktCommand() {
   // Suffix trie multimap for (file, offset) pairs of matching prefixes
   val trie: KWIndex by lazy { buildOrLoadKWIndex(File(index), URI(path)) }
 
-  @OptIn(ExperimentalTime::class)
   override fun run() {
     println("\nSearching index of size ${trie.size()} for [?]=[$query]…\n")
 

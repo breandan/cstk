@@ -22,7 +22,6 @@ import kotlin.time.*
 ./gradlew syntheticSyntaxRepair
  */
 
-@OptIn(ExperimentalTime::class)
 fun main() {
   val models = setOf(tidyparse)
 

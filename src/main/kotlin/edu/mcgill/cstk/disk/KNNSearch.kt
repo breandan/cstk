@@ -58,7 +58,6 @@ class KNNSearch: CliktCommand() {
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   private fun printQuery() {
     println("\nSearching KNN index of size ${knnIndex.size()} for [?]=[$query]…\n")
     val nearestNeighbors = approxKNNSearch(query) //exactKNNSearch(query)

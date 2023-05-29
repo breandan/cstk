@@ -38,7 +38,6 @@ fun File.unzip(
   }.onFailure { it.printStackTrace() }
 }
 
-@OptIn(ExperimentalTime::class)
 inline fun <reified T> T.serializeTo(path: File) =
   measureTimedValue {
 //  Kryo().writeObject(Output(FileOutputStream(path)), this)
@@ -49,7 +48,6 @@ inline fun <reified T> T.serializeTo(path: File) =
     println("Wrote $path in ${it.duration}")
   }
 
-@OptIn(ExperimentalTime::class)
 inline fun <reified T> File.deserializeFrom(): T = measureTimedValue {
 //  Kryo().readObject(Input(FileInputStream(this)), T::class.java)
   println("Reading ${T::class.java.simpleName} from $path...")
