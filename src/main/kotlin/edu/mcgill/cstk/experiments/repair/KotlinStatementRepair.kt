@@ -70,7 +70,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
       eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
-      tokensToDelete = 1,
+      tokensToDelete = 2,
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
@@ -209,7 +209,7 @@ fun parallelRepairKotlinStatement(
           }
         }
       }
-  )
+  ).sortedWith(compareBy({ it.edit.size }, { it.score })).toList()
 }
 
 fun repairKotlinStatement(
