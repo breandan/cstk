@@ -13,11 +13,14 @@ import kotlin.time.*
 
 const val keywordFile = "src/main/resources/datasets/kotlin/keywords.txt"
 
-val mostCommonKotlinKeywords = File(keywordFile)
-  .readLines().map { it.trim() }.filter { it.isNotBlank() }
+val mostCommonKotlinKeywords by lazy {
+  File(keywordFile)
+    .readLines().map { it.trim() }.filter { it.isNotBlank() }
+}
 
-val mostCommonSymbols =
+val mostCommonSymbols by lazy {
   mostCommonKotlinKeywords.filter { it.none { it.isLetterOrDigit() } }
+}
 
 val memory = 3
 val windowsSize = 3
