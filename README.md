@@ -71,7 +71,7 @@ Once all models have been downloaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd> 
 Then, make sure the project builds correctly on a login node and download the dataset. This make take a few minutes the first time it is run:
 
 ```bash
-module load java/13.0.2 && \
+module load java/17.0.2 && \
 ./gradlew build && \
 ./gradlew cloneRepos
 ```
@@ -90,7 +90,7 @@ export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core
 # Disable 🤗 from phoning home on a Compute node
 export TRANSFORMERS_OFFLINE=1
 module load python/3.8
-module load java
+module load java/17.0.2
 source bin/activate
 # Use --offline for all Gradle commands on Compute nodes
 ./gradlew --offline [completeCode] [completeDoc] [varMisuse]
@@ -1061,7 +1061,7 @@ To start, must have Java and Python with PyTorch and HuggingFace:
 ```bash
 export TRANSFORMERS_OFFLINE=1 && \
 module load python/3.8 && \
-module load java && \
+module load java/17.0.2 && \
 source venv/bin/activate && \
 python embedding_server.py --model microsoft/graphcodebert-base --offline & && \
 java -jar gym-fs-fat-1.0-SNAPSHOT.jar
