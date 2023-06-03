@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import edu.mcgill.cstk.utils.*
+import org.apache.datasketches.frequencies.ErrorType
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.*
@@ -24,9 +25,10 @@ val mostCommonSymbols by lazy {
 
 val memory = 3
 val windowsSize = 3
-val P: MarkovChain<Σᐩ> by lazy {
+val P_kotlin: MarkovChain<Σᐩ> by lazy {
 //  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
 //  println("Top 1k most common tuples: ${P.topTuples(1000).joinToString("\n")}\n\n")
+// TODO: prepare the prompt in the same way as the training data
   fetchKotlinExamples().map { "BOS $it EOS" }.map {
     it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
   }.fold(MarkovChain(memory = memory)) { a, b -> a + b }
@@ -65,7 +67,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
   val deck =
     (commonKotlinKeywords + "ε" - "w")
       .also { println("Full deck: $it") }
-      .sortedBy { P[it] }.reversed().take(32)
+      .sortedBy { P_kotlin[it] }.reversed().take(32)
       .also { println("High frequency deck: $it") }.toSet()
 
   val edits = 2
@@ -81,12 +83,12 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
   }
 //      listOf("val query = seed ? : queries . first ( )" to "query = seed ? : queries . first ( )")
 
-    .filter { !it.second.isSyntacticallyValidKotlin() }.distinct().shuffled()
+   .filter { !it.second.isSyntacticallyValidKotlin() }.distinct().shuffled()
    // Run repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
      val startTime = System.currentTimeMillis()
-     parallelRepairKotlinStatement(prompt, deck, edits, scoreEdit).postprocess()
+     parallelRepairKotlinStatement(prompt, deck, edits + 1, scoreEdit).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
          val gtSeq = groundTruth.tokenizeByWhitespace().joinToString(" ")
@@ -112,22 +114,15 @@ val projectDir = File(File("").absolutePath)
 val allProjectsDir = projectDir.parentFile
 
 fun collectMostCommonKeywords() {
-  projectDir.also { println("Working directory: $it") }
-    .walkTopDown().filter { it.extension == "kt" }
-    .flatMap { it.readLines() }
-    .filter { it.isSyntacticallyValidKotlin() }
-    .filter { it.coarsenAsKotlin().let { str -> ignoredKeywords.none { it in str } } }
-    .flatMap { it.lexAsKotlin() }
-    // Compute histogram
-    .groupingBy { it }.eachCount()
-    // Take most common 10000
-    .toList().sortedByDescending { it.second }.take(10000)
+  P_kotlin.counter.rawCounts.getFrequentItems(ErrorType.NO_FALSE_NEGATIVES)
+    .map { it.item to it.estimate }.toList()
+    .sortedByDescending { it.second }.take(10000)
     .joinToString("\n") { it.first }
     .let { File(keywordFile).writeText(it) }
 }
 
 private fun constructScoringFunction(): (Σᐩ) -> Double =
-  { P.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
+  { P_kotlin.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
@@ -176,24 +171,20 @@ fun parallelRepairKotlinStatement(
   fillers: Set<Σᐩ>,
   maxEdits: Int = 2,
   scoreEdit: ((Σᐩ) -> Double)? = null,
-  clock: TimeMark = TimeSource.Monotonic.markNow()
 ): List<Repair> {
   var bestRepair = Double.MAX_VALUE
   val delim = List(prompt.length) { "-" }.joinToString("")
   println("$delim\nBest repairs so far:\n$delim")
   // We intersperse the prompt with empty strings to enable the repair of the first and last token
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
-  val promptTokens = listOf("") + prompt.tokenizeByWhitespace().intersperse(maxEdits) + listOf("")
+  val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
 
   val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   return bijectiveRepair(
     promptTokens = promptTokens,
     fillers = fillers,
     maxEdits = maxEdits,
-//    coarsen = Σᐩ::coarsenAsKotlin,
-//    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
-    //  updateProgress = { println(it) },
     admissibilityFilter = { isSyntacticallyValidKotlin() },
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =

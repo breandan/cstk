@@ -35,7 +35,7 @@ FUN -> def w ( ARGS ) :
 ARGS -> w , ARGS | w
 """.parseCFG()
 
-val prompt = """
+val user_prompt = """
   # Is the following code syntactically valid?
   $example_code
   # Answer (Y/N): <MASK: {Y_prob/N_prob}>
