@@ -68,12 +68,13 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
       .sortedBy { P[it] }.reversed().take(32)
       .also { println("High frequency deck: $it") }.toSet()
 
+  val edits = 2
   // Generate synthetic error dataset
   List(100) { dataset }.joinToString("\n").lines().map {
     val original = it.lexAsKotlin().joinToString(" ").trim()
     val prompt = original.constructPromptByDeletingRandomSyntax(
       eligibleTokensForDeletion = officialKotlinKeywords + commonKotlinKeywords,
-      tokensToDelete = 2,
+      tokensToDelete = edits,
       tokenizer = Σᐩ::lexAsKotlin
     )
     original to prompt
@@ -85,11 +86,12 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
      val startTime = System.currentTimeMillis()
-     parallelRepairKotlinStatement(prompt, deck, scoreEdit).postprocess()
+     parallelRepairKotlinStatement(prompt, deck, edits, scoreEdit).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
-         val results = it.map { it.result.tokenizeByWhitespace().joinToString(" ") }
-         val contained = groundTruth.tokenizeByWhitespace().joinToString(" ") in results
+         val gtSeq = groundTruth.tokenizeByWhitespace().joinToString(" ")
+         val fullESEC = it.map { listOf(it.result) + it.equivalenceClass.map { it.result } }
+         val contained = fullESEC.any { gtSeq in it }
          val elapsed = System.currentTimeMillis() - startTime
 
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
@@ -99,7 +101,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
 
          println("\nFound ${it.size} valid repairs in ${elapsed}ms, or roughly " +
            "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
-         println("Original string was ${if (contained) "#${results.indexOf(groundTruth)}" else "NOT"} in repair proposals!\n")
+         println("Original string was ${if (contained) "#${fullESEC.indexOfFirst { gtSeq in it }}" else "NOT"} in repair proposals!\n")
        }
    }
 }
@@ -172,6 +174,7 @@ fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
 fun parallelRepairKotlinStatement(
   prompt: Σᐩ,
   fillers: Set<Σᐩ>,
+  maxEdits: Int = 2,
   scoreEdit: ((Σᐩ) -> Double)? = null,
   clock: TimeMark = TimeSource.Monotonic.markNow()
 ): List<Repair> {
@@ -180,11 +183,13 @@ fun parallelRepairKotlinStatement(
   println("$delim\nBest repairs so far:\n$delim")
   // We intersperse the prompt with empty strings to enable the repair of the first and last token
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
-  val promptTokens = listOf("") + prompt.tokenizeByWhitespace().intersperse() + listOf("")
+  val promptTokens = listOf("") + prompt.tokenizeByWhitespace().intersperse(maxEdits) + listOf("")
 
+  val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   return bijectiveRepair(
     promptTokens = promptTokens,
     fillers = fillers,
+    maxEdits = maxEdits,
 //    coarsen = Σᐩ::coarsenAsKotlin,
 //    uncoarsen = Σᐩ::uncoarsenAsKotlin,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
@@ -212,7 +217,15 @@ fun parallelRepairKotlinStatement(
           }
         }
       }
-  ).sortedWith(compareBy({ it.edit.size }, { it.score })).toList()
+  )
+  .map {
+    it.editSignatureEquivalenceClass(
+      tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
+      filter =  { it.isSyntacticallyValidKotlin() },
+      score = { scoreEdit?.invoke(it) ?: 0.0 }
+    ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
+  }.distinctBy { it.result }.toList()
+  .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 
 fun repairKotlinStatement(
