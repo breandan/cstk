@@ -50,14 +50,19 @@ fun main() {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
-    .filter { it.tokenizeByWhitespace().size < 10 }.take(10)
+    .filter { it.tokenizeByWhitespace().size < 20 }.take(10)
+    .map { seq -> seq.tokenizeByWhitespace()
+      .map { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } }
+      .onEach { (it in seq2parsePythonCFG.symbols) .also { b -> if(!b) println("Invalid! " + seq) } }
+      .joinToString(" ") }
     .forEach { prompt ->
+       println("Repairing: $prompt")
        val startTime = System.currentTimeMillis()
        val deck = seq2parsePythonCFG.terminals + "ε"
        parallelRepairPythonSnippet(
          prompt = prompt,
          fillers = deck,
-         maxEdits = 5,
+         maxEdits = 3,
          scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
        ).also {
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
@@ -115,13 +120,14 @@ fun parallelRepairPythonSnippet(
           }
         }
       }
-  ).toList().parallelStream().map {
-      it.editSignatureEquivalenceClass(
-        tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
-        filter =  { it in seq2parsePythonCFG.language },
-        score = { scoreEdit?.invoke(it) ?: 0.0 }
-      ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-    }.toList().distinctBy { it.result }.toList()
+  ).toList()
+//    .parallelStream().map {
+//      it.editSignatureEquivalenceClass(
+//        tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
+//        filter =  { it in seq2parsePythonCFG.language },
+//        score = { scoreEdit?.invoke(it) ?: 0.0 }
+//      ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
+//    }.toList().distinctBy { it.result }.toList()
     .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 
@@ -317,4 +323,15 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
-""".parseCFG()
+""".parseCFG(normalize = false)
+  .run {
+    mutableListOf<CFG>().let { rewrites ->
+      expandOr()
+      .also { rewrites.add(it) } /** [originalForm] */
+      .eliminateParametricityFromLHS()
+      .also { rewrites.add(it) } /** [nonparametricForm] */
+      .generateNonterminalStubs()
+      .transformIntoCNF()
+      .also { cnf -> rewriteHistory.put(cnf, rewrites) }
+    }
+  }
