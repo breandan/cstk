@@ -95,34 +95,33 @@ fun parallelRepairPythonSnippet(
     admissibilityFilter = { this in seq2parsePythonCFG.language },
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
-    if (scoreEdit != null) {
-      {
-        val score = scoreEdit(it.result)
-        if (score < bestRepair) {
-          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//        println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
-          bestRepair = score
+      if (scoreEdit != null) {
+        {
+          val score = scoreEdit(it.result)
+          if (score < bestRepair) {
+            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+//          println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
+            bestRepair = score
+          }
         }
       }
-    }
-    else {
-      {
-        val levDiff = it.edit.size.toDouble()
-        if (levDiff < bestRepair) {
-          println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//          println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
-          bestRepair = levDiff
+      else {
+        {
+          val levDiff = it.edit.size.toDouble()
+          if (levDiff < bestRepair) {
+            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+//            println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
+            bestRepair = levDiff
+          }
         }
       }
-    }
-  )
-    .map {
+  ).toList().parallelStream().map {
       it.editSignatureEquivalenceClass(
         tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
         filter =  { it in seq2parsePythonCFG.language },
         score = { scoreEdit?.invoke(it) ?: 0.0 }
       ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-    }.distinctBy { it.result }.toList()
+    }.toList().distinctBy { it.result }.toList()
     .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 

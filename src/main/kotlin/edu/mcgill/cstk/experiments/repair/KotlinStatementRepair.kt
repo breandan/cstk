@@ -208,14 +208,13 @@ fun parallelRepairKotlinStatement(
           }
         }
       }
-  )
-  .map {
+  ).toList().parallelStream().map {
     it.editSignatureEquivalenceClass(
       tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
       filter =  { it.isSyntacticallyValidKotlin() },
       score = { scoreEdit?.invoke(it) ?: 0.0 }
     ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-  }.distinctBy { it.result }.toList()
+  }.toList().distinctBy { it.result }
   .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 
