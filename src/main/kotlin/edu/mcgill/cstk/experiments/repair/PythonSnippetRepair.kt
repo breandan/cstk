@@ -23,12 +23,12 @@ val brokenPythonSnippets by lazy {
         println("Downloading broken Python snippets from $it")
         writeText(it.readText())
       }
-    }.readLines().asSequence().map { it.substringBefore(" _ENDMARKER_ ") }
+    }.readLines().asSequence()
 }
 
 val P_seq2parse: MarkovChain<Σᐩ> by lazy {
   brokenPythonSnippets.toList().parallelStream().map { "BOS $it EOS" }
-    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(memory) }
+    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(2) }
     .reduce { t, u -> t + u }.get()
 }
 
@@ -50,13 +50,10 @@ fun main() {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
-    .filter { it.tokenizeByWhitespace().size < 20 }.take(10)
-    .map { seq -> seq.tokenizeByWhitespace()
-      .map { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } }
-      .onEach { (it in seq2parsePythonCFG.symbols) .also { b -> if(!b) println("Invalid! " + seq) } }
-      .joinToString(" ") }
+    .filter { it.tokenizeByWhitespace().size < 20 }.distinct().take(10)
+    .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
+    .map { println("\nERule: $it"); it.substringBefore(" ENDMARKER ").also { println("Repairing: $it\n") } }
     .forEach { prompt ->
-       println("Repairing: $prompt")
        val startTime = System.currentTimeMillis()
        val deck = seq2parsePythonCFG.terminals + "ε"
        parallelRepairPythonSnippet(
@@ -66,7 +63,7 @@ fun main() {
          scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
        ).also {
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-           println("Δ=${it.edit.size} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
            //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
          }
 
@@ -127,7 +124,8 @@ fun parallelRepairPythonSnippet(
 //        filter =  { it in seq2parsePythonCFG.language },
 //        score = { scoreEdit?.invoke(it) ?: 0.0 }
 //      ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-//    }.toList().distinctBy { it.result }.toList()
+//    }.toList()
+    .distinctBy { it.result }.toList()
     .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 

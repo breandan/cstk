@@ -97,7 +97,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
          val elapsed = System.currentTimeMillis() - startTime
 
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-           println("Δ=${it.edit.size} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
            //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
          }
 
@@ -208,13 +208,15 @@ fun parallelRepairKotlinStatement(
           }
         }
       }
-  ).toList().parallelStream().map {
-    it.editSignatureEquivalenceClass(
-      tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
-      filter =  { it.isSyntacticallyValidKotlin() },
-      score = { scoreEdit?.invoke(it) ?: 0.0 }
-    ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-  }.toList().distinctBy { it.result }
+  ).toList()
+//  .parallelStream().map {
+//    it.editSignatureEquivalenceClass(
+//      tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
+//      filter =  { it.isSyntacticallyValidKotlin() },
+//      score = { scoreEdit?.invoke(it) ?: 0.0 }
+//    ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
+//  }.toList()
+    .distinctBy { it.result }
   .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 
