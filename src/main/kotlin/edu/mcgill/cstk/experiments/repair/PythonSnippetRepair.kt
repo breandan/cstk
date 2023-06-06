@@ -28,7 +28,7 @@ val brokenPythonSnippets by lazy {
 
 val P_seq2parse: MarkovChain<Σᐩ> by lazy {
   brokenPythonSnippets.toList().parallelStream().map { "BOS $it EOS" }
-    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(2) }
+    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(1) }
     .reduce { t, u -> t + u }.get()
 }
 
@@ -50,7 +50,7 @@ fun main() {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
-    .filter { it.tokenizeByWhitespace().size < 20 }.distinct().take(10)
+    .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(10)
     .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
     .map { println("\nERule: $it"); it.substringBefore(" ENDMARKER ").also { println("Repairing: $it\n") } }
     .forEach { prompt ->
@@ -59,7 +59,7 @@ fun main() {
        parallelRepairPythonSnippet(
          prompt = prompt,
          fillers = deck,
-         maxEdits = 3,
+         maxEdits = 4,
          scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
        ).also {
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
