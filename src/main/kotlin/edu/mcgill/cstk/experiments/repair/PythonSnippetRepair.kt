@@ -2,6 +2,7 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.intersperse
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import edu.mcgill.cstk.utils.prettyDiffNoFrills
@@ -50,7 +51,7 @@ fun main() {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
-    .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(300).shuffled()
+    .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(300)
     .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
     .map { println("\nERule: $it"); it.substringBefore(" ENDMARKER ").also { println("Repairing: $it\n") } }
     .forEach { prompt ->
@@ -88,13 +89,16 @@ fun parallelRepairPythonSnippet(
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
   val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
 
+  val (nts, bmp, ur, ba, bdx) =
+    seq2parsePythonCFG.run { nonterminals to bimap to unitReachability to bitwiseAlgebra to bindex[START_SYMBOL] }
+
   val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   return bijectiveRepair(
     promptTokens = promptTokens,
     fillers = fillers,
     maxEdits = maxEdits,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
-    admissibilityFilter = { this in seq2parsePythonCFG.language },
+    admissibilityFilter = { seq2parsePythonCFG.isValid(tokenizeByWhitespace(), nts, bmp, ur, ba, bdx) },
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
       if (scoreEdit != null) {
@@ -325,11 +329,11 @@ Yield_Arg -> From_Keyword Test | Testlist_Endcomma
   .run {
     mutableListOf<CFG>().let { rewrites ->
       expandOr()
-      .also { rewrites.add(it) } /** [originalForm] */
+      .also { rewrites.add(it.freeze()) } /** [originalForm] */
       .eliminateParametricityFromLHS()
       .also { rewrites.add(it) } /** [nonparametricForm] */
       .generateNonterminalStubs()
       .transformIntoCNF()
-      .also { cnf -> rewriteHistory.put(cnf, rewrites) }
+      .also { cnf -> rewriteHistory.put(cnf.freeze(), rewrites) }
     }
-  }
+  }.freeze()
