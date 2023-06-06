@@ -50,7 +50,7 @@ fun main() {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
-    .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(10)
+    .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(300).shuffled()
     .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
     .map { println("\nERule: $it"); it.substringBefore(" ENDMARKER ").also { println("Repairing: $it\n") } }
     .forEach { prompt ->
