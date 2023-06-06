@@ -42,7 +42,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.2.1"
+  val multikVersion = "0.2.2"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "7.40.8"
+  val openrwVersion = "8.0.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,7 +83,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.314")
+  implementation("org.kohsuke:github-api:1.315")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.1")
 
@@ -151,10 +151,10 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-7")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-8")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.2.4")
+  implementation("com.aallam.openai:openai-client:3.2.5")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
