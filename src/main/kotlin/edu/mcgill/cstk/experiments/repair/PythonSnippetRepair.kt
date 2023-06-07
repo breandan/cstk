@@ -53,14 +53,19 @@ fun main() {
     }
     .filter { it.tokenizeByWhitespace().size < 50 }.distinct().take(300)
     .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
-    .map { println("\nERule: $it"); it.substringBefore(" ENDMARKER ").also { println("Repairing: $it\n") } }
+    .map { it.substringBefore(" ENDMARKER ") }
     .forEach { prompt ->
        val startTime = System.currentTimeMillis()
        val deck = seq2parsePythonCFG.terminals + "ε"
+       val segmentation = Segmentation.build(seq2parsePythonCFG, prompt)
+
+       println("Repairing: ${segmentation.toColorfulString()}\n")
+
        parallelRepairPythonSnippet(
          prompt = prompt,
          fillers = deck,
          maxEdits = 4,
+         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
          scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
        ).also {
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
