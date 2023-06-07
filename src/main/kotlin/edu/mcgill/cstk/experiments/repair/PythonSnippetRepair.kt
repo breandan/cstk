@@ -2,13 +2,13 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.intersperse
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import edu.mcgill.cstk.utils.prettyDiffNoFrills
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
 import java.net.URL
+import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
 
 
@@ -89,16 +89,13 @@ fun parallelRepairPythonSnippet(
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
   val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
 
-  val (nts, bmp, ur, ba, bdx) =
-    seq2parsePythonCFG.run { nonterminals to bimap to unitReachability to bitwiseAlgebra to bindex[START_SYMBOL] }
-
   val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   return bijectiveRepair(
     promptTokens = promptTokens,
     fillers = fillers,
     maxEdits = maxEdits,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
-    admissibilityFilter = { seq2parsePythonCFG.isValid(tokenizeByWhitespace(), nts, bmp, ur, ba, bdx) },
+    admissibilityFilter = { this in seq2parsePythonCFG.language },
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
       if (scoreEdit != null) {
@@ -326,14 +323,18 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
 """.parseCFG(normalize = false)
+  /** TODO: remove this pain in the future, canonicalize [normalForm]s */
   .run {
     mutableListOf<CFG>().let { rewrites ->
-      expandOr()
-      .also { rewrites.add(it.freeze()) } /** [originalForm] */
+      expandOr().freeze()
+      .also { rewrites.add(it) } /** [originalForm] */
       .eliminateParametricityFromLHS()
       .also { rewrites.add(it) } /** [nonparametricForm] */
       .generateNonterminalStubs()
       .transformIntoCNF()
-      .also { cnf -> rewriteHistory.put(cnf.freeze(), rewrites) }
+      .also { cnf -> rewriteHistory.put(cnf, rewrites) }
     }
-  }.freeze()
+  }.freeze().also {
+    measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
+      .also { println("Computed unit reachability in ${it}ms") }
+  }
