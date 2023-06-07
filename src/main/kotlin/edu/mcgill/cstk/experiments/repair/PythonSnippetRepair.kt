@@ -8,6 +8,7 @@ import edu.mcgill.cstk.utils.prettyDiffNoFrills
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
 import java.net.URL
+import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
 
 
@@ -322,9 +323,10 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
 """.parseCFG(normalize = false)
+  /** TODO: remove this pain in the future, canonicalize [normalForm]s */
   .run {
     mutableListOf<CFG>().let { rewrites ->
-      expandOr()
+      expandOr().freeze()
       .also { rewrites.add(it) } /** [originalForm] */
       .eliminateParametricityFromLHS()
       .also { rewrites.add(it) } /** [nonparametricForm] */
@@ -332,4 +334,7 @@ Yield_Arg -> From_Keyword Test | Testlist_Endcomma
       .transformIntoCNF()
       .also { cnf -> rewriteHistory.put(cnf, rewrites) }
     }
+  }.freeze().also {
+    measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
+      .also { println("Computed unit reachability in ${it}ms") }
   }
