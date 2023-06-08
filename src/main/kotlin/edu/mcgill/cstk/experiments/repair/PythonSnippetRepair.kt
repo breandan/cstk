@@ -1,13 +1,19 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.intersperse
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
-import edu.mcgill.cstk.utils.prettyDiffNoFrills
+import com.beust.klaxon.*
+import com.beust.klaxon.JsonObject
+import com.google.common.io.Resources
+import com.google.gson.*
+import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
-import java.io.File
+import java.io.*
 import java.net.URL
+import java.util.logging.*
+import kotlin.math.absoluteValue
 import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
 
@@ -16,8 +22,8 @@ val brokenSnippetURL =
   "https://raw.githubusercontent.com/gsakkas/seq2parse/main/src/datasets/python/erule-test-set-generic.txt"
 
 val brokenPythonSnippets by lazy {
-  // Download file if "resources/datasets/python/erule-test-set-generic.txt" doesn't exist
-  "/src/main/resources/datasets/python/erule-test-set-generic.txt"
+  // Download file if "resources/datasets/python/seq2parse/erule-test-set-generic.txt" doesn't exist
+  "/src/main/resources/datasets/python/seq2parse/erule-test-set-generic.txt"
     .let { File(File("").absolutePath + it) }
     .apply {
       if (!exists()) URL(brokenSnippetURL).also {
@@ -34,7 +40,8 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 }
 
 val mostCommonTokens by lazy {
-  P_seq2parse.counter.rawCounts.getFrequentItems(ErrorType.NO_FALSE_NEGATIVES)
+  P_seq2parse.counter.rawCounts
+    .getFrequentItems(ErrorType.NO_FALSE_NEGATIVES)
     .associate { it.item to it.estimate }
     .entries.sortedByDescending { it.value }.take(62)
     .onEach { println("${it.key} (${it.value})") }
@@ -46,8 +53,32 @@ val mostCommonTokens by lazy {
  */
 
 fun main() {
-  brokenPythonSnippets
-    .map {
+  seq2parseEval()
+//  stackOverflowEval()
+}
+
+fun stackOverflowEval() {
+  val (brokeSnippets, fixedSnippets) =
+    readContents("parse_errors.json") to
+    readContents("parse_fixes.json")
+
+  brokeSnippets.zip(fixedSnippets)
+    .filter { (broke, fixed) ->
+      val (brokeTokens, fixedTokens) =
+        broke.tokenizeAsPython() to fixed.tokenizeAsPython()
+      broke != fixed && jaccardDistance(brokeTokens, fixedTokens)
+        .let { it > 0.01 && it < 0.2 }.also { println(it) }
+    }
+    .map { (erroneous, corrected) ->
+      prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected"))
+    }.filter {
+      // Count number of occurences of ANSI_GREEN_BACKGROUND and ANSI_RED_BACKGROUND
+      it.count { it == '\u001B' } > 6
+    }.forEach { println(it) }
+}
+
+fun seq2parseEval() {
+  brokenPythonSnippets.map {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }
     }
@@ -55,29 +86,29 @@ fun main() {
     .map { seq -> seq.tokenizeByWhitespace().joinToString(" ") { it.dropWhile { it == '_' }.dropLastWhile { it == '_' } } }
     .map { it.substringBefore(" ENDMARKER ") }
     .forEach { prompt ->
-       val startTime = System.currentTimeMillis()
-       val deck = seq2parsePythonCFG.terminals + "ε"
-       val segmentation = Segmentation.build(seq2parsePythonCFG, prompt)
+      val startTime = System.currentTimeMillis()
+      val deck = seq2parsePythonCFG.terminals + "ε"
+      val segmentation = Segmentation.build(seq2parsePythonCFG, prompt)
 
-       println("Repairing: ${segmentation.toColorfulString()}\n")
+      println("Repairing: ${segmentation.toColorfulString()}\n")
 
-       parallelRepairPythonSnippet(
-         prompt = prompt,
-         fillers = deck,
-         maxEdits = 4,
-         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
-         scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
-       ).also {
-         it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
-         }
+      parallelRepairPythonSnippet(
+        prompt = prompt,
+        fillers = deck,
+        maxEdits = 4,
+        // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
+        scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
+      ).also {
+        it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
+          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+          //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
+        }
 
-         val elapsed = System.currentTimeMillis() - startTime
+        val elapsed = System.currentTimeMillis() - startTime
 
-         println("\nFound ${it.size} valid repairs in ${elapsed}ms, or roughly " +
-           "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
-       }
+        println("\nFound ${it.size} valid repairs in ${elapsed}ms, or roughly " +
+          "${(it.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
+      }
     }
 }
 
@@ -135,7 +166,8 @@ fun parallelRepairPythonSnippet(
     .sortedWith(compareBy({ it.edit.size }, { it.score }))
 }
 
-val seq2parsePythonCFG: CFG = """
+val seq2parsePythonCFG: CFG by lazy {
+  """
 START -> Stmts_Or_Newlines Endmarker
 Stmts_Or_Newlines -> Stmt_Or_Newline | Stmt_Or_Newline Stmts_Or_Newlines
 Stmt_Or_Newline -> Stmt | Newline
@@ -328,18 +360,28 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
 """.parseCFG(normalize = false)
-  /** TODO: remove this pain in the future, canonicalize [normalForm]s */
-  .run {
-    mutableListOf<CFG>().let { rewrites ->
-      expandOr().freeze()
-      .also { rewrites.add(it) } /** [originalForm] */
-      .eliminateParametricityFromLHS()
-      .also { rewrites.add(it) } /** [nonparametricForm] */
-      .generateNonterminalStubs()
-      .transformIntoCNF()
-      .also { cnf -> rewriteHistory.put(cnf, rewrites) }
+    /** TODO: remove this pain in the future, canonicalize [normalForm]s */
+    .run {
+      mutableListOf<CFG>().let { rewrites ->
+        expandOr().freeze()
+          .also { rewrites.add(it) }
+          /** [originalForm] */
+          .eliminateParametricityFromLHS()
+          .also { rewrites.add(it) }
+          /** [nonparametricForm] */
+          .generateNonterminalStubs()
+          .transformIntoCNF()
+          .also { cnf -> rewriteHistory.put(cnf, rewrites) }
+      }
+    }.freeze().also {
+      measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
+        .also { println("Computed unit reachability in ${it}ms") }
     }
-  }.freeze().also {
-    measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
-      .also { println("Computed unit reachability in ${it}ms") }
-  }
+}
+
+fun readContents(
+  filename: String = "parse_errors.json",
+  file: File = File(File("").absolutePath +
+  "/src/main/resources/datasets/python/stack_overflow/$filename")
+): Sequence<Σᐩ> = Klaxon().parseJsonObject(file.reader()).asSequence()
+  .map { (_, v) -> (v as JsonObject).string("content")!! }
