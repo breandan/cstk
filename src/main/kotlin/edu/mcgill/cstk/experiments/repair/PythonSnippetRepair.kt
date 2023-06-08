@@ -6,13 +6,10 @@ import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import com.beust.klaxon.*
 import com.beust.klaxon.JsonObject
-import com.google.common.io.Resources
-import com.google.gson.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.*
 import java.net.URL
-import java.util.logging.*
 import kotlin.math.absoluteValue
 import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
@@ -63,18 +60,20 @@ fun stackOverflowEval() {
     readContents("parse_fixes.json")
 
   brokeSnippets.zip(fixedSnippets)
+    .filter { it.first.lines().size < 20 &&
+      (it.first.lines().size - it.second.lines().size).absoluteValue < 4
+    }
     .filter { (broke, fixed) ->
       val (brokeTokens, fixedTokens) =
         broke.tokenizeAsPython() to fixed.tokenizeAsPython()
-      broke != fixed && jaccardDistance(brokeTokens, fixedTokens)
-        .let { it > 0.01 && it < 0.2 }.also { println(it) }
+      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
+      broke != fixed && multisetManhattanDistance(brokeTokens, fixedTokens)
+        .let { it in 1..5 }
     }
     .map { (erroneous, corrected) ->
       prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected"))
-    }.filter {
-      // Count number of occurences of ANSI_GREEN_BACKGROUND and ANSI_RED_BACKGROUND
-      it.count { it == '\u001B' } > 6
-    }.forEach { println(it) }
+    }.filter { it.count { it == '\u001B' } in 4..10 }
+    .forEach { println(it) }
 }
 
 fun seq2parseEval() {

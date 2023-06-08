@@ -393,7 +393,10 @@ fun prettyDiffs(
 fun String.visibleLen() =
   replace(ANSI_RED_BACKGROUND,"")
     .replace(ANSI_GREEN_BACKGROUND,"")
-    .replace(ANSI_RESET,"").length
+    .replace(ANSI_RESET,"")
+    // Replace tabs with 4 spaces
+    .replace("\t", "  ")
+    .length
 
 fun latexDiffSingleLOC(original: String, new: String) =
   DiffRowGenerator.create()
@@ -437,8 +440,8 @@ fun prettyDiffHorizontal(
   maxLen: Int = 180, maxLines: Int = 200,
 ): String {
   val sb = StringBuilder()
-  val leftLines = left.lines()
-  val rightLines = right.lines()
+  val leftLines = left.replace("\t", "  ").lines()
+  val rightLines = right.replace("\t", "  ").lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
     val rows = DiffRowGenerator.create()
       .showInlineDiffs(true)
@@ -450,8 +453,8 @@ fun prettyDiffHorizontal(
       .build()
       .generateDiffRows(leftLines, rightLines)
 
-    val padLeft = rows.maxOf { it.oldLine.visibleLen() } + 3
-    val padRight = rows.maxOf { it.newLine.visibleLen() } + 3
+    val padLeft = max(leftHeading.visibleLen(), rows.maxOf { it.oldLine.visibleLen() }) + 3
+    val padRight = max(rightHeading.visibleLen(), rows.maxOf { it.newLine.visibleLen() }) + 3
 
     val tlsep = "┌".padEnd(padLeft, '─')
     val trsep = "┬".padEnd(padRight, '─')
