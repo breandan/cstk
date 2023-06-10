@@ -5,12 +5,11 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import com.beust.klaxon.*
-import com.beust.klaxon.JsonObject
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.*
 import java.net.URL
-import kotlin.math.absoluteValue
+import kotlin.math.*
 import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
 
@@ -52,6 +51,34 @@ val mostCommonTokens by lazy {
 fun main() {
   seq2parseEval()
 //  stackOverflowEval()
+}
+
+fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boolean): List<T> {
+  // If n granularity is greater than number of tests, then finished, simply return passed in tests
+  if (elements.size < n) { return elements }
+
+  // Cut the elements into n equal chunks and try each chunk
+  val chunkSize = (elements.size.toDouble() / n).roundToInt()
+
+  val chunks = elements.windowed(chunkSize, chunkSize, true)
+
+  chunks.forEachIndexed { index, chunk ->
+    val otherChunk = elements.subList(0, index*chunkSize) +
+      elements.subList(min((index+1)*chunkSize, elements.size), elements.size)
+
+    // Try to other, complement chunk first, with theory that valid elements are closer to end
+    if (checkValid(otherChunk)) return deltaDebug(otherChunk, 2, checkValid)
+
+    // Check if running this chunk works
+    if (checkValid(chunk)) return deltaDebug(chunk, 2, checkValid)
+  }
+
+  // If size is equal to number of chunks, we are finished, cannot go down more
+  if (elements.size == n) return elements
+
+  // If not chunk/complement work, increase granularity and try again
+  return if (elements.size < n * 2) deltaDebug(elements, elements.size, checkValid)
+  else deltaDebug(elements, n * 2, checkValid)
 }
 
 fun stackOverflowEval() {
@@ -359,23 +386,23 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
 """.parseCFG(normalize = false)
-    /** TODO: remove this pain in the future, canonicalize [normalForm]s */
-    .run {
-      mutableListOf<CFG>().let { rewrites ->
-        expandOr().freeze()
-          .also { rewrites.add(it) }
-          /** [originalForm] */
-          .eliminateParametricityFromLHS()
-          .also { rewrites.add(it) }
-          /** [nonparametricForm] */
-          .generateNonterminalStubs()
-          .transformIntoCNF()
-          .also { cnf -> rewriteHistory.put(cnf, rewrites) }
-      }
-    }.freeze().also {
-      measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
-        .also { println("Computed unit reachability in ${it}ms") }
+  /** TODO: remove this pain in the future, canonicalize [normalForm]s */
+  .run {
+    mutableListOf<CFG>().let { rewrites ->
+      expandOr().freeze()
+        .also { rewrites.add(it) }
+        /** [originalForm] */
+        .eliminateParametricityFromLHS()
+        .also { rewrites.add(it) }
+        /** [nonparametricForm] */
+        .generateNonterminalStubs()
+        .transformIntoCNF()
+        .also { cnf -> rewriteHistory.put(cnf, rewrites) }
     }
+  }.freeze().also {
+    measureTimeMillis { println("UR:" + it.originalForm.unitReachability.size) }
+      .also { println("Computed unit reachability in ${it}ms") }
+  }
 }
 
 fun readContents(
