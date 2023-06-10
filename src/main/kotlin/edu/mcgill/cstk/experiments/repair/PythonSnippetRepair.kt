@@ -7,8 +7,10 @@ import bijectiveRepair
 import com.beust.klaxon.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
+import scala.tools.nsc.doc.html.page.JSONObject
 import java.io.*
 import java.net.URL
+import java.util.regex.Pattern
 import kotlin.math.*
 import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
@@ -49,8 +51,8 @@ val mostCommonTokens by lazy {
  */
 
 fun main() {
-  seq2parseEval()
-//  stackOverflowEval()
+//  seq2parseEval()
+  stackOverflowEval()
 }
 
 fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boolean): List<T> {
@@ -84,9 +86,10 @@ fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boole
 fun stackOverflowEval() {
   val (brokeSnippets, fixedSnippets) =
     readContents("parse_errors.json") to
-    readContents("parse_fixes.json")
+      readContents("parse_fixes.json")
 
   brokeSnippets.zip(fixedSnippets)
+    .filter { (it.first.isValidPython() && it.second.isValidPython()) }
     .filter { it.first.lines().size < 20 &&
       (it.first.lines().size - it.second.lines().size).absoluteValue < 4
     }
@@ -99,6 +102,9 @@ fun stackOverflowEval() {
     }
     .map { (erroneous, corrected) ->
       prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected"))
+      // TODO: Only minimize the delta between erroneous and corrected, not corrected itself
+//      val minimized = deltaDebug(corrected.map { "$it" }, 2) { it.joinToString("").isValidPython() }.joinToString("")
+//      prettyDiffs(listOf(erroneous, corrected, minimized), listOf("erroneous", "corrected", "minimized"))
     }.filter { it.count { it == '\u001B' } in 4..10 }
     .forEach { println(it) }
 }
@@ -408,6 +414,22 @@ Yield_Arg -> From_Keyword Test | Testlist_Endcomma
 fun readContents(
   filename: String = "parse_errors.json",
   file: File = File(File("").absolutePath +
-  "/src/main/resources/datasets/python/stack_overflow/$filename")
-): Sequence<Σᐩ> = Klaxon().parseJsonObject(file.reader()).asSequence()
-  .map { (_, v) -> (v as JsonObject).string("content")!! }
+    "/src/main/resources/datasets/python/stack_overflow/$filename")
+): Sequence<String> {
+  val contentPattern = Pattern.compile("\"content\"\\s*:\\s*\"(.*?)\",\\s*\"length\"")
+
+  return sequence {
+    file.bufferedReader().use { reader ->
+      val line = reader.readLine() ?: return@sequence
+
+      val matcher = contentPattern.matcher(line)
+      yieldAll(generateSequence {
+        if (matcher.find()) {
+          val json = "{\"content\":\"${matcher.group(1)}\"}"
+          val parsedObject = Klaxon().parseJsonObject(json.reader())
+          parsedObject.string("content")
+        } else null
+      })
+    }
+  }
+}

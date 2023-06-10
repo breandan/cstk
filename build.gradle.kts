@@ -219,6 +219,7 @@ tasks {
       minHeapSize = "4g"
       maxHeapSize = "8g"
       classpath = sourceSets["main"].runtimeClasspath
+      outputs.upToDateWhen { false }
     }
   }
 
