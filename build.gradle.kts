@@ -2,7 +2,7 @@ import de.undercouch.gradle.tasks.download.Download
 
 plugins {
   kotlin("jvm") version "1.9.0-Beta"
-  id("com.github.ben-manes.versions") version "0.46.0"
+  id("com.github.ben-manes.versions") version "0.47.0"
   id("de.undercouch.download") version "5.4.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.0.0"
+  val openrwVersion = "8.1.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -151,7 +151,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-8")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-9")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.2.5")
