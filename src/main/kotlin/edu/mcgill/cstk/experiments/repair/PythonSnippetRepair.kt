@@ -3,15 +3,18 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
+import ai.hypergraph.kaliningraph.types.*
 import bijectiveRepair
 import com.beust.klaxon.*
+import com.github.difflib.text.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
-import scala.tools.nsc.doc.html.page.JSONObject
 import java.io.*
 import java.net.URL
 import java.util.regex.Pattern
+import java.util.stream.Stream
 import kotlin.math.*
+import kotlin.streams.asStream
 import kotlin.system.measureTimeMillis
 import kotlin.time.TimeSource
 
@@ -89,24 +92,46 @@ fun stackOverflowEval() {
       readContents("parse_fixes.json")
 
   brokeSnippets.zip(fixedSnippets)
-    .filter { (it.first.isValidPython() && it.second.isValidPython()) }
-    .filter { it.first.lines().size < 20 &&
+    .asStream()
+    .filter {
+      it.first != it.second &&
+      (!it.first.isValidPython() && it.second.isValidPython()) &&
+      it.first.lines().size < 20 &&
       (it.first.lines().size - it.second.lines().size).absoluteValue < 4
     }
-    .filter { (broke, fixed) ->
+    .minimizeFix()
+    .filter { (broke, fixed, minfix) ->
       val (brokeTokens, fixedTokens) =
         broke.tokenizeAsPython() to fixed.tokenizeAsPython()
       (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
       broke != fixed && multisetManhattanDistance(brokeTokens, fixedTokens)
         .let { it in 1..5 }
     }
-    .map { (erroneous, corrected) ->
-      prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected"))
+    .map { (erroneous, corrected, minfix) ->
+      prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected")) +
+        prettyDiffs(listOf(erroneous, minfix), listOf("erroneous", "minimized"))
       // TODO: Only minimize the delta between erroneous and corrected, not corrected itself
 //      val minimized = deltaDebug(corrected.map { "$it" }, 2) { it.joinToString("").isValidPython() }.joinToString("")
 //      prettyDiffs(listOf(erroneous, corrected, minimized), listOf("erroneous", "corrected", "minimized"))
-    }.filter { it.count { it == '\u001B' } in 4..10 }
+    }.filter { it.count { it == '\u001B' } in 2..10 }
     .forEach { println(it) }
+}
+
+fun Stream<Π2A<Σᐩ>>.minimizeFix() =
+ map { (broke, fixed) ->
+  val (brokeTokens, fixedTokens) =
+    broke.tokenizeAsPython(true) to fixed.tokenizeAsPython(true)
+
+//  val brokeJoin = brokeTokens.joinToString("")
+  val fixedJoin = fixedTokens.joinToString("")
+//  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
+
+  val patch: Patch = extractPatch(brokeTokens, fixedTokens)
+  val minEdit = deltaDebug(patch.allEdits()) { idxs -> patch.apply(idxs).isValidPython() }
+  val minFix = patch.apply(minEdit)
+//  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
+//  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
+  broke to fixedJoin to minFix
 }
 
 fun seq2parseEval() {
@@ -433,3 +458,24 @@ fun readContents(
     }
   }
 }
+
+enum class EditType { INSERT, CHANGE, DELETE, EQUALS }
+data class Edit(val type: EditType, val old: Σᐩ, val new: Σᐩ)
+
+typealias Patch = List<Edit>
+
+fun Patch.allEdits(): List<Int> = indices.filter { this[it].type != EditType.EQUALS }
+
+fun Patch.apply(indices: List<Int>) =
+  mapIndexed { i, it -> if (it.type == EditType.EQUALS || i in indices) it.new else it.old }.joinToString("")
+
+fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
+  DiffRowGenerator.create().build()
+    .generateDiffRows(original, new).mapIndexed { i, it ->
+      when (it.tag) {
+        DiffRow.Tag.INSERT -> Edit(EditType.INSERT, "", it.newLine)
+        DiffRow.Tag.CHANGE -> Edit(EditType.CHANGE, it.oldLine, it.newLine)
+        DiffRow.Tag.DELETE -> Edit(EditType.DELETE, it.oldLine, "")
+        DiffRow.Tag.EQUAL ->  Edit(EditType.EQUALS, it.oldLine, it.newLine)
+      }
+    }

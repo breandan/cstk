@@ -64,10 +64,19 @@ fun String.isValidPython(onErrorAction: (String?) -> Unit = {}) =
     false
   }
 
-fun String.tokenizeAsPython(): List<String> =
-  lexAsPython().allTokens.map { it.text }
+fun String.tokenizeAsPython(exhaustive: Boolean = false): List<String> =
+  if (!exhaustive) lexAsPython().allTokens.map { it.text }
+  else tokenizeAsPython(false).fold(listOf(this)) { runningTokens, t ->
+    val toSplit = runningTokens.last()
+    runningTokens.dropLast(1) +
+      if (t.all { it.isWhitespace() }) listOf(toSplit.takeWhile { it.isWhitespace() }, toSplit.dropWhile { it.isWhitespace() })
+      else if (toSplit.startsWith(t)) listOf(t, toSplit.removePrefix(t))
+      else if (t in toSplit) toSplit.substringBefore(t).let { listOf(it, t, toSplit.removePrefix(it).removePrefix(t)) }
+      else if(toSplit.isEmpty()) listOf(t)
+      else throw Exception("Could not find token $t in ${toSplit.map { it.code }}").also { println("\n\n$this\n\n") }
+  }
 
-fun String.lexAsPython() =
+fun String.lexAsPython(): Python3Lexer =
   Python3Lexer(CharStreams.fromStream(byteInputStream()))
 
 fun String.lexAsJava(): Java8Lexer =
@@ -440,8 +449,8 @@ fun prettyDiffHorizontal(
   maxLen: Int = 180, maxLines: Int = 200,
 ): String {
   val sb = StringBuilder()
-  val leftLines = left.replace("\t", "  ").lines()
-  val rightLines = right.replace("\t", "  ").lines()
+  val leftLines = left.replace("\t", "  ").replace("&lt;", "<").replace("&gt;", ">").lines()
+  val rightLines = right.replace("\t", "  ").replace("&lt;", "<").replace("&gt;", ">").lines()
   if (leftLines.all { it.length < maxLen } && leftLines.size < maxLines) {
     val rows = DiffRowGenerator.create()
       .showInlineDiffs(true)
@@ -470,7 +479,7 @@ fun prettyDiffHorizontal(
     fun String.adjust(len: Int) = padEnd(len + length - visibleLen() - 3, ' ')
     sb.appendLine("$lsep$rsep┤")
     rows.forEach { row ->
-      sb.appendLine("│ ${row.oldLine.adjust(padLeft)} │ ${row.newLine.adjust(padRight)} │")
+      sb.appendLine("│ ${row.oldLine.adjust(padLeft)} $ANSI_RESET│ ${row.newLine.adjust(padRight)} $ANSI_RESET│")
     }
 
     val blsep = "└".padEnd(padLeft, '─')
