@@ -92,30 +92,43 @@ fun stackOverflowEval() {
       readContents("parse_fixes.json")
 
   brokeSnippets.zip(fixedSnippets)
-    .asStream()
-    .filter {
-      it.first != it.second &&
-      (!it.first.isValidPython() && it.second.isValidPython()) &&
-      it.first.lines().size < 20 &&
-      (it.first.lines().size - it.second.lines().size).absoluteValue < 4
+    .asStream().parallel()
+    .filter { (broke, fixed) ->
+//      '"' !in broke && '\'' !in broke &&
+      broke.tokenizeAsPython().size < 30 &&
+      broke != fixed &&
+      (!broke.isValidPython() && fixed.isValidPython()) &&
+      broke.lines().size < 20 &&
+      (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
     .minimizeFix()
     .filter { (broke, fixed, minfix) ->
       val (brokeTokens, fixedTokens) =
         broke.tokenizeAsPython() to fixed.tokenizeAsPython()
-      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
-      broke != fixed && multisetManhattanDistance(brokeTokens, fixedTokens)
-        .let { it in 1..5 }
+//      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
+      broke != fixed && multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
     }
-    .map { (erroneous, corrected, minfix) ->
-      prettyDiffs(listOf(erroneous, corrected), listOf("erroneous", "corrected")) +
-        prettyDiffs(listOf(erroneous, minfix), listOf("erroneous", "minimized"))
-      // TODO: Only minimize the delta between erroneous and corrected, not corrected itself
-//      val minimized = deltaDebug(corrected.map { "$it" }, 2) { it.joinToString("").isValidPython() }.joinToString("")
-//      prettyDiffs(listOf(erroneous, corrected, minimized), listOf("erroneous", "corrected", "minimized"))
-    }.filter { it.count { it == '\u001B' } in 2..10 }
-    .forEach { println(it) }
+//    .forEach { (broke, fixed, minfix) ->
+//      broke.tokenizeAsPython()
+//    }
+    .filter { (broke, fixed, minfix) ->
+      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+      brokeVis != fixedVis && brokeVis != minfixVis && fixedVis != minfixVis
+    }
+    .map { (broke, fixed, minfix) ->
+      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
+        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
+          // Compare ASCII characters for a visible difference, if same do not print two
+//          if (corrected.visibleChars() == minfix.visibleChars()) origDiff to "" else
+          origDiff to minDiff
+        }
+      }
+    }.filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
+    .forEach { (a, b) -> println("$a\n$b") }
 }
+
+// Filters for anything visible keyboard characters, excluding whitespace
+fun String.visibleChars() = filter { it in '!'..'~' }
 
 fun Stream<Π2A<Σᐩ>>.minimizeFix() =
  map { (broke, fixed) ->

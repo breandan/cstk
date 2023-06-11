@@ -64,6 +64,7 @@ fun String.isValidPython(onErrorAction: (String?) -> Unit = {}) =
     false
   }
 
+// Exhaustive tokenization includes whitespaces
 fun String.tokenizeAsPython(exhaustive: Boolean = false): List<String> =
   if (!exhaustive) lexAsPython().allTokens.map { it.text }
   else tokenizeAsPython(false).fold(listOf(this)) { runningTokens, t ->
