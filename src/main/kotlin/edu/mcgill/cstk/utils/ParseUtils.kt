@@ -32,7 +32,7 @@ fun Σᐩ.tokenizeAsPython(exhaustive: Boolean = false): List<Σᐩ> =
       else throw Exception("Could not find token $t in ${toSplit.map { it.code }}").also { println("\n\n$this\n\n") }
   }
 
-fun IntArray.isValidPython(): Boolean {
+fun List<Int>.isValidPython(): Boolean {
   val tokenSource = ListTokenSource(map { CommonToken(it) })
   val tokens = CommonTokenStream(tokenSource)
   return try {
@@ -48,6 +48,12 @@ fun IntArray.isValidPython(): Boolean {
 fun Σᐩ.lexToIntTypesAsPython(
   lexer: Lexer = Python3Lexer(CharStreams.fromString(this + "\n"))
 ) = lexer.allTokens.map { it.type }
+
+val pythonVocabBindex: Bindex<Σᐩ> =
+  Python3Lexer(CharStreams.fromString(""))
+  .vocabulary.let { vocab ->
+    (0..vocab.maxTokenType).associateWith { vocab.getDisplayName(it) }
+  }.let { Bindex(it) }//.also { println(it.toString()) }
 
 fun Σᐩ.lexToStrTypesAsPython(
   lexer: Lexer = Python3Lexer(CharStreams.fromString(this)),

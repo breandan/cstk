@@ -94,6 +94,7 @@ fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boole
   else deltaDebug(elements, n * 2, checkValid)
 }
 
+// TODO: Generify to accept List<T>
 fun parallelRepair(
   prompt: Σᐩ,
   fillers: Set<Σᐩ>,
