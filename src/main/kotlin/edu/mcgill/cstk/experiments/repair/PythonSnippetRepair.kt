@@ -76,27 +76,40 @@ fun stackOverflowEval() {
     .minimizeFix { tokenizeAsPython(true) }
     .filter { (broke, fixed, minfix) ->
       val (brokeTokens, fixedTokens) =
-        broke.tokenizeAsPython() to fixed.tokenizeAsPython()
+        broke.lexToIntTypesAsPython() to fixed.lexToIntTypesAsPython()
 //      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
-      broke != fixed && multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
+      multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
     }
 //    .forEach { (broke, fixed, minfix) ->
 //      broke.tokenizeAsPython()
 //    }
     .filter { (broke, fixed, minfix) ->
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
-      brokeVis != fixedVis && brokeVis != minfixVis && fixedVis != minfixVis
+      brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
     }
     .map { (broke, fixed, minfix) ->
       prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
         prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
           // Compare ASCII characters for a visible difference, if same do not print two
 //          if (corrected.visibleChars() == minfix.visibleChars()) origDiff to "" else
-          origDiff to minDiff
+          origDiff to minDiff to broke to minfix
         }
       }
-    }.filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
-    .forEach { (a, b) -> println("$a\n$b") }
+    }
+//    .filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
+    .forEach { (a, b, c, d) ->
+//      println("$a\n$b")
+      val coarseBroke = c.lexToStrTypesAsPython().joinToString(" ") + "  |  " + c.lexToIntTypesAsPython().joinToString(" ")
+      val coarseFixed = d.lexToStrTypesAsPython().joinToString(" ") + "  |  " + d.lexToIntTypesAsPython().joinToString(" ")
+//      val diff1 = prettyDiffNoFrills(coarseBroke, coarseFixed)
+//      val diff2 = prettyDiffNoFrills(coarseFixed, coarseBroke)
+//      val diff3 = prettyDiffNoFrills(c.lexToIntTypesAsPython().joinToString("\n"), d.lexToIntTypesAsPython().joinToString("\n"))
+//      val maxlen = max(diff1.visibleLen(), diff2.visibleLen())
+
+      println("Broke tokens: ${prettyDiffNoFrills(coarseFixed, coarseBroke)}")
+      println("Fixed tokens: ${prettyDiffNoFrills(coarseBroke, coarseFixed)}")
+      println("\n\n")
+    }
 }
 
 fun seq2parseEval() {

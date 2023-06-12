@@ -32,6 +32,28 @@ fun Σᐩ.tokenizeAsPython(exhaustive: Boolean = false): List<Σᐩ> =
       else throw Exception("Could not find token $t in ${toSplit.map { it.code }}").also { println("\n\n$this\n\n") }
   }
 
+fun IntArray.isValidPython(): Boolean {
+  val tokenSource = ListTokenSource(map { CommonToken(it) })
+  val tokens = CommonTokenStream(tokenSource)
+  return try {
+    Python3Parser(tokens)
+      .apply { removeErrorListeners(); addErrorListener(errorListener) }
+      .file_input()
+    true
+  } catch (e: Exception) {
+    false
+  }
+}
+
+fun Σᐩ.lexToIntTypesAsPython(
+  lexer: Lexer = Python3Lexer(CharStreams.fromString(this + "\n"))
+) = lexer.allTokens.map { it.type }
+
+fun Σᐩ.lexToStrTypesAsPython(
+  lexer: Lexer = Python3Lexer(CharStreams.fromString(this)),
+  vocabulary: Vocabulary = lexer.vocabulary
+) = lexer.allTokens.map { vocabulary.getDisplayName(it.type) }
+
 fun Σᐩ.lexAsPython(): Python3Lexer =
   Python3Lexer(CharStreams.fromStream(byteInputStream()))
 
