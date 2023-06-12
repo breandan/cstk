@@ -36,7 +36,7 @@ fun main() {
     .allFilesRecursively().allMethods()
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }
-    .filter(String::isANontrivialStatementWithBalancedBrackets)
+    .filter(Σᐩ::isANontrivialStatementWithBalancedBrackets)
     .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null } }
     .map {
       val prompt = it.constructPromptByDeletingRandomSyntax()
@@ -97,7 +97,7 @@ fun main() {
 }
 
 fun String.constructPromptByDeletingRandomSyntax(
-  eligibleTokensForDeletion: Set<String> = brackets,
+  eligibleTokensForDeletion: Set<String> = COMMON_BRACKETS,
   tokensToDelete: Int = 1,
   tokenizer: Σᐩ.() -> List<Σᐩ> = Σᐩ::defaultTokenizer
 ) =

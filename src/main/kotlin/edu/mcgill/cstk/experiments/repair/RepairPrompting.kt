@@ -3,7 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.parsing.*
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.defaultModel
-import edu.mcgill.cstk.utils.makeQueryAndScore
+import edu.mcgill.cstk.utils.*
 import java.io.File
 
 val example_code = """

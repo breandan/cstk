@@ -28,7 +28,7 @@ private fun syntheticErrorCorrection() {
     .filter { it.isNotBlank() }.asSequence().map {
       val original = it.tokenizeAsPython().joinToString(" ")
       val prompt = original.constructPromptByDeletingRandomSyntax(
-        eligibleTokensForDeletion = pythonKeywords + pythonOperators + brackets,
+        eligibleTokensForDeletion = pythonKeywords + pythonOperators + COMMON_BRACKETS,
         tokensToDelete = 1,
         tokenizer = Σᐩ::tokenizeAsPython,
       )
@@ -67,7 +67,7 @@ private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
   }
 
 private fun satRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
-  { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS  }) }
+  { a: List<Σᐩ> -> asCJL.synthesize(a, takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }) }
 
 private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
@@ -82,10 +82,6 @@ private fun setRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σ�
 
 private fun parallelSetRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> -> a.parallelSolve(this).asSequence() }
-
-//  validPythonStatements.lines().map { it.coarsenAsPython() }
-//    .forEach { println("${it.isValidPython()} : $it") }
-//}
 
 fun repairPythonStatement(
   prompt: String,

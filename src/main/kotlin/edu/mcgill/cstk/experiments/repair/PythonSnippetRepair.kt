@@ -58,34 +58,6 @@ fun main() {
   stackOverflowEval()
 }
 
-fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boolean): List<T> {
-  // If n granularity is greater than number of tests, then finished, simply return passed in tests
-  if (elements.size < n) { return elements }
-
-  // Cut the elements into n equal chunks and try each chunk
-  val chunkSize = (elements.size.toDouble() / n).roundToInt()
-
-  val chunks = elements.windowed(chunkSize, chunkSize, true)
-
-  chunks.forEachIndexed { index, chunk ->
-    val otherChunk = elements.subList(0, index*chunkSize) +
-      elements.subList(min((index+1)*chunkSize, elements.size), elements.size)
-
-    // Try to other, complement chunk first, with theory that valid elements are closer to end
-    if (checkValid(otherChunk)) return deltaDebug(otherChunk, 2, checkValid)
-
-    // Check if running this chunk works
-    if (checkValid(chunk)) return deltaDebug(chunk, 2, checkValid)
-  }
-
-  // If size is equal to number of chunks, we are finished, cannot go down more
-  if (elements.size == n) return elements
-
-  // If not chunk/complement work, increase granularity and try again
-  return if (elements.size < n * 2) deltaDebug(elements, elements.size, checkValid)
-  else deltaDebug(elements, n * 2, checkValid)
-}
-
 fun stackOverflowEval() {
   val (brokeSnippets, fixedSnippets) =
     readContents("parse_errors.json") to
@@ -101,7 +73,7 @@ fun stackOverflowEval() {
       broke.lines().size < 20 &&
       (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
-    .minimizeFix()
+    .minimizeFix { tokenizeAsPython(true) }
     .filter { (broke, fixed, minfix) ->
       val (brokeTokens, fixedTokens) =
         broke.tokenizeAsPython() to fixed.tokenizeAsPython()
@@ -127,26 +99,6 @@ fun stackOverflowEval() {
     .forEach { (a, b) -> println("$a\n$b") }
 }
 
-// Filters for anything visible keyboard characters, excluding whitespace
-fun String.visibleChars() = filter { it in '!'..'~' }
-
-fun Stream<Π2A<Σᐩ>>.minimizeFix() =
- map { (broke, fixed) ->
-  val (brokeTokens, fixedTokens) =
-    broke.tokenizeAsPython(true) to fixed.tokenizeAsPython(true)
-
-//  val brokeJoin = brokeTokens.joinToString("")
-  val fixedJoin = fixedTokens.joinToString("")
-//  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
-
-  val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-  val minEdit = deltaDebug(patch.allEdits()) { idxs -> patch.apply(idxs).isValidPython() }
-  val minFix = patch.apply(minEdit)
-//  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
-//  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
-  broke to fixedJoin to minFix
-}
-
 fun seq2parseEval() {
   brokenPythonSnippets.map {
       it.tokenizeByWhitespace()
@@ -162,10 +114,11 @@ fun seq2parseEval() {
 
       println("Repairing: ${segmentation.toColorfulString()}\n")
 
-      parallelRepairPythonSnippet(
+      parallelRepair(
         prompt = prompt,
         fillers = deck,
         maxEdits = 4,
+        admissibilityFilter = { this in seq2parsePythonCFG.language },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
         scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
       ).also {
@@ -182,60 +135,7 @@ fun seq2parseEval() {
     }
 }
 
-fun parallelRepairPythonSnippet(
-  prompt: Σᐩ,
-  fillers: Set<Σᐩ>,
-  maxEdits: Int = 2,
-  scoreEdit: ((Σᐩ) -> Double)? = null,
-): List<Repair> {
-  var bestRepair = Double.MAX_VALUE
-  val delim = List(prompt.length) { "-" }.joinToString("")
-  println("$delim\nBest repairs so far:\n$delim")
-  // We intersperse the prompt with empty strings to enable the repair of the first and last token
-  // as well as insertion of tokens by the repair algorithm, which only considers substitutions
-  val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
-
-  val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-  return bijectiveRepair(
-    promptTokens = promptTokens,
-    fillers = fillers,
-    maxEdits = maxEdits,
-    takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
-    admissibilityFilter = { this in seq2parsePythonCFG.language },
-    scoreEdit = scoreEdit ?: { 0.0 },
-    diagnostic =
-      if (scoreEdit != null) {
-        {
-          val score = scoreEdit(it.result)
-          if (score < bestRepair) {
-            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//          println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = score
-          }
-        }
-      }
-      else {
-        {
-          val levDiff = it.edit.size.toDouble()
-          if (levDiff < bestRepair) {
-            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//            println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = levDiff
-          }
-        }
-      }
-  ).toList()
-//    .parallelStream().map {
-//      it.editSignatureEquivalenceClass(
-//        tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
-//        filter =  { it in seq2parsePythonCFG.language },
-//        score = { scoreEdit?.invoke(it) ?: 0.0 }
-//      ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-//    }.toList()
-    .distinctBy { it.result }.toList()
-    .sortedWith(compareBy({ it.edit.size }, { it.score }))
-}
-
+// Taken from seq2parse's Python grammar
 val seq2parsePythonCFG: CFG by lazy {
   """
 START -> Stmts_Or_Newlines Endmarker
@@ -472,23 +372,3 @@ fun readContents(
   }
 }
 
-enum class EditType { INSERT, CHANGE, DELETE, EQUALS }
-data class Edit(val type: EditType, val old: Σᐩ, val new: Σᐩ)
-
-typealias Patch = List<Edit>
-
-fun Patch.allEdits(): List<Int> = indices.filter { this[it].type != EditType.EQUALS }
-
-fun Patch.apply(indices: List<Int>) =
-  mapIndexed { i, it -> if (it.type == EditType.EQUALS || i in indices) it.new else it.old }.joinToString("")
-
-fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
-  DiffRowGenerator.create().build()
-    .generateDiffRows(original, new).mapIndexed { i, it ->
-      when (it.tag) {
-        DiffRow.Tag.INSERT -> Edit(EditType.INSERT, "", it.newLine)
-        DiffRow.Tag.CHANGE -> Edit(EditType.CHANGE, it.oldLine, it.newLine)
-        DiffRow.Tag.DELETE -> Edit(EditType.DELETE, it.oldLine, "")
-        DiffRow.Tag.EQUAL ->  Edit(EditType.EQUALS, it.oldLine, it.newLine)
-      }
-    }

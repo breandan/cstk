@@ -34,19 +34,6 @@ val P_kotlin: MarkovChain<Σᐩ> by lazy {
   }.fold(MarkovChain(memory = memory)) { a, b -> a + b }
 }
 
-// Output stream that rejects all lines starting with "Parser error:" or "Lex error:"
-class FilteredOutputStream(out: OutputStream) : PrintStream(out) {
-  override fun println(x: String?) {
-    if (x == null) return
-    if (x.toString().let {
-//      it.startsWith("logging: ") ||
-      it.startsWith("Parser error:") ||
-      it.startsWith("Lexer error:")
-    }) return
-    super.println(x)
-  }
-}
-
 /*
 ./gradlew kotlinStatementRepair
  */
@@ -88,7 +75,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
      val startTime = System.currentTimeMillis()
-     parallelRepairKotlinStatement(prompt, deck, edits + 1, scoreEdit).postprocess()
+     parallelRepair(prompt, deck, edits + 1, { isSyntacticallyValidKotlin() }, scoreEdit).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
          val gtSeq = groundTruth.tokenizeByWhitespace().joinToString(" ")
@@ -138,88 +125,6 @@ fun fetchKotlinExamples() =
     .map { it.trim() }.distinct()
 //    .take(10)
 
-fun Σᐩ.coarsenAsKotlin(lex: Boolean = true): Σᐩ =
-  (if(lex) lexAsKotlin() else tokenizeByWhitespace()).joinToString(" ") {
-    when {
-      it.isBracket() -> it
-      it.none { it.isLetterOrDigit() } -> it
-      it in officialKotlinKeywords -> it
-      it.first().isUpperCase() -> "W"
-      else -> "w"
-    }
-  }
-
-fun Σᐩ.uncoarsenAsKotlin(prompt: Σᐩ): Σᐩ {
-  val words = prompt.tokenizeByWhitespace()
-    .filter { it !in officialKotlinKeywords && it.any { it.isLetterOrDigit() } }.toMutableList()
-  val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
-    when {
-      token.isBracket() -> token
-      token.none { it.isLetterOrDigit() } -> token
-      token.equals("w", ignoreCase = true) -> words.removeFirst()
-      token in officialKotlinKeywords -> token
-      else -> throw Exception("Unknown token: $token")
-    }
-  } + words.joinToString(" ", " ")
-
-//  println("After uncoarsening: $uncoarsed")
-  return uncoarsed
-}
-
-fun parallelRepairKotlinStatement(
-  prompt: Σᐩ,
-  fillers: Set<Σᐩ>,
-  maxEdits: Int = 2,
-  scoreEdit: ((Σᐩ) -> Double)? = null,
-): List<Repair> {
-  var bestRepair = Double.MAX_VALUE
-  val delim = List(prompt.length) { "-" }.joinToString("")
-  println("$delim\nBest repairs so far:\n$delim")
-  // We intersperse the prompt with empty strings to enable the repair of the first and last token
-  // as well as insertion of tokens by the repair algorithm, which only considers substitutions
-  val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
-
-  val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-  return bijectiveRepair(
-    promptTokens = promptTokens,
-    fillers = fillers,
-    maxEdits = maxEdits,
-    takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
-    admissibilityFilter = { isSyntacticallyValidKotlin() },
-    scoreEdit = scoreEdit ?: { 0.0 },
-    diagnostic =
-      if (scoreEdit != null) {
-        {
-          val score = scoreEdit(it.result)
-          if (score < bestRepair) {
-            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//        println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = score
-          }
-        }
-      }
-      else {
-        {
-          val levDiff = it.edit.size.toDouble()
-          if (levDiff < bestRepair) {
-            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//          println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = levDiff
-          }
-        }
-      }
-  ).toList()
-//  .parallelStream().map {
-//    it.editSignatureEquivalenceClass(
-//      tokens = (fillers + promptTokens).shuffled().toSet() - "\"",
-//      filter =  { it.isSyntacticallyValidKotlin() },
-//      score = { scoreEdit?.invoke(it) ?: 0.0 }
-//    ).also { it.time = clock.elapsedNow().inWholeMilliseconds }
-//  }.toList()
-    .distinctBy { it.result }
-  .sortedWith(compareBy({ it.edit.size }, { it.score }))
-}
-
 fun repairKotlinStatement(
   prompt: Σᐩ,
   clock: TimeMark = TimeSource.Monotonic.markNow()
@@ -244,10 +149,6 @@ private fun bruteForceKotlinRepair(clock: TimeMark): CFG.(List<Σᐩ>) -> Sequen
         //  .also { println("Solving: ${it.joinToString(" ")}") }
     } catch (e: Exception) { e.printStackTrace(); emptySequence()}
   }
-
-fun Σᐩ.isSyntacticallyValidKotlin(): Boolean =
-  try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
-  catch (_: Throwable) { false }
 
 @Language("kt")
 val originalKotlinLines = """
@@ -1087,16 +988,6 @@ val permissiveKotlinCFG = """
 val ignoredKeywords =
   setOf("import", "package", "//", "/*", "\"", "\'", "\\`", "data", "_")
 
-val officialKotlinKeywords = setOf(
-  "as", "as?", "break", "class", "continue", "do", "else", "false", "for", "fun", "if", "in",
-  "!in", "interface", "is", "!is", "null", "object", "package", "return", "super", "this",
-  "throw", "true", "try", "typealias", "val", "var", "when", "while", "by", "catch", "constructor",
-  "delegate", "dynamic", "field", "file", "finally", "get", "import", "init", "param", "property",
-  "receiver", "set", "setparam", "where", "actual", "abstract", "annotation", "companion",
-  "const", "crossinline", "data", "enum", "expect", "external", "final", "infix", "inline",
-  "inner", "internal", "lateinit", "noinline", "open", "operator", "out", "override", "private",
-  "protected", "public", "reified", "sealed", "suspend", "tailrec", "vararg", "field", "it"
-)
 
 val allBuiltinTypes = setOf(
   "Any", "Boolean", "Byte", "Char", "Double", "Float", "Int", "Long", "Nothing", "Short", "String",

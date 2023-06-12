@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.hasBalancedBrackets
+import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
 
@@ -29,7 +30,7 @@ fun main() {
   val models = MODELS// + tidyparse
   DATA_DIR.also { println("Evaluating syntax completion using $models on $it...") }
     .allFilesRecursively().allMethods().map { it.first.lineSequence() }.flatten()
-    .filter(String::isANontrivialStatementWithBalancedBrackets)
+    .filter(Σᐩ::isANontrivialStatementWithBalancedBrackets)
     .map { it to it.constructLevelOneHalfRepair() }
     .runningFold(models.associateWith { (0 to 0) }) { scores, (groundTruth, prompt) ->
       models.associateWith { model ->
@@ -45,11 +46,5 @@ fun main() {
 }
 
 // Can model reconstruct a syntactically valid snippet from its truncated form?
-fun String.constructLevelOneHalfRepair() =
+fun Σᐩ.constructLevelOneHalfRepair() =
   substringBeforeLast('(').trim() + '('
-
-fun String.isANontrivialStatementWithBalancedBrackets(
-  depth: Int = 2,
-  statementCriteria: String.() -> Boolean = { trim().endsWith(';') && hasBalancedBrackets() },
-  parensAndDepth: Pair<Int, Int> = countBracketsAndMaxDepth(),
-) = statementCriteria() && parensAndDepth.let { (p, d) -> p == 0 && depth < d }

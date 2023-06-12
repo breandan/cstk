@@ -19,7 +19,7 @@ import kotlin.time.*
 
 fun main() {
   val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
-  val parsed = Klaxon().parse<Map<String, Map<String, Any>>>(json)
+  val parsed = Klaxon().parse<Map<Σᐩ, Map<Σᐩ, Any>>>(json)
 
   val strbins: MutableMap<Int, MutableList<CodeSnippet>> = mutableMapOf()
 
@@ -35,7 +35,7 @@ fun main() {
 
   MAX_TOKENS = 100
   MAX_SAMPLE = 200
-  var pfxs = mutableListOf<String>()
+  var pfxs = mutableListOf<Σᐩ>()
   for (i in listOf(10000, 30000, 60000)) {
     TIMEOUT_MS = i.also { println("REEVALUATING TIMEOUT: $it ms") }
     val lenbins = ConcurrentHashMap<Int, Π3A<AtomicInteger>>()
@@ -53,7 +53,7 @@ fun main() {
         val t = TimeSource.Monotonic.markNow()
         var totalValidSamples = 0
         val repair = repair(code, cfg,
-          String::coarsen, String::uncoarsen,
+          Σᐩ::coarsen, Σᐩ::uncoarsen,
           //      synthesizer = { a -> synthesize(a) },
           synthesizer = { a -> a.solve(this) },
           score = { defaultModel.score(it) },
@@ -75,14 +75,7 @@ fun main() {
   }
 }
 
-data class CodeSnippet(
-  val originalCode: String,
-  val coarsened: String,
-  val errorMsg: String,
-  val groundTruth: String? = null
-) {
-  val tokens = coarsened.split(" ")
-}
+
 
 const val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
 
@@ -93,14 +86,6 @@ val cfg: CFG =
   """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
     .parseCFG().apply { blocked.addAll(setOf("w")) }
 
-val pythonKeywords = setOf(
- "False", "None", "True", "and", "as", "assert",
-  "async", "await", "break", "class", "continue",
-  "def", "del", "elif", "else", "except", "finally",
-  "for", "from", "global", "if", "import", "in", "is",
-  "lambda", "nonlocal", "not", "or", "pass", "raise",
-  "return", "try", "while", "with", "yield"
-)
 
 val pythonOperators = setOf(
   "=", "==", "+", "-", "*", "/", "%", "**", "//",
@@ -108,34 +93,7 @@ val pythonOperators = setOf(
   ">=", "!=", "not", "in", "is", "and", "or"
 )
 
-fun String.coarsenAsPython(): String =
-  tokenizeAsPython().joinToString(" ") {
-    when {
-      it.isBracket() -> it
-      it.none { it.isLetterOrDigit() } -> it
-      it in pythonKeywords -> it
-      else -> "w"
-    }
-  }
-
-fun String.uncoarsenAsPython(prompt: String): String {
-  val words = prompt.tokenizeByWhitespace()
-    .filter { it !in pythonKeywords && it.any { it.isLetterOrDigit() }}.toMutableList()
-  val uncoarsed = tokenizeByWhitespace().joinToString(" ") { token ->
-    when {
-      token.isBracket() -> token
-      token.none { it.isLetterOrDigit() } -> token
-      token == "w" -> words.removeFirst()
-      token in pythonKeywords -> token
-      else -> throw Exception("Unknown token: $token")
-    }
-  } + words.joinToString(" ", " ")
-
-//  println("After uncoarsening: $uncoarsed")
-  return uncoarsed
-}
-
-fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
+fun Σᐩ.dispatchTo(model: Model, grammar: CFG?): List<Σᐩ> =
   when (model) {
     tidyparse -> repair(this, grammar!!,
       String::coarsen, String::uncoarsen,
@@ -146,7 +104,7 @@ fun String.dispatchTo(model: Model, grammar: CFG?): List<String> =
     else -> { if (MSK in this) listOf(model.complete(replace(MSK, model.mask))) else emptyList() }
   }
 
-fun String.parsePythonOutput(): String =
+fun Σᐩ.parsePythonOutput(): Σᐩ =
   ProcessBuilder("python", "parser.py", this)
     .start().also { it.waitFor() }.inputStream
     .bufferedReader().readText().lines().first()
