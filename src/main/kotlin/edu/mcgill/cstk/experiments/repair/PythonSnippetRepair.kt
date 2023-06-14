@@ -5,16 +5,13 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
-import bijectiveRepair
 import com.beust.klaxon.*
-import com.github.difflib.text.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import org.kosat.round
 import java.io.*
 import java.net.URL
 import java.util.regex.Pattern
-import java.util.stream.Stream
 import kotlin.math.*
 import kotlin.streams.asStream
 import kotlin.system.measureTimeMillis
@@ -75,12 +72,15 @@ fun stackOverflowEval() {
     readContents("parse_errors.json") to
       readContents("parse_fixes.json")
 
-  TIMEOUT_MS = 30_000
+  TIMEOUT_MS = 60_000
   val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
   println("Deck size: $deck")
 
-  var samplesEvaluated = 0
-  var timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
+  var samplesEvaluated = 1
+  val timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
+  val timedPAK =
+    (setOf(1, 5, 10, 15, 20) * (5..60 step 5).toSet())
+      .associateWith { 0.0 }.toMutableMap()
 
   brokeSnippets.zip(fixedSnippets)
     .asStream()//.parallel()
@@ -143,28 +143,67 @@ fun stackOverflowEval() {
           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
         }
 
-        (5..60 step 5).forEach { sec ->
-          repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
-            val mrr = it.indexOfFirst { it == coarseFixedStr }
-              .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
-            timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
-          }
-        }
-
-        samplesEvaluated++
-
         val contained = repairs.any { coarseFixedStr == it.result }
         val elapsed = System.currentTimeMillis() - startTime
 
         println("\nFound ${repairs.size} valid repairs in ${elapsed}ms, or roughly " +
           "${(repairs.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
 
-        println("Minimized repair was ${if (contained) "#" + repairs.indexOfFirst { it.result == coarseFixedStr } else "NOT"} in repair proposals!")
-        println("MRRs at cutoffs: ${timedMRR.entries.sortedByDescending { it.key }.joinToString(",") { (k, v) -> "${k}s: ${(v / samplesEvaluated).round(5)}" }
-        }\n\n")
+        val minRepairState = if (!contained) "NOT" else
+          "#" + repairs.indexOfFirst { it.result == coarseFixedStr }
+        println("Minimized repair was $minRepairState in repair proposals!")
+
+        updateRankingStats(repairs, coarseFixedStr, timedMRR, timedPAK, samplesEvaluated++)
       }
     }
   }
+
+private fun updateRankingStats(
+  repairs: List<Repair>,
+  coarseFixedStr: String,
+  timedMRR: MutableMap<Int, Double>, // Mean Reciprocal Rank
+  timedPAK: MutableMap<Pair<Int, Int>, Double>, // Precision at K, first int is K, second is the time cutoff
+  samplesEvaluated: Int
+) {
+  (timedMRR.keys).forEach { sec ->
+    repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
+      val mrr = it.indexOfFirst { it == coarseFixedStr }
+        .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
+      timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
+    }
+  }
+
+  (timedPAK.keys).forEach { (k, sec) ->
+    repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
+      val pak = it.take(k).count { it == coarseFixedStr }.toDouble()
+      timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
+    }
+  }
+
+  var summary = "Ranking statistics for $samplesEvaluated samples in total...\n"
+  val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
+    .joinToString(", ") { (k, v) -> "${k}s: ${(v / samplesEvaluated).round(3)}" }
+  summary += "\nMRR=  $latestMRRs"
+
+  val latestPAKs = timedPAK.entries.groupBy { it.key.first }
+    .mapValues { (_, v) ->
+      v.sortedByDescending { it.key.second }
+        .joinToString(", ") { (p, v) ->
+          "${p.second}s: ${(v / samplesEvaluated).round(3)}"
+        }
+    }.entries.joinToString("\n") { (k, v) -> "P@$k=".padEnd(6) + v }
+  summary += "\n$latestPAKs"
+  printInBox(summary)
+}
+
+// Draws a nice box around a multiline string using a single line box-drawing characters
+// Rembering to pad the box by the length of the maximum line in the string
+fun printInBox(s: String) =
+  println(
+    "\n┌" + "─".repeat(s.lines().maxBy { it.length }?.length?.plus(2) ?: 0) + "┐\n" +
+      s.lines().joinToString("\n") { "│ $it" + " ".repeat((s.lines().maxBy { it.length }.length) - it.length) + " │" } + "\n" +
+      "└" + "─".repeat(s.lines().maxBy { it.length }?.length?.plus(2) ?: 0) + "┘\n"
+  )
 
 fun seq2parseEval() {
   brokenPythonSnippets.map {
