@@ -229,7 +229,7 @@ tasks {
   }
 
   shadowJar {
-    manifest.attributes["Main-Class"] = "edu.mcgill.cstk.utils.TokenizerKt"
+    manifest.attributes["Main-Class"] = "edu.mcgill.cstk.experiments.repair.PythonSnippetRepairKt"
 //      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset

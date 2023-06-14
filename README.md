@@ -1055,7 +1055,7 @@ Interface:
 If, for some reason Gradle does not work on Compute Canada, you can build a fat JAR locally then deploy.
 
 ```bash
-./gradlew shadowJar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@cedar.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk
+./gradlew shadowJar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk
 
 salloc -t 3:0:0 --account=def-jinguo --gres=gpu:v100:1 --mem=32G --cpus-per-task=24
 ```
@@ -1070,7 +1070,7 @@ module load python/3.8 && \
 module load java/17.0.2 && \
 source venv/bin/activate && \
 python embedding_server.py --model microsoft/graphcodebert-base --offline & && \
-java -jar gym-fs-fat-1.0-SNAPSHOT.jar
+java -jar gym-fs-fat-1.0-SNAPSHOT.jar 2>&1 | tee /scratch/b/bengioy/breandan/log.txt
 ```
 
 # Research Questions

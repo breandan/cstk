@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import NUM_CORES
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
@@ -74,11 +75,12 @@ fun stackOverflowEval() {
     readContents("parse_errors.json") to
       readContents("parse_fixes.json")
 
+  TIMEOUT_MS = 30_000
   val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
   println("Deck size: $deck")
 
   var samplesEvaluated = 0
-  var timedMRR = (10..60 step 10).associateWith { 0.0 }.toMutableMap()
+  var timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
 
   brokeSnippets.zip(fixedSnippets)
     .asStream()//.parallel()
@@ -126,7 +128,7 @@ fun stackOverflowEval() {
       val startTime = System.currentTimeMillis()
 //      val segmentation = Segmentation.build(seq2parsePythonCFG, coarseBrokeStr)
 
-      println("Repairing: $coarseBrokeStr")
+      println("Repairing ($NUM_CORES cores): $coarseBrokeStr")
 
       parallelRepair(
         prompt = coarseBrokeStr,
@@ -141,7 +143,7 @@ fun stackOverflowEval() {
           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
         }
 
-        (10..60 step 10).forEach { sec ->
+        (5..60 step 5).forEach { sec ->
           repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
             val mrr = it.indexOfFirst { it == coarseFixedStr }
               .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
@@ -157,8 +159,8 @@ fun stackOverflowEval() {
         println("\nFound ${repairs.size} valid repairs in ${elapsed}ms, or roughly " +
           "${(repairs.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
 
-        println("Minimized repair was ${if (contained) "#" + repairs.indexOfFirst { it.result == coarseFixedStr } else "NOT"} in repair proposals!\n")
-        println("MRRs at cutoffs: ${timedMRR.entries.sortedByDescending { it.key }.joinToString(", ") { (k, v) -> "$k: ${(v / samplesEvaluated).round(6)}" }
+        println("Minimized repair was ${if (contained) "#" + repairs.indexOfFirst { it.result == coarseFixedStr } else "NOT"} in repair proposals!")
+        println("MRRs at cutoffs: ${timedMRR.entries.sortedByDescending { it.key }.joinToString(",") { (k, v) -> "${k}s: ${(v / samplesEvaluated).round(5)}" }
         }\n\n")
       }
     }
