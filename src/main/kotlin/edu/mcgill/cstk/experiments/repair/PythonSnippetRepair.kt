@@ -79,7 +79,7 @@ fun stackOverflowEval() {
   var samplesEvaluated = 1
   val timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
   val timedPAK =
-    (setOf(1, 5, 10, 15, 20) * (5..60 step 5).toSet())
+    (setOf(1, 5, 10, 15, 20, 999) * (5..60 step 5).toSet())
       .associateWith { 0.0 }.toMutableMap()
 
   brokeSnippets.zip(fixedSnippets)
