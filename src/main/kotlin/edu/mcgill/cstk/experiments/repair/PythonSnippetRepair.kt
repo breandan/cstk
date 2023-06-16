@@ -10,7 +10,7 @@ import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import org.kosat.round
 import java.io.*
-import java.net.URL
+import java.net.*
 import java.util.regex.Pattern
 import kotlin.math.*
 import kotlin.streams.asStream
@@ -72,7 +72,6 @@ fun stackOverflowEval() {
     readContents("parse_errors.json") to
       readContents("parse_fixes.json")
 
-  TIMEOUT_MS = 60_000
   val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
   println("Deck size: $deck")
 
@@ -153,10 +152,38 @@ fun stackOverflowEval() {
           "#" + repairs.indexOfFirst { it.result == coarseFixedStr }
         println("Minimized repair was $minRepairState in repair proposals!")
 
+        compareSeq2ParseFix(humanError, coarseFixedStr, repairs)
+
         updateRankingStats(repairs, coarseFixedStr, timedMRR, timedPAK, samplesEvaluated++)
       }
     }
   }
+
+private fun compareSeq2ParseFix(
+  humanError: Σᐩ,
+  coarseBrokeStr: String,
+  ourRepairs: List<Repair>
+) {
+  val seq2parseFix = seq2parseFix(humanError)
+  val parseable = seq2parseFix.isValidPython()
+  val seq2parseFixCoarse =
+    seq2parseFix.lexToStrTypesAsPython().joinToString(" ", "", " NEWLINE")
+
+  val idx = ourRepairs.indexOfFirst { it.result == seq2parseFixCoarse }
+  println(
+    "seq2parse fix (parseable=$parseable, idx=$idx):" +
+      prettyDiffNoFrills(coarseBrokeStr, seq2parseFixCoarse)
+  )
+  println("seq2parse fix (parseable=$parseable) is the same as the coarse fix!")
+}
+
+fun seq2parseFix(
+  brokenCode: String,
+  prefix: String = "http://127.0.0.1:5000/api/text?seq2parse="
+) =
+  try {
+    URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
+  } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
 
 private fun updateRankingStats(
   repairs: List<Repair>,
