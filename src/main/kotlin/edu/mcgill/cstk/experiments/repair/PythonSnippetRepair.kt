@@ -13,7 +13,7 @@ import java.io.*
 import java.net.*
 import java.util.regex.Pattern
 import kotlin.math.*
-import kotlin.streams.asStream
+import kotlin.streams.*
 import kotlin.system.measureTimeMillis
 import kotlin.time.*
 
@@ -63,15 +63,55 @@ val mostCommonTokens by lazy {
  */
 
 fun main() {
-//  seq2parseEval()
-  stackOverflowEval()
+//  evaluateTidyparseOnSeq2Parse15k()
+  evaluateTidyparseOnStackoverflow()
+//  evaluateSeq2ParseOnStackOverflowDataset()
 }
 
-fun stackOverflowEval() {
-  val (brokeSnippets, fixedSnippets) =
-    readContents("parse_errors.json") to
-      readContents("parse_fixes.json")
+fun evaluateSeq2ParseOnStackOverflowDataset() {
+  var syntaxPrecision = 0.0
+  var humanFixPrecision = 0.0
+  var chrMatchPrecision = 0.0
+  var latency = 0.0
+  preprocessStackOverflow().asSequence()
+    .forEachIndexed { i, (humanError, humanFix, minimumFix) ->
+      val errTks = humanError.lexToStrTypesAsPython()
+      val minFixTks = minimumFix.lexToStrTypesAsPython()
+      val seq2parseFix = measureTimedValue { seq2parseFix(humanError) }.let {
+        latency += it.duration.inWholeMilliseconds
+        it.value
+      }
+      val seq2parseWasParseable = seq2parseFix.isValidPython {
+        val s2pDiffFullDiff = prettyDiffHorizontal(humanError, seq2parseFix, "human error", "seq2parse fix")
+        println("\nSeq2Parse fix did NOT parse: $it!\n$s2pDiffFullDiff\n\n")
+      }
 
+      val seq2parseFixTks = seq2parseFix.lexToStrTypesAsPython()
+      if (seq2parseFixTks == minFixTks)
+        println("Abstract tokens matched but there was a character diff:\n" +
+          prettyDiffHorizontal(minimumFix, seq2parseFix, "human fix", "seq2parse fix"))
+
+      val minDiff = prettyDiffNoFrills(errTks.joinToString(" "), minFixTks.joinToString(" "))
+      println("Minimized human fix: $minDiff")
+      val s2pDiff = prettyDiffNoFrills(errTks.joinToString(" "), seq2parseFixTks.joinToString(" "))
+      println("Seq2Parse tokenized: $s2pDiff (matched=${seq2parseFixTks == minFixTks})")
+
+      syntaxPrecision += if (seq2parseWasParseable) 1.0 else 0.0
+      val avgSyntaxPrecision = (syntaxPrecision / (i + 1)).round(3)
+      println("Average Syntactic precision@1 (${i+1} samples): $avgSyntaxPrecision")
+      humanFixPrecision += if (seq2parseFixTks == minFixTks) 1.0 else 0.0
+      val avgHumanFixPrecision = (humanFixPrecision / (i + 1)).round(3)
+      println("Average HumanEval precision@1 (${i+1} samples): $avgHumanFixPrecision")
+      chrMatchPrecision += if (seq2parseFix == humanFix) 1.0 else 0.0
+      val avgChrMatchPrecision = (chrMatchPrecision / (i + 1)).round(3)
+      println("Average CharMatch precision@1 (${i+1} samples): $avgChrMatchPrecision")
+
+      val avgLatency = (latency / (i + 1)).round(3)
+      println("Average latency: ${avgLatency}ms\n")
+    }
+}
+
+fun evaluateTidyparseOnStackoverflow() {
   val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
   println("Deck size: $deck")
 
@@ -81,38 +121,7 @@ fun stackOverflowEval() {
     (setOf(1, 5, 10, 15, 20, 999) * (5..60 step 5).toSet())
       .associateWith { 0.0 }.toMutableMap()
 
-  brokeSnippets.zip(fixedSnippets)
-    .asStream()//.parallel()
-    .filter { (broke, fixed) ->
-//      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 30 &&
-      broke != fixed &&
-      (!broke.isValidPython() && fixed.isValidPython()) &&
-//      broke.lines().size < 20 &&
-      (broke.lines().size - fixed.lines().size).absoluteValue < 4
-    }
-    .minimizeFix { tokenizeAsPython(true) }
-    .filter { (broke, fixed, minfix) ->
-      val (brokeTokens, fixedTokens) =
-        broke.lexToIntTypesAsPython() to fixed.lexToIntTypesAsPython()
-//      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
-      multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
-    }
-    .filter { (broke, fixed, minfix) ->
-      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
-      brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
-    }
-//    .map { (broke, fixed, minfix) ->
-//      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
-//        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
-//          // Compare ASCII characters for a visible difference, if same do not print two
-////          if (corrected.visibleChars() == minfix.visibleChars()) origDiff to "" else
-//          origDiff to minDiff to broke to minfix
-//        }
-//      }
-//    }
-//    .filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
-    .filter { extractPatch(it.first.lexToStrTypesAsPython(), it.third.lexToStrTypesAsPython()).changes().size < 3 }
+  preprocessStackOverflow()
     .forEach { (humanError, humanFix, minimumFix) ->
 //      println("$a\n$b")
       val coarseBrokeTks = humanError.lexToStrTypesAsPython()
@@ -158,6 +167,48 @@ fun stackOverflowEval() {
       }
     }
   }
+
+private fun preprocessStackOverflow(
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json")
+): Sequence<Π3<Σᐩ, String, String>> =
+  brokeSnippets.zip(fixedSnippets)
+//    .asStream()//.parallel()
+    .filter { (broke, fixed) ->
+//      '"' !in broke && '\'' !in broke &&
+      broke.tokenizeAsPython().size < 30 &&
+        broke != fixed &&
+        (!broke.isValidPython() && fixed.isValidPython()) &&
+//      broke.lines().size < 20 &&
+        (broke.lines().size - fixed.lines().size).absoluteValue < 4
+    }
+    .minimizeFix { tokenizeAsPython(true) }
+    .filter { (broke, fixed, minfix) ->
+      val (brokeTokens, fixedTokens) =
+        broke.lexToIntTypesAsPython() to fixed.lexToIntTypesAsPython()
+//      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
+      multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
+    }
+    .filter { (broke, fixed, minfix) ->
+      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+      brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
+    }
+//    .map { (broke, fixed, minfix) ->
+//      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
+//        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
+//          // Compare ASCII characters for a visible difference, if same do not print two
+////          if (corrected.visibleChars() == minfix.visibleChars()) origDiff to "" else
+//          origDiff to minDiff to broke to minfix
+//        }
+//      }
+//    }
+//    .filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
+    .filter {
+      extractPatch(
+        it.first.lexToStrTypesAsPython(),
+        it.third.lexToStrTypesAsPython()
+      ).changes().size < 3
+    }.distinctBy { it.third }
 
 private fun compareSeq2ParseFix(
   humanError: Σᐩ,
@@ -220,19 +271,19 @@ private fun updateRankingStats(
         }
     }.entries.joinToString("\n") { (k, v) -> "P@$k=".padEnd(6) + v }
   summary += "\n$latestPAKs"
-  printInBox(summary)
+  printInABox(summary)
 }
 
 // Draws a nice box around a multiline string using a single line box-drawing characters
 // Rembering to pad the box by the length of the maximum line in the string
-fun printInBox(s: String) =
+fun printInABox(s: String) =
   println(
     "\n┌" + "─".repeat(s.lines().maxBy { it.length }?.length?.plus(2) ?: 0) + "┐\n" +
       s.lines().joinToString("\n") { "│ $it" + " ".repeat((s.lines().maxBy { it.length }.length) - it.length) + " │" } + "\n" +
       "└" + "─".repeat(s.lines().maxBy { it.length }?.length?.plus(2) ?: 0) + "┘\n"
   )
 
-fun seq2parseEval() {
+fun evaluateTidyparseOnSeq2Parse15k() {
   brokenPythonSnippets.map {
       it.tokenizeByWhitespace()
         .joinToString(" ") { if (it in seq2parsePythonCFG.nonterminals) "<$it>" else it }

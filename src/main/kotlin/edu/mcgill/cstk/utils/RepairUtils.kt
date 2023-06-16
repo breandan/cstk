@@ -29,7 +29,7 @@ val COMMON_BRACKETS = "()[]{}".map { "$it" }.toSet()
 fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
 
-fun Stream<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
+fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
   map { (broke, fixed) ->
     val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
 
@@ -118,26 +118,22 @@ fun parallelRepair(
     admissibilityFilter = admissibilityFilter,
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
-    if (scoreEdit != null) {
-      {
-        val score = scoreEdit(it.result)
-        if (score < bestRepair) {
-          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//          println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
-          bestRepair = score
-        }
-      }
-    }
-    else {
-      {
-        val levDiff = it.edit.size.toDouble()
-        if (levDiff < bestRepair) {
-          println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
-//            println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
-          bestRepair = levDiff
-        }
-      }
-    }
+      if (scoreEdit != null) ({
+          val score = scoreEdit(it.result)
+          if (score < bestRepair) {
+            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+//            println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
+            bestRepair = score
+          }
+      })
+      else ({
+          val levDiff = it.edit.size.toDouble()
+          if (levDiff < bestRepair) {
+            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+//              println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
+            bestRepair = levDiff
+          }
+      })
   ).toList()
 //    .parallelStream().map {
 //      it.editSignatureEquivalenceClass(
