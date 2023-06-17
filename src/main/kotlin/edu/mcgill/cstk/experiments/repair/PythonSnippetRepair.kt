@@ -73,7 +73,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
   var humanFixPrecision = 0.0
   var chrMatchPrecision = 0.0
   var latency = 0.0
-  preprocessStackOverflow().asSequence()
+  preprocessStackOverflow()
     .forEachIndexed { i, (humanError, humanFix, minimumFix) ->
       val errTks = humanError.lexToStrTypesAsPython()
       val minFixTks = minimumFix.lexToStrTypesAsPython()
@@ -91,10 +91,11 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
         println("Abstract tokens matched but there was a character diff:\n" +
           prettyDiffHorizontal(minimumFix, seq2parseFix, "human fix", "seq2parse fix"))
 
+      println("Original code error: ${errTks.joinToString(" ")}")
       val minDiff = prettyDiffNoFrills(errTks.joinToString(" "), minFixTks.joinToString(" "))
-      println("Minimized human fix: $minDiff")
+      println("Minimized human fix: $minDiff (parsed=${minimumFix.isValidPython()})")
       val s2pDiff = prettyDiffNoFrills(errTks.joinToString(" "), seq2parseFixTks.joinToString(" "))
-      println("Seq2Parse tokenized: $s2pDiff (matched=${seq2parseFixTks == minFixTks})")
+      println("Seq2Parse tokenized: $s2pDiff (parsed=${seq2parseWasParseable}, matched=${seq2parseFixTks == minFixTks})")
 
       syntaxPrecision += if (seq2parseWasParseable) 1.0 else 0.0
       val avgSyntaxPrecision = (syntaxPrecision / (i + 1)).round(3)
@@ -111,15 +112,68 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
     }
 }
 
-fun evaluateTidyparseOnStackoverflow() {
-  val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
-  println("Deck size: $deck")
-
-  var samplesEvaluated = 1
+class RankStats(val name: String = "Total") {
+  // Mean Reciprocal Rank
   val timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
+  // Precision at K, first int is K, second is the time cutoff
   val timedPAK =
     (setOf(1, 5, 10, 15, 20, 999) * (5..60 step 5).toSet())
       .associateWith { 0.0 }.toMutableMap()
+  var samplesEvaluated = 0
+
+  fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
+    samplesEvaluated += 1
+    (timedMRR.keys).forEach { sec ->
+      repairProposals.filter { it.time in 0..(sec * 1000) }
+        .map { it.result }.let {
+          val mrr = it.indexOfFirst { it == groundTruthRepair }
+            .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
+          timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
+        }
+    }
+
+    (timedPAK.keys).forEach { (k, sec) ->
+      repairProposals.filter { it.time in 0..(sec * 1000) }
+        .map { it.result }.let {
+          val pak = it.take(k).count { it == groundTruthRepair }.toDouble()
+          timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
+        }
+    }
+
+    var summary = "$name ranking statistics across $samplesEvaluated samples...\n"
+    val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
+      .joinToString(", ") { (k, v) ->
+        "${k}s: ${(v / samplesEvaluated).round(3)}"
+      }
+    summary += "\nMRR=  $latestMRRs"
+
+    val latestPAKs = timedPAK.entries.groupBy { it.key.first }
+      .mapValues { (_, v) ->
+        v.sortedByDescending { it.key.second }
+          .joinToString(", ") { (p, v) ->
+            "${p.second}s: ${(v / samplesEvaluated).round(3)}"
+          }
+      }.entries.joinToString("\n") { (k, v) -> "P@$k=".padEnd(6) + v }
+    summary += "\n$latestPAKs"
+    printInABox(summary)
+  }
+}
+
+val MAX_PATCH_SIZE = 3
+
+// Tracks ranking statistics for each patch size and across all patch sizes
+class MultiRankStats {
+  // Total ranking statistics across all patch sizes
+  val totalRankStats = RankStats()
+  // Ranking statistics for each patch size
+  val patchRankStats =
+    (1..MAX_PATCH_SIZE).associateWith { RankStats("$it-edit") }.toMutableMap()
+}
+
+fun evaluateTidyparseOnStackoverflow() {
+  val deck = P_stackoverflow.topK(200).map { it.first }.toSet() + "ε"
+  println("Deck size: $deck")
+  val multiRankStats = MultiRankStats()
 
   preprocessStackOverflow()
     .forEach { (humanError, humanFix, minimumFix) ->
@@ -129,8 +183,13 @@ fun evaluateTidyparseOnStackoverflow() {
       val coarseBrokeStr = coarseBrokeTks.joinToString(" ", "", " NEWLINE")
       val coarseFixedStr = coarseFixedTks.joinToString(" ", "", " NEWLINE")
 
-      println("Broke tokens: ${prettyDiffNoFrills(coarseFixedStr, coarseBrokeStr)}")
-      println("Fixed tokens: ${prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr)}")
+      val editSize = extractPatch(
+        humanError.lexToStrTypesAsPython(),
+        minimumFix.lexToStrTypesAsPython()
+      ).changes().size
+
+      println("Original broken source: ${prettyDiffNoFrills(coarseFixedStr, coarseBrokeStr)}")
+      println("Minimized human repair: ${prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr)}")
       println("\n\n")
 
       val startTime = System.currentTimeMillis()
@@ -161,9 +220,8 @@ fun evaluateTidyparseOnStackoverflow() {
           "#" + repairs.indexOfFirst { it.result == coarseFixedStr }
         println("Minimized repair was $minRepairState in repair proposals!")
 
-        compareSeq2ParseFix(humanError, coarseFixedStr, repairs)
-
-        updateRankingStats(repairs, coarseFixedStr, timedMRR, timedPAK, samplesEvaluated++)
+//      compareSeq2ParseFix(humanError, coarseBrokeStr, coarseFixedStr, repairs)
+        updateRankingStats(repairs, coarseFixedStr, multiRankStats, editSize)
       }
     }
   }
@@ -177,17 +235,16 @@ private fun preprocessStackOverflow(
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       broke.tokenizeAsPython().size < 30 &&
-        broke != fixed &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
-//      broke.lines().size < 20 &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
     .minimizeFix { tokenizeAsPython(true) }
     .filter { (broke, fixed, minfix) ->
-      val (brokeTokens, fixedTokens) =
-        broke.lexToIntTypesAsPython() to fixed.lexToIntTypesAsPython()
+      val (brokeTokens, minFixedTokens) =
+        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
 //      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
-      multisetManhattanDistance(brokeTokens, fixedTokens).let { it in 1..5 }
+      minfix.isValidPython() &&
+      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
     }
     .filter { (broke, fixed, minfix) ->
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
@@ -202,17 +259,19 @@ private fun preprocessStackOverflow(
 //        }
 //      }
 //    }
-//    .filter { (a, b) -> b.isNotEmpty() && 2 < (a.count { it == '\u001B' } - b.count { it == '\u001B' }).absoluteValue }
     .filter {
       extractPatch(
         it.first.lexToStrTypesAsPython(),
         it.third.lexToStrTypesAsPython()
-      ).changes().size < 3
-    }.distinctBy { it.third }
+      ).changes().size <= MAX_PATCH_SIZE
+    }
+    .distinctBy { it.third }
+    .shuffleOnline()
 
 private fun compareSeq2ParseFix(
   humanError: Σᐩ,
   coarseBrokeStr: String,
+  coarseFixedStr: String,
   ourRepairs: List<Repair>
 ) {
   val seq2parseFix = seq2parseFix(humanError)
@@ -222,10 +281,9 @@ private fun compareSeq2ParseFix(
 
   val idx = ourRepairs.indexOfFirst { it.result == seq2parseFixCoarse }
   println(
-    "seq2parse fix (parseable=$parseable, idx=$idx):" +
+    "seq2parse fix (parseable=$parseable, idx=$idx, matches=${coarseFixedStr == seq2parseFixCoarse}): " +
       prettyDiffNoFrills(coarseBrokeStr, seq2parseFixCoarse)
   )
-  println("seq2parse fix (parseable=$parseable) is the same as the coarse fix!")
 }
 
 fun seq2parseFix(
@@ -239,39 +297,11 @@ fun seq2parseFix(
 private fun updateRankingStats(
   repairs: List<Repair>,
   coarseFixedStr: String,
-  timedMRR: MutableMap<Int, Double>, // Mean Reciprocal Rank
-  timedPAK: MutableMap<Pair<Int, Int>, Double>, // Precision at K, first int is K, second is the time cutoff
-  samplesEvaluated: Int
+  holeRankStats: MultiRankStats,
+  editSize: Int
 ) {
-  (timedMRR.keys).forEach { sec ->
-    repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
-      val mrr = it.indexOfFirst { it == coarseFixedStr }
-        .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
-      timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
-    }
-  }
-
-  (timedPAK.keys).forEach { (k, sec) ->
-    repairs.filter { it.time in 0..(sec * 1000) }.map { it.result }.let {
-      val pak = it.take(k).count { it == coarseFixedStr }.toDouble()
-      timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
-    }
-  }
-
-  var summary = "Ranking statistics for $samplesEvaluated samples in total...\n"
-  val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
-    .joinToString(", ") { (k, v) -> "${k}s: ${(v / samplesEvaluated).round(3)}" }
-  summary += "\nMRR=  $latestMRRs"
-
-  val latestPAKs = timedPAK.entries.groupBy { it.key.first }
-    .mapValues { (_, v) ->
-      v.sortedByDescending { it.key.second }
-        .joinToString(", ") { (p, v) ->
-          "${p.second}s: ${(v / samplesEvaluated).round(3)}"
-        }
-    }.entries.joinToString("\n") { (k, v) -> "P@$k=".padEnd(6) + v }
-  summary += "\n$latestPAKs"
-  printInABox(summary)
+  holeRankStats.totalRankStats.update(repairs, coarseFixedStr)
+  holeRankStats.patchRankStats[editSize]!!.run { update(repairs, coarseFixedStr) }
 }
 
 // Draws a nice box around a multiline string using a single line box-drawing characters
