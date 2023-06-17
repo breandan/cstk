@@ -2,6 +2,8 @@
 #SBATCH --time 24:0:0
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
+#SBATCH --output=/scratch/b/bengioy/breandan/slurm-%j.out
+#SBATCH --error=/scratch/b/bengioy/breandan/slurm-%j.err
 
 # export LD_LIBRARY_PATH=/cvmfs/soft.computecanada.ca/easybuild/software/2017/Core/cudacore/10.2.89/targets/x86_64-linux/lib/
 # export TRANSFORMERS_OFFLINE=1
