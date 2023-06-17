@@ -64,8 +64,8 @@ val mostCommonTokens by lazy {
 
 fun main() {
 //  evaluateTidyparseOnSeq2Parse15k()
-  evaluateTidyparseOnStackoverflow()
-//  evaluateSeq2ParseOnStackOverflowDataset()
+//  evaluateTidyparseOnStackoverflow()
+  evaluateSeq2ParseOnStackOverflowDataset()
 }
 
 fun evaluateSeq2ParseOnStackOverflowDataset() {
@@ -73,20 +73,29 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
   var humanFixPrecision = 0.0
   var chrMatchPrecision = 0.0
   var latency = 0.0
+  var percentageOfFixesShorterThanSeq2Parse = 0.0
+  var percentageOfFixesLongerThanSeq2Parse = 0.0
   preprocessStackOverflow()
+//    .filter { it.second != it.third }
     .forEachIndexed { i, (humanError, humanFix, minimumFix) ->
       val errTks = humanError.lexToStrTypesAsPython()
       val minFixTks = minimumFix.lexToStrTypesAsPython()
+
+      val minFixSize = extractPatch(errTks, minFixTks).changes().size
+
       val seq2parseFix = measureTimedValue { seq2parseFix(humanError) }.let {
         latency += it.duration.inWholeMilliseconds
         it.value
       }
+
+      val seq2parseFixTks = seq2parseFix.lexToStrTypesAsPython()
+      val seq2parseEditSize = extractPatch(errTks, seq2parseFixTks).changes().size
+
       val seq2parseWasParseable = seq2parseFix.isValidPython {
         val s2pDiffFullDiff = prettyDiffHorizontal(humanError, seq2parseFix, "human error", "seq2parse fix")
         println("\nSeq2Parse fix did NOT parse: $it!\n$s2pDiffFullDiff\n\n")
       }
 
-      val seq2parseFixTks = seq2parseFix.lexToStrTypesAsPython()
       if (seq2parseFixTks == minFixTks)
         println("Abstract tokens matched but there was a character diff:\n" +
           prettyDiffHorizontal(minimumFix, seq2parseFix, "human fix", "seq2parse fix"))
@@ -95,8 +104,12 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       val minDiff = prettyDiffNoFrills(errTks.joinToString(" "), minFixTks.joinToString(" "))
       println("Minimized human fix: $minDiff (parsed=${minimumFix.isValidPython()})")
       val s2pDiff = prettyDiffNoFrills(errTks.joinToString(" "), seq2parseFixTks.joinToString(" "))
-      println("Seq2Parse tokenized: $s2pDiff (parsed=${seq2parseWasParseable}, matched=${seq2parseFixTks == minFixTks})")
+      println("Seq2Parse tokenized: $s2pDiff (parsed=${seq2parseWasParseable}, matched=${seq2parseFixTks == minFixTks})\n")
 
+      if (minFixSize > seq2parseEditSize) percentageOfFixesLongerThanSeq2Parse += 1.0
+      else if (minFixSize < seq2parseEditSize) percentageOfFixesShorterThanSeq2Parse += 1.0
+      println("Percentage of fixes shorter than Seq2Parse: ${(percentageOfFixesShorterThanSeq2Parse / (i + 1)).round(3)}")
+      println("Percentage of fixes longer than Seq2Parse : ${(percentageOfFixesLongerThanSeq2Parse / (i + 1)).round(3)}")
       syntaxPrecision += if (seq2parseWasParseable) 1.0 else 0.0
       val avgSyntaxPrecision = (syntaxPrecision / (i + 1)).round(3)
       println("Average Syntactic precision@1 (${i+1} samples): $avgSyntaxPrecision")
@@ -108,7 +121,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       println("Average CharMatch precision@1 (${i+1} samples): $avgChrMatchPrecision")
 
       val avgLatency = (latency / (i + 1)).round(3)
-      println("Average latency: ${avgLatency}ms\n")
+      println("Average latency to produce a single sample: ${avgLatency}ms\n")
     }
 }
 
