@@ -7,6 +7,7 @@ import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
 import com.beust.klaxon.*
 import edu.mcgill.cstk.utils.*
+import org.antlr.v4.runtime.CommonToken
 import org.apache.datasketches.frequencies.ErrorType
 import org.kosat.round
 import java.io.*
@@ -69,10 +70,34 @@ fun main() {
 }
 
 fun evaluateSeq2ParseOnStackOverflowDataset() {
-  var syntaxPrecision = 0.0
-  var humanFixPrecision = 0.0
-  var chrMatchPrecision = 0.0
-  var latency = 0.0
+  class Seq2ParsePrecision {
+    var syntaxPrecision = 0.0
+    var humanFixPrecision = 0.0
+    var chrMatchPrecision = 0.0
+    var samples = 0
+    var latency = 0.0
+    fun update(seq2parseWasParseable: Boolean,
+               seq2parseFixTks: List<Σᐩ>, minFixTks: List<Σᐩ>,
+               humanFix: String, seq2parseFix: String, latency: Int) {
+      samples += 1
+      syntaxPrecision += if (seq2parseWasParseable) 1.0 else 0.0
+      val avgSyntaxPrecision = (syntaxPrecision / (samples)).round(3)
+      println("Average Syntactic precision@1: $avgSyntaxPrecision")
+      humanFixPrecision += if (seq2parseFixTks == minFixTks) 1.0 else 0.0
+      val avgHumanFixPrecision = (humanFixPrecision / (samples)).round(3)
+      println("Average HumanEval precision@1: $avgHumanFixPrecision")
+      chrMatchPrecision += if (seq2parseFix == humanFix) 1.0 else 0.0
+      val avgChrMatchPrecision = (chrMatchPrecision / (samples)).round(3)
+      println("Average CharMatch precision@1: $avgChrMatchPrecision")
+      this.latency += latency
+      val avgLatency = (this.latency / samples).round(3)
+      println("Average latency to produce a single sample: ${avgLatency}ms\n")
+    }
+  }
+
+  val totalPrecision = Seq2ParsePrecision()
+  val editPrecision = (1..MAX_PATCH_SIZE).associateWith { Seq2ParsePrecision() }
+  var latency: Int
   var percentageOfFixesShorterThanSeq2Parse = 0.0
   var percentageOfFixesLongerThanSeq2Parse = 0.0
   preprocessStackOverflow()
@@ -84,7 +109,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       val minFixSize = extractPatch(errTks, minFixTks).changes().size
 
       val seq2parseFix = measureTimedValue { seq2parseFix(humanError) }.let {
-        latency += it.duration.inWholeMilliseconds
+        latency = it.duration.inWholeMilliseconds.toInt()
         it.value
       }
 
@@ -110,18 +135,11 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       else if (minFixSize < seq2parseEditSize) percentageOfFixesShorterThanSeq2Parse += 1.0
       println("Percentage of fixes shorter than Seq2Parse: ${(percentageOfFixesShorterThanSeq2Parse / (i + 1)).round(3)}")
       println("Percentage of fixes longer than Seq2Parse : ${(percentageOfFixesLongerThanSeq2Parse / (i + 1)).round(3)}")
-      syntaxPrecision += if (seq2parseWasParseable) 1.0 else 0.0
-      val avgSyntaxPrecision = (syntaxPrecision / (i + 1)).round(3)
-      println("Average Syntactic precision@1 (${i+1} samples): $avgSyntaxPrecision")
-      humanFixPrecision += if (seq2parseFixTks == minFixTks) 1.0 else 0.0
-      val avgHumanFixPrecision = (humanFixPrecision / (i + 1)).round(3)
-      println("Average HumanEval precision@1 (${i+1} samples): $avgHumanFixPrecision")
-      chrMatchPrecision += if (seq2parseFix == humanFix) 1.0 else 0.0
-      val avgChrMatchPrecision = (chrMatchPrecision / (i + 1)).round(3)
-      println("Average CharMatch precision@1 (${i+1} samples): $avgChrMatchPrecision")
 
-      val avgLatency = (latency / (i + 1)).round(3)
-      println("Average latency to produce a single sample: ${avgLatency}ms\n")
+      println("Ranking stats for $minFixSize-edit fixes (${editPrecision[minFixSize]!!.samples} samples):")
+      editPrecision[minFixSize]!!.run { update(seq2parseWasParseable, seq2parseFixTks, minFixTks, humanFix, seq2parseFix, latency) }
+      println("\nTotal ranking stats across all edit sizes (${totalPrecision.samples} samples):")
+      totalPrecision.run { update(seq2parseWasParseable, seq2parseFixTks, minFixTks, humanFix, seq2parseFix, latency) }
     }
 }
 
@@ -242,7 +260,7 @@ fun evaluateTidyparseOnStackoverflow() {
 private fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json")
-): Sequence<Π3<Σᐩ, String, String>> =
+): Sequence<Π3A<Σᐩ>> =
   brokeSnippets.zip(fixedSnippets)
 //    .asStream()//.parallel()
     .filter { (broke, fixed) ->
@@ -253,15 +271,17 @@ private fun preprocessStackOverflow(
     }
     .minimizeFix { tokenizeAsPython(true) }
     .filter { (broke, fixed, minfix) ->
-      val (brokeTokens, minFixedTokens) =
-        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
+//      val (brokeTokens, minFixedTokens) =
+//        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
 //      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
-      minfix.isValidPython() &&
-      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
-    }
-    .filter { (broke, fixed, minfix) ->
+
+      val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+
+      minfix.isValidPython() &&
+      minpatch.changes().size <= MAX_PATCH_SIZE &&
       brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
+//      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
     }
 //    .map { (broke, fixed, minfix) ->
 //      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
@@ -272,13 +292,7 @@ private fun preprocessStackOverflow(
 //        }
 //      }
 //    }
-    .filter {
-      extractPatch(
-        it.first.lexToStrTypesAsPython(),
-        it.third.lexToStrTypesAsPython()
-      ).changes().size <= MAX_PATCH_SIZE
-    }
-    .distinctBy { it.third }
+    .distinctBy { it.π3 }
     .shuffleOnline()
 
 private fun compareSeq2ParseFix(

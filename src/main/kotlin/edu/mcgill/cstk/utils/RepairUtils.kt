@@ -2,11 +2,11 @@ package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.intersperse
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.sampling.choose
 import ai.hypergraph.kaliningraph.types.*
 import bijectiveRepair
 import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
-import java.util.stream.Stream
 import kotlin.math.*
 import kotlin.time.TimeSource
 
@@ -31,6 +31,7 @@ fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
 
 fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
   map { (broke, fixed) ->
+//    val startTime = TimeSource.Monotonic.markNow()
     val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
 
 //  val brokeJoin = brokeTokens.joinToString("")
@@ -39,10 +40,19 @@ fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
 
     val patch: Patch = extractPatch(brokeTokens, fixedTokens)
     val minEdit = deltaDebug(patch.changes()) { idxs -> patch.apply(idxs).isValidPython() }
-    val minFix = patch.apply(minEdit)
+// deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
+//      .minimalSubpatch { patch.apply(this).isValidPython() }
+
 //  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
 //  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
-    broke to fixedJoin to minFix
+
+//    println("Reduced from ${patch.changes().size} to ${minEdit.size} edits in ${startTime.elapsedNow().inWholeMilliseconds}ms")
+
+//    if(!minFix.isValidPython()) println("Minimized fix is invalid Python: $minFix")
+
+    val minfix= patch.apply(minEdit)
+
+    broke to fixedJoin to minfix
   }
 
 typealias Edit = Π2A<Σᐩ>
@@ -52,8 +62,12 @@ val Edit.new: Σᐩ get() = second
 
 fun Patch.changes(): List<Int> = indices.filter { this[it].old != this[it].new }
 
-fun Patch.apply(indices: List<Int>) =
-  mapIndexed { i, it -> if (i in indices) it.new else it.old }.joinToString("")
+fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =
+  (1..size).asSequence().map { choose(it).map { it.toList() } }
+  .map { it.filter { it.filter() } }.firstOrNull { it.any() }?.firstOrNull() ?: this
+
+fun Patch.apply(indices: List<Int>, separator: Σᐩ = ""): Σᐩ =
+  mapIndexed { i, it -> if (i in indices) it.new else it.old }.joinToString(separator)
 
 fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
   DiffRowGenerator.create().build()

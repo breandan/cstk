@@ -60,6 +60,11 @@ fun Σᐩ.lexToStrTypesAsPython(
   vocabulary: Vocabulary = lexer.vocabulary
 ) = lexer.allTokens.map { vocabulary.getDisplayName(it.type) }
 
+fun Σᐩ.lexToPythonTokens(
+  lexer: Lexer = Python3Lexer(CharStreams.fromString(this)),
+  vocabulary: Vocabulary = lexer.vocabulary
+) = lexer.allTokens.toList()
+
 fun Σᐩ.lexAsPython(): Python3Lexer =
   Python3Lexer(CharStreams.fromStream(byteInputStream()))
 
