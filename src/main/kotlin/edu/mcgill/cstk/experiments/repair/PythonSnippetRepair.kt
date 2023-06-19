@@ -65,8 +65,8 @@ val mostCommonTokens by lazy {
 
 fun main() {
 //  evaluateTidyparseOnSeq2Parse15k()
-//  evaluateTidyparseOnStackoverflow()
-  evaluateSeq2ParseOnStackOverflowDataset()
+  evaluateTidyparseOnStackoverflow()
+//  evaluateSeq2ParseOnStackOverflowDataset()
 }
 
 fun evaluateSeq2ParseOnStackOverflowDataset() {
@@ -144,11 +144,12 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 }
 
 class RankStats(val name: String = "Total") {
+  val upperBound = TIMEOUT_MS / 1000
   // Mean Reciprocal Rank
-  val timedMRR = (5..60 step 5).associateWith { 0.0 }.toMutableMap()
+  val timedMRR = (5..upperBound step 5).associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
   val timedPAK =
-    (setOf(1, 5, 10, 15, 20, 999) * (5..60 step 5).toSet())
+    ((setOf(1, 5, 10, 15, 20) + (1..10_000 step 1000).toSet()) * ((5..upperBound step 5).toSet()))
       .associateWith { 0.0 }.toMutableMap()
   var samplesEvaluated = 0
 
