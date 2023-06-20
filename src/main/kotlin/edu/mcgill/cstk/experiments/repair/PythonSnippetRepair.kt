@@ -145,13 +145,16 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
+  val step = 10
   // Mean Reciprocal Rank
-  val timedMRR = (5..upperBound step 5).associateWith { 0.0 }.toMutableMap()
+  val timedMRR = (0..upperBound step step).associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
   val timedPAK =
-    ((setOf(1, 5, 10, 15, 20) + (1..10_000 step 1000).toSet()) * ((5..upperBound step 5).toSet()))
+    ((setOf(1, 5, 10, 15, 20) + (1..10_000 step 1000).toSet()) * ((0..upperBound step step).toSet()))
       .associateWith { 0.0 }.toMutableMap()
+  val newRepairsFoundInTime = mutableMapOf<Int, Int>()
   var samplesEvaluated = 0
+  var repairSize = 0
 
   fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
     samplesEvaluated += 1
@@ -171,6 +174,9 @@ class RankStats(val name: String = "Total") {
           timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
         }
     }
+
+    val newRepairs = repairProposals.map { it.result }.toSet() -
+      repairProposals.map { it.result }.toSet()
 
     var summary = "$name ranking statistics across $samplesEvaluated samples...\n"
     val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
