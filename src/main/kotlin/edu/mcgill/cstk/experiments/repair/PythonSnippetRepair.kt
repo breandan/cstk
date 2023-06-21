@@ -1,13 +1,11 @@
 package edu.mcgill.cstk.experiments.repair
 
 import NUM_CORES
-import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
 import com.beust.klaxon.*
 import edu.mcgill.cstk.utils.*
-import org.antlr.v4.runtime.CommonToken
 import org.apache.datasketches.frequencies.ErrorType
 import org.kosat.round
 import java.io.*
@@ -155,29 +153,29 @@ class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
   val step = 20
   // Mean Reciprocal Rank
-  val timedMRR = (0..upperBound step step).associateWith { 0.0 }.toMutableMap()
+  val timedMRR = (step..upperBound step step).associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
   val timedPAK =
-    ((setOf(1, 5, 10, Int.MAX_VALUE) + (1..10_000 step 1000).toSet()) * ((0..upperBound step step).toSet()))
+    (setOf(1, 5, 10, Int.MAX_VALUE) * ((step..upperBound step step).toSet()))
       .associateWith { 0.0 }.toMutableMap()
   var samplesEvaluated = 0
 
   fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
     samplesEvaluated += 1
     (timedMRR.keys).forEach { sec ->
-      repairProposals.filter { it.time in 0..(sec * 1000) }
-        .map { it.result }.let {
-          val mrr = it.indexOfFirst { it == groundTruthRepair }
+      repairProposals.filter { it.timeMS in 0..(sec * 1000) }
+        .let {
+          val mrr = it.indexOfFirst { it.matches(groundTruthRepair) }
             .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
           timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
         }
     }
 
     (timedPAK.keys).forEach { (k, sec) ->
-      repairProposals.filter { it.time in 0..(sec * 1000) }
-        .map { it.result }.let {
+      repairProposals.filter { it.timeMS in 0..(sec * 1000) }
+        .let {
           val pak = (if(k == Int.MAX_VALUE) it else it.take(k))
-            .count { it == groundTruthRepair }.toDouble()
+            .count { it.matches(groundTruthRepair) }.toDouble()
           timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
         }
     }
@@ -245,23 +243,24 @@ fun evaluateTidyparseOnStackoverflow() {
         prompt = coarseBrokeStr,
         fillers = deck,
         maxEdits = 4,
-        admissibilityFilter = { tokenizeByWhitespace().map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
+        admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
-        scoreEdit = { P_stackoverflow.score(it.tokenizeByWhitespace()) }
+        // TODO: only score the locations that are actually being modified to avoid redundant work
+        scoreEdit = { P_stackoverflow.score(it) }
       ).also { repairs ->
         repairs.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(coarseBrokeStr, it.result)}")
+          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(coarseBrokeStr, it.resToStr())}")
           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
         }
 
-        val contained = repairs.any { coarseFixedStr == it.result }
+        val contained = repairs.any { coarseFixedStr == it.resToStr() }
         val elapsed = System.currentTimeMillis() - startTime
 
         println("\nFound ${repairs.size} valid repairs in ${elapsed}ms, or roughly " +
           "${(repairs.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
 
         val minRepairState = if (!contained) "NOT" else
-          "#" + repairs.indexOfFirst { it.result == coarseFixedStr }
+          "#" + repairs.indexOfFirst { it.resToStr() == coarseFixedStr }
         println("Minimized repair was $minRepairState in repair proposals!")
 
 //      compareSeq2ParseFix(humanError, coarseBrokeStr, coarseFixedStr, repairs)
@@ -319,7 +318,7 @@ private fun compareSeq2ParseFix(
   val seq2parseFixCoarse =
     seq2parseFix.lexToStrTypesAsPython().joinToString(" ", "", " NEWLINE")
 
-  val idx = ourRepairs.indexOfFirst { it.result == seq2parseFixCoarse }
+  val idx = ourRepairs.indexOfFirst { it.matches(seq2parseFixCoarse) }
   println(
     "seq2parse fix (parseable=$parseable, idx=$idx, matches=${coarseFixedStr == seq2parseFixCoarse}): " +
       prettyDiffNoFrills(coarseBrokeStr, seq2parseFixCoarse)
@@ -374,10 +373,10 @@ fun evaluateTidyparseOnSeq2Parse15k() {
         maxEdits = 4,
         admissibilityFilter = { this in seq2parsePythonCFG.language },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
-        scoreEdit = { P_seq2parse.score(it.tokenizeByWhitespace()) }
+        scoreEdit = { P_seq2parse.score(it) }
       ).also {
         it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
         }
 

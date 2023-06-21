@@ -113,8 +113,8 @@ fun parallelRepair(
   prompt: Σᐩ,
   fillers: Set<Σᐩ>,
   maxEdits: Int = 2,
-  admissibilityFilter: Σᐩ.() -> Boolean,
-  scoreEdit: ((Σᐩ) -> Double)? = null,
+  admissibilityFilter: List<Σᐩ>.() -> Boolean,
+  scoreEdit: ((List<Σᐩ>) -> Double)? = null,
 ): List<Repair> {
   var bestRepair = Double.MAX_VALUE
   val delim = List(prompt.length) { "-" }.joinToString("")
@@ -135,7 +135,7 @@ fun parallelRepair(
       if (scoreEdit != null) ({
           val score = scoreEdit(it.result)
           if (score < bestRepair) {
-            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
 //            println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
             bestRepair = score
           }
@@ -143,7 +143,7 @@ fun parallelRepair(
       else ({
           val levDiff = it.edit.size.toDouble()
           if (levDiff < bestRepair) {
-            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
 //              println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
             bestRepair = levDiff
           }

@@ -49,7 +49,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
   System.setErr(FilteredOutputStream(System.err))
   System.setOut(FilteredOutputStream(System.out))
 
-  val scoreEdit: (Σᐩ) -> Double = constructScoringFunction()
+  val scoreEdit: (List<Σᐩ>) -> Double = constructScoringFunction()
 
   val deck =
     (commonKotlinKeywords + "ε" - "w")
@@ -75,16 +75,16 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
      val startTime = System.currentTimeMillis()
-     parallelRepair(prompt, deck, edits + 1, { isSyntacticallyValidKotlin() }, scoreEdit).postprocess()
+     parallelRepair(prompt, deck, edits + 1, { joinToString("").isSyntacticallyValidKotlin() }, scoreEdit).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
          val gtSeq = groundTruth.tokenizeByWhitespace().joinToString(" ")
-         val fullESEC = it.map { listOf(it.result) + it.equivalenceClass.map { it.result } }
+         val fullESEC = it.map { listOf(it.resToStr()) + it.equivalenceClass.map { it.resToStr() } }
          val contained = fullESEC.any { gtSeq in it }
          val elapsed = System.currentTimeMillis() - startTime
 
          it.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
-           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.result)}")
+           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
            //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
          }
 
@@ -108,8 +108,8 @@ fun collectMostCommonKeywords() {
     .let { File(keywordFile).writeText(it) }
 }
 
-private fun constructScoringFunction(): (Σᐩ) -> Double =
-  { P_kotlin.score("BOS ${it.coarsenAsKotlin(false)} EOS".tokenizeByWhitespace()) }
+private fun constructScoringFunction(): (List<Σᐩ>) -> Double =
+  { P_kotlin.score(listOf("BOS") + it + listOf("EOS")) }
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =
