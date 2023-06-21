@@ -64,7 +64,7 @@ Compute Canada run command:
 
 ./gradlew shadowJar &&
 scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk &&
-ssh breandan@niagara.computecanada.ca 'sbatch /home/b/bengioy/breandan/cstk/submit_job.sh'
+ssh breandan@niagara.computecanada.ca 'cd /home/b/bengioy/breandan/cstk && sbatch submit_job.sh'
 
 Local run command:
 
@@ -153,16 +153,14 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
-  val step = 10
+  val step = 20
   // Mean Reciprocal Rank
   val timedMRR = (0..upperBound step step).associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
   val timedPAK =
-    ((setOf(1, 5, 10, 15, 20) + (1..10_000 step 1000).toSet()) * ((0..upperBound step step).toSet()))
+    ((setOf(1, 5, 10, Int.MAX_VALUE) + (1..10_000 step 1000).toSet()) * ((0..upperBound step step).toSet()))
       .associateWith { 0.0 }.toMutableMap()
-  val newRepairsFoundInTime = mutableMapOf<Int, Int>()
   var samplesEvaluated = 0
-  var repairSize = 0
 
   fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
     samplesEvaluated += 1
@@ -178,13 +176,11 @@ class RankStats(val name: String = "Total") {
     (timedPAK.keys).forEach { (k, sec) ->
       repairProposals.filter { it.time in 0..(sec * 1000) }
         .map { it.result }.let {
-          val pak = it.take(k).count { it == groundTruthRepair }.toDouble()
+          val pak = (if(k == Int.MAX_VALUE) it else it.take(k))
+            .count { it == groundTruthRepair }.toDouble()
           timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
         }
     }
-
-    val newRepairs = repairProposals.map { it.result }.toSet() -
-      repairProposals.map { it.result }.toSet()
 
     var summary = "$name ranking statistics across $samplesEvaluated samples...\n"
     val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
@@ -199,7 +195,9 @@ class RankStats(val name: String = "Total") {
           .joinToString(", ") { (p, v) ->
             "${p.second}s: ${(v / samplesEvaluated).round(3)}"
           }
-      }.entries.joinToString("\n") { (k, v) -> "P@$k=".padEnd(6) + v }
+      }.entries.joinToString("\n") { (k, v) ->
+        "P@${if (k == Int.MAX_VALUE) "All" else k}=".padEnd(6) + v
+      }
     summary += "\n$latestPAKs"
     printInABox(summary)
   }
