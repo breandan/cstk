@@ -23,7 +23,7 @@ fun main() {
   evaluateSyntheticRepairBenchmarkOn(standaloneCompileableKotlinStatements) {
     print("Generated $size syntactic repairs")
     val time = System.currentTimeMillis()
-    parallelStream().filter { it.result.isCompilableKotlin() }.toList()
+    parallelStream().filter { it.resToStr().isCompilableKotlin() }.toList()
       .also {
         println(", and ${it.size} of them could be compiled." +
         " (${System.currentTimeMillis() - time}ms)")
