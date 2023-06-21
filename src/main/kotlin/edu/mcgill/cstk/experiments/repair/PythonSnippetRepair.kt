@@ -60,8 +60,16 @@ val mostCommonTokens by lazy {
 }
 
 /*
+Compute Canada run command:
+
+./gradlew shadowJar &&
+scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk &&
+ssh breandan@niagara.computecanada.ca 'sbatch /home/b/bengioy/breandan/cstk/submit_job.sh'
+
+Local run command:
+
 ./gradlew pythonSnippetRepair
- */
+*/
 
 fun main() {
 //  evaluateTidyparseOnSeq2Parse15k()
