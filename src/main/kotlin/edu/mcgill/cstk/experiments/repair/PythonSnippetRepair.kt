@@ -160,7 +160,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
-  val time = (1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
+  val time = (300..3000 step 300) //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
   // Mean Reciprocal Rank
   val timedMRR = time.associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
@@ -171,21 +171,21 @@ class RankStats(val name: String = "Total") {
 
   fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
     samplesEvaluated += 1
-    (timedMRR.keys).forEach { sec ->
-      repairProposals.filter { it.timeMS in 0..(sec * 1000) }
+    (timedMRR.keys).forEach { ms ->
+      repairProposals.filter { it.timeMS <= ms }
         .let {
           val mrr = it.indexOfFirst { it.matches(groundTruthRepair) }
             .let { if (it == -1) 0.0 else 1.0 / (it + 1) }
-          timedMRR[sec] = (timedMRR[sec] ?: 0.0) + mrr
+          timedMRR[ms] = (timedMRR[ms] ?: 0.0) + mrr
         }
     }
 
-    (timedPAK.keys).forEach { (k, sec) ->
-      repairProposals.filter { it.timeMS in 0..(sec * 1_000) }
+    (timedPAK.keys).forEach { (k, ms) ->
+      repairProposals.filter { it.timeMS <= ms }
         .let {
           val pak = (if(k == Int.MAX_VALUE) it else it.take(k))
             .count { it.matches(groundTruthRepair) }.toDouble()
-          timedPAK[k to sec] = (timedPAK[k to sec] ?: 0.0) + pak
+          timedPAK[k to ms] = (timedPAK[k to ms] ?: 0.0) + pak
         }
     }
 
@@ -200,7 +200,7 @@ class RankStats(val name: String = "Total") {
       .mapValues { (_, v) ->
         v.sortedByDescending { it.key.second }
           .joinToString(", ") { (p, v) ->
-            "${p.second}s: ${(v / samplesEvaluated).round(3)}"
+            "${p.second}ms: ${(v / samplesEvaluated).round(3)}"
           }
       }.entries.joinToString("\n") { (k, v) ->
         "P@${if (k == Int.MAX_VALUE) "All" else k}=".padEnd(6) + v
