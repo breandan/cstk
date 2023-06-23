@@ -3,11 +3,9 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.markovian.mcmc.*
-import bijectiveRepair
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.spec.grammar.tools.*
 import java.io.*
 import kotlin.time.*
 
@@ -55,7 +53,7 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
     (commonKotlinKeywords + "ε" - "w")
       .also { println("Full deck: $it") }
       .sortedBy { P_kotlin[it] }.reversed().take(32)
-      .also { println("High frequency deck: $it") }.toSet()
+      .also { println("High frequency deck: $it") }
 
   val edits = 2
   // Generate synthetic error dataset

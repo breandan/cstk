@@ -50,8 +50,7 @@ fun Σᐩ.lexToIntTypesAsPython(
 ) = lexer.allTokens.map { it.type }
 
 val pythonVocabBindex: Bindex<Σᐩ> =
-  Python3Lexer(CharStreams.fromString(""))
-  .vocabulary.let { vocab ->
+  Python3Lexer(CharStreams.fromString("")).vocabulary.let { vocab ->
     (0..vocab.maxTokenType).associateWith { vocab.getDisplayName(it) }
   }.let { Bindex(it) }//.also { println(it.toString()) }
 

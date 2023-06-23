@@ -1,9 +1,10 @@
 package edu.mcgill.cstk.utils
 
-import ai.hypergraph.kaliningraph.intersperse
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sampling.choose
 import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.markovian.mcmc.expandByFrequency
 import bijectiveRepair
 import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
@@ -58,6 +59,7 @@ fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
 typealias Edit = Π2A<Σᐩ>
 typealias Patch = List<Edit>
 val Edit.old: Σᐩ get() = first
+// If new is empty, then this is a deletion
 val Edit.new: Σᐩ get() = second
 
 fun Patch.changes(): List<Int> = indices.filter { this[it].old != this[it].new }
@@ -111,7 +113,7 @@ fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boole
 // TODO: Generify to accept List<T>
 fun parallelRepair(
   prompt: Σᐩ,
-  fillers: Set<Σᐩ>,
+  fillers: Collection<Σᐩ>,
   maxEdits: Int = 2,
   admissibilityFilter: List<Σᐩ>.() -> Boolean,
   scoreEdit: ((List<Σᐩ>) -> Double)? = null,
@@ -123,10 +125,12 @@ fun parallelRepair(
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
   val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
 
+  val deck = fillers + promptTokens.toSet() - "\""
+
   val clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
   return bijectiveRepair(
     promptTokens = promptTokens,
-    fillers = fillers,
+    deck = deck,
     maxEdits = maxEdits,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     admissibilityFilter = admissibilityFilter,
