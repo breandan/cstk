@@ -41,7 +41,7 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} tokens StackOverflow in ${it.duration.inWholeMilliseconds}ms"); it.value }
 }
 
-val P_stackoverflow: MarkovChain<Σᐩ> by lazy {
+val P_BIFI: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
     readBIFIContents().take(100_000).asStream().parallel()
       .map { "\n$it\n".lexToStrTypesAsPython().asSequence().toMarkovChain(4) }
@@ -225,7 +225,7 @@ class MultiRankStats {
 
 fun evaluateTidyparseOnStackoverflow() {
 //  val errDeck = pythonErrProbs.expandByFrequency(10)
-  val topTokens = P_stackoverflow.topK(200).map { it.first } + "ε" // + errDeck
+  val topTokens = P_BIFI.topK(200).map { it.first } + "ε" // + errDeck
   println("Top tokens: $topTokens")
 
   val multiRankStats = MultiRankStats()
@@ -260,7 +260,7 @@ fun evaluateTidyparseOnStackoverflow() {
         admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
         // TODO: only score the locations that are actually being modified to avoid redundant work
-        scoreEdit = { P_stackoverflow.score(it) }
+        scoreEdit = { P_BIFI.score(it) }
       ).also { repairs ->
         repairs.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(coarseBrokeStr, it.resToStr())}")
