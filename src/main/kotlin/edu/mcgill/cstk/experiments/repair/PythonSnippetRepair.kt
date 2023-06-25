@@ -43,7 +43,7 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 
 val P_stackoverflow: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
-    readContents("parse_fixes.json").asStream().parallel()
+    readBIFIContents().take(100_000).asStream().parallel()
       .map { "\n$it\n".lexToStrTypesAsPython().asSequence().toMarkovChain(4) }
       .reduce { t, u -> t + u }.get()
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} tokens StackOverflow in ${it.duration.inWholeMilliseconds}ms"); it.value }

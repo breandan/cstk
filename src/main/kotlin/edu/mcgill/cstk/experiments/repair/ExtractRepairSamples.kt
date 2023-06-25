@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.regex.Pattern
 
 /*
 ./gradlew extractRepairSamples
@@ -35,3 +36,15 @@ fun main() {
 
 private fun selectionCriteria(it: String) =
   it.isANontrivialStatementWithBalancedBrackets(1, statementCriteria = { true })
+
+fun readBIFIContents(
+  filename: String = "bifi/data/orig_good_code/orig.good.json",
+  file: File = File(filename)
+): Sequence<String> =
+  file.readLines().asSequence()
+    .filter { it.startsWith("    \"code_string\": \"") }
+    .mapNotNull {
+      val json = "{$it}"
+      val parsedObject = Klaxon().parseJsonObject(json.reader())
+      parsedObject.string("code_string")
+    }
