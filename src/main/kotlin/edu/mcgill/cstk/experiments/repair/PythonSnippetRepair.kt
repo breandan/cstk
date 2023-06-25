@@ -160,7 +160,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
-  val time = (300..3000 step 300) //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
+  val time = (100..2500 step 200).toSet() //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
   // Mean Reciprocal Rank
   val timedMRR = time.associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
@@ -189,10 +189,12 @@ class RankStats(val name: String = "Total") {
         }
     }
 
+    fun Int.roundToTenths() = (toDouble() / 1000).round(1)
+
     var summary = "$name ranking statistics across $samplesEvaluated samples...\n"
     val latestMRRs = timedMRR.entries.sortedByDescending { it.key }
       .joinToString(", ") { (k, v) ->
-        "${k}s: ${(v / samplesEvaluated).round(3)}"
+        "${(k.roundToTenths()).round(1)}s: ${(v / samplesEvaluated).round(3)}"
       }
     summary += "\nMRR=  $latestMRRs"
 
@@ -200,7 +202,7 @@ class RankStats(val name: String = "Total") {
       .mapValues { (_, v) ->
         v.sortedByDescending { it.key.second }
           .joinToString(", ") { (p, v) ->
-            "${p.second}ms: ${(v / samplesEvaluated).round(3)}"
+            "${p.second.roundToTenths()}s: ${(v / samplesEvaluated).round(3)}"
           }
       }.entries.joinToString("\n") { (k, v) ->
         "P@${if (k == Int.MAX_VALUE) "All" else k}=".padEnd(6) + v
@@ -253,6 +255,7 @@ fun evaluateTidyparseOnStackoverflow() {
       parallelRepair(
         prompt = coarseBrokeStr,
         fillers = topTokens,
+//        hints = pythonErrorLocations(humanError.lexToIntTypesAsPython()),
         maxEdits = 4,
         admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
@@ -280,6 +283,10 @@ fun evaluateTidyparseOnStackoverflow() {
     }
   }
 
+fun pythonErrorLocations(coarseBrokeTks: List<Int>): List<Int> =
+  listOf(coarseBrokeTks.getIndexOfFirstPythonError())
+
+// Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
 private fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json")

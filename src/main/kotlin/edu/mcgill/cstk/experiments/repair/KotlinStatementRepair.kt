@@ -73,7 +73,13 @@ fun evaluateSyntheticRepairBenchmarkOn(dataset: String, postprocess: List<Repair
    .forEach { (groundTruth, prompt) ->
      println("Original:  $groundTruth\nCorrupted: ${prettyDiffNoFrills(groundTruth, prompt)}")
      val startTime = System.currentTimeMillis()
-     parallelRepair(prompt, deck, edits + 1, { joinToString("").isSyntacticallyValidKotlin() }, scoreEdit).postprocess()
+     parallelRepair(
+       prompt = prompt,
+       fillers = deck,
+       maxEdits = edits + 1,
+       admissibilityFilter = { joinToString("").isSyntacticallyValidKotlin() },
+       scoreEdit = scoreEdit
+     ).postprocess()
        .also {
          //    repairKotlinStatement(prompt).also {
          val gtSeq = groundTruth.tokenizeByWhitespace().joinToString(" ")

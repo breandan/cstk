@@ -114,6 +114,7 @@ fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boole
 fun parallelRepair(
   prompt: Σᐩ,
   fillers: Collection<Σᐩ>,
+  hints: List<Int> = emptyList(),
   maxEdits: Int = 2,
   admissibilityFilter: List<Σᐩ>.() -> Boolean,
   scoreEdit: ((List<Σᐩ>) -> Double)? = null,
@@ -123,7 +124,10 @@ fun parallelRepair(
   println("$delim\nBest repairs so far:\n$delim")
   // We intersperse the prompt with empty strings to enable the repair of the first and last token
   // as well as insertion of tokens by the repair algorithm, which only considers substitutions
-  val promptTokens = prompt.tokenizeByWhitespace().intersperse(maxEdits.coerceAtMost(2))
+  val spacingLength = maxEdits.coerceAtMost(2)
+  val promptTokens = prompt.tokenizeByWhitespace().intersperse(spacingLength)
+  // Remap the hints to the new indices in the interspersed prompt tokens
+  val remappedHints = hints.map { (spacingLength + 1) * it + 2 }
 
   val deck = fillers + promptTokens.toSet() - "\""
 
@@ -131,6 +135,7 @@ fun parallelRepair(
   return bijectiveRepair(
     promptTokens = promptTokens,
     deck = deck,
+    hints = remappedHints,
     maxEdits = maxEdits,
     takeMoreWhile = { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS },
     admissibilityFilter = admissibilityFilter,

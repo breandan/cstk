@@ -19,6 +19,23 @@ val errorListener =
     ) { throw Exception("$msg") }
   }
 
+// Reports the index of the token that caused the error
+val indexReportingListener =
+  object: BaseErrorListener() {
+    override fun syntaxError(
+      recognizer: Recognizer<*, *>?,
+      offendingSymbol: Any?,
+      line: Int,
+      charPositionInLine: Int,
+      msg: Σᐩ?,
+      e: RecognitionException?
+    ) {
+      (offendingSymbol as? Token)
+        ?.let { throw Exception(it.tokenIndex.toString()) }
+        ?: throw Exception("")
+    }
+  }
+
 // Exhaustive tokenization includes whitespaces
 fun Σᐩ.tokenizeAsPython(exhaustive: Boolean = false): List<Σᐩ> =
   if (!exhaustive) lexAsPython().allTokens.map { it.text }
@@ -31,6 +48,17 @@ fun Σᐩ.tokenizeAsPython(exhaustive: Boolean = false): List<Σᐩ> =
       else if(toSplit.isEmpty()) listOf(t)
       else throw Exception("Could not find token $t in ${toSplit.map { it.code }}").also { println("\n\n$this\n\n") }
   }
+
+fun List<Int>.getIndexOfFirstPythonError(): Int {
+  val tokenSource = ListTokenSource(map { CommonToken(it) })
+  val tokens = CommonTokenStream(tokenSource)
+  return try {
+    Python3Parser(tokens)
+      .apply { removeErrorListeners(); addErrorListener(indexReportingListener) }
+      .file_input()
+    -1
+  } catch (e: Exception) { e.message?.toIntOrNull() ?: -1 }
+}
 
 fun List<Int>.isValidPython(): Boolean {
   val tokenSource = ListTokenSource(map { CommonToken(it) })
@@ -103,6 +131,7 @@ fun Σᐩ.javac(): Σᐩ =
   } catch (e: Exception) { e.message!! }
 
 fun Σᐩ.isValidJava() = javac().isEmpty()
+
 
 fun Σᐩ.isValidPython(onErrorAction: (Σᐩ?) -> Unit = {}): Boolean =
   try {
