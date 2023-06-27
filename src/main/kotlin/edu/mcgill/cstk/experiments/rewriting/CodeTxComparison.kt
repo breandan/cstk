@@ -36,15 +36,15 @@ fun main() {
 private fun analyzeDimensionalShift(tx: KFunction1<String, String>) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it cc tx(it) }
-      matrixize(original).average().zip(matrixize(transformed).average())
+      matrixize(original).mean().zip(matrixize(transformed).mean())
         .map { (a, b) -> (a - b).absoluteValue }.toDoubleArray()
-    }.toList().toTypedArray().average().normalize()
+    }.toList().toTypedArray().mean().normalize()
 
 private fun compareTsneEmbeddings(tx: KFunction1<String, String>) {
   val (vecs, labels) =
     DATA_DIR.allFilesRecursively().allCodeFragments().take(100).mapIndexed { i, (c, s) ->
       val (original, transformed) = c.getContext(4).let { it cc tx(it) }
-      listOf(matrixize(original).average() to "o", matrixize(transformed).average() to "t")
+      listOf(matrixize(original).mean() to "o", matrixize(transformed).mean() to "t")
     }.flatten().unzip()
   val d2vecs = vecs.toTypedArray().reduceDim()
   val plot = plotTsneEmbeddingsWithLabels(d2vecs, labels)
@@ -61,8 +61,8 @@ private fun compareDistributionalShift(txs: List<KFunction1<String, String>>) {
       if (original == transformed) return@mapNotNull null
 //      val distance = kantorovich(matrixize(original), matrixize(transformed))
       val distance = euclidDist(
-        matrixize(original).average(),
-        matrixize(transformed).average()
+        matrixize(original).mean(),
+        matrixize(transformed).mean()
       )
       println("${tx.name}:".padEnd(20, ' ') + distance)
       tx to distance

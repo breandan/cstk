@@ -1,14 +1,18 @@
 package edu.mcgill.cstk.experiments.repair
 
 import NUM_CORES
+import ai.hypergraph.kaliningraph.choose
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
 import com.beust.klaxon.*
+import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import org.kosat.round
 import java.io.*
+import java.math.*
 import java.net.*
 import java.util.regex.Pattern
 import java.util.stream.Collectors
@@ -167,6 +171,57 @@ class RankStats(val name: String = "Total") {
   val timedPAK =
     (setOf(1, 5, 10, Int.MAX_VALUE) * (time.toSet()))
       .associateWith { 0.0 }.toMutableMap()
+
+  val minAdmitSetSize = mutableMapOf<Π2A<Int>, MutableList<Int>>()
+
+  val densities = mutableListOf<BigDecimal>()
+
+  fun calcNormalizingConstantSize(n: Int, k: Int): BigDecimal =
+    (1..k).sumOf { c ->
+      ((c * n + n + 1) choose c).toBigDecimal() *
+        (pythonVocabBindex.size + 1).pow(c).toBigDecimal()
+    }
+
+  fun updateDensity(repairs: List<Repair>) {
+    if (repairs.isEmpty()) return
+    val origStrSize = repairs.first().orig.size
+    val minRepairDist = repairs.maxOf { it.edit.size }
+
+    val density = repairs.size.toBigDecimal().divide(calcNormalizingConstantSize(origStrSize, minRepairDist), 15, RoundingMode.HALF_UP)
+    densities.add(density)
+
+    val kRepairsCount = repairs.filter { it.edit.size == minRepairDist }.size
+    val key = origStrSize to minRepairDist
+    minAdmitSetSize[key].let {
+      if (it != null) it.add(kRepairsCount)
+      else minAdmitSetSize[key] = mutableListOf(kRepairsCount)
+    }
+
+    fun List<Int>.meanVar(): String =
+      if (isEmpty()) "N/A"
+      else let { "(μ=" + it.average().round(1) + ", σ=" + it.map { it.toDouble() }.variance().round(1) + ")" }
+
+    fun List<BigDecimal>.minMeanMax(): String =
+      if (isEmpty()) "N/A" else let { "(μ=${it.mean()}, σ²=${it.variance()})" }
+
+    val strBld = StringBuilder()
+    strBld.append("Density stats:" +
+      " admitSet=${minAdmitSetSize.values.flatten().meanVar()}, density=${densities.minMeanMax()}, |Σ|=${pythonVocabBindex.size}\n\n")
+    (1..3).forEach { edits ->
+      strBld.append("Δ($edits) = ")
+      // Buckets of size 10
+      (20 until minAdmitSetSize.keys.maxOf { it.first }.coerceAtLeast(20) step 20)
+        .forEach { len ->
+          ((len - 10)..len).fold(listOf<Int>()) { a, it ->
+            a + (minAdmitSetSize[it to edits] ?: emptyList())
+          }.let { strBld.append("$len: ${it.meanVar()}, ") }
+        }
+      strBld.append("\n")
+    }
+
+    printInABox(strBld.toString())
+  }
+
   var samplesEvaluated = 0
 
   fun update(repairProposals: List<Repair>, groundTruthRepair: String) {
@@ -209,6 +264,8 @@ class RankStats(val name: String = "Total") {
       }
     summary += "\n$latestPAKs"
     printInABox(summary)
+
+    updateDensity(repairProposals)
   }
 }
 
@@ -295,7 +352,7 @@ private fun preprocessStackOverflow(
 //    .asStream()//.parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 30 &&
+      broke.tokenizeAsPython().size < 40 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }

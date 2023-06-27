@@ -11,7 +11,7 @@ fun euclidDist(f1: DoubleArray, f2: DoubleArray) =
   sqrt(f1.zip(f2) { a, b -> (a - b).pow(2) }.sum())
 
 // Computes elementwise means on a list of lists
-fun Array<DoubleArray>.average(): DoubleArray =
+fun Array<DoubleArray>.mean(): DoubleArray =
   fold(DoubleArray(first().size)) { a, b ->
     a.zip(b).map { (i, j) -> i + j }.toDoubleArray()
   }.map { it / size }.toDoubleArray()

@@ -42,7 +42,7 @@ fun readBIFIContents(
   file: File = File(filename)
 ): Sequence<String> =
   file.readLines().asSequence()
-    .filter { it.startsWith("    \"code_string\": \"") }
+    .filter { it.trimStart().startsWith("\"code_string\": \"") }
     .mapNotNull {
       val json = "{$it}"
       val parsedObject = Klaxon().parseJsonObject(json.reader())
