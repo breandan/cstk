@@ -164,7 +164,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
-  val time = (100..2500 step 200).toSet() //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
+  val time = (1000..9000 step 1000).toSet() //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
   // Mean Reciprocal Rank
   val timedMRR = time.associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
@@ -295,10 +295,14 @@ fun evaluateTidyparseOnStackoverflow() {
       val coarseBrokeStr = coarseBrokeTks.joinToString(" ", "", " NEWLINE")
       val coarseFixedStr = coarseFixedTks.joinToString(" ", "", " NEWLINE")
 
-      val editSize = extractPatch(
+      val patch: Patch = extractPatch(
         humanError.lexToStrTypesAsPython(),
         minimumFix.lexToStrTypesAsPython()
-      ).changes().size
+      )
+
+      val patchSize = patch.changes().size
+
+      if (!patch.isInteresting()) return@forEach
 
       println("Original broken source: ${prettyDiffNoFrills(coarseFixedStr, coarseBrokeStr)}")
       println("Minimized human repair: ${prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr)}")
@@ -330,12 +334,19 @@ fun evaluateTidyparseOnStackoverflow() {
         println("\nFound ${repairs.size} valid repairs in ${elapsed}ms, or roughly " +
           "${(repairs.size / (elapsed/1000.0)).toString().take(5)} repairs per second.")
 
-        val minRepairState = if (!contained) "NOT" else
-          "#" + repairs.indexOfFirst { it.resToStr() == coarseFixedStr }
+        val idx = repairs.indexOfFirst { it.resToStr() == coarseFixedStr }
+        val minRepairState = if (!contained) "NOT" else "#$idx (${repairs[idx].timeMS}ms)"
         println("Minimized repair was $minRepairState in repair proposals!")
 
+        if (contained) {
+          println(prettyDiffHorizontal(humanError, minimumFix) + "\n")
+          println(prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr) + "\n")
+          latexDiffMultilineStrings(coarseBrokeStr, coarseFixedStr)
+            .let { (a, b) -> println(a + "\n\n" + b) }
+        }
+
 //      compareSeq2ParseFix(humanError, coarseBrokeStr, coarseFixedStr, repairs)
-        updateRankingStats(repairs, coarseFixedStr, multiRankStats, editSize)
+        updateRankingStats(repairs, coarseFixedStr, multiRankStats, patchSize)
       }
     }
   }
@@ -352,7 +363,7 @@ private fun preprocessStackOverflow(
 //    .asStream()//.parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 40 &&
+      broke.tokenizeAsPython().size < 100 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }

@@ -62,6 +62,12 @@ val Edit.old: Σᐩ get() = first
 // If new is empty, then this is a deletion
 val Edit.new: Σᐩ get() = second
 
+// returns when there are at least two types of edits (insertions, deletions, changes) choose 2
+fun Patch.isInteresting() = changes().let {ch ->
+  filterIndexed { index, pair -> index in ch }
+    .map { (a, b) -> if(b == "") "D" else if(a == "") "I" else "C" }
+    .toSet().size > 1
+}
 fun Patch.changes(): List<Int> = indices.filter { this[it].old != this[it].new }
 
 fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =
