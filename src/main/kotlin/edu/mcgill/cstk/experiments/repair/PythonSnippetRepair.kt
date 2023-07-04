@@ -205,8 +205,8 @@ class RankStats(val name: String = "Total") {
       if (isEmpty()) "N/A" else let { "(μ=${it.mean()}, σ²=${it.variance()})" }
 
     val strBld = StringBuilder()
-    strBld.append("Density stats:" +
-      " admitSet=${minAdmitSetSize.values.flatten().meanVar()}, density=${densities.minMeanMax()}, |Σ|=${pythonVocabBindex.size}\n\n")
+    strBld.append("$name density stats:" +
+      " admits=${minAdmitSetSize.values.flatten().meanVar()}, density=${densities.minMeanMax()}, |Σ|=${pythonVocabBindex.size}\n\n")
     (1..3).forEach { edits ->
       strBld.append("Δ($edits) = ")
       // Buckets of size 10
@@ -339,10 +339,13 @@ fun evaluateTidyparseOnStackoverflow() {
         println("Minimized repair was $minRepairState in repair proposals!")
 
         if (contained) {
-          println(prettyDiffHorizontal(humanError, minimumFix) + "\n")
+          println(prettyDiffHorizontal(humanError, minimumFix,
+            "humanErr", "minFix") + "\n")
           println(prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr) + "\n")
           latexDiffMultilineStrings(coarseBrokeStr, coarseFixedStr)
-            .let { (a, b) -> println(a + "\n\n" + b) }
+            .let { (a, b) -> println("$a\n\n$b\n") }
+          latexDiffMultilineStrings(humanError, minimumFix)
+            .let { (a, b) -> println("$a\n\n$b") }
         }
 
 //      compareSeq2ParseFix(humanError, coarseBrokeStr, coarseFixedStr, repairs)
@@ -363,7 +366,7 @@ private fun preprocessStackOverflow(
 //    .asStream()//.parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 100 &&
+      broke.tokenizeAsPython().size < 40 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
