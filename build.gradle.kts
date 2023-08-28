@@ -87,6 +87,7 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.2")
 
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.0.0")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.2")
 
   // Read compressed repositories downloaded from GitHub
