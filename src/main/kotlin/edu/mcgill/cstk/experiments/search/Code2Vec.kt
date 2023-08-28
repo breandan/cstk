@@ -10,9 +10,9 @@ import astminer.common.model.*
 import astminer.parse.antlr.AntlrNode
 import astminer.parse.antlr.python.PythonParser
 import edu.mcgill.cstk.disk.DEFAULT_RAND
-import jetbrains.datalore.base.geometry.DoubleVector
-import jetbrains.datalore.plot.PlotSvgExport
 import org.jetbrains.letsPlot.*
+import org.jetbrains.letsPlot.awt.plot.PlotSvgExport
+import org.jetbrains.letsPlot.commons.geometry.DoubleVector
 import org.jetbrains.letsPlot.geom.geomPoint
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.label.ggtitle
