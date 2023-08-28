@@ -1,9 +1,9 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "1.9.0-RC"
+  kotlin("jvm") version "1.9.10"
   id("com.github.ben-manes.versions") version "0.47.0"
-  id("de.undercouch.download") version "5.4.0"
+  id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.22.1"
+  val djlVersion = "0.23.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -50,13 +50,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:3.5.4")
+  implementation("com.github.ajalt.clikt:clikt:4.2.0")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.1.2"
+  val openrwVersion = "8.4.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,18 +83,18 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.315")
+  implementation("org.kohsuke:github-api:1.316")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.2")
 
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.1")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.2")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.23.0")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.6.2534"
+  val ortoolsVersion = "9.7.2996"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -148,13 +148,13 @@ dependencies {
   }
   implementation("org.apache.datasketches:datasketches-java:4.1.0")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.0-beta-11")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.3.0")
+  implementation("com.aallam.openai:openai-client:3.4.0")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:2.3")
@@ -162,7 +162,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.0")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.0-RC")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.10")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
