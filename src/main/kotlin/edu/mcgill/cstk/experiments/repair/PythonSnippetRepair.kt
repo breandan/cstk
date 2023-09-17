@@ -53,6 +53,8 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} tokens StackOverflow in ${it.duration.inWholeMilliseconds}ms"); it.value }
 }
 
+val topTokens by lazy { P_BIFI.topK(200).map { it.first } + "ε" - "BOS" - "EOS" }// + errDeck
+
 typealias CooccurenceMatrix = List<List<Double>>
 val pythonCooccurence: CooccurenceMatrix by lazy {
   readContents("parse_fixes.json").asStream().parallel()
@@ -82,10 +84,42 @@ Local run command:
 */
 
 fun main() {
-//  evaluateTidyparseOnSeq2Parse15k()
-  evaluateTidyparseOnStackoverflow()
+  evaluateTidyparseOnSeq2Parse15k()
+//  evaluateTidyparseOnStackoverflow()
 //  evaluateSeq2ParseOnStackOverflowDataset()
 //  println(extractErrProbs().joinToString(", ", "listOf(", ")") { "\"${it.first}\" to ${it.second}" })
+//  runSingleExample()
+//  computeLengthDistributionStats()
+}
+
+// Returns the frequency of tokenized snippet lengths for buckets of size 10
+fun computeLengthDistributionStats(
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+) =
+  brokenPythonSnippets.take(10000)
+    .map { it.tokenizeByWhitespace().size }
+    .groupBy { it / 10 }.mapValues { it.value.size }
+    .toList().sortedBy { it.first }
+    .joinToString("\n") { "${it.second}" }.also { println(it) }
+//  brokeSnippets.map { it.tokenizeAsPython().size }
+//  .take(10000)
+//  .groupBy { it / 10 }.mapValues { it.value.size }
+//  .toList().sortedBy { it.first }
+//  .joinToString("\n") { "${it.second}" }
+//  .also { println(it) }
+
+fun runSingleExample() {
+  val example = "d = sum([foo(i] for i in vals))"
+  parallelRepair(
+    prompt = example.lexToStrTypesAsPython().joinToString(" ", "", " NEWLINE"),
+    fillers = topTokens,
+//        hints = pythonErrorLocations(humanError.lexToIntTypesAsPython()),
+    maxEdits = 4,
+    admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
+    // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
+    // TODO: only score the locations that are actually being modified to avoid redundant work
+    scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
+  ).forEach { println(prettyDiffNoFrills(example, it.resToStr())) }
 }
 
 fun evaluateSeq2ParseOnStackOverflowDataset() {
@@ -164,7 +198,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
 
 class RankStats(val name: String = "Total") {
   val upperBound = TIMEOUT_MS / 1000
-  val time = (1000..9000 step 1000).toSet() //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
+  val time = (1000..TIMEOUT_MS step 1000).toSet() //(1..10).toSet()//setOf(2, 5, 10) + (20..upperBound step 20).toSet()
   // Mean Reciprocal Rank
   val timedMRR = time.associateWith { 0.0 }.toMutableMap()
   // Precision at K, first int is K, second is the time cutoff
@@ -282,7 +316,6 @@ class MultiRankStats {
 
 fun evaluateTidyparseOnStackoverflow() {
 //  val errDeck = pythonErrProbs.expandByFrequency(10)
-  val topTokens = P_BIFI.topK(200).map { it.first } + "ε" - "BOS" - "EOS"// + errDeck
   println("Top tokens: $topTokens")
 
   val multiRankStats = MultiRankStats()
@@ -302,7 +335,7 @@ fun evaluateTidyparseOnStackoverflow() {
 
       val patchSize = patch.changes().size
 
-      if (!patch.isInteresting()) return@forEach
+      if (2 < patchSize) return@forEach
 
       println("Original broken source: ${prettyDiffNoFrills(coarseFixedStr, coarseBrokeStr)}")
       println("Minimized human repair: ${prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr)}")
