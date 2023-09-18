@@ -1,7 +1,7 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "1.9.10"
+  kotlin("jvm") version "1.9.20-Beta"
   id("com.github.ben-manes.versions") version "0.47.0"
   id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -163,7 +163,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.0")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.10")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.20-Beta")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
