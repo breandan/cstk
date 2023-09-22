@@ -156,20 +156,20 @@ fun parallelRepair(
     scoreEdit = scoreEdit ?: { 0.0 },
     diagnostic =
       if (scoreEdit != null) ({
-          val score = scoreEdit(it.result)
-          if (score < bestRepair) {
-            println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
-//            println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = score
-          }
+        val score = scoreEdit(it.result)
+        if (score < bestRepair) {
+          println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
+//          println("(LATEX) Δ=$score repair: ${latexDiffSingleLOC(prompt, it)}")
+          bestRepair = score
+        }
       })
       else ({
-          val levDiff = it.edit.size.toDouble()
-          if (levDiff < bestRepair) {
-            println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
-//              println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
-            bestRepair = levDiff
-          }
+        val levDiff = it.edit.size.toDouble()
+        if (levDiff < bestRepair) {
+          println("Δ=$levDiff repair (${it.elapsed()}): ${prettyDiffNoFrills(prompt, it.resToStr())}")
+//            println("(LATEX) Δ=$levDiff repair: ${latexDiffSingleLOC(prompt, it)}")
+          bestRepair = levDiff
+        }
       })
   ).toList()
 //    .parallelStream().map {
