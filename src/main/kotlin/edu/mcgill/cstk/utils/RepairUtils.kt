@@ -4,7 +4,7 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sampling.choose
 import ai.hypergraph.kaliningraph.types.*
-import ai.hypergraph.markovian.mcmc.expandByFrequency
+import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
@@ -115,6 +115,14 @@ fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boole
   return if (elements.size < n * 2) deltaDebug(elements, elements.size, checkValid)
   else deltaDebug(elements, n * 2, checkValid)
 }
+
+fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair> =
+  solve(List(refStr.size + 3) { "_" }) {
+    levenshtein(it.tokens, refStr) * mc.score(listOf("BOS") + it.tokens + "EOS").toFloat()
+  }.map {
+    val tokens = it.tokenizeByWhitespace()
+    Repair(refStr, listOf(), tokens, mc.score(listOf("BOS") + it + "EOS"))
+  }
 
 // TODO: Generify to accept List<T>
 fun parallelRepair(

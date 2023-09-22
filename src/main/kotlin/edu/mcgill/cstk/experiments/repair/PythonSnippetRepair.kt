@@ -39,9 +39,9 @@ val brokenPythonSnippets by lazy {
 
 val P_seq2parse: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
-  brokenPythonSnippets.toList().parallelStream().map { "BOS $it EOS" }
-    .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(1) }
-    .reduce { t, u -> t + u }.get()
+    brokenPythonSnippets.toList().parallelStream().map { "BOS $it EOS" }
+      .map { it.tokenizeByWhitespace().asSequence().toMarkovChain(1) }
+      .reduce { t, u -> t + u }.get()
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} tokens StackOverflow in ${it.duration.inWholeMilliseconds}ms"); it.value }
 }
 
@@ -84,7 +84,7 @@ Local run command:
 */
 
 fun main() {
-  evaluateTidyparseOnSeq2Parse15k()
+//  evaluateTidyparseOnSeq2Parse15k()
   evaluateTidyparseOnStackoverflow()
 //  evaluateSeq2ParseOnStackOverflowDataset()
 //  println(extractErrProbs().joinToString(", ", "listOf(", ")") { "\"${it.first}\" to ${it.second}" })
@@ -355,7 +355,9 @@ fun evaluateTidyparseOnStackoverflow() {
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
         // TODO: only score the locations that are actually being modified to avoid redundant work
         scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
-      ).also { repairs ->
+      )
+//        seq2parsePythonCFG.metrizedRepair(coarseBrokeTks, P_BIFI)
+      .also { repairs: List<Repair> ->
         repairs.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(coarseBrokeStr, it.resToStr())}")
           //        println("(LATEX) Δ=${levenshtein(prompt, it)} repair: ${latexDiffSingleLOC(prompt, it)}")
