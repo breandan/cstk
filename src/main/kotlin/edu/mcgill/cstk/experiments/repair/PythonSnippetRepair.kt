@@ -356,7 +356,8 @@ fun evaluateTidyparseOnStackoverflow() {
         // TODO: only score the locations that are actually being modified to avoid redundant work
         scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
       )
-//        seq2parsePythonCFG.metrizedRepair(coarseBrokeTks, P_BIFI)
+//      seq2parsePythonCFG.metrizedRepair(coarseBrokeTks, P_BIFI)
+//      seq2parsePythonCFG.ptreeRepair(coarseBrokeTks, { P_BIFI.score(listOf("BOS") + it + "EOS") })
       .also { repairs: List<Repair> ->
         repairs.take(20).apply { println("\nTop $size repairs:\n") }.forEach {
           println("Δ=${it.scoreStr()} repair (${it.elapsed()}): ${prettyDiffNoFrills(coarseBrokeStr, it.resToStr())}")

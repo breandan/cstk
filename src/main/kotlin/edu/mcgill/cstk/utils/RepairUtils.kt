@@ -124,6 +124,20 @@ fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair
     Repair(refStr, listOf(), tokens, mc.score(listOf("BOS") + it + "EOS"))
   }
 
+fun CFG.ptreeRepair(
+  refStr: List<Σᐩ>,
+  scoreEdit: ((List<Σᐩ>) -> Double),
+  clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
+) =
+  solveSeq(List(refStr.size + 3) { "_" }.joinToString(" "))
+    .map {
+      val tokens = it.tokenizeByWhitespace()
+      Repair(refStr, listOf(), tokens, scoreEdit(tokens))
+    }
+    .filter { levenshtein(it.result, refStr) < 3 }
+    .takeWhile { clock.elapsedNow().inWholeMilliseconds < TIMEOUT_MS }
+    .sortedBy { it.score }.toList()
+
 // TODO: Generify to accept List<T>
 fun parallelRepair(
   prompt: Σᐩ,
