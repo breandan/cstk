@@ -13,17 +13,17 @@ import kotlin.time.*
 */
 
 fun main() {
-  invalidPythonStatements.lines()
-    .filter { it.isNotBlank() }.asSequence().map {
-      val original = it.tokenizeAsPython().joinToString(" ")
-      println(it.lexToStrTypesAsPython().joinToString(" "))
-    }
-    .take(10)
-    .toList()
-//  MAX_SAMPLE = 100
-//  MAX_REPAIR = 2
-//  syntheticErrorCorrection()
-//  organicErrorCorrection()
+//  invalidPythonStatements.lines()
+//    .filter { it.isNotBlank() }.asSequence().map {
+//      val original = it.tokenizeAsPython().joinToString(" ")
+//      println(it.lexToStrTypesAsPython().joinToString(" "))
+//    }
+//    .take(10)
+//    .toList()
+  MAX_SAMPLE = 100
+  MAX_REPAIR = 2
+  syntheticErrorCorrection()
+  organicErrorCorrection()
 // compareParserValidity()
 //  pythonStatementCFG.blocked.add("w")
 //  println(pythonStatementCFG.blocked)
