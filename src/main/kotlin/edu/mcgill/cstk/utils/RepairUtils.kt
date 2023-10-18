@@ -129,7 +129,7 @@ fun CFG.ptreeRepair(
   scoreEdit: ((List<Σᐩ>) -> Double),
   clock: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
 ) =
-  solveSeq(List(refStr.size + 3) { "_" }.joinToString(" "))
+  solveSeq(List(refStr.size + 3) { "_" })
     .map {
       val tokens = it.tokenizeByWhitespace()
       Repair(refStr, listOf(), tokens, scoreEdit(tokens))
