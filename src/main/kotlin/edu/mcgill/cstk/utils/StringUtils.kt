@@ -166,7 +166,7 @@ fun vectorize(query: Σᐩ) = matrixize(query).first()
 fun matrixize(query: Σᐩ): Array<DoubleArray> =
   defaultModel.makeQuery(query).first().lines()
   .map { it.trim().replace("[", "").replace("]", "") }
-  .map { it.split(" ").filter(Σᐩ::isNotEmpty).map(Σᐩ::toDouble) }
+  .map { it.split(' ').filter(Σᐩ::isNotEmpty).map(Σᐩ::toDouble) }
   .map { it.toDoubleArray() }.toTypedArray()
 
 fun Model.score(
@@ -351,7 +351,7 @@ fun prettyDiffNoFrills(original: Σᐩ, new: Σᐩ) =
     .newTag { l -> if(l) "<begin>" else "<end>" }
     .oldTag { _ -> "" }
     .build()
-    .generateDiffRows(original.split(" "), new.split(" ")).joinToString(" ") {
+    .generateDiffRows(original.split(' '), new.split(' ')).joinToString(" ") {
       when (it.tag) {
         INSERT -> it.newLine.replace("<begin>", ANSI_GREEN_BACKGROUND).replace("<end>", ANSI_RESET)
         CHANGE -> it.newLine.replace("<begin>", ANSI_YELLOW_BACKGROUND).replace("<end>", ANSI_RESET)

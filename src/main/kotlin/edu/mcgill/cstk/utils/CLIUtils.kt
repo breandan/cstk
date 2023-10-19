@@ -18,5 +18,5 @@ class FilteredOutputStream(out: OutputStream) : PrintStream(out) {
 }
 
 fun Σᐩ.execute() =
-  ProcessBuilder( split(" ") ).start().waitFor()
+  ProcessBuilder( split(' ') ).start().waitFor()
 

@@ -203,5 +203,5 @@ data class CodeSnippet(
   val errorMsg: Σᐩ,
   val groundTruth: Σᐩ? = null
 ) {
-  val tokens = coarsened.split(" ")
+  val tokens = coarsened.split(' ')
 }

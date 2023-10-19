@@ -69,7 +69,7 @@ class BasicTokenizer(private val doLowerCase: Boolean) {
     /* Runs basic whitespace cleaning and splitting on a piece of text. */
     fun whitespaceTokenize(text: String?): List<String> {
       if (text == null) throw NullPointerException("The input String is null.")
-      return listOf(*text.split(" ").toTypedArray())
+      return listOf(*text.split(' ').toTypedArray())
     }
 
     /* Splits punctuation on a piece of text. */
