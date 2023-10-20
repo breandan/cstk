@@ -109,7 +109,8 @@ fun computeLengthDistributionStats(
 //  .also { println(it) }
 
 fun runSingleExample() {
-  val example = "d = sum([foo(i] for i in vals))"
+  val clock = TimeSource.Monotonic.markNow()
+  val example = "NAME = ( NAME . NAME ( NAME"
   parallelRepair(
     prompt = example.lexToStrTypesAsPython().joinToString(" ", "", " NEWLINE"),
     fillers = topTokens,
@@ -119,7 +120,8 @@ fun runSingleExample() {
     // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
     // TODO: only score the locations that are actually being modified to avoid redundant work
     scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
-  ).forEach { println(prettyDiffNoFrills(example, it.resToStr())) }
+  ).onEach { println(prettyDiffNoFrills(example, it.resToStr().replace("'", ""))) }
+    .also { println("Found ${it.size} total repairs in ${clock.elapsedNow().inWholeSeconds}s") }
 }
 
 fun evaluateSeq2ParseOnStackOverflowDataset() {
