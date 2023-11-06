@@ -11,7 +11,10 @@ fun main() {
 //  stackOverflowSnips().computeLengthDistributionStats()
 //  stackOverflowSnips().computeRawTokenFrequencies()
 //  seq2ParseSnips().computeBigramFrequencies()
-  computeErrorSizeFreq()
+//  computeErrorSizeFreq()
+  mostFrequentInsertion()
+  mostFrequentDeletion()
+  mostFrequentSubstitution()
 }
 
 /*
@@ -117,3 +120,64 @@ fun computeErrorSizeFreq() =
     .let { it.map { (n, count) -> n to count.toDouble() / it.last().second } }
     .joinToString("\n") { "${it.first}, ${it.second}" }
       .also { println("Number of edits, Frequency\n$it") }
+
+/*
+Insertion, Frequency, Deletion     , Frequency, Substitution            , Frequency
+')'      , 98       , NAME         , 219      , (UNKNOWN_CHAR -> STRING), 53
+','      , 87       , UNKNOWN_CHAR , 160      , (NAME -> ',')           , 22
+98       , 59       , '.'          , 50       , (':' -> ',')            , 12
+99       , 58       , NUMBER       , 41       , (NEWLINE -> ':')        , 12
+'}'      , 46       , '>'          , 30       , ('=' -> ':')            , 11
+']'      , 36       , NEWLINE      , 28       , (STRING -> ',')         , 8
+':'      , 35       , ')'          , 26       , ('.' -> ',')            , 8
+'('      , 33       , '**'         , 25       , (NAME -> STRING)        , 8
+NEWLINE  , 28       , ':'          , 23       , ('pass' -> NAME)        , 8
+NAME     , 19       , '>>'         , 20       , ('=' -> '==')           , 7
+STRING   , 17       , STRING       , 19       , ('class' -> NAME)       , 6
+'{'      , 13       , 98           , 13       , ('[' -> '{')            , 6
+'='      , 12       , '...'        , 12       , ('break' -> NAME)       , 6
+'['      , 10       , '('          , 10       , (UNKNOWN_CHAR -> ',')   , 6
+'class'  , 8        , '{'          , 10       , (',' -> ':')            , 6
+'def'    , 7        , 99           , 10       , ('(' -> '[')            , 6
+'import' , 6        , '['          , 9        , (']' -> '}')            , 5
+'.'      , 6        , ']'          , 7        , (UNKNOWN_CHAR -> '.')   , 4
+'from'   , 5        , '*'          , 6        , (NAME -> ']')           , 4
+'return' , 3        , '/'          , 5        , ('...' -> ',')          , 4
+'in'     , 2        , '//'         , 5        , ('in' -> NAME)          , 4
+'...'    , 2        , ','          , 4        , ('<' -> '&')            , 3
+'except' , 2        , '}'          , 4        , ('>' -> ';')            , 3
+*/
+
+fun mostFrequentInsertion() =
+  preprocessStackOverflow().map { (broke, humfix, minfix) ->
+    val brokeLex = broke.lexToStrTypesAsPython()
+    val minfixLex = minfix.lexToStrTypesAsPython()
+    val minpatch = extractPatch(brokeLex, minfixLex)
+    minpatch.changes().filter { minpatch[it].old == "" }.map { minpatch[it].new }
+  }.take(1000).flatten().groupingBy { it }.eachCount()
+    .toList().sortedByDescending { it.second }.take(100)
+    .joinToString("\n") { "${it.first}, ${it.second}" }
+    .also { println("Insertion, Frequency\n$it") }
+
+fun mostFrequentDeletion() =
+  preprocessStackOverflow().map { (broke, humfix, minfix) ->
+    val brokeLex = broke.lexToStrTypesAsPython()
+    val minfixLex = minfix.lexToStrTypesAsPython()
+    val minpatch = extractPatch(brokeLex, minfixLex)
+    minpatch.changes().filter { minpatch[it].new == "" }.map { minpatch[it].old }
+  }.take(1000).flatten().groupingBy { it }.eachCount()
+    .toList().sortedByDescending { it.second }.take(100)
+    .joinToString("\n") { "${it.first}, ${it.second}" }
+    .also { println("Deletion, Frequency\n$it") }
+
+fun mostFrequentSubstitution() =
+  preprocessStackOverflow().map { (broke, humfix, minfix) ->
+    val brokeLex = broke.lexToStrTypesAsPython()
+    val minfixLex = minfix.lexToStrTypesAsPython()
+    val minpatch = extractPatch(brokeLex, minfixLex)
+    minpatch.changes().filter { minpatch[it].old != "" && minpatch[it].new != "" }
+      .map { minpatch[it].old to minpatch[it].new }
+  }.take(1000).flatten().groupingBy { it }.eachCount()
+    .toList().sortedByDescending { it.second }.take(100)
+    .joinToString("\n") { "(${it.first.first} -> ${it.first.second}), ${it.second}" }
+    .also { println("Substitution, Frequency\n$it") }
