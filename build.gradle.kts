@@ -1,7 +1,7 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "1.9.20-RC"
+  kotlin("jvm") version "1.9.20"
   id("com.github.ben-manes.versions") version "0.49.0"
   id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.24.0"
+  val djlVersion = "0.25.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.7.4"
+  val openrwVersion = "8.8.3"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,11 +83,11 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.316")
+  implementation("org.kohsuke:github-api:1.317")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.2")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.0.1")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.1.0")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.3")
 
   // Read compressed repositories downloaded from GitHub
@@ -155,7 +155,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.2")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.5.0")
+  implementation("com.aallam.openai:openai-client:3.5.1")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.0")
@@ -163,7 +163,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.1")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.20-RC")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.20")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
