@@ -89,24 +89,7 @@ fun main() {
 //  evaluateSeq2ParseOnStackOverflowDataset()
 //  println(extractErrProbs().joinToString(", ", "listOf(", ")") { "\"${it.first}\" to ${it.second}" })
 //  runSingleExample()
-//  computeLengthDistributionStats()
 }
-
-// Returns the frequency of tokenized snippet lengths for buckets of size 10
-fun computeLengthDistributionStats(
-  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
-) =
-  brokenPythonSnippets.take(10000)
-    .map { it.tokenizeByWhitespace().size }
-    .groupBy { it / 10 }.mapValues { it.value.size }
-    .toList().sortedBy { it.first }
-    .joinToString("\n") { "${it.second}" }.also { println(it) }
-//  brokeSnippets.map { it.tokenizeAsPython().size }
-//  .take(10000)
-//  .groupBy { it / 10 }.mapValues { it.value.size }
-//  .toList().sortedBy { it.first }
-//  .joinToString("\n") { "${it.second}" }
-//  .also { println(it) }
 
 fun runSingleExample() {
   val clock = TimeSource.Monotonic.markNow()
@@ -396,7 +379,7 @@ fun pythonErrorLocations(coarseBrokeTks: List<Int>): List<Int> =
   listOf(coarseBrokeTks.getIndexOfFirstPythonError())
 
 // Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
-private fun preprocessStackOverflow(
+fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json")
 ): Sequence<Π3A<Σᐩ>> =
