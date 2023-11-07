@@ -1,7 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import NUM_CORES
-import ai.hypergraph.kaliningraph.choose
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
@@ -15,7 +15,7 @@ import java.io.*
 import java.math.*
 import java.net.*
 import java.util.regex.Pattern
-import java.util.stream.Collectors
+import java.util.stream.*
 import kotlin.math.*
 import kotlin.streams.*
 import kotlin.system.measureTimeMillis
@@ -384,7 +384,6 @@ fun preprocessStackOverflow(
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json")
 ): Sequence<Π3A<Σᐩ>> =
   brokeSnippets.zip(fixedSnippets)
-//    .asStream()//.parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       broke.tokenizeAsPython().size < 40 &&
@@ -416,6 +415,28 @@ fun preprocessStackOverflow(
 //    }
     .distinctBy { it.π3 }
     .shuffleOnline()
+
+fun preprocessStackOverflowInParallel(
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
+  take: Int = 1000
+): Stream<Π3A<Σᐩ>> =
+  brokeSnippets.zip(fixedSnippets).take(take).asStream().parallel()
+    .filter { (broke, fixed) ->
+//      '"' !in broke && '\'' !in broke &&
+      broke.tokenizeAsPython().size < 40 &&
+        (!broke.isValidPython() && fixed.isValidPython()) &&
+        (broke.lines().size - fixed.lines().size).absoluteValue < 4
+    }
+    .minimizeFix { tokenizeAsPython(true) }
+    .filter { (broke, fixed, minfix) ->
+      val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
+      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+
+      minfix.isValidPython() &&
+        minpatch.changes().size <= MAX_PATCH_SIZE &&
+        brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
+    }
 
 private fun compareSeq2ParseFix(
   humanError: Σᐩ,

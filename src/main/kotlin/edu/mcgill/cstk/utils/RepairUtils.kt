@@ -8,6 +8,7 @@ import ai.hypergraph.markovian.mcmc.*
 import bijectiveRepair
 import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
+import java.util.stream.Stream
 import kotlin.math.*
 import kotlin.time.TimeSource
 
@@ -29,6 +30,32 @@ fun Σᐩ.constructPromptByMaskingRandomSyntax(
 val COMMON_BRACKETS = "()[]{}".map { "$it" }.toSet()
 fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
+
+fun Stream<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
+  map { (broke, fixed) ->
+//    val startTime = TimeSource.Monotonic.markNow()
+    val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
+
+//  val brokeJoin = brokeTokens.joinToString("")
+    val fixedJoin = fixedTokens.joinToString("")
+//  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
+
+    val patch: Patch = extractPatch(brokeTokens, fixedTokens)
+    val minEdit = deltaDebug(patch.changes()) { idxs -> patch.apply(idxs).isValidPython() }
+// deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
+//      .minimalSubpatch { patch.apply(this).isValidPython() }
+
+//  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
+//  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
+
+//    println("Reduced from ${patch.changes().size} to ${minEdit.size} edits in ${startTime.elapsedNow().inWholeMilliseconds}ms")
+
+//    if(!minFix.isValidPython()) println("Minimized fix is invalid Python: $minFix")
+
+    val minfix= patch.apply(minEdit)
+
+    broke to fixedJoin to minfix
+  }
 
 fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
   map { (broke, fixed) ->
@@ -80,11 +107,13 @@ fun Patch.apply(indices: List<Int>, separator: Σᐩ = ""): Σᐩ =
 fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
   DiffRowGenerator.create().build()
     .generateDiffRows(original, new).mapIndexed { i, it ->
+      val new = it.newLine.replace("&lt;", "<").replace("&gt;", ">")
+      val old = it.oldLine.replace("&lt;", "<").replace("&gt;", ">")
       when (it.tag) {
-        DiffRow.Tag.INSERT -> ("" to it.newLine)
-        DiffRow.Tag.CHANGE -> (it.oldLine to it.newLine)
-        DiffRow.Tag.DELETE -> (it.oldLine to "")
-        DiffRow.Tag.EQUAL ->  (it.oldLine to it.newLine)
+        DiffRow.Tag.INSERT -> ("" to new)
+        DiffRow.Tag.CHANGE -> (old to new)
+        DiffRow.Tag.DELETE -> (old to "")
+        DiffRow.Tag.EQUAL ->  (old to new)
       }
     }
 

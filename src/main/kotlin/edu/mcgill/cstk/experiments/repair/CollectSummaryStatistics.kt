@@ -2,7 +2,6 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
 import edu.mcgill.cstk.utils.*
-import kotlin.math.min
 
 /*
 ./gradlew collectSummaryStats
@@ -12,9 +11,8 @@ fun main() {
 //  stackOverflowSnips().computeRawTokenFrequencies()
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
-  mostFrequentInsertion()
-  mostFrequentDeletion()
-  mostFrequentSubstitution()
+//  computePatchStats()
+  computePatchTrigramStats()
 }
 
 /*
@@ -148,36 +146,138 @@ STRING   , 17       , STRING       , 19       , ('class' -> NAME)       , 6
 'except' , 2        , '}'          , 4        , ('>' -> ';')            , 3
 */
 
-fun mostFrequentInsertion() =
-  preprocessStackOverflow().map { (broke, humfix, minfix) ->
-    val brokeLex = broke.lexToStrTypesAsPython()
-    val minfixLex = minfix.lexToStrTypesAsPython()
-    val minpatch = extractPatch(brokeLex, minfixLex)
-    minpatch.changes().filter { minpatch[it].old == "" }.map { minpatch[it].new }
-  }.take(1000).flatten().groupingBy { it }.eachCount()
+fun computePatchStats() =
+  preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
+    val brokeLexed = broke.lexToStrTypesAsPython()
+    val minfixLexed = minfix.lexToStrTypesAsPython()
+    val patch = extractPatch(brokeLexed, minfixLexed)
+    patch.changes().map {
+      if (patch[it].old == "") "INS, ${patch[it].new}"
+      else if (patch[it].new == "") "DEL, ${patch[it].old}"
+      else "SUB, ${patch[it].old} -> ${patch[it].new}"
+    }
+  }.toList().flatten().groupingBy { it }.eachCount()
     .toList().sortedByDescending { it.second }.take(100)
     .joinToString("\n") { "${it.first}, ${it.second}" }
-    .also { println("Insertion, Frequency\n$it") }
+    .also { println("Type, Edit, Frequency\n$it") }
 
-fun mostFrequentDeletion() =
-  preprocessStackOverflow().map { (broke, humfix, minfix) ->
-    val brokeLex = broke.lexToStrTypesAsPython()
-    val minfixLex = minfix.lexToStrTypesAsPython()
-    val minpatch = extractPatch(brokeLex, minfixLex)
-    minpatch.changes().filter { minpatch[it].new == "" }.map { minpatch[it].old }
-  }.take(1000).flatten().groupingBy { it }.eachCount()
+/*
+Type, Edit, Frequency
+INS, ')' [')'] END, 456
+INS, NAME ['('] NAME, 455
+INS, NAME [')'] END, 196
+INS, NAME ['('] STRING, 174
+DEL, NAME [NAME] NEWLINE, 150
+DEL, START ['>>'] '>', 142
+INS, NAME [')'] NEWLINE, 130
+DEL, NAME [NAME] END, 120
+DEL, ')' [UNKNOWN_CHAR] END, 109
+DEL, '>>' ['>'] NAME, 101
+INS, ']' [')'] END, 95
+INS, NEWLINE [98] NAME, 91
+DEL, NAME [NAME] NAME, 87
+INS, ')' [')'] NEWLINE, 85
+INS,  [NEWLINE] NAME, 82
+DEL, NAME [UNKNOWN_CHAR] ']', 80
+INS, NAME ['='] NAME, 80
+INS, 99 [99] END, 79
+DEL, NAME [NAME] ':', 78
+INS, ')' [':'] NEWLINE, 77
+INS, STRING [')'] END, 76
+INS, ':' [NAME] END, 74
+DEL, ')' [')'] END, 69
+DEL, NAME [NAME] '.', 64
+DEL, NAME [UNKNOWN_CHAR] ')', 63
+INS, STRING [')'] NEWLINE, 60
+DEL, START [UNKNOWN_CHAR] NAME, 60
+SUB, '(' [UNKNOWN_CHAR -> STRING] NAME, 57
+INS, ')' [')'] , 56
+INS, NUMBER [','] NUMBER, 55
+SUB, 98 ['pass' -> NAME] NEWLINE, 55
+SUB, ',' [UNKNOWN_CHAR -> STRING] NAME, 53
+INS, NEWLINE [99] NAME, 53
+DEL, NAME [NAME] '(', 51
+DEL, UNKNOWN_CHAR [NAME] ']', 51
+DEL, UNKNOWN_CHAR [NAME] ')', 47
+INS, ']' [')'] NEWLINE, 47
+INS, START ['import'] NAME, 45
+INS, '}' ['}'] END, 45
+DEL, STRING [NAME] UNKNOWN_CHAR, 42
+INS, ')' [NEWLINE] NAME, 42
+INS,  [')'] END, 42
+INS, NEWLINE [98] 'def', 41
+DEL, ']' [UNKNOWN_CHAR] END, 39
+INS, NAME [','] NAME, 39
+DEL, STRING [NAME] STRING, 38
+SUB, STRING [NAME -> ','] UNKNOWN_CHAR, 37
+DEL, NEWLINE [98] NAME, 36
+INS, ')' [']'] END, 36
+DEL, NAME [UNKNOWN_CHAR] END, 35
+INS, NAME ['.'] NAME, 34
+INS, ']' [']'] END, 34
+DEL, NAME [NAME] '=', 34
+DEL, ')' ['.'] END, 33
+SUB, '=' [UNKNOWN_CHAR -> STRING] NAME, 33
+DEL, NAME [':'] NEWLINE, 33
+DEL, NAME ['('] NAME, 33
+DEL, 99 [99] END, 32
+INS, ']' ['}'] END, 32
+SUB, '[' [UNKNOWN_CHAR -> STRING] NAME, 32
+INS, STRING [','] NAME, 31
+INS, STRING [','] STRING, 31
+INS, STRING [STRING] NEWLINE, 29
+INS, NAME ['in'] NAME, 29
+INS, ',' [']'] END, 28
+INS, START ['def'] NAME, 27
+INS, START ['{'] STRING, 27
+INS, NAME [':'] NEWLINE, 27
+DEL, START ['**'] NAME, 27
+INS, NEWLINE [98] 'if', 27
+DEL, ']' ['.'] END, 26
+INS, NUMBER [','] STRING, 26
+INS, ',' ['}'] END, 26
+DEL, ')' [':'] END, 26
+DEL, UNKNOWN_CHAR [NAME] UNKNOWN_CHAR, 25
+INS, STRING [']'] ')', 25
+INS, NAME ['('] , 25
+INS, ':' ['('] , 25
+DEL, NAME [NAME] ',', 25
+INS, ')' [')'] 'for', 25
+INS, START ['from'] NAME, 24
+INS, START ['class'] NAME, 24
+INS, STRING ['}'] END, 23
+DEL, ')' ['**'] END, 23
+INS, NAME [','] STRING, 23
+SUB, STRING ['=' -> ':'] STRING, 23
+INS, '}' [')'] END, 23
+INS, ':' ['...'] END, 23
+DEL, NAME ['.'] END, 22
+DEL, NAME [NAME] ')', 22
+DEL, START [NEWLINE] 98, 22
+DEL, NAME ['>'] NEWLINE, 21
+DEL, NAME [UNKNOWN_CHAR] ',', 21
+INS, ']' [']'] ')', 21
+DEL, UNKNOWN_CHAR [NAME] '.', 21
+INS, NAME ['('] '[', 21
+DEL, ',' [NEWLINE] STRING, 20
+INS, NEWLINE [98] 'for', 20
+SUB, 98 ['break' -> NAME] NEWLINE, 20
+DEL, ')' [')'] NEWLINE, 20
+*/
+
+fun computePatchTrigramStats() =
+  preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
+    val brokeLexed = listOf("START") + broke.lexToStrTypesAsPython() + listOf("END")
+    val minfixLexed = listOf("START") + minfix.lexToStrTypesAsPython() + listOf("END")
+    val patch = extractPatch(brokeLexed, minfixLexed)
+    patch.changes().map {
+      (
+        if (patch[it].old == "") "INS, ${patch[it-1].old} [${patch[it].new}] ${patch[it+1].old}"
+        else if (patch[it].new == "") "DEL, ${patch[it-1].old} [${patch[it].old}] ${patch[it+1].old}"
+        else "SUB, ${patch[it-1].old} [${patch[it].old} -> ${patch[it].new}] ${patch[it+1].old}"
+      )
+    }
+  }.toList().flatten().groupingBy { it }.eachCount()
     .toList().sortedByDescending { it.second }.take(100)
     .joinToString("\n") { "${it.first}, ${it.second}" }
-    .also { println("Deletion, Frequency\n$it") }
-
-fun mostFrequentSubstitution() =
-  preprocessStackOverflow().map { (broke, humfix, minfix) ->
-    val brokeLex = broke.lexToStrTypesAsPython()
-    val minfixLex = minfix.lexToStrTypesAsPython()
-    val minpatch = extractPatch(brokeLex, minfixLex)
-    minpatch.changes().filter { minpatch[it].old != "" && minpatch[it].new != "" }
-      .map { minpatch[it].old to minpatch[it].new }
-  }.take(1000).flatten().groupingBy { it }.eachCount()
-    .toList().sortedByDescending { it.second }.take(100)
-    .joinToString("\n") { "(${it.first.first} -> ${it.first.second}), ${it.second}" }
-    .also { println("Substitution, Frequency\n$it") }
+    .also { println("Type, Edit, Frequency\n$it") }
