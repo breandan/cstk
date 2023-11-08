@@ -97,6 +97,7 @@ fun Patch.isInteresting() = changes().let {ch ->
 }
 fun Patch.changes(): List<Int> = indices.filter { this[it].old != this[it].new }
 
+
 fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =
   (1..size).asSequence().map { choose(it).map { it.toList() } }
   .map { it.filter { it.filter() } }.firstOrNull { it.any() }?.firstOrNull() ?: this

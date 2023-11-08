@@ -1,7 +1,8 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.parsing.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
+import edu.mcgill.cstk.utils.Edit
 
 /*
 ./gradlew collectSummaryStats
@@ -163,119 +164,131 @@ fun computePatchStats() =
 
 /*
 Type, Edit, Frequency
-INS, ')' [')'] END, 456
-INS, NAME ['('] NAME, 455
-INS, NAME [')'] END, 196
+INS, ')' [')'] END, 467
+INS, NAME ['('] NAME, 456
+INS, NAME [')'] END, 198
 INS, NAME ['('] STRING, 174
-DEL, NAME [NAME] NEWLINE, 150
+DEL, NAME [NAME] NEWLINE, 154
 DEL, START ['>>'] '>', 142
-INS, NAME [')'] NEWLINE, 130
-DEL, NAME [NAME] END, 120
-DEL, ')' [UNKNOWN_CHAR] END, 109
-DEL, '>>' ['>'] NAME, 101
-INS, ']' [')'] END, 95
-INS, NEWLINE [98] NAME, 91
-DEL, NAME [NAME] NAME, 87
-INS, ')' [')'] NEWLINE, 85
-INS,  [NEWLINE] NAME, 82
-DEL, NAME [UNKNOWN_CHAR] ']', 80
-INS, NAME ['='] NAME, 80
+INS, NAME [')'] NEWLINE, 131
+DEL, NAME [NAME] END, 124
+DEL, START ['>'] NAME, 117
+DEL, ')' [UNKNOWN_CHAR] END, 112
+INS, ')' [NEWLINE] NAME, 110
+INS, ']' [')'] END, 103
+INS, NEWLINE [98] NAME, 92
+INS, ')' [')'] NEWLINE, 92
+INS, ':' [NAME] END, 89
+INS, NAME ['='] NAME, 82
+DEL, NAME [NAME] '.', 81
+INS, ')' [':'] NEWLINE, 80
+DEL, NAME [NAME] ':', 80
 INS, 99 [99] END, 79
-DEL, NAME [NAME] ':', 78
-INS, ')' [':'] NEWLINE, 77
+DEL, NAME [NAME] NAME, 76
 INS, STRING [')'] END, 76
-INS, ':' [NAME] END, 74
-DEL, ')' [')'] END, 69
-DEL, NAME [NAME] '.', 64
-DEL, NAME [UNKNOWN_CHAR] ')', 63
-INS, STRING [')'] NEWLINE, 60
+DEL, ')' [')'] END, 70
+DEL, STRING [NAME] UNKNOWN_CHAR, 65
+INS, STRING [')'] NEWLINE, 62
 DEL, START [UNKNOWN_CHAR] NAME, 60
+DEL, NAME [NAME] '(', 58
 SUB, '(' [UNKNOWN_CHAR -> STRING] NAME, 57
-INS, ')' [')'] , 56
+DEL, STRING [NAME] ')', 56
 INS, NUMBER [','] NUMBER, 55
 SUB, 98 ['pass' -> NAME] NEWLINE, 55
+DEL, STRING [NAME] ']', 54
 SUB, ',' [UNKNOWN_CHAR -> STRING] NAME, 53
 INS, NEWLINE [99] NAME, 53
-DEL, NAME [NAME] '(', 51
-DEL, UNKNOWN_CHAR [NAME] ']', 51
-DEL, UNKNOWN_CHAR [NAME] ')', 47
-INS, ']' [')'] NEWLINE, 47
+INS, ']' [')'] NEWLINE, 52
+INS, '}' ['}'] END, 48
+DEL, NAME [UNKNOWN_CHAR] ']', 47
 INS, START ['import'] NAME, 45
-INS, '}' ['}'] END, 45
-DEL, STRING [NAME] UNKNOWN_CHAR, 42
-INS, ')' [NEWLINE] NAME, 42
-INS,  [')'] END, 42
+INS, ')' [')'] NAME, 42
 INS, NEWLINE [98] 'def', 41
-DEL, ']' [UNKNOWN_CHAR] END, 39
+DEL, ']' [UNKNOWN_CHAR] END, 40
+DEL, ')' ['.'] END, 39
 INS, NAME [','] NAME, 39
-DEL, STRING [NAME] STRING, 38
+DEL, STRING [NAME] STRING, 39
+INS, ')' [']'] END, 39
+DEL, NAME [UNKNOWN_CHAR] ')', 38
 SUB, STRING [NAME -> ','] UNKNOWN_CHAR, 37
-DEL, NEWLINE [98] NAME, 36
-INS, ')' [']'] END, 36
-DEL, NAME [UNKNOWN_CHAR] END, 35
+DEL, NAME [NAME] '=', 37
+INS, ']' ['}'] END, 36
+INS, ']' [']'] END, 35
 INS, NAME ['.'] NAME, 34
-INS, ']' [']'] END, 34
-DEL, NAME [NAME] '=', 34
-DEL, ')' ['.'] END, 33
+DEL, NAME [UNKNOWN_CHAR] END, 33
 SUB, '=' [UNKNOWN_CHAR -> STRING] NAME, 33
 DEL, NAME [':'] NEWLINE, 33
+INS, '(' [')'] END, 33
 DEL, NAME ['('] NAME, 33
 DEL, 99 [99] END, 32
-INS, ']' ['}'] END, 32
+INS, ',' [']'] END, 32
 SUB, '[' [UNKNOWN_CHAR -> STRING] NAME, 32
+DEL, NAME [NAME] ',', 32
+INS, STRING [STRING] NEWLINE, 31
+DEL, NAME [NAME] ')', 31
 INS, STRING [','] NAME, 31
+INS, NAME [':'] NEWLINE, 31
 INS, STRING [','] STRING, 31
-INS, STRING [STRING] NEWLINE, 29
+DEL, STRING [UNKNOWN_CHAR] ')', 31
+DEL, ']' ['.'] END, 29
 INS, NAME ['in'] NAME, 29
-INS, ',' [']'] END, 28
+INS, ']' [NEWLINE] NAME, 28
+INS, NEWLINE [98] 'if', 28
 INS, START ['def'] NAME, 27
 INS, START ['{'] STRING, 27
-INS, NAME [':'] NEWLINE, 27
+DEL, STRING [UNKNOWN_CHAR] ']', 27
+INS, NUMBER [','] STRING, 27
+INS, ',' ['}'] END, 27
 DEL, START ['**'] NAME, 27
-INS, NEWLINE [98] 'if', 27
-DEL, ']' ['.'] END, 26
-INS, NUMBER [','] STRING, 26
-INS, ',' ['}'] END, 26
 DEL, ')' [':'] END, 26
-DEL, UNKNOWN_CHAR [NAME] UNKNOWN_CHAR, 25
+INS, ':' ['...'] END, 26
+DEL, NAME [NAME] '[', 25
 INS, STRING [']'] ')', 25
-INS, NAME ['('] , 25
-INS, ':' ['('] , 25
-DEL, NAME [NAME] ',', 25
+DEL, STRING [NAME] '.', 25
 INS, ')' [')'] 'for', 25
+INS, STRING ['}'] END, 24
 INS, START ['from'] NAME, 24
+DEL, ')' ['**'] END, 24
+DEL, NAME ['>'] NEWLINE, 24
 INS, START ['class'] NAME, 24
-INS, STRING ['}'] END, 23
-DEL, ')' ['**'] END, 23
+INS, 'for' [NAME] 'in', 24
 INS, NAME [','] STRING, 23
 SUB, STRING ['=' -> ':'] STRING, 23
 INS, '}' [')'] END, 23
-INS, ':' ['...'] END, 23
 DEL, NAME ['.'] END, 22
-DEL, NAME [NAME] ')', 22
+INS, ':' ['('] END, 22
+DEL, STRING [NAME] ',', 22
 DEL, START [NEWLINE] 98, 22
-DEL, NAME ['>'] NEWLINE, 21
-DEL, NAME [UNKNOWN_CHAR] ',', 21
+INS, NAME ['('] '[', 22
 INS, ']' [']'] ')', 21
-DEL, UNKNOWN_CHAR [NAME] '.', 21
-INS, NAME ['('] '[', 21
 DEL, ',' [NEWLINE] STRING, 20
 INS, NEWLINE [98] 'for', 20
 SUB, 98 ['break' -> NAME] NEWLINE, 20
-DEL, ')' [')'] NEWLINE, 20
 */
+
+fun Patch.scan(i: Int, direction: Boolean, age: Edit.() -> Σᐩ): Σᐩ? =
+  (if (direction) (i + 1 until size) else (i - 1 downTo 0))
+    .firstOrNull { this[it].age() != "" }?.let { this[it].age() }
+
+// Scan [l]eft/[r]ight for first non-empty [n]ew/[o]ld token
+fun Patch.sln(i: Int): String = scan(i, false) { new }!!
+fun Patch.srn(i: Int): String = scan(i, true) { new }!!
+fun Patch.slo(i: Int): String = scan(i, false) { old }!!
+fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
 fun computePatchTrigramStats() =
   preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
     val brokeLexed = listOf("START") + broke.lexToStrTypesAsPython() + listOf("END")
     val minfixLexed = listOf("START") + minfix.lexToStrTypesAsPython() + listOf("END")
-    val patch = extractPatch(brokeLexed, minfixLexed)
-    patch.changes().map {
-      (
-        if (patch[it].old == "") "INS, ${patch[it-1].old} [${patch[it].new}] ${patch[it+1].old}"
-        else if (patch[it].new == "") "DEL, ${patch[it-1].old} [${patch[it].old}] ${patch[it+1].old}"
-        else "SUB, ${patch[it-1].old} [${patch[it].old} -> ${patch[it].new}] ${patch[it+1].old}"
-      )
+    val patch: Patch = extractPatch(brokeLexed, minfixLexed)
+    patch.run {
+      changes().map { i ->
+        val (old, new) = get(i).old to get(i).new
+
+        if (old == "") "INS, ${sln(i)} [$new] ${sro(i)}"
+        else if (new == "") "DEL, ${sln(i)} [$old] ${sro(i)}"
+        else "SUB, ${sln(i)} [$old -> $new] ${sro(i)}"
+      }
     }
   }.toList().flatten().groupingBy { it }.eachCount()
     .toList().sortedByDescending { it.second }.take(100)
