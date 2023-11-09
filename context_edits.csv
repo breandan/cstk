@@ -1,0 +1,2628 @@
+Type , Left     , Old Mid      , Right        , New Mid    , Frequency
+INS  , ')'      ,              , END          , ')'        , 467      
+INS  , NAME     ,              , NAME         , '('        , 456      
+INS  , NAME     ,              , END          , ')'        , 198      
+INS  , NAME     ,              , STRING       , '('        , 174      
+DEL  , NAME     , NAME         , NEWLINE      ,            , 154      
+DEL  , START    , '>>'         , '>'          ,            , 142      
+INS  , NAME     ,              , NEWLINE      , ')'        , 131      
+DEL  , NAME     , NAME         , END          ,            , 124      
+DEL  , START    , '>'          , NAME         ,            , 117      
+DEL  , ')'      , UNKNOWN_CHAR , END          ,            , 112      
+INS  , ')'      ,              , NAME         , NEWLINE    , 110      
+INS  , ']'      ,              , END          , ')'        , 103      
+INS  , NEWLINE  ,              , NAME         , 98         , 92       
+INS  , ')'      ,              , NEWLINE      , ')'        , 92       
+INS  , ':'      ,              , END          , NAME       , 89       
+INS  , NAME     ,              , NAME         , '='        , 82       
+DEL  , NAME     , NAME         , '.'          ,            , 81       
+INS  , ')'      ,              , NEWLINE      , ':'        , 80       
+DEL  , NAME     , NAME         , ':'          ,            , 80       
+INS  , 99       ,              , END          , 99         , 79       
+DEL  , NAME     , NAME         , NAME         ,            , 76       
+INS  , STRING   ,              , END          , ')'        , 76       
+DEL  , ')'      , ')'          , END          ,            , 70       
+DEL  , STRING   , NAME         , UNKNOWN_CHAR ,            , 65       
+INS  , STRING   ,              , NEWLINE      , ')'        , 62       
+DEL  , START    , UNKNOWN_CHAR , NAME         ,            , 60       
+DEL  , NAME     , NAME         , '('          ,            , 58       
+SUB  , '('      , UNKNOWN_CHAR , NAME         , STRING     , 57       
+DEL  , STRING   , NAME         , ')'          ,            , 56       
+INS  , NUMBER   ,              , NUMBER       , ','        , 55       
+SUB  , 98       , 'pass'       , NEWLINE      , NAME       , 55       
+DEL  , STRING   , NAME         , ']'          ,            , 54       
+SUB  , ','      , UNKNOWN_CHAR , NAME         , STRING     , 53       
+INS  , NEWLINE  ,              , NAME         , 99         , 53       
+INS  , ']'      ,              , NEWLINE      , ')'        , 52       
+INS  , '}'      ,              , END          , '}'        , 48       
+DEL  , NAME     , UNKNOWN_CHAR , ']'          ,            , 47       
+INS  , START    ,              , NAME         , 'import'   , 45       
+INS  , ')'      ,              , NAME         , ')'        , 42       
+INS  , NEWLINE  ,              , 'def'        , 98         , 41       
+DEL  , ']'      , UNKNOWN_CHAR , END          ,            , 40       
+DEL  , ')'      , '.'          , END          ,            , 39       
+INS  , NAME     ,              , NAME         , ','        , 39       
+DEL  , STRING   , NAME         , STRING       ,            , 39       
+INS  , ')'      ,              , END          , ']'        , 39       
+DEL  , NAME     , UNKNOWN_CHAR , ')'          ,            , 38       
+SUB  , STRING   , NAME         , UNKNOWN_CHAR , ','        , 37       
+DEL  , NAME     , NAME         , '='          ,            , 37       
+INS  , ']'      ,              , END          , '}'        , 36       
+INS  , ']'      ,              , END          , ']'        , 35       
+INS  , NAME     ,              , NAME         , '.'        , 34       
+DEL  , NAME     , UNKNOWN_CHAR , END          ,            , 33       
+SUB  , '='      , UNKNOWN_CHAR , NAME         , STRING     , 33       
+DEL  , NAME     , ':'          , NEWLINE      ,            , 33       
+INS  , '('      ,              , END          , ')'        , 33       
+DEL  , NAME     , '('          , NAME         ,            , 33       
+DEL  , 99       , 99           , END          ,            , 32       
+INS  , ','      ,              , END          , ']'        , 32       
+SUB  , '['      , UNKNOWN_CHAR , NAME         , STRING     , 32       
+DEL  , NAME     , NAME         , ','          ,            , 32       
+INS  , STRING   ,              , NEWLINE      , STRING     , 31       
+DEL  , NAME     , NAME         , ')'          ,            , 31       
+INS  , STRING   ,              , NAME         , ','        , 31       
+INS  , NAME     ,              , NEWLINE      , ':'        , 31       
+INS  , STRING   ,              , STRING       , ','        , 31       
+DEL  , STRING   , UNKNOWN_CHAR , ')'          ,            , 31       
+DEL  , ']'      , '.'          , END          ,            , 29       
+INS  , NAME     ,              , NAME         , 'in'       , 29       
+INS  , ']'      ,              , NAME         , NEWLINE    , 28       
+INS  , NEWLINE  ,              , 'if'         , 98         , 28       
+INS  , START    ,              , NAME         , 'def'      , 27       
+INS  , START    ,              , STRING       , '{'        , 27       
+DEL  , STRING   , UNKNOWN_CHAR , ']'          ,            , 27       
+INS  , NUMBER   ,              , STRING       , ','        , 27       
+INS  , ','      ,              , END          , '}'        , 27       
+DEL  , START    , '**'         , NAME         ,            , 27       
+DEL  , ')'      , ':'          , END          ,            , 26       
+INS  , ':'      ,              , END          , '...'      , 26       
+DEL  , NAME     , NAME         , '['          ,            , 25       
+INS  , STRING   ,              , ')'          , ']'        , 25       
+DEL  , STRING   , NAME         , '.'          ,            , 25       
+INS  , ')'      ,              , 'for'        , ')'        , 25       
+INS  , STRING   ,              , END          , '}'        , 24       
+INS  , START    ,              , NAME         , 'from'     , 24       
+DEL  , ')'      , '**'         , END          ,            , 24       
+DEL  , NAME     , '>'          , NEWLINE      ,            , 24       
+INS  , START    ,              , NAME         , 'class'    , 24       
+INS  , 'for'    ,              , 'in'         , NAME       , 24       
+INS  , NAME     ,              , STRING       , ','        , 23       
+SUB  , STRING   , '='          , STRING       , ':'        , 23       
+INS  , '}'      ,              , END          , ')'        , 23       
+DEL  , NAME     , '.'          , END          ,            , 22       
+INS  , ':'      ,              , END          , '('        , 22       
+DEL  , STRING   , NAME         , ','          ,            , 22       
+DEL  , START    , NEWLINE      , 98           ,            , 22       
+INS  , NAME     ,              , '['          , '('        , 22       
+INS  , ']'      ,              , ')'          , ']'        , 21       
+DEL  , ','      , NEWLINE      , STRING       ,            , 20       
+INS  , NEWLINE  ,              , 'for'        , 98         , 20       
+SUB  , 98       , 'break'      , NEWLINE      , NAME       , 20       
+DEL  , ')'      , ')'          , NEWLINE      ,            , 20       
+DEL  , 'lambda' , '('          , NAME         ,            , 20       
+INS  , 99       ,              , NAME         , 'except'   , 20       
+DEL  , ')'      , ':'          , NEWLINE      ,            , 20       
+DEL  , ')'      , UNKNOWN_CHAR , NEWLINE      ,            , 20       
+DEL  , NUMBER   , UNKNOWN_CHAR , END          ,            , 19       
+DEL  , NEWLINE  , 98           , NAME         ,            , 19       
+DEL  , '.'      , '.'          , NAME         ,            , 19       
+DEL  , NUMBER   , NUMBER       , ','          ,            , 19       
+INS  , NAME     ,              , STRING       , '='        , 19       
+INS  , NAME     ,              , NAME         , 'import'   , 19       
+INS  , ','      ,              , END          , ')'        , 18       
+INS  , NEWLINE  ,              , 'return'     , 99         , 18       
+INS  , '}'      ,              , '{'          , ','        , 18       
+SUB  , STRING   , NAME         , UNKNOWN_CHAR , STRING     , 18       
+SUB  , 'return' , 'False'      , NEWLINE      , NAME       , 18       
+INS  , '}'      ,              , STRING       , ','        , 18       
+SUB  , NAME     , '='          , NAME         , '=='       , 18       
+INS  , '='      ,              , NAME         , 'lambda'   , 18       
+INS  , '('      ,              , NAME         , '('        , 18       
+DEL  , ','      , UNKNOWN_CHAR , ')'          ,            , 17       
+SUB  , STRING   , NAME         , STRING       , ','        , 17       
+INS  , NEWLINE  ,              , END          , 99         , 17       
+DEL  , NAME     , NAME         , ']'          ,            , 17       
+DEL  , NAME     , ')'          , ':'          ,            , 17       
+INS  , NAME     ,              , NAME         , NEWLINE    , 16       
+INS  , NEWLINE  ,              , 'def'        , 99         , 16       
+DEL  , NAME     , UNKNOWN_CHAR , ','          ,            , 16       
+DEL  , START    , '>'          , '['          ,            , 16       
+DEL  , START    , UNKNOWN_CHAR , 'import'     ,            , 16       
+DEL  , STRING   , UNKNOWN_CHAR , ','          ,            , 16       
+INS  , ')'      ,              , END          , ':'        , 16       
+DEL  , STRING   , UNKNOWN_CHAR , END          ,            , 16       
+INS  , ':'      ,              , NEWLINE      , NAME       , 16       
+DEL  , '('      , '('          , NAME         ,            , 16       
+INS  , ')'      ,              , ','          , ')'        , 16       
+DEL  , NAME     , STRING       , ','          ,            , 15       
+INS  , ')'      ,              , '.'          , ')'        , 15       
+DEL  , STRING   , NAME         , NAME         ,            , 15       
+DEL  , ')'      , NAME         , END          ,            , 15       
+INS  , NEWLINE  ,              , 'return'     , 98         , 15       
+DEL  , STRING   , ')'          , ','          ,            , 15       
+INS  , ']'      ,              , STRING       , ','        , 15       
+INS  , NAME     ,              , ':'          , '('        , 15       
+INS  , '('      ,              , ':'          , ')'        , 15       
+SUB  , START    , '>>'         , '>'          , NAME       , 15       
+DEL  , NAME     , NAME         , 'import'     ,            , 15       
+INS  , ')'      ,              , END          , NEWLINE    , 15       
+SUB  , NAME     , ','          , NAME         , ':'        , 15       
+DEL  , STRING   , NAME         , '-'          ,            , 15       
+DEL  , START    , 98           , NAME         ,            , 15       
+INS  , ')'      ,              , ']'          , ')'        , 15       
+INS  , NAME     ,              , ']'          , ')'        , 14       
+SUB  , NAME     , '='          , NUMBER       , '=='       , 14       
+DEL  , NUMBER   , NUMBER       , ')'          ,            , 14       
+DEL  , NAME     , ':'          , '//'         ,            , 14       
+DEL  , ')'      , NAME         , NAME         ,            , 14       
+DEL  , NAME     , '.'          , NAME         ,            , 14       
+DEL  , ','      , UNKNOWN_CHAR , ']'          ,            , 14       
+DEL  , NAME     , STRING       , NEWLINE      ,            , 14       
+DEL  , NAME     , '.'          , '['          ,            , 14       
+INS  , NAME     ,              , 'for'        , ')'        , 14       
+DEL  , NAME     , STRING       , END          ,            , 13       
+SUB  , NEWLINE  , '>>'         , '>'          , NAME       , 13       
+SUB  , ':'      , UNKNOWN_CHAR , NAME         , STRING     , 13       
+SUB  , STRING   , '.'          , STRING       , ','        , 13       
+DEL  , NAME     , ':'          , END          ,            , 13       
+DEL  , NAME     , NAME         , 'in'         ,            , 13       
+DEL  , '...'    , '.'          , NEWLINE      ,            , 13       
+DEL  , NAME     , NAME         , UNKNOWN_CHAR ,            , 12       
+INS  , STRING   ,              , NAME         , ')'        , 12       
+INS  , '('      ,              , NEWLINE      , ')'        , 12       
+DEL  , ']'      , ']'          , END          ,            , 12       
+INS  , ')'      ,              , NAME         , ','        , 12       
+INS  , NAME     ,              , '['          , '='        , 12       
+DEL  , STRING   , NUMBER       , STRING       ,            , 12       
+INS  , ')'      ,              , NAME         , '.'        , 12       
+DEL  , NEWLINE  , '>'          , NAME         ,            , 12       
+DEL  , NAME     , UNKNOWN_CHAR , NEWLINE      ,            , 12       
+INS  , STRING   ,              , END          , ']'        , 12       
+DEL  , '('      , UNKNOWN_CHAR , NAME         ,            , 12       
+DEL  , NAME     , ']'          , ')'          ,            , 12       
+DEL  , NAME     , STRING       , ')'          ,            , 12       
+SUB  , NAME     , '='          , STRING       , '=='       , 12       
+INS  , NAME     ,              , 'in'         , 'for'      , 12       
+DEL  , NAME     , '('          , ')'          ,            , 11       
+DEL  , NAME     , ')'          , NEWLINE      ,            , 11       
+DEL  , START    , UNKNOWN_CHAR , NEWLINE      ,            , 11       
+DEL  , NEWLINE  , NEWLINE      , NAME         ,            , 11       
+DEL  , NAME     , '.'          , NEWLINE      ,            , 11       
+DEL  , STRING   , NAME         , ':'          ,            , 11       
+SUB  , STRING   , ']'          , END          , '}'        , 11       
+INS  , NUMBER   ,              , END          , ')'        , 11       
+DEL  , NEWLINE  , 98           , 'def'        ,            , 11       
+DEL  , NAME     , '>'          , END          ,            , 11       
+INS  , '.'      ,              , NEWLINE      , NAME       , 11       
+DEL  , NUMBER   , NAME         , '='          ,            , 11       
+DEL  , NAME     , NAME         , 'as'         ,            , 11       
+DEL  , NEWLINE  , 99           , NAME         ,            , 11       
+INS  , '('      ,              , NAME         , 'lambda'   , 11       
+DEL  , ']'      , ')'          , END          ,            , 11       
+DEL  , STRING   , UNKNOWN_CHAR , NEWLINE      ,            , 10       
+INS  , NEWLINE  ,              , 'class'      , 98         , 10       
+INS  , '}'      ,              , NAME         , ','        , 10       
+DEL  , NEWLINE  , NUMBER       , NAME         ,            , 10       
+SUB  , STRING   , UNKNOWN_CHAR , ']'          , ','        , 10       
+DEL  , ','      , '{'          , STRING       ,            , 10       
+INS  , NEWLINE  ,              , 'if'         , 99         , 10       
+DEL  , ']'      , ')'          , 'for'        ,            , 10       
+DEL  , START    , '<'          , NAME         ,            , 10       
+SUB  , ','      , UNKNOWN_CHAR , NUMBER       , STRING     , 10       
+DEL  , NEWLINE  , UNKNOWN_CHAR , END          ,            , 10       
+DEL  , '='      , UNKNOWN_CHAR , NAME         ,            , 10       
+DEL  , '('      , '['          , NAME         ,            , 10       
+SUB  , ')'      , NEWLINE      , NAME         , ':'        , 10       
+INS  , 'else'   ,              , NEWLINE      , ':'        , 10       
+DEL  , ')'      , NAME         , 'in'         ,            , 10       
+DEL  , ')'      , ')'          , ','          ,            , 10       
+SUB  , STRING   , '='          , NUMBER       , ':'        , 10       
+INS  , NAME     ,              , NAME         , ':'        , 10       
+INS  , '('      ,              , STRING       , '{'        , 10       
+DEL  , ','      , UNKNOWN_CHAR , NAME         ,            , 10       
+DEL  , NUMBER   , NUMBER       , NUMBER       ,            , 10       
+SUB  , NAME     , ','          , NAME         , 'as'       , 10       
+DEL  , NUMBER   , UNKNOWN_CHAR , ')'          ,            , 10       
+DEL  , '}'      , UNKNOWN_CHAR , END          ,            , 9        
+SUB  , ','      , UNKNOWN_CHAR , ']'          , STRING     , 9        
+DEL  , NAME     , UNKNOWN_CHAR , NAME         ,            , 9        
+DEL  , ')'      , 99           , END          ,            , 9        
+INS  , '}'      ,              , END          , ']'        , 9        
+DEL  , NAME     , '.'          , '('          ,            , 9        
+INS  , NEWLINE  ,              , STRING       , 98         , 9        
+INS  , STRING   ,              , NAME         , '+'        , 9        
+INS  , '['      ,              , STRING       , '['        , 9        
+DEL  , '['      , '['          , STRING       ,            , 9        
+INS  , ':'      ,              , END          , '['        , 9        
+INS  , '['      ,              , END          , ']'        , 9        
+DEL  , NEWLINE  , 98           , 'if'         ,            , 9        
+SUB  , NAME     , '('          , NUMBER       , '['        , 9        
+INS  , NEWLINE  ,              , NAME         , 'return'   , 9        
+INS  , '+'      ,              , NEWLINE      , '+'        , 9        
+INS  , '+'      ,              , NEWLINE      , NUMBER     , 9        
+INS  , ':'      ,              , NEWLINE      , 'pass'     , 9        
+DEL  , START    , NAME         , '['          ,            , 9        
+INS  , STRING   ,              , ']'          , ')'        , 9        
+DEL  , ']'      , NAME         , END          ,            , 9        
+INS  , ':'      ,              , END          , NUMBER     , 9        
+SUB  , STRING   , '='          , '['          , ':'        , 9        
+DEL  , NEWLINE  , 98           , 'for'        ,            , 9        
+INS  , STRING   ,              , ')'          , '}'        , 9        
+INS  , ':'      ,              , END          , 'pass'     , 9        
+SUB  , START    , 'import'     , '.'          , 'from'     , 9        
+DEL  , NAME     , STRING       , '.'          ,            , 9        
+DEL  , NAME     , UNKNOWN_CHAR , '}'          ,            , 8        
+DEL  , STRING   , UNKNOWN_CHAR , ':'          ,            , 8        
+INS  , NUMBER   ,              , END          , ']'        , 8        
+DEL  , STRING   , NAME         , '}'          ,            , 8        
+DEL  , NUMBER   , UNKNOWN_CHAR , ']'          ,            , 8        
+INS  , 98       ,              , NAME         , 'def'      , 8        
+DEL  , NAME     , NAME         , 'is'         ,            , 8        
+DEL  , '...'    , '.'          , ']'          ,            , 8        
+INS  , STRING   ,              , NEWLINE      , ':'        , 8        
+INS  , NUMBER   ,              , ')'          , ']'        , 8        
+INS  , NEWLINE  ,              , 'for'        , 99         , 8        
+DEL  , NAME     , '**'         , END          ,            , 8        
+DEL  , ')'      , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 8        
+DEL  , NUMBER   , NUMBER       , NEWLINE      ,            , 8        
+INS  , STRING   ,              , ','          , ')'        , 8        
+INS  , '('      ,              , STRING       , '('        , 8        
+INS  , STRING   ,              , '}'          , ':'        , 8        
+INS  , '.'      ,              , END          , NAME       , 8        
+DEL  , '('      , '('          , STRING       ,            , 8        
+SUB  , ']'      , '='          , NAME         , '=='       , 8        
+DEL  , ')'      , 'for'        , NAME         ,            , 8        
+DEL  , START    , 'if'         , NAME         ,            , 8        
+INS  , '['      ,              , NAME         , '['        , 7        
+INS  , NUMBER   ,              , ']'          , ')'        , 7        
+SUB  , NAME     , STRING       , NAME         , ','        , 7        
+INS  , NAME     ,              , ','          , ')'        , 7        
+SUB  , STRING   , ':'          , NUMBER       , ','        , 7        
+DEL  , ')'      , ')'          , ']'          ,            , 7        
+DEL  , NAME     , '**'         , NEWLINE      ,            , 7        
+SUB  , START    , '['          , STRING       , '{'        , 7        
+DEL  , ']'      , NAME         , NAME         ,            , 7        
+DEL  , START    , '>'          , 'import'     ,            , 7        
+DEL  , NUMBER   , NAME         , ','          ,            , 7        
+SUB  , STRING   , ','          , STRING       , ':'        , 7        
+DEL  , STRING   , NUMBER       , ']'          ,            , 7        
+DEL  , STRING   , NAME         , '/'          ,            , 7        
+DEL  , STRING   , NAME         , END          ,            , 7        
+SUB  , START    , 'in'         , '='          , NAME       , 7        
+SUB  , NEWLINE  , 'break'      , NEWLINE      , NAME       , 7        
+SUB  , '{'      , UNKNOWN_CHAR , NAME         , STRING     , 7        
+DEL  , ':'      , NEWLINE      , NAME         ,            , 7        
+INS  , NUMBER   ,              , END          , '}'        , 7        
+DEL  , START    , NAME         , STRING       ,            , 7        
+DEL  , NAME     , '>'          , ')'          ,            , 7        
+INS  , '='      ,              , '['          , NAME       , 7        
+INS  , STRING   ,              , '{'          , ':'        , 7        
+DEL  , ')'      , ')'          , ';'          ,            , 7        
+INS  , NEWLINE  ,              , 'try'        , 98         , 7        
+DEL  , NUMBER   , NUMBER       , ']'          ,            , 7        
+SUB  , '='      , '['          , STRING       , '{'        , 7        
+INS  , STRING   ,              , ','          , ']'        , 7        
+INS  , '.'      ,              , '('          , NAME       , 7        
+DEL  , START    , NAME         , '{'          ,            , 7        
+DEL  , NAME     , ':'          , '/'          ,            , 7        
+INS  , ')'      ,              , END          , '}'        , 7        
+DEL  , NAME     , ')'          , ']'          ,            , 7        
+DEL  , STRING   , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 7        
+SUB  , 'return' , 'True'       , NEWLINE      , NAME       , 7        
+INS  , '}'      ,              , ')'          , '}'        , 7        
+INS  , NAME     ,              , ':'          , ')'        , 7        
+INS  , START    ,              , NAME         , '('        , 7        
+DEL  , STRING   , ','          , '%'          ,            , 7        
+INS  , '['      ,              , NAME         , '('        , 7        
+DEL  , NAME     , 'if'         , NAME         ,            , 7        
+INS  , NUMBER   ,              , NEWLINE      , ')'        , 7        
+DEL  , ']'      , ')'          , NEWLINE      ,            , 7        
+DEL  , ')'      , ')'          , 'for'        ,            , 7        
+INS  , '.'      ,              , NAME         , 'import'   , 7        
+SUB  , NEWLINE  , '>>'         , '>'          , 98         , 6        
+DEL  , STRING   , '}'          , ','          ,            , 6        
+DEL  , NAME     , '/'          , '>'          ,            , 6        
+DEL  , NAME     , NAME         , STRING       ,            , 6        
+DEL  , NAME     , NUMBER       , '='          ,            , 6        
+DEL  , NEWLINE  , 'or'         , NEWLINE      ,            , 6        
+INS  , ']'      ,              , ','          , ']'        , 6        
+INS  , NEWLINE  ,              , NAME         , 'def'      , 6        
+INS  , ':'      ,              , STRING       , '{'        , 6        
+INS  , STRING   ,              , ','          , '}'        , 6        
+INS  , NUMBER   ,              , '...'        , ','        , 6        
+DEL  , '...'    , '.'          , END          ,            , 6        
+DEL  , ')'      , NAME         , ','          ,            , 6        
+DEL  , NAME     , 'is'         , ':'          ,            , 6        
+SUB  , NAME     , UNKNOWN_CHAR , NAME         , '.'        , 6        
+DEL  , '&'      , '&'          , NAME         ,            , 6        
+DEL  , '='      , NEWLINE      , NAME         ,            , 6        
+SUB  , ']'      , '='          , STRING       , '=='       , 6        
+DEL  , STRING   , UNKNOWN_CHAR , '}'          ,            , 6        
+SUB  , NAME     , ':'          , NAME         , ','        , 6        
+INS  , START    ,              , NAME         , 'if'       , 6        
+DEL  , NUMBER   , NUMBER       , END          ,            , 6        
+DEL  , START    , '>'          , 'from'       ,            , 6        
+DEL  , START    , '>'          , NUMBER       ,            , 6        
+DEL  , ','      , ','          , NAME         ,            , 6        
+DEL  , NAME     , ')'          , END          ,            , 6        
+SUB  , NAME     , UNKNOWN_CHAR , ')'          , '('        , 6        
+DEL  , '='      , '='          , NAME         ,            , 6        
+DEL  , '...'    , '.'          , '.'          ,            , 6        
+DEL  , ':'      , ':'          , NUMBER       ,            , 6        
+DEL  , NUMBER   , NUMBER       , '-'          ,            , 6        
+DEL  , NAME     , '='          , NAME         ,            , 6        
+INS  , ']'      ,              , END          , NEWLINE    , 6        
+INS  , START    ,              , NAME         , '['        , 6        
+DEL  , START    , NAME         , NAME         ,            , 6        
+DEL  , NAME     , NAME         , '+'          ,            , 6        
+INS  , ':'      ,              , '}'          , NUMBER     , 6        
+INS  , STRING   ,              , NAME         , '.'        , 6        
+DEL  , ','      , UNKNOWN_CHAR , END          ,            , 5        
+DEL  , NAME     , '.'          , ']'          ,            , 5        
+SUB  , STRING   , NUMBER       , UNKNOWN_CHAR , ','        , 5        
+INS  , NAME     ,              , NUMBER       , '='        , 5        
+SUB  , STRING   , ','          , NUMBER       , ':'        , 5        
+DEL  , ')'      , '.'          , NEWLINE      ,            , 5        
+INS  , '['      ,              , NUMBER       , '['        , 5        
+DEL  , ')'      , NEWLINE      , 99           ,            , 5        
+INS  , '['      ,              , STRING       , '{'        , 5        
+INS  , '}'      ,              , ','          , '}'        , 5        
+INS  , ')'      ,              , NEWLINE      , '('        , 5        
+SUB  , NAME     , NEWLINE      , NAME         , ':'        , 5        
+INS  , '='      ,              , STRING       , '['        , 5        
+DEL  , '}'      , '.'          , END          ,            , 5        
+DEL  , NAME     , NUMBER       , ','          ,            , 5        
+INS  , '['      ,              , 'for'        , NAME       , 5        
+DEL  , NEWLINE  , 98           , 'class'      ,            , 5        
+INS  , '='      ,              , END          , NAME       , 5        
+DEL  , ']'      , '*'          , END          ,            , 5        
+INS  , ']'      ,              , NAME         , ','        , 5        
+INS  , ':'      ,              , '}'          , STRING     , 5        
+DEL  , NAME     , '...'        , END          ,            , 5        
+INS  , NUMBER   ,              , NAME         , ','        , 5        
+DEL  , 'if'     , UNKNOWN_CHAR , NAME         ,            , 5        
+DEL  , NUMBER   , UNKNOWN_CHAR , '}'          ,            , 5        
+DEL  , START    , UNKNOWN_CHAR , 'from'       ,            , 5        
+DEL  , ':'      , UNKNOWN_CHAR , NAME         ,            , 5        
+INS  , NAME     ,              , ')'          , '}'        , 5        
+DEL  , NAME     , '('          , STRING       ,            , 5        
+DEL  , START    , '%'          , NAME         ,            , 5        
+INS  , NUMBER   ,              , NEWLINE      , ':'        , 5        
+DEL  , START    , '>'          , STRING       ,            , 5        
+INS  , ','      ,              , NEWLINE      , ')'        , 5        
+DEL  , ')'      , UNKNOWN_CHAR , '.'          ,            , 5        
+DEL  , STRING   , ':'          , STRING       ,            , 5        
+INS  , NEWLINE  ,              , 'except'     , 99         , 5        
+INS  , NAME     ,              , '{'          , '='        , 5        
+SUB  , STRING   , ':'          , NAME         , ','        , 5        
+DEL  , '...'    , '...'        , '.'          ,            , 5        
+DEL  , START    , UNKNOWN_CHAR , 'def'        ,            , 5        
+DEL  , ']'      , UNKNOWN_CHAR , NEWLINE      ,            , 5        
+DEL  , ')'      , ']'          , END          ,            , 5        
+DEL  , ','      , '**'         , STRING       ,            , 5        
+DEL  , NAME     , NAME         , NUMBER       ,            , 5        
+DEL  , NUMBER   , NAME         , END          ,            , 5        
+DEL  , NAME     , '-'          , NAME         ,            , 5        
+SUB  , '='      , 'None'       , NEWLINE      , NAME       , 5        
+DEL  , '|'      , '|'          , NAME         ,            , 5        
+DEL  , NEWLINE  , '**'         , NAME         ,            , 5        
+DEL  , '}'      , ')'          , END          ,            , 5        
+INS  , STRING   ,              , NAME         , ']'        , 5        
+INS  , ')'      ,              , NAME         , ']'        , 5        
+DEL  , NAME     , ':'          , NAME         ,            , 5        
+DEL  , NUMBER   , NAME         , ']'          ,            , 5        
+INS  , 'import' ,              , END          , NAME       , 5        
+INS  , 'True'   ,              , END          , ')'        , 5        
+INS  , ')'      ,              , STRING       , '+'        , 5        
+INS  , ']'      ,              , NAME         , ')'        , 5        
+INS  , 98       ,              , NAME         , 'return'   , 5        
+DEL  , ','      , '...'        , '}'          ,            , 5        
+DEL  , ','      , '>'          , STRING       ,            , 5        
+DEL  , NAME     , NUMBER       , NEWLINE      ,            , 5        
+INS  , NAME     ,              , END          , ':'        , 5        
+SUB  , '='      , 'False'      , NEWLINE      , NAME       , 5        
+DEL  , NAME     , NAME         , '>'          ,            , 5        
+INS  , 99       ,              , 'return'     , 99         , 5        
+INS  , ']'      ,              , NAME         , '.'        , 5        
+DEL  , NAME     , NUMBER       , ')'          ,            , 5        
+INS  , NEWLINE  ,              , 'global'     , 98         , 5        
+DEL  , ')'      , NEWLINE      , '>>'         ,            , 5        
+INS  , NAME     ,              , NAME         , 'if'       , 5        
+INS  , ')'      ,              , ')'          , '}'        , 5        
+INS  , 'lambda' ,              , NAME         , ':'        , 5        
+INS  , '='      ,              , '('          , NAME       , 5        
+INS  , ')'      ,              , NAME         , 'if'       , 5        
+INS  , ')'      ,              , 'for'        , ']'        , 5        
+DEL  , ','      , '**'         , NAME         ,            , 5        
+INS  , NAME     ,              , END          , ']'        , 5        
+DEL  , '='      , '('          , NAME         ,            , 5        
+DEL  , NAME     , ','          , NAME         ,            , 5        
+SUB  , NAME     , '->'         , NAME         , '.'        , 5        
+INS  , ')'      ,              , STRING       , ','        , 5        
+INS  , NAME     ,              , NAME         , '-'        , 5        
+DEL  , NAME     , NAME         , '=='         ,            , 5        
+DEL  , NAME     , STRING       , NAME         ,            , 4        
+SUB  , STRING   , ':'          , STRING       , ','        , 4        
+DEL  , ')'      , '}'          , END          ,            , 4        
+INS  , '='      ,              , NAME         , '('        , 4        
+DEL  , ')'      , ')'          , '.'          ,            , 4        
+DEL  , NAME     , '**'         , ')'          ,            , 4        
+DEL  , 98       , STRING       , NEWLINE      ,            , 4        
+DEL  , NAME     , NUMBER       , ':'          ,            , 4        
+DEL  , STRING   , UNKNOWN_CHAR , NAME         ,            , 4        
+INS  , NEWLINE  ,              , 'while'      , 99         , 4        
+INS  , STRING   ,              , '.'          , ')'        , 4        
+DEL  , 98       , '^'          , NEWLINE      ,            , 4        
+DEL  , ']'      , ':'          , END          ,            , 4        
+INS  , NEWLINE  ,              , '...'        , 98         , 4        
+DEL  , ','      , NAME         , STRING       ,            , 4        
+SUB  , STRING   , NEWLINE      , NAME         , ':'        , 4        
+DEL  , NAME     , STRING       , '%'          ,            , 4        
+SUB  , '='      , '['          , NAME         , '{'        , 4        
+SUB  , NUMBER   , ']'          , END          , '}'        , 4        
+INS  , ','      ,              , NAME         , '('        , 4        
+DEL  , START    , NAME         , 'import'     ,            , 4        
+DEL  , NAME     , NEWLINE      , 99           ,            , 4        
+DEL  , NAME     , 99           , END          ,            , 4        
+DEL  , '['      , '['          , NAME         ,            , 4        
+DEL  , ','      , ','          , STRING       ,            , 4        
+SUB  , START    , UNKNOWN_CHAR , NAME         , STRING     , 4        
+DEL  , STRING   , NAME         , NEWLINE      ,            , 4        
+INS  , ']'      ,              , NAME         , ':'        , 4        
+DEL  , NEWLINE  , '//'         , NAME         ,            , 4        
+INS  , ':'      ,              , NAME         , '('        , 4        
+INS  , ')'      ,              , NEWLINE      , ']'        , 4        
+DEL  , NUMBER   , ':'          , NUMBER       ,            , 4        
+DEL  , STRING   , ')'          , END          ,            , 4        
+INS  , NAME     ,              , '['          , ')'        , 4        
+INS  , NAME     ,              , '='          , '('        , 4        
+INS  , '('      ,              , '='          , NAME       , 4        
+INS  , NAME     ,              , NAME         , 'as'       , 4        
+DEL  , STRING   , UNKNOWN_CHAR , STRING       ,            , 4        
+DEL  , START    , 'def'        , NAME         ,            , 4        
+INS  , 99       ,              , NAME         , 'return'   , 4        
+DEL  , NAME     , '='          , NEWLINE      ,            , 4        
+SUB  , NUMBER   , NEWLINE      , NAME         , ':'        , 4        
+DEL  , ')'      , '*'          , END          ,            , 4        
+INS  , 99       ,              , 'def'        , 99         , 4        
+DEL  , START    , UNKNOWN_CHAR , 'class'      ,            , 4        
+DEL  , START    , '>>'         , '['          ,            , 4        
+INS  , 99       ,              , 'else'       , 99         , 4        
+DEL  , NAME     , UNKNOWN_CHAR , '*'          ,            , 4        
+SUB  , START    , 'from'       , NAME         , 'import'   , 4        
+INS  , STRING   ,              , ':'          , STRING     , 4        
+INS  , NAME     ,              , ')'          , '('        , 4        
+INS  , STRING   ,              , 'if'         , ')'        , 4        
+INS  , NAME     ,              , ')'          , ']'        , 4        
+DEL  , START    , 'for'        , NAME         ,            , 4        
+INS  , STRING   ,              , NAME         , NEWLINE    , 4        
+DEL  , '+'      , UNKNOWN_CHAR , NAME         ,            , 4        
+SUB  , NAME     , 'if'         , NAME         , 'for'      , 4        
+DEL  , STRING   , NUMBER       , UNKNOWN_CHAR ,            , 4        
+DEL  , NAME     , NUMBER       , END          ,            , 4        
+INS  , NAME     ,              , '{'          , '('        , 4        
+DEL  , '='      , '/'          , NAME         ,            , 4        
+INS  , STRING   ,              , '['          , ':'        , 4        
+SUB  , 'return' , 'None'       , NEWLINE      , NAME       , 4        
+INS  , ']'      ,              , ')'          , '}'        , 4        
+DEL  , '-'      , NAME         , STRING       ,            , 4        
+DEL  , NEWLINE  , STRING       , NEWLINE      ,            , 4        
+DEL  , NEWLINE  , NEWLINE      , 98           ,            , 4        
+DEL  , ','      , '['          , NAME         ,            , 4        
+DEL  , '('      , NUMBER       , NAME         ,            , 4        
+INS  , ']'      ,              , NEWLINE      , ']'        , 4        
+INS  , '='      ,              , NAME         , '['        , 4        
+INS  , NAME     ,              , '('          , 'in'       , 4        
+INS  , 'in'     ,              , '('          , NAME       , 4        
+DEL  , NEWLINE  , '<'          , NAME         ,            , 4        
+SUB  , ')'      , ')'          , END          , ']'        , 4        
+INS  , ']'      ,              , NAME         , ']'        , 4        
+DEL  , NUMBER   , NAME         , ')'          ,            , 4        
+SUB  , START    , 'import'     , NAME         , 'from'     , 4        
+DEL  , ')'      , '**'         , NEWLINE      ,            , 4        
+DEL  , '('      , '<'          , NAME         ,            , 4        
+INS  , NAME     ,              , END          , NEWLINE    , 4        
+DEL  , NAME     , '**'         , '='          ,            , 4        
+SUB  , START    , 'pass'       , '='          , NAME       , 4        
+DEL  , STRING   , '.'          , '.'          ,            , 4        
+INS  , NAME     ,              , NUMBER       , ':'        , 4        
+DEL  , 'True'   , UNKNOWN_CHAR , ')'          ,            , 4        
+INS  , NAME     ,              , STRING       , '+'        , 4        
+DEL  , ')'      , ']'          , ')'          ,            , 4        
+INS  , 99       ,              , NEWLINE      , NAME       , 4        
+DEL  , ']'      , ']'          , NEWLINE      ,            , 4        
+SUB  , ')'      , UNKNOWN_CHAR , END          , ')'        , 4        
+SUB  , 99       , NAME         , ':'          , 'except'   , 4        
+INS  , START    ,              , '.'          , NAME       , 4        
+SUB  , NUMBER   , ':'          , NUMBER       , '-'        , 4        
+DEL  , NEWLINE  , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 4        
+DEL  , START    , '>'          , NEWLINE      ,            , 4        
+INS  , '}'      ,              , '}'          , ']'        , 4        
+SUB  , NAME     , '/'          , NAME         , '.'        , 4        
+SUB  , '('      , UNKNOWN_CHAR , UNKNOWN_CHAR , STRING     , 4        
+DEL  , ')'      , NUMBER       , END          ,            , 4        
+DEL  , 'in'     , '*'          , NAME         ,            , 4        
+DEL  , ')'      , '>>'         , '>'          ,            , 4        
+SUB  , ')'      , ']'          , END          , ')'        , 4        
+DEL  , 98       , NAME         , STRING       ,            , 4        
+INS  , ']'      ,              , NUMBER       , ','        , 4        
+SUB  , START    , '//'         , NAME         , NEWLINE    , 4        
+SUB  , NEWLINE  , 'pass'       , NEWLINE      , NAME       , 4        
+SUB  , NAME     , '.'          , NAME         , 'import'   , 4        
+SUB  , 98       , NAME         , STRING       , 'return'   , 4        
+DEL  , NAME     , '.'          , 'import'     ,            , 4        
+INS  , '('      ,              , 'if'         , ')'        , 4        
+INS  , ']'      ,              , 'for'        , ')'        , 4        
+INS  , STRING   ,              , '=='         , ']'        , 4        
+INS  , ')'      ,              , ';'          , ')'        , 4        
+DEL  , ':'      , 'return'     , STRING       ,            , 4        
+INS  , NAME     ,              , '='          , NEWLINE    , 4        
+INS  , NEWLINE  ,              , '='          , NAME       , 4        
+INS  , ')'      ,              , NAME         , 'for'      , 4        
+INS  , NAME     ,              , NUMBER       , '('        , 4        
+DEL  , NUMBER   , ':'          , NEWLINE      ,            , 4        
+DEL  , ')'      , '}'          , ')'          ,            , 4        
+INS  , ')'      ,              , 'return'     , NEWLINE    , 4        
+DEL  , NAME     , '>'          , '.'          ,            , 4        
+DEL  , NAME     , ','          , 'for'        ,            , 4        
+DEL  , START    , '('          , NAME         ,            , 4        
+DEL  , 'from'   , '<'          , NAME         ,            , 4        
+SUB  , NUMBER   , STRING       , NUMBER       , ','        , 3        
+DEL  , '='      , NAME         , STRING       ,            , 3        
+DEL  , NAME     , NAME         , '/'          ,            , 3        
+DEL  , STRING   , NUMBER       , ','          ,            , 3        
+DEL  , NEWLINE  , UNKNOWN_CHAR , NEWLINE      ,            , 3        
+DEL  , ')'      , '&'          , END          ,            , 3        
+DEL  , NAME     , NAME         , '**'         ,            , 3        
+SUB  , NAME     , UNKNOWN_CHAR , UNKNOWN_CHAR , '.'        , 3        
+DEL  , START    , '**'         , 'import'     ,            , 3        
+SUB  , NUMBER   , ':'          , NUMBER       , ','        , 3        
+SUB  , NAME     , '.'          , NAME         , ','        , 3        
+INS  , NAME     ,              , '['          , ':'        , 3        
+DEL  , NUMBER   , NUMBER       , '/'          ,            , 3        
+INS  , '='      ,              , NEWLINE      , NUMBER     , 3        
+DEL  , STRING   , NAME         , '>'          ,            , 3        
+DEL  , STRING   , '>'          , ','          ,            , 3        
+INS  , '='      ,              , STRING       , '{'        , 3        
+DEL  , ':'      , NAME         , STRING       ,            , 3        
+SUB  , STRING   , UNKNOWN_CHAR , ']'          , STRING     , 3        
+SUB  , '('      , 'class'      , '='          , NAME       , 3        
+SUB  , NAME     , STRING       , END          , '='        , 3        
+SUB  , '('      , UNKNOWN_CHAR , '.'          , STRING     , 3        
+DEL  , START    , NUMBER       , NAME         ,            , 3        
+DEL  , NAME     , '*'          , END          ,            , 3        
+SUB  , '('      , '%'          , NAME         , STRING     , 3        
+DEL  , STRING   , NUMBER       , NAME         ,            , 3        
+SUB  , NAME     , ':'          , STRING       , '='        , 3        
+DEL  , STRING   , NAME         , NUMBER       ,            , 3        
+DEL  , ')'      , UNKNOWN_CHAR , ')'          ,            , 3        
+INS  , NAME     ,              , NEWLINE      , ']'        , 3        
+DEL  , STRING   , UNKNOWN_CHAR , 'in'         ,            , 3        
+INS  , STRING   ,              , ']'          , '}'        , 3        
+SUB  , '='      , '['          , NUMBER       , '{'        , 3        
+INS  , 'else'   ,              , 'for'        , NAME       , 3        
+DEL  , NUMBER   , NAME         , NEWLINE      ,            , 3        
+SUB  , ','      , UNKNOWN_CHAR , ')'          , STRING     , 3        
+DEL  , NAME     , '*'          , '='          ,            , 3        
+DEL  , 98       , 'pass'       , NEWLINE      ,            , 3        
+DEL  , STRING   , '...'        , ']'          ,            , 3        
+INS  , 'import' ,              , NEWLINE      , NAME       , 3        
+INS  , STRING   ,              , END          , ','        , 3        
+SUB  , NAME     , 'as'         , NAME         , 'for'      , 3        
+DEL  , NEWLINE  , 99           , 'return'     ,            , 3        
+INS  , ')'      ,              , '...'        , ','        , 3        
+SUB  , 98       , 'pass'       , UNKNOWN_CHAR , NAME       , 3        
+DEL  , '('      , '('          , NUMBER       ,            , 3        
+INS  , ','      ,              , STRING       , '{'        , 3        
+DEL  , NAME     , NAME         , '-'          ,            , 3        
+INS  , STRING   ,              , END          , STRING     , 3        
+DEL  , ')'      , 'if'         , NAME         ,            , 3        
+INS  , STRING   ,              , '{'          , ','        , 3        
+INS  , ':'      ,              , NEWLINE      , '('        , 3        
+DEL  , NAME     , STRING       , ']'          ,            , 3        
+DEL  , '<'      , '/'          , NAME         ,            , 3        
+INS  , '}'      ,              , NAME         , ')'        , 3        
+DEL  , ')'      , '**'         , ')'          ,            , 3        
+DEL  , ','      , '<'          , NAME         ,            , 3        
+DEL  , NUMBER   , '}'          , ','          ,            , 3        
+INS  , NEWLINE  ,              , NAME         , 'class'    , 3        
+SUB  , NUMBER   , ')'          , END          , '}'        , 3        
+DEL  , NAME     , NAME         , '*'          ,            , 3        
+DEL  , ']'      , STRING       , END          ,            , 3        
+DEL  , NEWLINE  , '>>'         , '>'          ,            , 3        
+DEL  , ')'      , NEWLINE      , '.'          ,            , 3        
+SUB  , ']'      , '.'          , END          , ']'        , 3        
+INS  , ':'      ,              , END          , 'return'   , 3        
+DEL  , '{'      , '{'          , STRING       ,            , 3        
+DEL  , ']'      , '...'        , END          ,            , 3        
+DEL  , STRING   , ':'          , NEWLINE      ,            , 3        
+DEL  , STRING   , ']'          , ','          ,            , 3        
+DEL  , '...'    , '...'        , NEWLINE      ,            , 3        
+DEL  , STRING   , NAME         , '*'          ,            , 3        
+DEL  , START    , UNKNOWN_CHAR , '{'          ,            , 3        
+INS  , ']'      ,              , NEWLINE      , ':'        , 3        
+INS  , NUMBER   ,              , ','          , ']'        , 3        
+DEL  , NEWLINE  , 99           , 'def'        ,            , 3        
+INS  , '('      ,              , NAME         , '['        , 3        
+SUB  , NAME     , '}'          , END          , ')'        , 3        
+DEL  , '['      , UNKNOWN_CHAR , NAME         ,            , 3        
+DEL  , START    , UNKNOWN_CHAR , '['          ,            , 3        
+INS  , 99       ,              , NAME         , 'def'      , 3        
+DEL  , NAME     , '...'        , NEWLINE      ,            , 3        
+INS  , NAME     ,              , NAME         , ')'        , 3        
+SUB  , NAME     , ')'          , END          , '}'        , 3        
+SUB  , ']'      , NAME         , ']'          , ','        , 3        
+DEL  , NUMBER   , '*'          , ','          ,            , 3        
+SUB  , NAME     , STRING       , END          , '('        , 3        
+INS  , '['      ,              , ','          , ':'        , 3        
+SUB  , '+'      , UNKNOWN_CHAR , ')'          , STRING     , 3        
+DEL  , START    , '>>'         , NAME         ,            , 3        
+DEL  , STRING   , '**'         , ','          ,            , 3        
+INS  , NAME     ,              , '}'          , ')'        , 3        
+DEL  , NEWLINE  , 99           , 'for'        ,            , 3        
+DEL  , NAME     , UNKNOWN_CHAR , ':'          ,            , 3        
+DEL  , NUMBER   , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 3        
+SUB  , 98       , 'continue'   , NEWLINE      , NAME       , 3        
+SUB  , STRING   , NAME         , UNKNOWN_CHAR , ':'        , 3        
+DEL  , '('      , '['          , STRING       ,            , 3        
+DEL  , '('      , '**'         , NAME         ,            , 3        
+INS  , 'in'     ,              , NAME         , '('        , 3        
+SUB  , NUMBER   , ':'          , STRING       , ','        , 3        
+SUB  , '=='     , UNKNOWN_CHAR , NAME         , STRING     , 3        
+INS  , NAME     ,              , END          , '}'        , 3        
+DEL  , START    , UNKNOWN_CHAR , STRING       ,            , 3        
+SUB  , NAME     , NAME         , NEWLINE      , ')'        , 3        
+SUB  , ','      , UNKNOWN_CHAR , UNKNOWN_CHAR , STRING     , 3        
+DEL  , '}'      , '}'          , END          ,            , 3        
+SUB  , STRING   , '='          , NAME         , ':'        , 3        
+INS  , '='      ,              , '('          , '['        , 3        
+SUB  , START    , 'import'     , NEWLINE      , NAME       , 3        
+SUB  , NEWLINE  , 'break'      , NEWLINE      , 99         , 3        
+INS  , '='      ,              , ')'          , '('        , 3        
+DEL  , NAME     , '*'          , ','          ,            , 3        
+DEL  , NUMBER   , NUMBER       , ';'          ,            , 3        
+SUB  , ':'      , UNKNOWN_CHAR , '}'          , STRING     , 3        
+INS  , NUMBER   ,              , NUMBER       , '|'        , 3        
+DEL  , NEWLINE  , '>>'         , NAME         ,            , 3        
+DEL  , ')'      , ')'          , ')'          ,            , 3        
+INS  , NEWLINE  ,              , NAME         , 'while'    , 3        
+DEL  , NAME     , NAME         , '<'          ,            , 3        
+DEL  , ']'      , '.'          , NEWLINE      ,            , 3        
+DEL  , 99       , UNKNOWN_CHAR , END          ,            , 3        
+DEL  , ')'      , '<'          , '/'          ,            , 3        
+INS  , NEWLINE  ,              , NAME         , 'import'   , 3        
+DEL  , START    , ':'          , NAME         ,            , 3        
+INS  , STRING   ,              , NUMBER       , ','        , 3        
+SUB  , ':'      , '['          , STRING       , '{'        , 3        
+INS  , '['      ,              , STRING       , '('        , 3        
+INS  , ']'      ,              , NAME         , '='        , 3        
+DEL  , NAME     , '.'          , ','          ,            , 3        
+DEL  , '('      , UNKNOWN_CHAR , STRING       ,            , 3        
+INS  , STRING   ,              , NUMBER       , ':'        , 3        
+DEL  , ','      , '='          , STRING       ,            , 3        
+DEL  , START    , '**'         , 'from'       ,            , 3        
+DEL  , NAME     , '*'          , ')'          ,            , 3        
+DEL  , ')'      , '.'          , '['          ,            , 3        
+INS  , ']'      ,              , ']'          , ')'        , 3        
+DEL  , NAME     , NUMBER       , ']'          ,            , 3        
+SUB  , NAME     , '('          , ':'          , '['        , 3        
+DEL  , ')'      , STRING       , END          ,            , 3        
+DEL  , NAME     , UNKNOWN_CHAR , '='          ,            , 3        
+SUB  , 98       , 'raise'      , NEWLINE      , NAME       , 3        
+INS  , NAME     ,              , STRING       , '['        , 3        
+INS  , NAME     ,              , END          , 'import'   , 3        
+INS  , START    ,              , NAME         , 'lambda'   , 3        
+DEL  , ')'      , ')'          , ':'          ,            , 3        
+SUB  , '('      , ','          , ')'          , STRING     , 3        
+DEL  , '('      , NAME         , '('          ,            , 3        
+DEL  , '('      , ','          , ')'          ,            , 3        
+DEL  , STRING   , ')'          , NEWLINE      ,            , 3        
+INS  , STRING   ,              , '}'          , ')'        , 3        
+INS  , ']'      ,              , '.'          , ']'        , 3        
+DEL  , STRING   , NAME         , 'in'         ,            , 3        
+INS  , NAME     ,              , NAME         , '%'        , 3        
+SUB  , NUMBER   , ')'          , END          , ']'        , 3        
+DEL  , NAME     , 'for'        , NAME         ,            , 3        
+INS  , 'False'  ,              , NAME         , ','        , 3        
+SUB  , ')'      , NEWLINE      , 99           , ')'        , 3        
+SUB  , START    , '>>'         , '>'          , STRING     , 3        
+DEL  , NUMBER   , NAME         , UNKNOWN_CHAR ,            , 3        
+SUB  , ','      , '*'          , NAME         , '**'       , 3        
+DEL  , NAME     , ')'          , ','          ,            , 3        
+SUB  , 98       , '>'          , STRING       , NEWLINE    , 3        
+SUB  , NEWLINE  , STRING       , END          , 99         , 3        
+DEL  , 'if'     , '('          , NAME         ,            , 3        
+DEL  , NAME     , NAME         , 'for'        ,            , 3        
+INS  , NAME     ,              , '('          , '='        , 3        
+INS  , '('      ,              , 'for'        , NAME       , 3        
+INS  , NAME     ,              , 'def'        , NEWLINE    , 3        
+INS  , ')'      ,              , 'return'     , ')'        , 3        
+DEL  , STRING   , '.'          , ')'          ,            , 3        
+DEL  , '('      , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 3        
+DEL  , NAME     , '>'          , ','          ,            , 3        
+INS  , 'except' ,              , NAME         , '('        , 3        
+INS  , 'import' ,              , '.'          , NAME       , 3        
+DEL  , NAME     , '['          , NAME         ,            , 3        
+INS  , NAME     ,              , ']'          , '['        , 3        
+INS  , '['      ,              , ']'          , NAME       , 3        
+INS  , ')'      ,              , ')'          , ']'        , 3        
+INS  , ')'      ,              , '['          , ')'        , 3        
+DEL  , 'False'  , '**'         , ')'          ,            , 3        
+INS  , ']'      ,              , ','          , ')'        , 3        
+INS  , NEWLINE  ,              , '.'          , NAME       , 3        
+INS  , 98       ,              , NAME         , 'if'       , 3        
+DEL  , START    , 'if'         , '('          ,            , 3        
+SUB  , NAME     , UNKNOWN_CHAR , NUMBER       , '%'        , 3        
+SUB  , '('      , NAME         , ':'          , 'lambda'   , 3        
+INS  , START    ,              , '['          , '('        , 2        
+DEL  , STRING   , ':'          , NUMBER       ,            , 2        
+SUB  , '='      , 'class'      , '('          , NAME       , 2        
+SUB  , STRING   , NAME         , UNKNOWN_CHAR , ']'        , 2        
+SUB  , NUMBER   , STRING       , NAME         , ','        , 2        
+SUB  , START    , 'from'       , '='          , NAME       , 2        
+DEL  , START    , '>'          , '{'          ,            , 2        
+SUB  , STRING   , ']'          , END          , ')'        , 2        
+INS  , 'in'     ,              , NEWLINE      , NAME       , 2        
+INS  , 'True'   ,              , NEWLINE      , ':'        , 2        
+INS  , ']'      ,              , '['          , NEWLINE    , 2        
+SUB  , '('      , '~'          , '/'          , STRING     , 2        
+INS  , START    ,              , NAME         , '{'        , 2        
+DEL  , ','      , NEWLINE      , NAME         ,            , 2        
+DEL  , '='      , '['          , '{'          ,            , 2        
+INS  , NAME     ,              , NAME         , '|'        , 2        
+SUB  , '('      , '<'          , NAME         , STRING     , 2        
+DEL  , ':'      , ','          , NAME         ,            , 2        
+INS  , '}'      ,              , NAME         , NEWLINE    , 2        
+DEL  , NEWLINE  , '.'          , END          ,            , 2        
+DEL  , NAME     , STRING       , UNKNOWN_CHAR ,            , 2        
+DEL  , NAME     , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 2        
+DEL  , ';'      , '//'         , NAME         ,            , 2        
+INS  , 98       ,              , NAME         , 'raise'    , 2        
+DEL  , STRING   , '.'          , '/'          ,            , 2        
+DEL  , ']'      , NEWLINE      , '['          ,            , 2        
+INS  , ']'      ,              , '['          , ')'        , 2        
+INS  , STRING   ,              , ':'          , ']'        , 2        
+DEL  , ','      , NEWLINE      , '['          ,            , 2        
+DEL  , ','      , NEWLINE      , ']'          ,            , 2        
+INS  , '...'    ,              , '}'          , ':'        , 2        
+SUB  , NAME     , '-'          , NUMBER       , ','        , 2        
+SUB  , NUMBER   , STRING       , NAME         , ':'        , 2        
+DEL  , NUMBER   , STRING       , '}'          ,            , 2        
+INS  , 'None'   ,              , STRING       , ','        , 2        
+DEL  , NEWLINE  , '...'        , NAME         ,            , 2        
+INS  , NEWLINE  ,              , NAME         , 'from'     , 2        
+DEL  , '='      , UNKNOWN_CHAR , '['          ,            , 2        
+DEL  , NUMBER   , UNKNOWN_CHAR , NEWLINE      ,            , 2        
+SUB  , STRING   , ','          , ']'          , '}'        , 2        
+DEL  , START    , 'def'        , 'class'      ,            , 2        
+SUB  , ','      , UNKNOWN_CHAR , '/'          , STRING     , 2        
+INS  , '}'      ,              , ','          , ']'        , 2        
+INS  , STRING   ,              , ':'          , ')'        , 2        
+DEL  , NAME     , ')'          , NAME         ,            , 2        
+DEL  , START    , 98           , 'try'        ,            , 2        
+INS  , NAME     ,              , '.'          , ')'        , 2        
+SUB  , START    , 'def'        , NAME         , 'class'    , 2        
+DEL  , NAME     , UNKNOWN_CHAR , '|'          ,            , 2        
+SUB  , '='      , UNKNOWN_CHAR , '/'          , STRING     , 2        
+SUB  , 'import' , NUMBER       , NEWLINE      , NAME       , 2        
+DEL  , NUMBER   , NUMBER       , NAME         ,            , 2        
+SUB  , NEWLINE  , 'continue'   , NEWLINE      , NAME       , 2        
+SUB  , NAME     , UNKNOWN_CHAR , NAME         , ','        , 2        
+SUB  , 98       , NAME         , NUMBER       , 'return'   , 2        
+DEL  , NAME     , NAME         , '}'          ,            , 2        
+DEL  , NAME     , STRING       , 'is'         ,            , 2        
+SUB  , ','      , '.'          , '.'          , '...'      , 2        
+DEL  , '...'    , '...'        , END          ,            , 2        
+DEL  , ')'      , NAME         , 'return'     ,            , 2        
+DEL  , '='      , NEWLINE      , STRING       ,            , 2        
+DEL  , NAME     , '**'         , ','          ,            , 2        
+INS  , NEWLINE  ,              , 99           , NEWLINE    , 2        
+SUB  , STRING   , ';'          , STRING       , ','        , 2        
+DEL  , '='      , NEWLINE      , '{'          ,            , 2        
+INS  , '('      ,              , ','          , STRING     , 2        
+DEL  , START    , '.'          , NAME         ,            , 2        
+DEL  , '.'      , '/'          , NAME         ,            , 2        
+DEL  , ']'      , NAME         , UNKNOWN_CHAR ,            , 2        
+SUB  , NUMBER   , '='          , STRING       , ':'        , 2        
+SUB  , NAME     , UNKNOWN_CHAR , NAME         , NEWLINE    , 2        
+DEL  , '-'      , '->'         , NAME         ,            , 2        
+DEL  , NEWLINE  , 'for'        , NAME         ,            , 2        
+SUB  , NEWLINE  , '>>'         , '>>'         , 98         , 2        
+INS  , '='      ,              , NEWLINE      , STRING     , 2        
+DEL  , STRING   , '**'         , ')'          ,            , 2        
+SUB  , STRING   , NAME         , STRING       , ':'        , 2        
+SUB  , '='      , UNKNOWN_CHAR , END          , STRING     , 2        
+INS  , ','      ,              , NAME         , '['        , 2        
+SUB  , STRING   , NAME         , '-'          , ','        , 2        
+DEL  , '...'    , '...'        , '...'        ,            , 2        
+DEL  , NEWLINE  , 99           , 'if'         ,            , 2        
+DEL  , '...'    , NAME         , ']'          ,            , 2        
+DEL  , 'not'    , NAME         , 'in'         ,            , 2        
+DEL  , ','      , UNKNOWN_CHAR , STRING       ,            , 2        
+DEL  , ','      , NUMBER       , NAME         ,            , 2        
+DEL  , NAME     , '**'         , NUMBER       ,            , 2        
+DEL  , NAME     , NUMBER       , '**'         ,            , 2        
+DEL  , NAME     , '**'         , '.'          ,            , 2        
+INS  , ']'      ,              , ','          , '}'        , 2        
+INS  , NAME     ,              , NUMBER       , '<'        , 2        
+INS  , NUMBER   ,              , '}'          , ']'        , 2        
+INS  , ']'      ,              , '}'          , ']'        , 2        
+DEL  , ';'      , '&'          , NAME         ,            , 2        
+SUB  , '.'      , 'global'     , '['          , NAME       , 2        
+DEL  , STRING   , ','          , '['          ,            , 2        
+INS  , ':'      ,              , NUMBER       , '['        , 2        
+DEL  , NAME     , '/'          , UNKNOWN_CHAR ,            , 2        
+DEL  , '}'      , '}'          , ','          ,            , 2        
+DEL  , START    , 98           , '@'          ,            , 2        
+DEL  , NAME     , '...'        , '.'          ,            , 2        
+SUB  , '('      , 'in'         , ')'          , NAME       , 2        
+SUB  , 'if'     , 'in'         , '=='         , NAME       , 2        
+DEL  , NAME     , NAME         , '...'        ,            , 2        
+DEL  , ']'      , NAME         , '='          ,            , 2        
+DEL  , ','      , '<'          , STRING       ,            , 2        
+INS  , STRING   ,              , ')'          , STRING     , 2        
+INS  , NAME     ,              , NAME         , '/'        , 2        
+DEL  , NUMBER   , '.'          , ']'          ,            , 2        
+DEL  , ']'      , ':'          , NEWLINE      ,            , 2        
+SUB  , NEWLINE  , NAME         , END          , 99         , 2        
+DEL  , ':'      , 98           , NAME         ,            , 2        
+INS  , ','      ,              , NUMBER       , '['        , 2        
+DEL  , ','      , NEWLINE      , '}'          ,            , 2        
+DEL  , '...'    , '...'        , ']'          ,            , 2        
+INS  , NUMBER   ,              , NAME         , NEWLINE    , 2        
+DEL  , 98       , NAME         , NAME         ,            , 2        
+INS  , START    ,              , NUMBER       , '['        , 2        
+DEL  , '='      , UNKNOWN_CHAR , STRING       ,            , 2        
+DEL  , ')'      , NEWLINE      , ')'          ,            , 2        
+SUB  , ']'      , ']'          , NEWLINE      , '}'        , 2        
+INS  , ':'      ,              , ','          , STRING     , 2        
+DEL  , ':'      , UNKNOWN_CHAR , NUMBER       ,            , 2        
+INS  , '...'    ,              , NAME         , ','        , 2        
+DEL  , 'import' , '.'          , NAME         ,            , 2        
+DEL  , '('      , '<'          , STRING       ,            , 2        
+SUB  , STRING   , '>'          , ')'          , STRING     , 2        
+DEL  , '-'      , NUMBER       , NAME         ,            , 2        
+DEL  , STRING   , ':'          , '//'         ,            , 2        
+INS  , NEWLINE  ,              , 'import'     , 98         , 2        
+SUB  , NEWLINE  , UNKNOWN_CHAR , NAME         , STRING     , 2        
+INS  , ','      ,              , '{'          , STRING     , 2        
+INS  , NAME     ,              , STRING       , ':'        , 2        
+DEL  , STRING   , '.'          , ']'          ,            , 2        
+DEL  , NAME     , ')'          , '/'          ,            , 2        
+DEL  , STRING   , '.'          , END          ,            , 2        
+DEL  , ']'      , '.'          , '}'          ,            , 2        
+DEL  , NEWLINE  , 98           , 'while'      ,            , 2        
+INS  , '='      ,              , END          , STRING     , 2        
+DEL  , ']'      , '...'        , '...'        ,            , 2        
+DEL  , ']'      , '...'        , '.'          ,            , 2        
+DEL  , ','      , ','          , NUMBER       ,            , 2        
+SUB  , NUMBER   , '.'          , '.'          , ','        , 2        
+DEL  , ','      , '.'          , END          ,            , 2        
+INS  , ')'      ,              , '('          , ')'        , 2        
+SUB  , '+'      , '+'          , NEWLINE      , NUMBER     , 2        
+SUB  , STRING   , '}'          , END          , ']'        , 2        
+SUB  , STRING   , '='          , '{'          , ':'        , 2        
+DEL  , ')'      , ']'          , '['          ,            , 2        
+DEL  , NAME     , ':'          , '['          ,            , 2        
+INS  , NUMBER   ,              , NAME         , '*'        , 2        
+DEL  , NAME     , 'False'      , NEWLINE      ,            , 2        
+DEL  , STRING   , '**'         , NEWLINE      ,            , 2        
+DEL  , ','      , '**'         , NUMBER       ,            , 2        
+DEL  , NAME     , '['          , '('          ,            , 2        
+INS  , STRING   ,              , NEWLINE      , ']'        , 2        
+DEL  , '...'    , '.'          , ','          ,            , 2        
+INS  , START    ,              , '('          , '{'        , 2        
+INS  , STRING   ,              , STRING       , ':'        , 2        
+INS  , '('      ,              , NUMBER       , '('        , 2        
+DEL  , START    , '>'          , 'def'        ,            , 2        
+SUB  , ','      , UNKNOWN_CHAR , ':'          , STRING     , 2        
+DEL  , ':'      , NAME         , ':'          ,            , 2        
+INS  , '}'      ,              , ']'          , '}'        , 2        
+DEL  , START    , '>'          , END          ,            , 2        
+DEL  , NAME     , '>'          , ':'          ,            , 2        
+INS  , STRING   ,              , '}'          , ']'        , 2        
+DEL  , '.'      , NEWLINE      , NAME         ,            , 2        
+SUB  , STRING   , ','          , END          , ']'        , 2        
+SUB  , STRING   , ','          , '['          , ':'        , 2        
+DEL  , NAME     , 'from'       , NAME         ,            , 2        
+DEL  , NAME     , 'else'       , NEWLINE      ,            , 2        
+DEL  , START    , '>>'         , 'from'       ,            , 2        
+DEL  , ','      , NUMBER       , ':'          ,            , 2        
+DEL  , NUMBER   , NAME         , NUMBER       ,            , 2        
+INS  , STRING   ,              , NAME         , ':'        , 2        
+INS  , ':'      ,              , NAME         , '['        , 2        
+DEL  , 'for'    , '['          , NAME         ,            , 2        
+DEL  , NEWLINE  , '}'          , NEWLINE      ,            , 2        
+DEL  , 99       , 99           , UNKNOWN_CHAR ,            , 2        
+DEL  , NEWLINE  , '>'          , NEWLINE      ,            , 2        
+DEL  , ']'      , ']'          , ','          ,            , 2        
+DEL  , '='      , UNKNOWN_CHAR , '{'          ,            , 2        
+SUB  , 98       , '>'          , END          , NEWLINE    , 2        
+INS  , ')'      ,              , '...'        , ')'        , 2        
+INS  , ')'      ,              , '...'        , NEWLINE    , 2        
+DEL  , START    , NUMBER       , ')'          ,            , 2        
+DEL  , NEWLINE  , NAME         , STRING       ,            , 2        
+DEL  , ')'      , '~'          , '~'          ,            , 2        
+DEL  , ':'      , ':'          , '{'          ,            , 2        
+DEL  , ')'      , NAME         , '('          ,            , 2        
+SUB  , '='      , 'def'        , '['          , NAME       , 2        
+DEL  , '['      , '('          , NAME         ,            , 2        
+DEL  , NEWLINE  , UNKNOWN_CHAR , 'import'     ,            , 2        
+DEL  , 98       , '//'         , NAME         ,            , 2        
+INS  , '}'      ,              , ','          , ')'        , 2        
+SUB  , 'import' , 'class'      , END          , NAME       , 2        
+DEL  , '|'      , NEWLINE      , NUMBER       ,            , 2        
+INS  , NAME     ,              , ','          , ']'        , 2        
+DEL  , ']'      , '**'         , END          ,            , 2        
+DEL  , NAME     , '+'          , UNKNOWN_CHAR ,            , 2        
+SUB  , '('      , UNKNOWN_CHAR , NUMBER       , STRING     , 2        
+DEL  , STRING   , NUMBER       , '/'          ,            , 2        
+DEL  , STRING   , '>'          , ':'          ,            , 2        
+DEL  , NUMBER   , ']'          , '}'          ,            , 2        
+DEL  , STRING   , NUMBER       , ')'          ,            , 2        
+SUB  , STRING   , ','          , NAME         , ':'        , 2        
+DEL  , NAME     , '~'          , '/'          ,            , 2        
+SUB  , '('      , 'lambda'     , '*'          , NAME       , 2        
+DEL  , NAME     , '/'          , NEWLINE      ,            , 2        
+DEL  , ']'      , 'for'        , NAME         ,            , 2        
+DEL  , ']'      , NAME         , '('          ,            , 2        
+DEL  , ']'      , 'if'         , NAME         ,            , 2        
+DEL  , ']'      , NAME         , 'in'         ,            , 2        
+DEL  , NAME     , 'is'         , NEWLINE      ,            , 2        
+SUB  , STRING   , NAME         , ')'          , ','        , 2        
+SUB  , NAME     , STRING       , ','          , '='        , 2        
+DEL  , '='      , ','          , NAME         ,            , 2        
+DEL  , NAME     , NAME         , '|'          ,            , 2        
+INS  , '}'      ,              , '.'          , ')'        , 2        
+DEL  , NAME     , ')'          , '='          ,            , 2        
+DEL  , STRING   , NUMBER       , '-'          ,            , 2        
+SUB  , NEWLINE  , 'return'     , '='          , NAME       , 2        
+SUB  , '('      , UNKNOWN_CHAR , '...'        , STRING     , 2        
+SUB  , NEWLINE  , 'in'         , '='          , NAME       , 2        
+SUB  , STRING   , NAME         , UNKNOWN_CHAR , '='        , 2        
+SUB  , '='      , UNKNOWN_CHAR , ')'          , STRING     , 2        
+SUB  , ','      , 'class'      , ')'          , NAME       , 2        
+DEL  , 'None'   , UNKNOWN_CHAR , ')'          ,            , 2        
+INS  , '='      ,              , 'if'         , '('        , 2        
+DEL  , 'break'  , NAME         , NAME         ,            , 2        
+DEL  , ']'      , NEWLINE      , '='          ,            , 2        
+DEL  , ']'      , '='          , '>'          ,            , 2        
+DEL  , NAME     , 'import'     , END          ,            , 2        
+SUB  , NAME     , '('          , NAME         , ','        , 2        
+DEL  , START    , NAME         , 'from'       ,            , 2        
+INS  , 'None'   ,              , NEWLINE      , ':'        , 2        
+DEL  , ')'      , ']'          , 'for'        ,            , 2        
+DEL  , '%'      , '('          , NAME         ,            , 2        
+INS  , NAME     ,              , '+'          , ')'        , 2        
+DEL  , '...'    , '.'          , ')'          ,            , 2        
+SUB  , STRING   , ','          , NAME         , '%'        , 2        
+INS  , '='      ,              , '/'          , STRING     , 2        
+DEL  , NAME     , '/'          , NAME         ,            , 2        
+SUB  , STRING   , NAME         , END          , ')'        , 2        
+INS  , ')'      ,              , ','          , ']'        , 2        
+DEL  , NUMBER   , ']'          , ','          ,            , 2        
+DEL  , NAME     , '['          , ':'          ,            , 2        
+DEL  , STRING   , UNKNOWN_CHAR , '.'          ,            , 2        
+DEL  , STRING   , ')'          , ']'          ,            , 2        
+DEL  , NAME     , '-'          , NUMBER       ,            , 2        
+DEL  , STRING   , '{'          , '}'          ,            , 2        
+DEL  , STRING   , '}'          , STRING       ,            , 2        
+SUB  , NAME     , ')'          , NAME         , '('        , 2        
+SUB  , STRING   , ';'          , '('          , ','        , 2        
+DEL  , NEWLINE  , '@'          , NAME         ,            , 2        
+INS  , ':'      ,              , NEWLINE      , '...'      , 2        
+INS  , NAME     ,              , NAME         , '+'        , 2        
+INS  , 'not'    ,              , NAME         , 'in'       , 2        
+DEL  , ')'      , NAME         , '='          ,            , 2        
+DEL  , ')'      , ')'          , '+'          ,            , 2        
+SUB  , '{'      , UNKNOWN_CHAR , 'in'         , STRING     , 2        
+DEL  , STRING   , 'in'         , ':'          ,            , 2        
+DEL  , ';'      , UNKNOWN_CHAR , END          ,            , 2        
+DEL  , NAME     , 'is'         , 'not'        ,            , 2        
+DEL  , ','      , '**'         , END          ,            , 2        
+SUB  , '!='     , UNKNOWN_CHAR , NAME         , STRING     , 2        
+SUB  , ')'      , 'else'       , NUMBER       , 'if'       , 2        
+SUB  , NAME     , NAME         , END          , '('        , 2        
+DEL  , NAME     , '**'         , 'as'         ,            , 2        
+INS  , NEWLINE  ,              , NAME         , 'for'      , 2        
+DEL  , ':'      , ','          , '['          ,            , 2        
+DEL  , NAME     , ']'          , 'for'        ,            , 2        
+INS  , 'else'   ,              , ')'          , NAME       , 2        
+DEL  , NEWLINE  , NEWLINE      , 99           ,            , 2        
+SUB  , NAME     , 'or'         , NAME         , 'else'     , 2        
+SUB  , START    , UNKNOWN_CHAR , NAME         , 'import'   , 2        
+INS  , '-'      ,              , NEWLINE      , NUMBER     , 2        
+INS  , 'in'     ,              , 'if'         , '('        , 2        
+SUB  , ')'      , '='          , NAME         , '=='       , 2        
+SUB  , NAME     , ','          , '('          , ':'        , 2        
+DEL  , 99       , 'else'       , ':'          ,            , 2        
+DEL  , 99       , ':'          , NEWLINE      ,            , 2        
+INS  , ','      ,              , '('          , NAME       , 2        
+SUB  , 'True'   , ']'          , END          , ')'        , 2        
+DEL  , ']'      , UNKNOWN_CHAR , '.'          ,            , 2        
+DEL  , ':'      , STRING       , ':'          ,            , 2        
+SUB  , ')'      , ')'          , END          , '}'        , 2        
+INS  , START    ,              , NAME         , 'return'   , 2        
+DEL  , NAME     , 'in'         , 'for'        ,            , 2        
+DEL  , '='      , NAME         , '='          ,            , 2        
+INS  , ':'      ,              , END          , STRING     , 2        
+DEL  , NAME     , 'else'       , STRING       ,            , 2        
+DEL  , START    , '>'          , '('          ,            , 2        
+INS  , ')'      ,              , '+'          , ')'        , 2        
+SUB  , NAME     , '='          , STRING       , ':'        , 2        
+DEL  , '['      , '<'          , NAME         ,            , 2        
+DEL  , ','      , ')'          , END          ,            , 2        
+DEL  , STRING   , NAME         , '%'          ,            , 2        
+DEL  , 'and'    , UNKNOWN_CHAR , NAME         ,            , 2        
+SUB  , NAME     , 'in'         , NAME         , '='        , 2        
+DEL  , NUMBER   , ')'          , END          ,            , 2        
+SUB  , NAME     , '+='         , NUMBER       , '+'        , 2        
+DEL  , ':'      , '//'         , NAME         ,            , 2        
+INS  , ':'      ,              , '.'          , NAME       , 2        
+INS  , ':'      ,              , END          , 'True'     , 2        
+INS  , '}'      ,              , NEWLINE      , ')'        , 2        
+SUB  , NAME     , ':'          , ':'          , '.'        , 2        
+DEL  , '.'      , ':'          , NAME         ,            , 2        
+DEL  , '['      , NAME         , '['          ,            , 2        
+SUB  , '('      , '...'        , NAME         , '['        , 2        
+SUB  , NAME     , '...'        , ')'          , ']'        , 2        
+DEL  , STRING   , '}'          , ')'          ,            , 2        
+INS  , '['      ,              , NEWLINE      , ']'        , 2        
+DEL  , NUMBER   , ')'          , ','          ,            , 2        
+DEL  , '='      , '**'         , NAME         ,            , 2        
+SUB  , NAME     , '...'        , NEWLINE      , '.'        , 2        
+SUB  , ','      , 'pass'       , ')'          , NAME       , 2        
+DEL  , ')'      , '->'         , NUMBER       ,            , 2        
+INS  , ']'      ,              , ')'          , ','        , 2        
+SUB  , '['      , UNKNOWN_CHAR , ','          , '...'      , 2        
+SUB  , STRING   , UNKNOWN_CHAR , NEWLINE      , STRING     , 2        
+INS  , NAME     ,              , ','          , '('        , 2        
+INS  , '('      ,              , ','          , NAME       , 2        
+SUB  , '+'      , UNKNOWN_CHAR , NAME         , STRING     , 2        
+DEL  , '.'      , '['          , NAME         ,            , 2        
+INS  , '('      ,              , '.'          , NAME       , 2        
+INS  , '.'      ,              , ')'          , NAME       , 2        
+DEL  , NAME     , NUMBER       , '/'          ,            , 2        
+INS  , NEWLINE  ,              , NAME         , '('        , 2        
+DEL  , '='      , '('          , '['          ,            , 2        
+DEL  , '='      , '('          , STRING       ,            , 2        
+SUB  , 'if'     , UNKNOWN_CHAR , NAME         , STRING     , 2        
+INS  , ')'      ,              , ':'          , ')'        , 2        
+INS  , ','      ,              , NEWLINE      , '}'        , 2        
+SUB  , '('      , 'from'       , ','          , NAME       , 2        
+DEL  , STRING   , ':'          , END          ,            , 2        
+INS  , STRING   ,              , '+'          , STRING     , 2        
+DEL  , NAME     , '<'          , '/'          ,            , 2        
+INS  , '&'      ,              , NAME         , '('        , 2        
+INS  , ')'      ,              , '<'          , ')'        , 2        
+DEL  , ')'      , '->'         , '('          ,            , 2        
+DEL  , NEWLINE  , '//'         , NUMBER       ,            , 2        
+DEL  , NAME     , ')'          , 'for'        ,            , 2        
+DEL  , 'from'   , 'class'      , '-'          ,            , 2        
+DEL  , 'from'   , '-'          , NAME         ,            , 2        
+DEL  , ']'      , '//'         , NAME         ,            , 2        
+DEL  , ']'      , NAME         , STRING       ,            , 2        
+INS  , ')'      ,              , ')'          , '('        , 2        
+INS  , NAME     ,              , '.'          , 'in'       , 2        
+INS  , 'in'     ,              , '.'          , NAME       , 2        
+INS  , ')'      ,              , 'import'     , NEWLINE    , 2        
+SUB  , ')'      , '->'         , NAME         , '.'        , 2        
+DEL  , NAME     , ']'          , '}'          ,            , 2        
+DEL  , ']'      , '='          , '-='         ,            , 2        
+SUB  , '='      , 'for'        , '('          , NAME       , 2        
+DEL  , NEWLINE  , 98           , 'return'     ,            , 1        
+INS  , STRING   ,              , '<'          , STRING     , 1        
+DEL  , START    , '{'          , 'import'     ,            , 1        
+SUB  , STRING   , '.'          , NAME         , ':'        , 1        
+SUB  , STRING   , NUMBER       , STRING       , ','        , 1        
+SUB  , 98       , '>'          , UNKNOWN_CHAR , NEWLINE    , 1        
+SUB  , NEWLINE  , UNKNOWN_CHAR , END          , 99         , 1        
+DEL  , NUMBER   , NUMBER       , STRING       ,            , 1        
+DEL  , NUMBER   , STRING       , NUMBER       ,            , 1        
+DEL  , NUMBER   , NUMBER       , '+'          ,            , 1        
+DEL  , ')'      , ')'          , '='          ,            , 1        
+SUB  , ','      , NAME         , ':'          , STRING     , 1        
+SUB  , STRING   , NAME         , '-'          , ':'        , 1        
+INS  , NEWLINE  ,              , 'yield'      , 98         , 1        
+SUB  , '.'      , 'class'      , '('          , NAME       , 1        
+INS  , ')'      ,              , 'else'       , ')'        , 1        
+SUB  , ']'      , UNKNOWN_CHAR , '+'          , '('        , 1        
+SUB  , ','      , UNKNOWN_CHAR , 'None'       , STRING     , 1        
+DEL  , STRING   , 'None'       , UNKNOWN_CHAR ,            , 1        
+SUB  , ','      , 'def'        , ']'          , STRING     , 1        
+SUB  , 99       , 'else'       , ':'          , 'except'   , 1        
+DEL  , '{'      , '('          , STRING       ,            , 1        
+DEL  , '-'      , UNKNOWN_CHAR , '{'          ,            , 1        
+SUB  , NAME     , '['          , NAME         , '('        , 1        
+INS  , '...'    ,              , NEWLINE      , 'in'       , 1        
+DEL  , '%'      , NAME         , '['          ,            , 1        
+DEL  , '%'      , '['          , STRING       ,            , 1        
+DEL  , STRING   , ']'          , STRING       ,            , 1        
+SUB  , ':'      , '{'          , NUMBER       , '['        , 1        
+DEL  , STRING   , ','          , UNKNOWN_CHAR ,            , 1        
+SUB  , ','      , '.'          , NAME         , STRING     , 1        
+DEL  , ','      , '>'          , NAME         ,            , 1        
+DEL  , '}'      , '*'          , END          ,            , 1        
+SUB  , STRING   , '...'        , STRING       , ','        , 1        
+DEL  , '.'      , 'as'         , '.'          ,            , 1        
+SUB  , ':'      , UNKNOWN_CHAR , UNKNOWN_CHAR , NAME       , 1        
+SUB  , '.'      , UNKNOWN_CHAR , ','          , NAME       , 1        
+DEL  , ']'      , NAME         , 'and'        ,            , 1        
+SUB  , ']'      , NAME         , NEWLINE      , ')'        , 1        
+INS  , 99       ,              , END          , NAME       , 1        
+DEL  , NEWLINE  , NEWLINE      , '{'          ,            , 1        
+SUB  , NAME     , '.'          , NAME         , 'in'       , 1        
+DEL  , ']'      , ']'          , '='          ,            , 1        
+INS  , '['      ,              , NUMBER       , '{'        , 1        
+DEL  , ','      , 'or'         , STRING       ,            , 1        
+SUB  , STRING   , UNKNOWN_CHAR , END          , ']'        , 1        
+SUB  , NUMBER   , '//'         , 'or'         , NEWLINE    , 1        
+DEL  , NEWLINE  , 'or'         , NAME         ,            , 1        
+DEL  , 'else'   , ':'          , STRING       ,            , 1        
+DEL  , ','      , '['          , STRING       ,            , 1        
+SUB  , NAME     , NAME         , '*'          , 'import'   , 1        
+DEL  , STRING   , NAME         , '('          ,            , 1        
+DEL  , '<='     , '=='         , NAME         ,            , 1        
+DEL  , 98       , '^'          , '^'          ,            , 1        
+SUB  , ']'      , NAME         , '['          , ','        , 1        
+SUB  , NEWLINE  , 'class'      , '='          , NAME       , 1        
+DEL  , 'else'   , '**'         , NAME         ,            , 1        
+DEL  , NAME     , '**'         , 'for'        ,            , 1        
+SUB  , ','      , '['          , STRING       , '{'        , 1        
+SUB  , ':'      , '('          , STRING       , '{'        , 1        
+DEL  , '}'      , ')'          , '}'          ,            , 1        
+SUB  , ']'      , ','          , END          , '}'        , 1        
+SUB  , STRING   , '.'          , NAME         , ','        , 1        
+INS  , NEWLINE  ,              , 'try'        , 99         , 1        
+DEL  , NAME     , '('          , NUMBER       ,            , 1        
+INS  , ':'      ,              , '}'          , '...'      , 1        
+INS  , 'False'  ,              , ','          , ']'        , 1        
+INS  , ')'      ,              , NAME         , '}'        , 1        
+SUB  , NEWLINE  , '.'          , '.'          , '...'      , 1        
+DEL  , '...'    , '.'          , 'and'        ,            , 1        
+DEL  , ')'      , NUMBER       , ':'          ,            , 1        
+DEL  , ')'      , ':'          , 'if'         ,            , 1        
+SUB  , '('      , '+'          , ')'          , STRING     , 1        
+SUB  , '='      , '/'          , NAME         , STRING     , 1        
+DEL  , STRING   , '/'          , NEWLINE      ,            , 1        
+SUB  , NUMBER   , '['          , NAME         , ']'        , 1        
+DEL  , NEWLINE  , '>>'         , 'True'       ,            , 1        
+DEL  , START    , '*'          , 'if'         ,            , 1        
+INS  , 'if'     ,              , END          , '('        , 1        
+INS  , 'as'     ,              , END          , NAME       , 1        
+INS  , ']'      ,              , ':'          , ','        , 1        
+INS  , ','      ,              , ':'          , STRING     , 1        
+INS  , NAME     ,              , NEWLINE      , 'import'   , 1        
+INS  , 'import' ,              , NEWLINE      , '*'        , 1        
+INS  , '='      ,              , NUMBER       , '('        , 1        
+SUB  , '}'      , ';'          , ']'          , ','        , 1        
+DEL  , ']'      , '<'          , '/'          ,            , 1        
+SUB  , ']'      , NEWLINE      , NAME         , ':'        , 1        
+DEL  , ':'      , '>'          , NAME         ,            , 1        
+INS  , NUMBER   ,              , ']'          , '}'        , 1        
+SUB  , STRING   , '*'          , NEWLINE      , '**'       , 1        
+INS  , '**'     ,              , NEWLINE      , NAME       , 1        
+INS  , ','      ,              , STRING       , '('        , 1        
+SUB  , ','      , '-'          , ','          , STRING     , 1        
+DEL  , NEWLINE  , 'and'        , NEWLINE      ,            , 1        
+SUB  , NAME     , ':'          , 'False'      , '='        , 1        
+DEL  , NEWLINE  , '**'         , NEWLINE      ,            , 1        
+INS  , '}'      ,              , NEWLINE      , '}'        , 1        
+SUB  , 'is'     , UNKNOWN_CHAR , NAME         , STRING     , 1        
+DEL  , STRING   , STRING       , '}'          ,            , 1        
+INS  , ':'      ,              , NEWLINE      , STRING     , 1        
+INS  , STRING   ,              , '['          , ')'        , 1        
+INS  , '{'      ,              , STRING       , '('        , 1        
+DEL  , NAME     , '.'          , '.'          ,            , 1        
+DEL  , 'assert' , 'True'       , '='          ,            , 1        
+DEL  , 'assert' , '='          , NAME         ,            , 1        
+SUB  , NEWLINE  , '@'          , 'def'        , 98         , 1        
+DEL  , '.'      , '.'          , 'and'        ,            , 1        
+DEL  , '.'      , 'and'        , NAME         ,            , 1        
+SUB  , ','      , ']'          , END          , '}'        , 1        
+SUB  , '='      , '{'          , NUMBER       , '['        , 1        
+INS  , NEWLINE  ,              , 'from'       , 98         , 1        
+DEL  , ')'      , NAME         , NEWLINE      ,            , 1        
+SUB  , START    , '['          , NUMBER       , '{'        , 1        
+DEL  , START    , 98           , 'class'      ,            , 1        
+DEL  , 99       , 99           , 'def'        ,            , 1        
+DEL  , '...'    , UNKNOWN_CHAR , END          ,            , 1        
+DEL  , ','      , NAME         , NUMBER       ,            , 1        
+INS  , ','      ,              , '['          , '('        , 1        
+INS  , NUMBER   ,              , 'for'        , 'else'     , 1        
+SUB  , STRING   , '...'        , NAME         , ','        , 1        
+INS  , NEWLINE  ,              , 'while'      , 98         , 1        
+SUB  , '['      , 'is'         , ']'          , NUMBER     , 1        
+DEL  , 'False'  , UNKNOWN_CHAR , ','          ,            , 1        
+DEL  , NEWLINE  , UNKNOWN_CHAR , NAME         ,            , 1        
+SUB  , ','      , UNKNOWN_CHAR , ']'          , '['        , 1        
+SUB  , '='      , 'in'         , '.'          , NAME       , 1        
+INS  , NAME     ,              , NAME         , ';'        , 1        
+SUB  , ']'      , '.'          , '['          , ','        , 1        
+SUB  , STRING   , UNKNOWN_CHAR , NAME         , STRING     , 1        
+SUB  , '('      , NUMBER       , ','          , NAME       , 1        
+INS  , ','      ,              , STRING       , NAME       , 1        
+DEL  , START    , '='          , '['          ,            , 1        
+DEL  , ':'      , NEWLINE      , 98           ,            , 1        
+DEL  , ':'      , 98           , 'import'     ,            , 1        
+SUB  , STRING   , ','          , END          , '}'        , 1        
+DEL  , START    , '('          , '['          ,            , 1        
+SUB  , NAME     , STRING       , NEWLINE      , '='        , 1        
+INS  , '='      ,              , NEWLINE      , 'True'     , 1        
+DEL  , STRING   , '/'          , END          ,            , 1        
+DEL  , START    , '*'          , 'from'       ,            , 1        
+SUB  , NEWLINE  , NAME         , ':'          , 'try'      , 1        
+DEL  , ')'      , 'return'     , '['          ,            , 1        
+DEL  , ')'      , ','          , END          ,            , 1        
+SUB  , ']'      , ')'          , END          , ']'        , 1        
+DEL  , STRING   , ']'          , '-'          ,            , 1        
+SUB  , NUMBER   , NAME         , END          , ']'        , 1        
+DEL  , '['      , '('          , STRING       ,            , 1        
+INS  , '...'    ,              , END          , '}'        , 1        
+SUB  , ']'      , 'for'        , NAME         , ';'        , 1        
+DEL  , '='      , UNKNOWN_CHAR , '('          ,            , 1        
+DEL  , '('      , ','          , NUMBER       ,            , 1        
+SUB  , NAME     , STRING       , NAME         , ']'        , 1        
+DEL  , ']'      , UNKNOWN_CHAR , ')'          ,            , 1        
+DEL  , NAME     , 'False'      , END          ,            , 1        
+INS  , '['      ,              , END          , STRING     , 1        
+DEL  , '{'      , '@'          , STRING       ,            , 1        
+INS  , ')'      ,              , NEWLINE      , ','        , 1        
+DEL  , 98       , '>>'         , NAME         ,            , 1        
+INS  , NEWLINE  ,              , 'from'       , 99         , 1        
+DEL  , NAME     , ':'          , '**'         ,            , 1        
+INS  , NEWLINE  ,              , 'assert'     , 98         , 1        
+INS  , 'None'   ,              , NAME         , ','        , 1        
+DEL  , STRING   , STRING       , ']'          ,            , 1        
+SUB  , STRING   , NUMBER       , NAME         , ','        , 1        
+SUB  , '('      , UNKNOWN_CHAR , '~'          , STRING     , 1        
+DEL  , STRING   , '~'          , '/'          ,            , 1        
+DEL  , STRING   , '{'          , UNKNOWN_CHAR ,            , 1        
+DEL  , NUMBER   , NAME         , '}'          ,            , 1        
+SUB  , STRING   , '}'          , END          , ')'        , 1        
+SUB  , '...'    , '.'          , NEWLINE      , '='        , 1        
+DEL  , 'class'  , '('          , NAME         ,            , 1        
+DEL  , ')'      , NAME         , 'is'         ,            , 1        
+DEL  , START    , STRING       , 'not'        ,            , 1        
+DEL  , 'in'     , '<'          , NAME         ,            , 1        
+DEL  , START    , '//'         , NAME         ,            , 1        
+SUB  , NEWLINE  , 'class'      , '.'          , NAME       , 1        
+SUB  , '.'      , 'class'      , 'import'     , NAME       , 1        
+DEL  , '{'      , '{'          , NAME         ,            , 1        
+SUB  , STRING   , NAME         , NAME         , ']'        , 1        
+SUB  , ']'      , NAME         , UNKNOWN_CHAR , '='        , 1        
+SUB  , STRING   , NUMBER       , NAME         , ')'        , 1        
+DEL  , '...'    , '/'          , ']'          ,            , 1        
+DEL  , NUMBER   , NAME         , '=='         ,            , 1        
+DEL  , NUMBER   , '=='         , END          ,            , 1        
+DEL  , '*'      , NEWLINE      , NAME         ,            , 1        
+DEL  , NEWLINE  , '{'          , END          ,            , 1        
+SUB  , ']'      , ')'          , END          , '}'        , 1        
+DEL  , START    , NUMBER       , 'import'     ,            , 1        
+DEL  , NUMBER   , NAME         , '^'          ,            , 1        
+DEL  , '+'      , NUMBER       , NAME         ,            , 1        
+DEL  , '...'    , '...'        , NAME         ,            , 1        
+SUB  , ')'      , '{'          , '}'          , ':'        , 1        
+SUB  , ':'      , '}'          , END          , 'pass'     , 1        
+SUB  , NAME     , STRING       , NEWLINE      , '.'        , 1        
+DEL  , 'not'    , NAME         , NAME         ,            , 1        
+SUB  , '='      , '['          , NAME         , STRING     , 1        
+SUB  , '='      , STRING       , NAME         , '['        , 1        
+SUB  , NAME     , '='          , NAME         , '+'        , 1        
+SUB  , NAME     , NAME         , ':'          , '='        , 1        
+DEL  , '='      , ':'          , '['          ,            , 1        
+INS  , START    ,              , 'if'         , '('        , 1        
+INS  , '('      ,              , 'if'         , STRING     , 1        
+INS  , NUMBER   ,              , '('          , ','        , 1        
+SUB  , '='      , UNKNOWN_CHAR , NUMBER       , STRING     , 1        
+DEL  , STRING   , NUMBER       , NEWLINE      ,            , 1        
+DEL  , 'return' , '='          , NUMBER       ,            , 1        
+DEL  , NAME     , '-'          , UNKNOWN_CHAR ,            , 1        
+DEL  , NAME     , '/'          , ','          ,            , 1        
+SUB  , ')'      , '...'        , NUMBER       , ','        , 1        
+SUB  , ']'      , '...'        , NUMBER       , ','        , 1        
+DEL  , NAME     , 'not'        , 'in'         ,            , 1        
+DEL  , 99       , 99           , 'else'       ,            , 1        
+DEL  , ']'      , NAME         , NUMBER       ,            , 1        
+DEL  , ']'      , NUMBER       , END          ,            , 1        
+SUB  , ']'      , NAME         , '...'        , ']'        , 1        
+SUB  , '.'      , 'assert'     , '('          , NAME       , 1        
+DEL  , ':'      , '='          , NUMBER       ,            , 1        
+DEL  , STRING   , ']'          , UNKNOWN_CHAR ,            , 1        
+SUB  , ','      , STRING       , ']'          , '['        , 1        
+SUB  , NAME     , '='          , NEWLINE      , '=='       , 1        
+INS  , '=='     ,              , NEWLINE      , '('        , 1        
+DEL  , ')'      , '**'         , '**'         ,            , 1        
+SUB  , ')'      , '='          , NUMBER       , '=='       , 1        
+SUB  , STRING   , UNKNOWN_CHAR , STRING       , ','        , 1        
+INS  , STRING   ,              , ','          , ':'        , 1        
+INS  , ':'      ,              , ','          , 'None'     , 1        
+SUB  , ')'      , NEWLINE      , 'return'     , ':'        , 1        
+DEL  , NEWLINE  , UNKNOWN_CHAR , 'for'        ,            , 1        
+SUB  , START    , 'in'         , NAME         , NEWLINE    , 1        
+DEL  , 'from'   , UNKNOWN_CHAR , NAME         ,            , 1        
+DEL  , NAME     , UNKNOWN_CHAR , 'import'     ,            , 1        
+DEL  , '='      , NAME         , NAME         ,            , 1        
+DEL  , 'def'    , '('          , NAME         ,            , 1        
+DEL  , '>'      , ','          , NAME         ,            , 1        
+SUB  , '='      , UNKNOWN_CHAR , '...'        , STRING     , 1        
+DEL  , STRING   , '...'        , '/'          ,            , 1        
+INS  , '['      ,              , ']'          , STRING     , 1        
+DEL  , STRING   , ';'          , ','          ,            , 1        
+DEL  , START    , UNKNOWN_CHAR , 'if'         ,            , 1        
+DEL  , NEWLINE  , '>'          , '{'          ,            , 1        
+SUB  , STRING   , '...'        , '}'          , ','        , 1        
+INS  , ']'      ,              , NAME         , '<'        , 1        
+INS  , NAME     ,              , ','          , '['        , 1        
+INS  , '['      ,              , ','          , STRING     , 1        
+INS  , '...'    ,              , '}'          , ']'        , 1        
+INS  , NAME     ,              , '*'          , 'import'   , 1        
+DEL  , 98       , '&'          , NAME         ,            , 1        
+DEL  , START    , NAME         , '>'          ,            , 1        
+INS  , 98       ,              , NAME         , 'yield'    , 1        
+DEL  , 98       , NAME         , ':'          ,            , 1        
+DEL  , 98       , ':'          , NUMBER       ,            , 1        
+DEL  , 98       , NUMBER       , NEWLINE      ,            , 1        
+SUB  , NEWLINE  , '...'        , NAME         , 98         , 1        
+SUB  , '='      , UNKNOWN_CHAR , UNKNOWN_CHAR , NAME       , 1        
+SUB  , '.'      , UNKNOWN_CHAR , NEWLINE      , NAME       , 1        
+SUB  , NAME     , '}'          , NEWLINE      , ')'        , 1        
+SUB  , 98       , 'return'     , '='          , NAME       , 1        
+INS  , ']'      ,              , ']'          , '}'        , 1        
+SUB  , ','      , 'def'        , ','          , STRING     , 1        
+DEL  , NAME     , '['          , ']'          ,            , 1        
+DEL  , NAME     , ']'          , '='          ,            , 1        
+DEL  , ']'      , ']'          , '.'          ,            , 1        
+DEL  , STRING   , NAME         , '['          ,            , 1        
+SUB  , '.'      , UNKNOWN_CHAR , UNKNOWN_CHAR , NAME       , 1        
+DEL  , NUMBER   , '.'          , END          ,            , 1        
+INS  , '{'      ,              , NUMBER       , '('        , 1        
+INS  , '}'      ,              , '{'          , NEWLINE    , 1        
+SUB  , '}'      , '}'          , END          , NEWLINE    , 1        
+INS  , START    ,              , NAME         , 'while'    , 1        
+SUB  , NAME     , '='          , STRING       , ','        , 1        
+INS  , 'True'   ,              , '.'          , ')'        , 1        
+DEL  , STRING   , NAME         , ';'          ,            , 1        
+DEL  , ')'      , STRING       , '+'          ,            , 1        
+DEL  , ']'      , '>'          , END          ,            , 1        
+DEL  , NUMBER   , '...'        , ']'          ,            , 1        
+DEL  , '('      , '.'          , NAME         ,            , 1        
+DEL  , NAME     , '...'        , NAME         ,            , 1        
+DEL  , STRING   , NUMBER       , ':'          ,            , 1        
+INS  , ':'      ,              , ','          , NUMBER     , 1        
+SUB  , NEWLINE  , 'for'        , NAME         , '...'      , 1        
+DEL  , '...'    , NAME         , 'in'         ,            , 1        
+DEL  , ')'      , 'and'        , '('          ,            , 1        
+DEL  , NAME     , ';'          , ')'          ,            , 1        
+INS  , '}'      ,              , NEWLINE      , ']'        , 1        
+DEL  , NAME     , '...'        , ')'          ,            , 1        
+SUB  , '['      , UNKNOWN_CHAR , '/'          , STRING     , 1        
+SUB  , NAME     , '.'          , '.'          , ':'        , 1        
+SUB  , ':'      , '.'          , END          , STRING     , 1        
+DEL  , NAME     , '+'          , '+'          ,            , 1        
+DEL  , NAME     , '+'          , NEWLINE      ,            , 1        
+SUB  , NAME     , ')'          , NEWLINE      , '}'        , 1        
+SUB  , ')'      , NEWLINE      , 99           , '('        , 1        
+SUB  , '('      , 99           , END          , ')'        , 1        
+INS  , NUMBER   ,              , ')'          , '}'        , 1        
+DEL  , 'True'   , ']'          , ')'          ,            , 1        
+DEL  , '<'      , '('          , NAME         ,            , 1        
+DEL  , '<'      , UNKNOWN_CHAR , '+'          ,            , 1        
+DEL  , 'import' , 'from'       , NAME         ,            , 1        
+DEL  , NUMBER   , '*'          , ']'          ,            , 1        
+DEL  , NUMBER   , '...'        , '.'          ,            , 1        
+DEL  , NUMBER   , '.'          , '.'          ,            , 1        
+DEL  , '['      , 'def'        , ']'          ,            , 1        
+SUB  , '...'    , '...'        , '.'          , '('        , 1        
+SUB  , '('      , '.'          , NEWLINE      , NAME       , 1        
+DEL  , '('      , '>>'         , '>>'         ,            , 1        
+DEL  , '('      , '>>'         , NAME         ,            , 1        
+SUB  , NUMBER   , ')'          , NEWLINE      , ']'        , 1        
+SUB  , NEWLINE  , 'assert'     , '.'          , NAME       , 1        
+DEL  , '-'      , ','          , NAME         ,            , 1        
+SUB  , STRING   , '.'          , NAME         , ']'        , 1        
+SUB  , ']'      , NAME         , UNKNOWN_CHAR , '+'        , 1        
+DEL  , NUMBER   , ','          , ':'          ,            , 1        
+DEL  , '-'      , UNKNOWN_CHAR , '+'          ,            , 1        
+SUB  , ')'      , '...'        , ']'          , '('        , 1        
+INS  , '('      ,              , ']'          , ')'        , 1        
+DEL  , START    , '{'          , NAME         ,            , 1        
+DEL  , ']'      , '}'          , END          ,            , 1        
+INS  , '('      ,              , END          , NAME       , 1        
+SUB  , ','      , '...'        , '.'          , '}'        , 1        
+DEL  , ')'      , '-'          , 'not'        ,            , 1        
+DEL  , ')'      , 'not'        , NAME         ,            , 1        
+DEL  , ']'      , ')'          , ','          ,            , 1        
+SUB  , ']'      , '...'        , END          , ']'        , 1        
+DEL  , '/'      , NAME         , STRING       ,            , 1        
+DEL  , ')'      , '**'         , 'if'         ,            , 1        
+SUB  , NAME     , '...'        , END          , ','        , 1        
+SUB  , ']'      , UNKNOWN_CHAR , END          , ')'        , 1        
+DEL  , NAME     , '{'          , '}'          ,            , 1        
+DEL  , NAME     , '}'          , '.'          ,            , 1        
+DEL  , '}'      , ','          , END          ,            , 1        
+SUB  , 98       , '>>'         , NAME         , NEWLINE    , 1        
+DEL  , NAME     , ')'          , 'as'         ,            , 1        
+DEL  , '['      , '**'         , STRING       ,            , 1        
+SUB  , ')'      , NEWLINE      , 98           , ':'        , 1        
+DEL  , STRING   , NUMBER       , NUMBER       ,            , 1        
+DEL  , '-'      , '->'         , '>'          ,            , 1        
+DEL  , '-'      , '>'          , NAME         ,            , 1        
+DEL  , ','      , '%'          , STRING       ,            , 1        
+DEL  , ','      , '//'         , STRING       ,            , 1        
+SUB  , ','      , '}'          , END          , ')'        , 1        
+SUB  , NUMBER   , ']'          , ','          , ')'        , 1        
+INS  , START    ,              , '{'          , '['        , 1        
+SUB  , ','      , UNKNOWN_CHAR , NAME         , '{'        , 1        
+DEL  , 98       , NAME         , NEWLINE      ,            , 1        
+SUB  , STRING   , NAME         , STRING       , '['        , 1        
+INS  , NAME     ,              , '{'          , ':'        , 1        
+SUB  , START    , '('          , NAME         , '{'        , 1        
+SUB  , STRING   , UNKNOWN_CHAR , END          , '+'        , 1        
+INS  , '+'      ,              , END          , NAME       , 1        
+SUB  , '='      , NUMBER       , NAME         , STRING     , 1        
+SUB  , ':'      , UNKNOWN_CHAR , NUMBER       , STRING     , 1        
+INS  , '='      ,              , END          , '...'      , 1        
+SUB  , 'in'     , UNKNOWN_CHAR , ']'          , STRING     , 1        
+DEL  , NAME     , '='          , 'True'       ,            , 1        
+DEL  , NAME     , 'True'       , ']'          ,            , 1        
+SUB  , NAME     , 'from'       , NAME         , 'import'   , 1        
+DEL  , '...'    , NAME         , NAME         ,            , 1        
+DEL  , '...'    , NAME         , '...'        ,            , 1        
+SUB  , ']'      , ']'          , END          , '}'        , 1        
+SUB  , NAME     , NEWLINE      , 98           , ':'        , 1        
+DEL  , ':'      , 98           , 'return'     ,            , 1        
+INS  , ')'      ,              , '=='         , ')'        , 1        
+DEL  , NAME     , ','          , END          ,            , 1        
+INS  , ','      ,              , STRING       , '}'        , 1        
+INS  , '}'      ,              , STRING       , ']'        , 1        
+INS  , ':'      ,              , '}'          , 'None'     , 1        
+DEL  , NEWLINE  , NEWLINE      , '...'        ,            , 1        
+DEL  , ','      , '>'          , '>'          ,            , 1        
+DEL  , ')'      , '**'         , ','          ,            , 1        
+DEL  , ')'      , '('          , 'for'        ,            , 1        
+SUB  , 99       , NAME         , '('          , 'except'   , 1        
+SUB  , 98       , 'return'     , NEWLINE      , NAME       , 1        
+DEL  , ','      , '('          , STRING       ,            , 1        
+DEL  , STRING   , '*'          , END          ,            , 1        
+SUB  , ')'      , ']'          , END          , '}'        , 1        
+SUB  , STRING   , NAME         , '+'          , ','        , 1        
+SUB  , ','      , 'import'     , ','          , NAME       , 1        
+INS  , NAME     ,              , '...'        , ','        , 1        
+DEL  , '-'      , '->'         , '('          ,            , 1        
+DEL  , NAME     , NAME         , '->'         ,            , 1        
+DEL  , NAME     , '->'         , 'is'         ,            , 1        
+SUB  , NAME     , STRING       , '%'          , '('        , 1        
+INS  , '('      ,              , '%'          , ')'        , 1        
+DEL  , NUMBER   , NAME         , ':'          ,            , 1        
+SUB  , NAME     , '{'          , NAME         , ','        , 1        
+DEL  , NAME     , '}'          , NEWLINE      ,            , 1        
+DEL  , START    , NEWLINE      , 'or'         ,            , 1        
+DEL  , START    , 'or'         , END          ,            , 1        
+INS  , 'True'   ,              , END          , ']'        , 1        
+INS  , '['      ,              , '*'          , '['        , 1        
+DEL  , STRING   , NAME         , '+'          ,            , 1        
+DEL  , STRING   , '+'          , ')'          ,            , 1        
+DEL  , '-'      , '->'         , NUMBER       ,            , 1        
+DEL  , NEWLINE  , '>>'         , '{'          ,            , 1        
+SUB  , ','      , 'def'        , '='          , NAME       , 1        
+DEL  , NAME     , '.'          , 'class'      ,            , 1        
+DEL  , NAME     , 'class'      , ')'          ,            , 1        
+DEL  , NAME     , STRING       , '|'          ,            , 1        
+DEL  , NAME     , '|'          , '/'          ,            , 1        
+DEL  , ']'      , '&'          , '>'          ,            , 1        
+SUB  , 98       , NAME         , 'True'       , 'while'    , 1        
+SUB  , STRING   , NAME         , ':'          , STRING     , 1        
+DEL  , START    , '>>'         , STRING       ,            , 1        
+DEL  , ','      , 'and'        , ','          ,            , 1        
+SUB  , STRING   , ':'          , 'None'       , ','        , 1        
+SUB  , NAME     , ':'          , '//'         , ']'        , 1        
+SUB  , '='      , '('          , STRING       , '{'        , 1        
+INS  , '...'    ,              , NAME         , ';'        , 1        
+SUB  , STRING   , UNKNOWN_CHAR , NUMBER       , ','        , 1        
+DEL  , STRING   , UNKNOWN_CHAR , NUMBER       ,            , 1        
+DEL  , STRING   , NUMBER       , END          ,            , 1        
+INS  , NEWLINE  ,              , 'assert'     , 99         , 1        
+SUB  , START    , NEWLINE      , 98           , NAME       , 1        
+SUB  , NAME     , 98           , '+'          , '('        , 1        
+INS  , '...'    ,              , END          , ':'        , 1        
+SUB  , ','      , UNKNOWN_CHAR , END          , ']'        , 1        
+DEL  , '**'     , NEWLINE      , NAME         ,            , 1        
+DEL  , START    , '*'          , 'import'     ,            , 1        
+DEL  , NEWLINE  , 98           , 'from'       ,            , 1        
+DEL  , ']'      , NEWLINE      , ']'          ,            , 1        
+DEL  , ']'      , '.'          , '.'          ,            , 1        
+DEL  , '='      , '>'          , NUMBER       ,            , 1        
+INS  , 98       ,              , NAME         , 'from'     , 1        
+DEL  , STRING   , NAME         , 'is'         ,            , 1        
+DEL  , STRING   , 'is'         , NEWLINE      ,            , 1        
+SUB  , ')'      , UNKNOWN_CHAR , END          , '.'        , 1        
+DEL  , START    , '%'          , '%'          ,            , 1        
+DEL  , '('      , '@'          , STRING       ,            , 1        
+DEL  , NAME     , '='          , '{'          ,            , 1        
+DEL  , NAME     , '{'          , NUMBER       ,            , 1        
+DEL  , '!='     , '**'         , STRING       ,            , 1        
+DEL  , STRING   , '**'         , ':'          ,            , 1        
+INS  , ']'      ,              , ')'          , '('        , 1        
+SUB  , ')'      , ','          , '('          , ']'        , 1        
+INS  , ')'      ,              , NAME         , '=='       , 1        
+INS  , '...'    ,              , NUMBER       , '['        , 1        
+INS  , 98       ,              , NEWLINE      , '('        , 1        
+DEL  , NEWLINE  , ','          , NAME         ,            , 1        
+DEL  , '('      , '%'          , NAME         ,            , 1        
+SUB  , NEWLINE  , 'continue'   , NEWLINE      , 99         , 1        
+SUB  , ','      , '.'          , ','          , STRING     , 1        
+SUB  , ','      , '.'          , ']'          , STRING     , 1        
+DEL  , '['      , '**'         , NUMBER       ,            , 1        
+INS  , 'as'     ,              , NEWLINE      , NAME       , 1        
+INS  , NAME     ,              , ')'          , '='        , 1        
+DEL  , START    , 98           , 'import'     ,            , 1        
+DEL  , 99       , 99           , 'elif'       ,            , 1        
+DEL  , ')'      , '...'        , ']'          ,            , 1        
+INS  , '('      ,              , STRING       , '['        , 1        
+DEL  , STRING   , NEWLINE      , '>>'         ,            , 1        
+DEL  , STRING   , '>>'         , '>'          ,            , 1        
+DEL  , '**'     , '*'          , NAME         ,            , 1        
+DEL  , NAME     , '**'         , '*'          ,            , 1        
+DEL  , START    , '**'         , 'for'        ,            , 1        
+SUB  , NAME     , '='          , '('          , '.'        , 1        
+DEL  , '='      , NEWLINE      , '['          ,            , 1        
+DEL  , ']'      , UNKNOWN_CHAR , ']'          ,            , 1        
+DEL  , NEWLINE  , 98           , '...'        ,            , 1        
+DEL  , ';'      , UNKNOWN_CHAR , 'None'       ,            , 1        
+DEL  , 'None'   , UNKNOWN_CHAR , END          ,            , 1        
+SUB  , ','      , NAME         , UNKNOWN_CHAR , STRING     , 1        
+DEL  , NUMBER   , '**'         , END          ,            , 1        
+SUB  , NUMBER   , ','          , '['          , ':'        , 1        
+SUB  , STRING   , NAME         , '-'          , NEWLINE    , 1        
+INS  , ']'      ,              , '['          , ','        , 1        
+SUB  , STRING   , NEWLINE      , 98           , '('        , 1        
+SUB  , '('      , 98           , '['          , ')'        , 1        
+INS  , '=='     ,              , END          , STRING     , 1        
+SUB  , STRING   , NAME         , NUMBER       , ','        , 1        
+INS  , '{'      ,              , STRING       , '}'        , 1        
+DEL  , ','      , 'and'        , NAME         ,            , 1        
+SUB  , '['      , '{'          , NUMBER       , '('        , 1        
+DEL  , '='      , '>'          , STRING       ,            , 1        
+DEL  , STRING   , ']'          , NEWLINE      ,            , 1        
+SUB  , START    , 'try'        , '='          , NAME       , 1        
+SUB  , NEWLINE  , 'try'        , '.'          , NAME       , 1        
+SUB  , NEWLINE  , 'and'        , END          , 98         , 1        
+INS  , 98       ,              , END          , NEWLINE    , 1        
+DEL  , 'is'     , ':'          , '['          ,            , 1        
+INS  , ')'      ,              , '['          , ']'        , 1        
+DEL  , '%'      , '>'          , '%'          ,            , 1        
+DEL  , '%'      , '%'          , NAME         ,            , 1        
+SUB  , NEWLINE  , STRING       , NEWLINE      , 98         , 1        
+DEL  , 98       , NEWLINE      , 'for'        ,            , 1        
+INS  , 'True'   ,              , 'assert'     , ')'        , 1        
+INS  , ')'      ,              , 'assert'     , NEWLINE    , 1        
+SUB  , 'import' , STRING       , NEWLINE      , NAME       , 1        
+SUB  , STRING   , '}'          , NEWLINE      , ')'        , 1        
+SUB  , '!='     , '+'          , 'or'         , STRING     , 1        
+SUB  , '!='     , '-'          , 'or'         , STRING     , 1        
+SUB  , '!='     , '*'          , NEWLINE      , STRING     , 1        
+DEL  , ','      , '...'        , '.'          ,            , 1        
+DEL  , ','      , '.'          , '}'          ,            , 1        
+DEL  , ','      , UNKNOWN_CHAR , UNKNOWN_CHAR ,            , 1        
+INS  , NAME     ,              , '!='         , ')'        , 1        
+DEL  , START    , 98           , 'if'         ,            , 1        
+SUB  , NEWLINE  , NAME         , 'True'       , 'while'    , 1        
+DEL  , ']'      , '->'         , NAME         ,            , 1        
+SUB  , '=='     , 'def'        , ')'          , NAME       , 1        
+DEL  , ']'      , NAME         , 'return'     ,            , 1        
+DEL  , ']'      , 'return'     , '['          ,            , 1        
+SUB  , NEWLINE  , 98           , 'elif'       , 99         , 1        
+SUB  , NEWLINE  , 99           , NAME         , 98         , 1        
+DEL  , NAME     , '-'          , '-'          ,            , 1        
+DEL  , NAME     , '-'          , NEWLINE      ,            , 1        
+DEL  , ','      , ':'          , '{'          ,            , 1        
+DEL  , NUMBER   , NUMBER       , '('          ,            , 1        
+SUB  , STRING   , UNKNOWN_CHAR , ')'          , ','        , 1        
+INS  , NEWLINE  ,              , STRING       , '{'        , 1        
+SUB  , NAME     , ']'          , END          , '}'        , 1        
+DEL  , ','      , NEWLINE      , '('          ,            , 1        
+DEL  , '='      , '>'          , 'True'       ,            , 1        
+DEL  , '-'      , NAME         , '{'          ,            , 1        
+DEL  , NEWLINE  , 98           , '@'          ,            , 1        
+DEL  , NEWLINE  , NEWLINE      , END          ,            , 1        
+INS  , NEWLINE  ,              , 'else'       , 99         , 1        
+SUB  , 'else'   , NEWLINE      , NAME         , ':'        , 1        
+SUB  , STRING   , STRING       , NAME         , ']'        , 1        
+INS  , ']'      ,              , '-'          , ')'        , 1        
+DEL  , 'in'     , 'in'         , NAME         ,            , 1        
+DEL  , ','      , NUMBER       , '...'        ,            , 1        
+DEL  , NUMBER   , '|'          , END          ,            , 1        
+SUB  , NAME     , '-'          , NAME         , NEWLINE    , 1        
+SUB  , ','      , 'class'      , ':'          , STRING     , 1        
+INS  , ','      ,              , '}'          , ']'        , 1        
+SUB  , START    , NAME         , 'True'       , 'while'    , 1        
+SUB  , ':'      , 'break'      , NEWLINE      , NAME       , 1        
+INS  , START    ,              , '='          , NAME       , 1        
+INS  , '='      ,              , NUMBER       , '['        , 1        
+DEL  , START    , ')'          , NAME         ,            , 1        
+SUB  , NEWLINE  , NAME         , '('          , 'with'     , 1        
+DEL  , ']'      , NAME         , '.'          ,            , 1        
+DEL  , '}'      , '}'          , NEWLINE      ,            , 1        
+INS  , NUMBER   ,              , ','          , ')'        , 1        
+SUB  , 'and'    , UNKNOWN_CHAR , NAME         , STRING     , 1        
+DEL  , 98       , UNKNOWN_CHAR , NEWLINE      ,            , 1        
+SUB  , '('      , 'in'         , '('          , NAME       , 1        
+DEL  , ']'      , '...'        , NAME         ,            , 1        
+INS  , ':'      ,              , NEWLINE      , NUMBER     , 1        
+SUB  , NAME     , 'is'         , NAME         , 'if'       , 1        
+DEL  , ')'      , '~'          , END          ,            , 1        
+INS  , '.'      ,              , '['          , NAME       , 1        
+SUB  , '['      , 'from'       , ','          , NAME       , 1        
+DEL  , ')'      , 'or'         , END          ,            , 1        
+SUB  , 'from'   , 'def'        , 'import'     , NAME       , 1        
+SUB  , '.'      , 'def'        , 'import'     , NAME       , 1        
+INS  , '}'      ,              , END          , NEWLINE    , 1        
+DEL  , STRING   , '&'          , NEWLINE      ,            , 1        
+SUB  , '{'      , NAME         , ':'          , STRING     , 1        
+SUB  , '}'      , ']'          , NEWLINE      , '}'        , 1        
+DEL  , START    , '>>'         , NUMBER       ,            , 1        
+DEL  , NUMBER   , NEWLINE      , '>>'         ,            , 1        
+DEL  , '('      , '>'          , NUMBER       ,            , 1        
+DEL  , '...'    , STRING       , ','          ,            , 1        
+DEL  , ','      , ':'          , NUMBER       ,            , 1        
+DEL  , ']'      , ']'          , '}'          ,            , 1        
+INS  , NAME     ,              , 'with'       , NEWLINE    , 1        
+DEL  , '('      , UNKNOWN_CHAR , ')'          ,            , 1        
+DEL  , NUMBER   , NAME         , '.'          ,            , 1        
+SUB  , NAME     , '.'          , NAME         , NEWLINE    , 1        
+INS  , 98       ,              , NEWLINE      , NAME       , 1        
+SUB  , ']'      , ';'          , '['          , ','        , 1        
+DEL  , '}'      , NEWLINE      , '}'          ,            , 1        
+DEL  , 'not'    , 'None'       , 'else'       ,            , 1        
+DEL  , 'not'    , 'else'       , STRING       ,            , 1        
+INS  , ':'      ,              , STRING       , NUMBER     , 1        
+DEL  , NAME     , 'as'         , NAME         ,            , 1        
+DEL  , 'True'   , UNKNOWN_CHAR , END          ,            , 1        
+DEL  , START    , UNKNOWN_CHAR , 'for'        ,            , 1        
+INS  , ')'      ,              , ','          , '}'        , 1        
+INS  , STRING   ,              , 'in'         , STRING     , 1        
+INS  , ':'      ,              , NUMBER       , '{'        , 1        
+INS  , '{'      ,              , NUMBER       , STRING     , 1        
+DEL  , NAME     , STRING       , '-'          ,            , 1        
+DEL  , NAME     , UNKNOWN_CHAR , '.'          ,            , 1        
+SUB  , NAME     , '<'          , NAME         , NEWLINE    , 1        
+DEL  , '>'      , NEWLINE      , NAME         ,            , 1        
+DEL  , NAME     , '|'          , END          ,            , 1        
+DEL  , '}'      , ']'          , END          ,            , 1        
+DEL  , START    , UNKNOWN_CHAR , 'with'       ,            , 1        
+DEL  , ')'      , 'return'     , NUMBER       ,            , 1        
+DEL  , NAME     , '*'          , 'for'        ,            , 1        
+DEL  , 98       , '**'         , 'if'         ,            , 1        
+DEL  , ':'      , '**'         , NEWLINE      ,            , 1        
+INS  , ':'      ,              , NAME         , NEWLINE    , 1        
+DEL  , 'return' , '**'         , NAME         ,            , 1        
+INS  , '='      ,              , NAME         , 'yield'    , 1        
+DEL  , ','      , NAME         , '='          ,            , 1        
+SUB  , ']'      , '...'        , '.'          , ','        , 1        
+DEL  , ','      , '.'          , '['          ,            , 1        
+SUB  , STRING   , NUMBER       , UNKNOWN_CHAR , STRING     , 1        
+SUB  , STRING   , UNKNOWN_CHAR , '}'          , ','        , 1        
+INS  , '('      ,              , STRING       , ')'        , 1        
+INS  , ')'      ,              , STRING       , '['        , 1        
+INS  , ':'      ,              , NEWLINE      , 'return'   , 1        
+SUB  , START    , 'for'        , NAME         , NEWLINE    , 1        
+DEL  , ']'      , '*'          , ']'          ,            , 1        
+DEL  , STRING   , UNKNOWN_CHAR , '*'          ,            , 1        
+SUB  , ')'      , '='          , STRING       , '=='       , 1        
+DEL  , STRING   , '}'          , ']'          ,            , 1        
+DEL  , NEWLINE  , 99           , 'while'      ,            , 1        
+DEL  , START    , '**'         , '['          ,            , 1        
+SUB  , NAME     , NEWLINE      , 99           , ')'        , 1        
+SUB  , 98       , '>'          , NUMBER       , NEWLINE    , 1        
+SUB  , NEWLINE  , NUMBER       , END          , 99         , 1        
+INS  , STRING   ,              , '('          , ':'        , 1        
+SUB  , STRING   , STRING       , NUMBER       , ','        , 1        
+SUB  , NUMBER   , NAME         , UNKNOWN_CHAR , ':'        , 1        
+DEL  , NAME     , 'return'     , NUMBER       ,            , 1        
+DEL  , NAME     , NUMBER       , 'else'       ,            , 1        
+INS  , 'else'   ,              , END          , NUMBER     , 1        
+SUB  , '{'      , ':'          , NUMBER       , STRING     , 1        
+DEL  , START    , '<'          , 'class'      ,            , 1        
+DEL  , START    , 'class'      , STRING       ,            , 1        
+INS  , NEWLINE  ,              , '...'        , 99         , 1        
+SUB  , ':'      , STRING       , '}'          , NUMBER     , 1        
+SUB  , STRING   , '='          , '['          , ','        , 1        
+DEL  , STRING   , '='          , '['          ,            , 1        
+DEL  , ':'      , UNKNOWN_CHAR , STRING       ,            , 1        
+DEL  , NAME     , 'is'         , 'in'         ,            , 1        
+INS  , NAME     ,              , '-'          , NEWLINE    , 1        
+DEL  , '-'      , '-'          , NAME         ,            , 1        
+SUB  , '('      , '/'          , NAME         , STRING     , 1        
+DEL  , START    , NUMBER       , 'def'        ,            , 1        
+SUB  , NEWLINE  , NUMBER       , 'return'     , 98         , 1        
+SUB  , NEWLINE  , NUMBER       , NAME         , 99         , 1        
+SUB  , STRING   , '}'          , ','          , ']'        , 1        
+SUB  , 'None'   , ']'          , ','          , '}'        , 1        
+SUB  , NUMBER   , ']'          , ','          , '}'        , 1        
+INS  , NUMBER   ,              , NAME         , '}'        , 1        
+INS  , ':'      ,              , STRING       , '['        , 1        
+SUB  , NUMBER   , ')'          , ']'          , ','        , 1        
+INS  , '=='     ,              , END          , NAME       , 1        
+DEL  , STRING   , '**'         , '}'          ,            , 1        
+SUB  , NUMBER   , ';'          , NUMBER       , ':'        , 1        
+DEL  , ','      , '*'          , END          ,            , 1        
+DEL  , ','      , 'is'         , ','          ,            , 1        
+DEL  , ','      , UNKNOWN_CHAR , NUMBER       ,            , 1        
+SUB  , '}'      , ']'          , END          , ')'        , 1        
+SUB  , ')'      , '...'        , NAME         , ','        , 1        
+SUB  , START    , NAME         , '.'          , 'from'     , 1        
+INS  , 'True'   ,              , NEWLINE      , ')'        , 1        
+DEL  , ','      , NUMBER       , STRING       ,            , 1        
+INS  , NAME     ,              , NUMBER       , ','        , 1        
+SUB  , '['      , UNKNOWN_CHAR , NUMBER       , STRING     , 1        
+SUB  , NAME     , NAME         , NAME         , NEWLINE    , 1        
+SUB  , NUMBER   , '='          , NUMBER       , '=='       , 1        
+INS  , NEWLINE  ,              , 'break'      , 99         , 1        
+INS  , NAME     ,              , '**'         , '('        , 1        
+SUB  , ','      , '['          , NUMBER       , '('        , 1        
+INS  , ','      ,              , STRING       , '['        , 1        
+INS  , '('      ,              , '['          , NAME       , 1        
+DEL  , NAME     , 'with'       , '='          ,            , 1        
+SUB  , STRING   , NAME         , ']'          , ','        , 1        
+INS  , NUMBER   ,              , NAME         , ']'        , 1        
+DEL  , ']'      , NEWLINE      , UNKNOWN_CHAR ,            , 1        
+SUB  , STRING   , ')'          , ','          , ']'        , 1        
+INS  , '.'      ,              , '.'          , NAME       , 1        
+DEL  , NAME     , '('          , END          ,            , 1        
+INS  , ':'      ,              , ')'          , ']'        , 1        
+DEL  , ')'      , NAME         , STRING       ,            , 1        
+INS  , 98       ,              , NAME         , 'with'     , 1        
+INS  , NEWLINE  ,              , STRING       , 99         , 1        
+DEL  , NAME     , '.'          , UNKNOWN_CHAR ,            , 1        
+DEL  , ')'      , '->'         , NAME         ,            , 1        
+SUB  , ','      , 'from'       , '='          , NAME       , 1        
+DEL  , STRING   , ')'          , UNKNOWN_CHAR ,            , 1        
+DEL  , '('      , NAME         , '*'          ,            , 1        
+DEL  , NEWLINE  , 'class'      , '='          ,            , 1        
+DEL  , NEWLINE  , '='          , STRING       ,            , 1        
+SUB  , NAME     , '{'          , NAME         , '('        , 1        
+INS  , ','      ,              , ')'          , '}'        , 1        
+INS  , 98       ,              , NAME         , 'global'   , 1        
+DEL  , STRING   , '{'          , NUMBER       ,            , 1        
+DEL  , STRING   , NUMBER       , '}'          ,            , 1        
+DEL  , NAME     , ')'          , '+'          ,            , 1        
+SUB  , NUMBER   , ']'          , NEWLINE      , ')'        , 1        
+SUB  , NUMBER   , UNKNOWN_CHAR , ')'          , '='        , 1        
+INS  , '='      ,              , ')'          , STRING     , 1        
+SUB  , 'in'     , UNKNOWN_CHAR , NAME         , STRING     , 1        
+DEL  , 'in'     , UNKNOWN_CHAR , NAME         ,            , 1        
+DEL  , NAME     , UNKNOWN_CHAR , 'for'        ,            , 1        
+SUB  , NUMBER   , ']'          , '['          , ')'        , 1        
+DEL  , STRING   , '...'        , ')'          ,            , 1        
+DEL  , NEWLINE  , 'and'        , 'for'        ,            , 1        
+DEL  , '='      , '>'          , '('          ,            , 1        
+DEL  , NAME     , '...'        , '}'          ,            , 1        
+SUB  , 99       , 'else'       , NAME         , 'elif'     , 1        
+DEL  , 'None'   , 'is'         , 'in'         ,            , 1        
+SUB  , '+'      , 'class'      , '+'          , NAME       , 1        
+DEL  , '.'      , 'import'     , NAME         ,            , 1        
+SUB  , NEWLINE  , 'with'       , '='          , NAME       , 1        
+SUB  , '='      , 'with'       , '('          , NAME       , 1        
+SUB  , '('      , 'with'       , ')'          , NAME       , 1        
+SUB  , STRING   , NUMBER       , UNKNOWN_CHAR , ':'        , 1        
+SUB  , ':'      , UNKNOWN_CHAR , ','          , STRING     , 1        
+SUB  , NEWLINE  , 'import'     , '.'          , 'from'     , 1        
+DEL  , ']'      , ')'          , ']'          ,            , 1        
+INS  , '...'    ,              , NAME         , NEWLINE    , 1        
+SUB  , '('      , '...'        , END          , ')'        , 1        
+SUB  , 'None'   , 'and'        , END          , ':'        , 1        
+DEL  , '&'      , '&'          , NUMBER       ,            , 1        
+SUB  , ')'      , 'for'        , NAME         , 'in'       , 1        
+INS  , NEWLINE  ,              , NAME         , 'del'      , 1        
+DEL  , NEWLINE  , 99           , END          ,            , 1        
+SUB  , STRING   , NAME         , NAME         , STRING     , 1        
+SUB  , 99       , NAME         , STRING       , 'return'   , 1        
+DEL  , '['      , NUMBER       , ']'          ,            , 1        
+DEL  , '['      , ']'          , '.'          ,            , 1        
+DEL  , '['      , '.'          , NAME         ,            , 1        
+INS  , STRING   ,              , NAME         , '}'        , 1        
+SUB  , NAME     , NEWLINE      , '['          , ')'        , 1        
+SUB  , '='      , UNKNOWN_CHAR , UNKNOWN_CHAR , 'None'     , 1        
+DEL  , START    , NUMBER       , STRING       ,            , 1        
+SUB  , '='      , 'lambda'     , ','          , NAME       , 1        
+SUB  , ']'      , '['          , 'for'        , ']'        , 1        
+DEL  , NAME     , NEWLINE      , '>>'         ,            , 1        
+DEL  , NAME     , '>>'         , '>'          ,            , 1        
+SUB  , NAME     , '='          , NUMBER       , '>='       , 1        
+DEL  , 'break'  , NAME         , NEWLINE      ,            , 1        
+DEL  , NAME     , '='          , STRING       ,            , 1        
+SUB  , NAME     , ','          , NAME         , '('        , 1        
+INS  , 99       ,              , END          , 'except'   , 1        
+INS  , 'except' ,              , END          , ':'        , 1        
+SUB  , '('      , STRING       , ')'          , NAME       , 1        
+DEL  , ']'      , ']'          , '['          ,            , 1        
+SUB  , NAME     , 'in'         , 'not'        , 'is'       , 1        
+SUB  , '.'      , 'import'     , '='          , NAME       , 1        
+DEL  , START    , '@'          , NAME         ,            , 1        
+SUB  , '...'    , NAME         , '...'        , '='        , 1        
+DEL  , NUMBER   , '-'          , ')'          ,            , 1        
+SUB  , ')'      , 'is'         , NAME         , 'if'       , 1        
+SUB  , NAME     , ')'          , '['          , ']'        , 1        
+DEL  , ')'      , '}'          , '}'          ,            , 1        
+DEL  , ','      , ']'          , ']'          ,            , 1        
+DEL  , ','      , ']'          , NEWLINE      ,            , 1        
+DEL  , START    , 'while'      , NAME         ,            , 1        
+SUB  , NAME     , ';'          , NAME         , '-'        , 1        
+SUB  , ','      , 'pass'       , ':'          , STRING     , 1        
+SUB  , ')'      , '}'          , END          , ']'        , 1        
+DEL  , '.'      , ')'          , NAME         ,            , 1        
+SUB  , START    , 'elif'       , '('          , 'if'       , 1        
+INS  , '+='     ,              , NEWLINE      , NUMBER     , 1        
+SUB  , '='      , 'return'     , '.'          , NAME       , 1        
+INS  , NEWLINE  ,              , NUMBER       , '('        , 1        
+INS  , STRING   ,              , NAME         , 'if'       , 1        
+INS  , ']'      ,              , STRING       , '+'        , 1        
+SUB  , NAME     , 'else'       , NAME         , 'in'       , 1        
+INS  , ':'      ,              , NEWLINE      , 'None'     , 1        
+SUB  , NAME     , NEWLINE      , END          , ')'        , 1        
+DEL  , ')'      , '//'         , END          ,            , 1        
+SUB  , 'for'    , 'for'        , 'in'         , NAME       , 1        
+INS  , ')'      ,              , 'if'         , ')'        , 1        
+DEL  , NAME     , NAME         , '+='         ,            , 1        
+DEL  , NUMBER   , '='          , '>'          ,            , 1        
+SUB  , 98       , 'def'        , '...'        , NAME       , 1        
+SUB  , NAME     , '...'        , NEWLINE      , '='        , 1        
+DEL  , ']'      , NAME         , '['          ,            , 1        
+DEL  , '('      , 'if'         , NAME         ,            , 1        
+DEL  , NUMBER   , ':'          , 'for'        ,            , 1        
+SUB  , ':'      , 'None'       , ','          , NAME       , 1        
+DEL  , NAME     , ','          , 'None'       ,            , 1        
+DEL  , NAME     , 'None'       , END          ,            , 1        
+DEL  , STRING   , ']'          , 'in'         ,            , 1        
+DEL  , NUMBER   , ']'          , 'for'        ,            , 1        
+SUB  , '.'      , '('          , STRING       , NAME       , 1        
+SUB  , ','      , '('          , END          , NAME       , 1        
+INS  , NAME     ,              , END          , ','        , 1        
+INS  , '...'    ,              , NEWLINE      , '('        , 1        
+INS  , STRING   ,              , 'return'     , NEWLINE    , 1        
+SUB  , 'return' , UNKNOWN_CHAR , NAME         , STRING     , 1        
+DEL  , STRING   , UNKNOWN_CHAR , 'not'        ,            , 1        
+SUB  , 'while'  , 'del'        , UNKNOWN_CHAR , NAME       , 1        
+SUB  , NAME     , UNKNOWN_CHAR , '+'          , '!='       , 1        
+DEL  , ')'      , '-'          , '->'         ,            , 1        
+DEL  , ')'      , '->'         , END          ,            , 1        
+SUB  , '('      , UNKNOWN_CHAR , '%'          , STRING     , 1        
+DEL  , ':'      , NEWLINE      , NUMBER       ,            , 1        
+DEL  , '...'    , NUMBER       , ':'          ,            , 1        
+INS  , 'True'   ,              , STRING       , 'else'     , 1        
+DEL  , STRING   , 'if'         , 'False'      ,            , 1        
+DEL  , STRING   , 'False'      , END          ,            , 1        
+SUB  , STRING   , ';'          , 'if'         , NEWLINE    , 1        
+SUB  , ')'      , '='          , NUMBER       , '<'        , 1        
+DEL  , NAME     , '...'        , '|'          ,            , 1        
+SUB  , NAME     , '='          , '{'          , ':'        , 1        
+SUB  , STRING   , '}'          , ','          , ')'        , 1        
+SUB  , STRING   , '='          , 'True'       , ':'        , 1        
+SUB  , NAME     , ';'          , NAME         , ')'        , 1        
+SUB  , NAME     , ';'          , END          , ')'        , 1        
+SUB  , NEWLINE  , NAME         , STRING       , 'return'   , 1        
+INS  , '{'      ,              , STRING       , '{'        , 1        
+SUB  , STRING   , ';'          , NUMBER       , ':'        , 1        
+SUB  , NAME     , NAME         , NUMBER       , '='        , 1        
+DEL  , NUMBER   , NAME         , NAME         ,            , 1        
+SUB  , ':'      , 'in'         , '('          , NAME       , 1        
+INS  , '+'      ,              , NEWLINE      , NAME       , 1        
+SUB  , NAME     , '}'          , END          , ']'        , 1        
+SUB  , NAME     , '{'          , '}'          , '('        , 1        
+SUB  , '('      , '}'          , END          , ')'        , 1        
+DEL  , NAME     , NEWLINE      , 'else'       ,            , 1        
+SUB  , 'or'     , UNKNOWN_CHAR , NAME         , STRING     , 1        
+INS  , NUMBER   ,              , '('          , ']'        , 1        
+SUB  , '('      , 'class'      , '.'          , NAME       , 1        
+SUB  , 'for'    , 'class'      , 'in'         , NAME       , 1        
+DEL  , 98       , 'import'     , NAME         ,            , 1        
+DEL  , NAME     , '&'          , '>>'         ,            , 1        
+INS  , STRING   ,              , 'for'        , 'else'     , 1        
+DEL  , STRING   , ','          , '@'          ,            , 1        
+DEL  , ','      , '@'          , NAME         ,            , 1        
+SUB  , NAME     , 'from'       , NAME         , 'for'      , 1        
+DEL  , ']'      , NAME         , '...'        ,            , 1        
+DEL  , NUMBER   , ']'          , END          ,            , 1        
+INS  , 'else'   ,              , NAME         , '('        , 1        
+SUB  , NAME     , ':'          , NUMBER       , ','        , 1        
+INS  , NUMBER   ,              , 'for'        , ')'        , 1        
+SUB  , ','      , '<'          , NAME         , STRING     , 1        
+SUB  , NAME     , NAME         , 'in'         , 'not'      , 1        
+INS  , STRING   ,              , '='          , ']'        , 1        
+SUB  , NAME     , 'as'         , '*'          , 'import'   , 1        
+SUB  , ')'      , ':'          , END          , '('        , 1        
+INS  , '('      ,              , END          , STRING     , 1        
+DEL  , '}'      , ')'          , ','          ,            , 1        
+SUB  , NAME     , ']'          , NAME         , ')'        , 1        
+INS  , START    ,              , 'in'         , NAME       , 1        
+SUB  , START    , '>>'         , '>'          , 'while'    , 1        
+SUB  , 'while'  , '>'          , NAME         , NUMBER     , 1        
+INS  , NUMBER   ,              , NAME         , ':'        , 1        
+SUB  , '.'      , '.'          , NEWLINE      , NAME       , 1        
+DEL  , ','      , 'class'      , '='          ,            , 1        
+SUB  , '+'      , '+'          , END          , NUMBER     , 1        
+INS  , STRING   ,              , 'not'        , STRING     , 1        
+INS  , ')'      ,              , 'in'         , 'for'      , 1        
+DEL  , NEWLINE  , '//'         , 'or'         ,            , 1        
+SUB  , 'def'    , '<'          , 'lambda'     , NAME       , 1        
+DEL  , NAME     , 'lambda'     , '>'          ,            , 1        
+DEL  , NAME     , '>'          , '('          ,            , 1        
+SUB  , NAME     , STRING       , '.'          , '='        , 1        
+INS  , '='      ,              , '.'          , NAME       , 1        
+DEL  , NAME     , NAME         , '&'          ,            , 1        
+DEL  , '='      , '('          , 'lambda'     ,            , 1        
+DEL  , ')'      , '['          , NUMBER       ,            , 1        
+DEL  , ')'      , NUMBER       , ']'          ,            , 1        
+INS  , ')'      ,              , 'if'         , NEWLINE    , 1        
+SUB  , ','      , 'False'      , NEWLINE      , NAME       , 1        
+SUB  , NUMBER   , NEWLINE      , '='          , ')'        , 1        
+DEL  , ')'      , '='          , '>'          ,            , 1        
+DEL  , ')'      , '...'        , '.'          ,            , 1        
+DEL  , '.'      , UNKNOWN_CHAR , NAME         ,            , 1        
+DEL  , START    , '>'          , 'try'        ,            , 1        
+SUB  , STRING   , STRING       , NAME         , ':'        , 1        
+DEL  , 'import' , '('          , NAME         ,            , 1        
+SUB  , '('      , UNKNOWN_CHAR , NAME         , '~'        , 1        
+DEL  , STRING   , NAME         , '@'          ,            , 1        
+SUB  , '/'      , '<'          , NAME         , '['        , 1        
+SUB  , NAME     , '>'          , '/'          , ']'        , 1        
+DEL  , NUMBER   , UNKNOWN_CHAR , '%'          ,            , 1        
+SUB  , NUMBER   , NAME         , END          , NEWLINE    , 1        
+DEL  , NAME     , STRING       , '+'          ,            , 1        
+DEL  , NUMBER   , NEWLINE      , 99           ,            , 1        
+DEL  , NUMBER   , 99           , END          ,            , 1        
+SUB  , ')'      , ')'          , '('          , ']'        , 1        
+DEL  , NUMBER   , NAME         , '('          ,            , 1        
+INS  , '+'      ,              , '['          , NAME       , 1        
+INS  , START    ,              , NAME         , 'not'      , 1        
+DEL  , ')'      , UNKNOWN_CHAR , '}'          ,            , 1        
+INS  , '='      ,              , ')'          , NAME       , 1        
+INS  , NUMBER   ,              , ']'          , ':'        , 1        
+DEL  , NAME     , STRING       , 'in'         ,            , 1        
+DEL  , STRING   , ':'          , '-'          ,            , 1        
+DEL  , START    , '**'         , '('          ,            , 1        
+DEL  , NAME     , NAME         , '%'          ,            , 1        
+SUB  , ','      , NAME         , ':'          , 'lambda'   , 1        
+DEL  , NAME     , 'in'         , NAME         ,            , 1        
+SUB  , NAME     , '->'         , NAME         , '['        , 1        
+INS  , NAME     ,              , '='          , ']'        , 1        
+SUB  , NAME     , UNKNOWN_CHAR , NAME         , '('        , 1        
+SUB  , 'as'     , NEWLINE      , END          , NAME       , 1        
+SUB  , '.'      , '*'          , END          , NAME       , 1        
+SUB  , STRING   , NAME         , '@'          , ')'        , 1        
+SUB  , NAME     , '*'          , STRING       , '('        , 1        
+INS  , NUMBER   ,              , ')'          , '('        , 1        
+DEL  , 'import' , '**'         , NAME         ,            , 1        
+INS  , ')'      ,              , '!='         , ')'        , 1        
+SUB  , NAME     , NAME         , '['          , '('        , 1        
+SUB  , ']'      , ','          , NAME         , '.'        , 1        
+DEL  , '...'    , NAME         , 'with'       ,            , 1        
+DEL  , '...'    , 'with'       , NAME         ,            , 1        
+DEL  , '...'    , NAME         , 'and'        ,            , 1        
+DEL  , NAME     , NEWLINE      , '='          ,            , 1        
+DEL  , NAME     , '='          , '>'          ,            , 1        
+SUB  , 'None'   , ')'          , NEWLINE      , ':'        , 1        
+SUB  , NEWLINE  , 'in'         , '['          , NAME       , 1        
+SUB  , '='      , '%'          , NAME         , STRING     , 1        
+DEL  , STRING   , '.'          , '%'          ,            , 1        
+INS  , 'False'  ,              , ']'          , ')'        , 1        
+DEL  , NEWLINE  , 'import'     , NAME         ,            , 1        
+INS  , ']'      ,              , '='          , ']'        , 1        
+DEL  , '*'      , ')'          , '('          ,            , 1        
+INS  , ')'      ,              , NAME         , '+'        , 1        
+SUB  , START    , 'for'        , NAME         , 'from'     , 1        
+SUB  , NAME     , ','          , STRING       , '('        , 1        
+DEL  , 'None'   , ')'          , '}'          ,            , 1        
+DEL  , START    , '>'          , 'with'       ,            , 1        
+DEL  , ':'      , 'return'     , '('          ,            , 1        
+SUB  , NAME     , ','          , STRING       , '='        , 1        
+INS  , 'if'     ,              , 'is'         , NAME       , 1        
+INS  , ')'      ,              , ')'          , 'else'     , 1        
+SUB  , ','      , '['          , '...'        , STRING     , 1        
+SUB  , STRING   , '...'        , ']'          , ':'        , 1        
+SUB  , ':'      , ']'          , '}'          , STRING     , 1        
+INS  , 98       ,              , NAME         , 'try'      , 1        
+INS  , 'try'    ,              , NAME         , ':'        , 1        
+DEL  , '}'      , NEWLINE      , ')'          ,            , 1        
+DEL  , ','      , ','          , END          ,            , 1        
+DEL  , NAME     , '['          , STRING       ,            , 1        
+DEL  , '['      , NUMBER       , '->'         ,            , 1        
+DEL  , '['      , '->'         , STRING       ,            , 1        
+INS  , STRING   ,              , ']'          , STRING     , 1        
+DEL  , NUMBER   , ')'          , 'or'         ,            , 1        
+SUB  , NAME     , NUMBER       , NAME         , '%'        , 1        
+DEL  , '...'    , STRING       , ']'          ,            , 1        
+INS  , NEWLINE  ,              , NAME         , 'nonlocal' , 1        
+SUB  , '.'      , 'and'        , ','          , NAME       , 1        
+SUB  , '.'      , 'or'         , ','          , NAME       , 1        
+SUB  , '('      , 'lambda'     , '('          , NAME       , 1        
+SUB  , ')'      , ':'          , NAME         , '/'        , 1        
+DEL  , ','      , '('          , NAME         ,            , 1        
+INS  , NAME     ,              , STRING       , '%'        , 1        
+SUB  , STRING   , ')'          , NEWLINE      , '}'        , 1        
+DEL  , NEWLINE  , 'if'         , NAME         ,            , 1        
+DEL  , ']'      , NAME         , ','          ,            , 1        
+DEL  , '('      , '@'          , 'class'      ,            , 1        
+DEL  , '('      , 'class'      , ')'          ,            , 1        
+DEL  , '...'    , NAME         , END          ,            , 1        
+INS  , 'None'   ,              , NAME         , 'and'      , 1        
+SUB  , ']'      , '}'          , '=='         , ')'        , 1        
+DEL  , NAME     , '-'          , END          ,            , 1        
+SUB  , NAME     , '.'          , NUMBER       , '>'        , 1        
+DEL  , ')'      , '//'         , NUMBER       ,            , 1        
+DEL  , ')'      , NUMBER       , NAME         ,            , 1        
+DEL  , '{'      , '('          , NAME         ,            , 1        
+INS  , 'return' ,              , NAME         , '('        , 1        
+DEL  , ':'      , '<'          , NAME         ,            , 1        
+DEL  , ':'      , NAME         , '>'          ,            , 1        
+DEL  , ':'      , '>'          , NEWLINE      ,            , 1        
+DEL  , ':'      , ':'          , NEWLINE      ,            , 1        
+DEL  , STRING   , UNKNOWN_CHAR , '/'          ,            , 1        
+DEL  , ']'      , ','          , '%'          ,            , 1        
+SUB  , START    , 'while'      , NAME         , 'with'     , 1        
+SUB  , '['      , '.'          , '.'          , '...'      , 1        
+INS  , 'if'     ,              , '!='         , NAME       , 1        
+DEL  , 'not'    , 'is'         , NAME         ,            , 1        
+DEL  , STRING   , ']'          , END          ,            , 1        
+INS  , NUMBER   ,              , ':'          , ')'        , 1        
+DEL  , ')'      , '...'        , 'if'         ,            , 1        
+DEL  , '}'      , NUMBER       , ')'          ,            , 1        
+SUB  , 'else'   , 'None'       , NEWLINE      , NAME       , 1        
+DEL  , '='      , '='          , 'lambda'     ,            , 1        
+SUB  , '+='     , UNKNOWN_CHAR , NAME         , STRING     , 1        
+SUB  , NAME     , '<'          , STRING       , '('        , 1        
+SUB  , '.'      , '.'          , '.'          , NAME       , 1        
+INS  , ']'      ,              , '['          , ']'        , 1        
+SUB  , '='      , NAME         , 'from'       , 'yield'    , 1        
+SUB  , ')'      , 'if'         , NUMBER       , 'for'      , 1        
+INS  , 'for'    ,              , NUMBER       , NAME       , 1        
+INS  , NAME     ,              , NUMBER       , 'in'       , 1        
+DEL  , '=='     , UNKNOWN_CHAR , NAME         ,            , 1        
+SUB  , ')'      , 'as'         , NAME         , '='        , 1        
+SUB  , ','      , UNKNOWN_CHAR , '.'          , STRING     , 1        
+SUB  , NUMBER   , NAME         , '('          , ']'        , 1        
+INS  , ')'      ,              , '['          , NEWLINE    , 1        
+SUB  , 98       , 'global'     , NEWLINE      , NAME       , 1        
+SUB  , NAME     , 'else'       , STRING       , 'in'       , 1        
+DEL  , '...'    , ':'          , '('          ,            , 1        
+SUB  , '('      , 'in'         , ','          , NAME       , 1        
+INS  , 99       ,              , 'except'     , 99         , 1        
+DEL  , 'in'     , '**'         , NAME         ,            , 1        
+DEL  , ')'      , '**'         , '['          ,            , 1        
+DEL  , NAME     , NAME         , 'if'         ,            , 1        
+SUB  , ','      , UNKNOWN_CHAR , '-'          , STRING     , 1        
+DEL  , ')'      , '='          , END          ,            , 1        
+INS  , NAME     ,              , '|'          , ')'        , 1        
+INS  , 'None'   ,              , END          , ']'        , 1        
+DEL  , ':'      , NAME         , NAME         ,            , 1        
+DEL  , ':'      , ':'          , STRING       ,            , 1        
+DEL  , START    , '>'          , 'for'        ,            , 1        
+DEL  , 99       , NEWLINE      , 99           ,            , 1        
+INS  , 'return' ,              , NUMBER       , '('        , 1        
+INS  , ')'      ,              , '{'          , NEWLINE    , 1        
+SUB  , 'return' , STRING       , NEWLINE      , NAME       , 1        
+INS  , NUMBER   ,              , NUMBER       , NEWLINE    , 1        
+SUB  , NAME     , '('          , NAME         , ')'        , 1        
+SUB  , '('      , UNKNOWN_CHAR , END          , STRING     , 1        
+DEL  , 'for'    , '('          , NAME         ,            , 1        
+SUB  , 'return' , 'return'     , '('          , NAME       , 1        
+INS  , 'and'    ,              , NAME         , '('        , 1        
+SUB  , ')'      , ':'          , NEWLINE      , ')'        , 1        
+DEL  , STRING   , ','          , ']'          ,            , 1        
+INS  , '{'      ,              , NAME         , '('        , 1        
+SUB  , ','      , 'pass'       , '='          , NAME       , 1        
+SUB  , STRING   , NEWLINE      , NAME         , '.'        , 1        
+SUB  , '%'      , UNKNOWN_CHAR , NAME         , STRING     , 1        
+INS  , 'True'   ,              , STRING       , ','        , 1        
+DEL  , '^'      , '^'          , '('          ,            , 1        
+INS  , NUMBER   ,              , END          , NEWLINE    , 1        
+SUB  , ':'      , 'pass'       , '}'          , NAME       , 1        
+INS  , START    ,              , '{'          , '('        , 1        
+INS  , ')'      ,              , 'for'        , '}'        , 1        
+INS  , ']'      ,              , '.'          , '['        , 1        
+INS  , '['      ,              , '.'          , '['        , 1        
+INS  , '['      ,              , '.'          , ']'        , 1        
+INS  , NAME     ,              , STRING       , 'or'       , 1        
+INS  , NUMBER   ,              , END          , ':'        , 1        
+INS  , '-'      ,              , ','          , NAME       , 1        
+INS  , NUMBER   ,              , 'return'     , ':'        , 1        
+DEL  , NEWLINE  , '.'          , '.'          ,            , 1        
+DEL  , NEWLINE  , '.'          , NAME         ,            , 1        
+INS  , 'as'     ,              , ':'          , NAME       , 1        
+SUB  , '['      , UNKNOWN_CHAR , NAME         , '~'        , 1        
+SUB  , ')'      , ']'          , NEWLINE      , '}'        , 1        
+SUB  , '('      , 'in'         , '.'          , NAME       , 1        
+SUB  , START    , 'if'         , 'None'       , NAME       , 1        
+DEL  , NAME     , 'None'       , 'in'         ,            , 1        
+SUB  , ')'      , 'from'       , NAME         , 'for'      , 1        
+INS  , ')'      ,              , NAME         , 'as'       , 1        
+INS  , NAME     ,              , '.'          , ':'        , 1        
+DEL  , NEWLINE  , 98           , '['          ,            , 1        
+DEL  , ']'      , NEWLINE      , 99           ,            , 1        
+DEL  , ']'      , 99           , END          ,            , 1        
+DEL  , '}'      , ','          , '}'          ,            , 1        
+INS  , ']'      ,              , END          , ','        , 1        
+SUB  , '='      , UNKNOWN_CHAR , '['          , NAME       , 1        
+SUB  , ')'      , NAME         , NUMBER       , '<'        , 1        
+SUB  , 98       , '//'         , NAME         , STRING     , 1        
+SUB  , ']'      , '('          , END          , ')'        , 1        
+SUB  , ','      , 'as'         , '.'          , NAME       , 1        
+DEL  , NAME     , '.'          , 'is'         ,            , 1        
+DEL  , NAME     , 'is'         , '='          ,            , 1        
+INS  , '>'      ,              , NEWLINE      , NAME       , 1        
+INS  , ','      ,              , NAME         , 'lambda'   , 1        
+SUB  , ']'      , NEWLINE      , NAME         , ','        , 1        
+DEL  , NUMBER   , 'for'        , NAME         ,            , 1        
+DEL  , NUMBER   , NAME         , 'in'         ,            , 1        
+INS  , '='      ,              , NEWLINE      , '['        , 1        
+DEL  , '('      , ')'          , 'for'        ,            , 1        
+DEL  , '('      , 'for'        , NAME         ,            , 1        
+SUB  , STRING   , UNKNOWN_CHAR , STRING       , ':'        , 1        
+DEL  , 'import' , '<'          , NAME         ,            , 1        
+DEL  , ')'      , '-'          , '-'          ,            , 1        
+DEL  , ')'      , '-'          , END          ,            , 1        
+DEL  , ','      , ':'          , NAME         ,            , 1        
+SUB  , 'is'     , UNKNOWN_CHAR , '+'          , NAME       , 1        
+SUB  , ','      , 'pass'       , ','          , NAME       , 1        
+DEL  , NAME     , 'in'         , 'not'        ,            , 1        
+SUB  , ','      , '.'          , '.'          , NAME       , 1        
+SUB  , NAME     , '.'          , '}'          , ':'        , 1        
+SUB  , ')'      , UNKNOWN_CHAR , NEWLINE      , ':'        , 1        
+DEL  , START    , UNKNOWN_CHAR , '('          ,            , 1        
+SUB  , NAME     , UNKNOWN_CHAR , NEWLINE      , '('        , 1        
+SUB  , NAME     , NAME         , '('          , '='        , 1        
+SUB  , 'if'     , 'pass'       , '=='         , NAME       , 1        
+DEL  , STRING   , '.'          , STRING       ,            , 1        
+INS  , 99       ,              , 99           , NEWLINE    , 1        
+DEL  , '{'      , ':'          , STRING       ,            , 1        
+DEL  , NAME     , ')'          , '}'          ,            , 1        
+DEL  , NAME     , NAME         , '>='         ,            , 1        
+DEL  , STRING   , '>'          , NEWLINE      ,            , 1        
+SUB  , START    , '>>'         , '>'          , 'assert'   , 1        
+DEL  , 'assert' , '>'          , NAME         ,            , 1        
+INS  , ')'      ,              , 'for'        , 'else'     , 1        
+SUB  , ']'      , '='          , NUMBER       , '=='       , 1        
+SUB  , NEWLINE  , 'lambda'     , '='          , NAME       , 1        
+DEL  , '/'      , UNKNOWN_CHAR , '+'          ,            , 1        
+DEL  , 'lambda' , '['          , NAME         ,            , 1        
+DEL  , NAME     , ']'          , ':'          ,            , 1        
+INS  , ')'      ,              , NUMBER       , ')'        , 1        
+INS  , ')'      ,              , NUMBER       , NEWLINE    , 1        
+SUB  , ')'      , NEWLINE      , END          , ')'        , 1        
+SUB  , NAME     , 'not'        , NUMBER       , '!='       , 1        
+DEL  , 99       , NAME         , NAME         ,            , 1        
+DEL  , 99       , NAME         , END          ,            , 1        
+SUB  , STRING   , ';'          , END          , ')'        , 1        
+SUB  , '('      , 'global'     , '('          , NAME       , 1        
+SUB  , ']'      , ']'          , END          , ')'        , 1        
+SUB  , NAME     , ')'          , NEWLINE      , ']'        , 1        
+DEL  , '+='     , '('          , NAME         ,            , 1        
+DEL  , '=='     , '='          , NUMBER       ,            , 1        
+DEL  , 99       , NEWLINE      , '...'        ,            , 1        
+INS  , NEWLINE  ,              , NAME         , 'with'     , 1        
+SUB  , NAME     , '{'          , NAME         , NEWLINE    , 1        
+SUB  , NAME     , '='          , NAME         , ':'        , 1        
+INS  , ','      ,              , ']'          , '}'        , 1        
+INS  , START    ,              , '('          , '['        , 1        
+SUB  , '='      , '['          , STRING       , '('        , 1        
+SUB  , '...'    , '.'          , ']'          , ')'        , 1        
+DEL  , NAME     , '('          , '['          ,            , 1        
+SUB  , NUMBER   , NUMBER       , ']'          , ':'        , 1        
+SUB  , '('      , '...'        , ')'          , '*'        , 1        
+INS  , '['      ,              , ']'          , NUMBER     , 1        
+SUB  , STRING   , '}'          , END          , ','        , 1        
+SUB  , 98       , 'and'        , '='          , NAME       , 1        
+DEL  , ')'      , ')'          , '}'          ,            , 1        
+SUB  , '{'      , UNKNOWN_CHAR , 'or'         , STRING     , 1        
+DEL  , STRING   , 'or'         , ':'          ,            , 1        
+INS  , 98       ,              , NAME         , '('        , 1        
+DEL  , START    , '**'         , '*'          ,            , 1        
+DEL  , NUMBER   , '*'          , END          ,            , 1        
+INS  , START    ,              , STRING       , '('        , 1        
+SUB  , NAME     , '='          , NUMBER       , ':'        , 1        
+SUB  , 'return' , '['          , END          , NUMBER     , 1        
+INS  , NAME     ,              , NEWLINE      , ','        , 1        
+INS  , ','      ,              , NEWLINE      , NAME       , 1        
+SUB  , NEWLINE  , 'global'     , '='          , NAME       , 1        
+INS  , ':'      ,              , 'for'        , NAME       , 1        
+DEL  , '='      , '='          , '['          ,            , 1        
+SUB  , NAME     , ','          , NAME         , '.'        , 1        
+SUB  , NAME     , UNKNOWN_CHAR , ']'          , '.'        , 1        
+INS  , '.'      ,              , ']'          , NAME       , 1        
+INS  , 'for'    ,              , '('          , NAME       , 1        
+SUB  , '('      , '*'          , ','          , STRING     , 1        
+INS  , ':'      ,              , END          , 'break'    , 1        
+INS  , '*'      ,              , ')'          , NAME       , 1        
+SUB  , NEWLINE  , 'if'         , STRING       , 98         , 1        
+INS  , 98       ,              , STRING       , 'while'    , 1        
+DEL  , ':'      , '('          , NAME         ,            , 1        
+DEL  , 98       , NUMBER       , NAME         ,            , 1        
+SUB  , STRING   , UNKNOWN_CHAR , NAME         , '.'        , 1        
+DEL  , NEWLINE  , '=='         , '>'          ,            , 1        
+SUB  , 98       , 'is'         , 'not'        , 'if'       , 1        
+INS  , NAME     ,              , STRING       , '>>'       , 1        
+SUB  , NAME     , ']'          , 'for'        , ')'        , 1        
+DEL  , STRING   , UNKNOWN_CHAR , '+'          ,            , 1        
+SUB  , NAME     , ')'          , END          , ']'        , 1        
+SUB  , '='      , '.'          , '.'          , '...'      , 1        
+INS  , START    ,              , 'for'        , '['        , 1        
+SUB  , STRING   , ':'          , END          , ']'        , 1        
+SUB  , NAME     , '('          , NAME         , '='        , 1        
+SUB  , '='      , STRING       , '*'          , '('        , 1        
+INS  , '('      ,              , '*'          , ')'        , 1        
+DEL  , NAME     , ']'          , '.'          ,            , 1        
+INS  , NUMBER   ,              , 'return'     , ')'        , 1        
+INS  , ':'      ,              , END          , 'yield'    , 1        
+INS  , NAME     ,              , '.'          , '('        , 1        
+SUB  , NAME     , '*='         , NAME         , '*'        , 1        
+DEL  , ')'      , NAME         , '.'          ,            , 1        
+DEL  , NUMBER   , NUMBER       , '%'          ,            , 1        
+SUB  , NAME     , UNKNOWN_CHAR , NAME         , 'if'       , 1        
+SUB  , NAME     , ':'          , NAME         , 'else'     , 1        
+SUB  , STRING   , ','          , NAME         , ']'        , 1        
+INS  , ']'      ,              , NAME         , '+'        , 1        
+INS  , ')'      ,              , NAME         , 'and'      , 1        
+SUB  , NUMBER   , 'or'         , NAME         , 'else'     , 1        
+SUB  , STRING   , '/'          , '>'          , ')'        , 1        
+DEL  , ')'      , '>'          , END          ,            , 1        
+SUB  , '='      , NUMBER       , NAME         , '-'        , 1        
+DEL  , '<='     , '='          , NUMBER       ,            , 1        
+SUB  , NAME     , '->'         , NAME         , ','        , 1        
+SUB  , ','      , '*'          , NAME         , '['        , 1        
+SUB  , NAME     , '*'          , ')'          , ']'        , 1        
+DEL  , 98       , '@'          , NAME         ,            , 1        
+DEL  , ':'      , STRING       , NEWLINE      ,            , 1        
+INS  , 98       ,              , NAME         , STRING     , 1        
+SUB  , 'else'   , NEWLINE      , 98           , ':'        , 1        
+SUB  , STRING   , ']'          , ','          , STRING     , 1        
+INS  , NAME     ,              , 'lambda'     , '('        , 1        
+SUB  , NAME     , '+'          , NAME         , ','        , 1        
+SUB  , 99       , '>>'         , '>'          , NUMBER     , 1        
+SUB  , STRING   , ';'          , NEWLINE      , ':'        , 1        
+DEL  , '}'      , UNKNOWN_CHAR , NEWLINE      ,            , 1        
+INS  , START    ,              , 'if'         , NAME       , 1        
+DEL  , NAME     , NAME         , 'else'       ,            , 1        
+INS  , 'import' ,              , END          , '*'        , 1        
+DEL  , 'is'     , UNKNOWN_CHAR , '+'          ,            , 1        
+DEL  , ')'      , NAME         , 'for'        ,            , 1        
+INS  , '&'      ,              , '<='         , NAME       , 1        
+SUB  , ')'      , NEWLINE      , STRING       , ')'        , 1        
+DEL  , 'if'     , NAME         , 'not'        ,            , 1        
+SUB  , '{'      , '%'          , NAME         , '{'        , 1        
+DEL  , ')'      , '%'          , '}'          ,            , 1        
+INS  , NAME     ,              , 'is'         , ')'        , 1        
+DEL  , NAME     , ')'          , '.'          ,            , 1        
+INS  , 'if'     ,              , '<'          , NAME       , 1        
+DEL  , START    , NAME         , NEWLINE      ,            , 1        
+SUB  , ')'      , '}'          , END          , ')'        , 1        
+DEL  , '='      , NAME         , '('          ,            , 1        
+DEL  , NAME     , NAME         , '!='         ,            , 1        
+SUB  , '['      , '.'          , '.'          , NUMBER     , 1        
+DEL  , START    , 'try'        , ':'          ,            , 1        
+INS  , NAME     ,              , '.'          , NEWLINE    , 1        
+INS  , NAME     ,              , NAME         , '!='       , 1        
+DEL  , ')'      , ']'          , NEWLINE      ,            , 1        
+DEL  , NEWLINE  , 'try'        , NAME         ,            , 1        
+SUB  , ':'      , 'pass'       , ')'          , 'None'     , 1        
+SUB  , NAME     , '='          , NAME         , 'is'       , 1        
+SUB  , '('      , '...'        , ','          , NAME       , 1        
+DEL  , NAME     , '<'          , NEWLINE      ,            , 1        
+SUB  , '('      , UNKNOWN_CHAR , 'if'         , STRING     , 1        
+SUB  , NAME     , 'for'        , NAME         , 'in'       , 1        
+DEL  , '*'      , '.'          , NAME         ,            , 1        
+DEL  , '*'      , NAME         , STRING       ,            , 1        
+SUB  , NAME     , NAME         , '('          , '-'        , 1        
+SUB  , NAME     , NAME         , NEWLINE      , '['        , 1        
+INS  , '['      ,              , NEWLINE      , STRING     , 1        
+INS  , '['      ,              , '!='         , NAME       , 1        
+DEL  , '/'      , 'from'       , '-'          ,            , 1        
+INS  , START    ,              , '('          , NAME       , 1        
+INS  , '['      ,              , 'for'        , '('        , 1        
+INS  , '('      ,              , 'for'        , ')'        , 1        
+SUB  , NAME     , '{'          , ':'          , '['        , 1        
+SUB  , NAME     , UNKNOWN_CHAR , END          , ','        , 1        
+INS  , ','      ,              , END          , NAME       , 1        
+INS  , ')'      ,              , '}'          , ')'        , 1        
+SUB  , NEWLINE  , '...'        , 'return'     , 98         , 1        
+SUB  , NAME     , NAME         , '+'          , '='        , 1        
+DEL  , '~'      , '/'          , '.'          ,            , 1        
+DEL  , '~'      , '.'          , NAME         ,            , 1        
+DEL  , '&'      , '&'          , '('          ,            , 1        
+DEL  , ')'      , '>>'         , STRING       ,            , 1        
+SUB  , NAME     , NUMBER       , '='          , '!='       , 1        
+DEL  , '!='     , '='          , NAME         ,            , 1        
+DEL  , '%'      , '%'          , NUMBER       ,            , 1        
+INS  , '.'      ,              , ','          , NAME       , 1        
+DEL  , '{'      , UNKNOWN_CHAR , NAME         ,            , 1        
+SUB  , NAME     , '='          , UNKNOWN_CHAR , '!='       , 1        
+DEL  , '!='     , UNKNOWN_CHAR , NAME         ,            , 1        
+DEL  , NUMBER   , 'as'         , NAME         ,            , 1        
+DEL  , NAME     , '>'          , 'import'     ,            , 1        
+INS  , ')'      ,              , END          , 'else'     , 1        
+INS  , 'else'   ,              , END          , NAME       , 1        
+SUB  , STRING   , ']'          , NEWLINE      , ')'        , 1        
+INS  , ':'      ,              , END          , 'None'     , 1        
+INS  , STRING   ,              , NAME         , 'in'       , 1        
+DEL  , START    , NAME         , NUMBER       ,            , 1        
+SUB  , NAME     , NAME         , END          , '+'        , 1        
+INS  , '+'      ,              , END          , STRING     , 1        
+DEL  , NEWLINE  , ')'          , END          ,            , 1        
+DEL  , 99       , 99           , 'except'     ,            , 1        
+DEL  , NAME     , '['          , NUMBER       ,            , 1        
+DEL  , 'import' , '/'          , NAME         ,            , 1        
+DEL  , ']'      , ']'          , 'for'        ,            , 1        
+INS  , NAME     ,              , 'in'         , '('        , 1        
+INS  , '('      ,              , 'in'         , ')'        , 1        
+SUB  , STRING   , ')'          , END          , '}'        , 1        
+DEL  , 'in'     , '<<'         , NAME         ,            , 1        
+DEL  , NAME     , '>>'         , ':'          ,            , 1        
+SUB  , START    , 'elif'       , NAME         , 'for'      , 1        
+INS  , STRING   ,              , '['          , ']'        , 1        
+SUB  , '{'      , '['          , NAME         , '{'        , 1        
+SUB  , 'else'   , UNKNOWN_CHAR , NAME         , STRING     , 1        
+DEL  , '|'      , '|'          , NUMBER       ,            , 1        
+DEL  , ';'      , NAME         , NAME         ,            , 1        
+DEL  , ';'      , NAME         , END          ,            , 1        
+SUB  , ';'      , '//'         , NAME         , NEWLINE    , 1        
+SUB  , 'lambda' , 'from'       , ','          , NAME       , 1        
+SUB  , STRING   , NAME         , '>'          , ')'        , 1        
+DEL  , NAME     , NUMBER       , '-'          ,            , 1        
+SUB  , NAME     , '.'          , NAME         , '['        , 1        
+SUB  , NAME     , '('          , STRING       , ']'        , 1        
+INS  , ']'      ,              , STRING       , '='        , 1        
+SUB  , '-'      , 'as'         , '.'          , NAME       , 1        
+INS  , ':'      ,              , 'if'         , NEWLINE    , 1        
+DEL  , ')'      , 'return'     , NAME         ,            , 1        
+DEL  , NAME     , ']'          , '*'          ,            , 1        
+INS  , NAME     ,              , 'not'        , 'is'       , 1        
+DEL  , STRING   , '...'        , UNKNOWN_CHAR ,            , 1        
+SUB  , STRING   , NAME         , '+'          , STRING     , 1        
+DEL  , STRING   , '+'          , UNKNOWN_CHAR ,            , 1        
+DEL  , ')'      , UNKNOWN_CHAR , ']'          ,            , 1        
+SUB  , 'if'     , 'def'        , '.'          , NAME       , 1        
+DEL  , STRING   , NAME         , '=='         ,            , 1        
+SUB  , NAME     , ']'          , END          , ')'        , 1        
+INS  , NAME     ,              , NAME         , '['        , 1        
+SUB  , NAME     , ','          , NAME         , ']'        , 1        
+DEL  , ')'      , '//'         , '='          ,            , 1        
+INS  , NUMBER   ,              , NAME         , ')'        , 1        
+INS  , NAME     ,              , NAME         , '>'        , 1        
+INS  , 'or'     ,              , STRING       , '('        , 1        
+SUB  , STRING   , ':'          , END          , ')'        , 1        
+SUB  , ']'      , ')'          , NEWLINE      , ']'        , 1        
+SUB  , NAME     , NAME         , NAME         , ']'        , 1        
+DEL  , '+'      , NAME         , STRING       ,            , 1        
+INS  , NAME     ,              , ')'          , 'else'     , 1        
+INS  , START    ,              , '.'          , '('        , 1        
+INS  , NAME     ,              , 'class'      , NEWLINE    , 1        
+INS  , '('      ,              , NAME         , ')'        , 1        
+INS  , ')'      ,              , NAME         , ':'        , 1        
+SUB  , ':'      , ')'          , END          , ']'        , 1        
+SUB  , NAME     , '='          , 'True'       , '=='       , 1        
+SUB  , START    , 'and'        , '('          , NAME       , 1        
+INS  , ':'      ,              , NEWLINE      , '['        , 1        
+INS  , 'for'    ,              , ','          , NAME       , 1        
+DEL  , START    , ';'          , NAME         ,            , 1        
+DEL  , ')'      , '+'          , '.'          ,            , 1        
+DEL  , ')'      , '.'          , UNKNOWN_CHAR ,            , 1        
+DEL  , ')'      , UNKNOWN_CHAR , ','          ,            , 1        
+DEL  , STRING   , ']'          , ')'          ,            , 1        
+SUB  , '.'      , 'in'         , '('          , NAME       , 1        
+SUB  , '='      , 'continue'   , '('          , NAME       , 1        
+DEL  , ','      , 'pass'       , ')'          ,            , 1        
+DEL  , START    , '...'        , NAME         ,            , 1        
+SUB  , NAME     , ']'          , ','          , '}'        , 1        
+SUB  , ','      , ')'          , END          , ']'        , 1        
+DEL  , NUMBER   , '**'         , ','          ,            , 1        
+SUB  , ':'      , '['          , NAME         , '{'        , 1        
+SUB  , ']'      , ']'          , 'for'        , '}'        , 1        
+DEL  , '('      , '{'          , NAME         ,            , 1        
+DEL  , ']'      , STRING       , ')'          ,            , 1        
+DEL  , ')'      , NAME         , '['          ,            , 1        
+DEL  , STRING   , ']'          , '}'          ,            , 1        
+DEL  , '='      , '/'          , NEWLINE      ,            , 1        
+INS  , ']'      ,              , NAME         , 'in'       , 1        
+SUB  , ']'      , '['          , ']'          , '.'        , 1        
+SUB  , '.'      , ']'          , '='          , NAME       , 1        
+INS  , '('      ,              , 'for'        , 'True'     , 1        
+SUB  , 'in'     , 'as'         , 'if'         , NAME       , 1        
+SUB  , 'as'     , 'as'         , END          , NAME       , 1        
+DEL  , '=='     , 'not'        , NAME         ,            , 1        
+SUB  , ')'      , ';'          , NEWLINE      , ':'        , 1        
+DEL  , NAME     , '+='         , NUMBER       ,            , 1        
+DEL  , NAME     , NUMBER       , 'for'        ,            , 1        
+INS  , ']'      ,              , '}'          , ')'        , 1        
+DEL  , NAME     , '='          , '/'          ,            , 1        
+SUB  , ')'      , ','          , NAME         , ':'        , 1        
+SUB  , NAME     , STRING       , NAME         , ':'        , 1        
+SUB  , NAME     , UNKNOWN_CHAR , '%'          , '('        , 1        
+INS  , '('      ,              , '%'          , STRING     , 1        
+SUB  , 'import' , STRING       , END          , NAME       , 1        
+SUB  , NAME     , '='          , '>'          , '>='       , 1        
+DEL  , '>='     , '>'          , NUMBER       ,            , 1        
+DEL  , STRING   , 'is'         , 'not'        ,            , 1        
+SUB  , STRING   , '='          , '>'          , ':'        , 1        
+DEL  , ':'      , '>'          , '{'          ,            , 1        
+SUB  , NAME     , 'as'         , NAME         , 'import'   , 1        
+DEL  , NAME     , '('          , '}'          ,            , 1        
+INS  , '>'      ,              , '.'          , NAME       , 1        
+SUB  , 'else'   , UNKNOWN_CHAR , NUMBER       , STRING     , 1        
+DEL  , STRING   , NUMBER       , '+'          ,            , 1        
+INS  , '}'      ,              , '['          , ')'        , 1        
+DEL  , 'if'     , '>'          , NAME         ,            , 1        
+DEL  , ':'      , NEWLINE      , 'import'     ,            , 1        
+SUB  , NEWLINE  , '='          , '>'          , 98         , 1        
+DEL  , START    , 'with'       , NAME         ,            , 1        
+SUB  , NAME     , '('          , NAME         , NEWLINE    , 1        
+SUB  , ')'      , '...'        , END          , '.'        , 1        
+DEL  , 'None'   , UNKNOWN_CHAR , '}'          ,            , 1        
+INS  , '('      ,              , NUMBER       , '['        , 1        
+INS  , 'None'   ,              , END          , ')'        , 1        
+DEL  , NAME     , 'as'         , NEWLINE      ,            , 1        
+SUB  , NAME     , 'if'         , '('          , 'in'       , 1        
+INS  , START    ,              , '/'          , NAME       , 1        
+DEL  , NUMBER   , UNKNOWN_CHAR , 'and'        ,            , 1        
+INS  , '='      ,              , NEWLINE      , NAME       , 1        
+INS  , '~'      ,              , END          , '('        , 1        
+INS  , NAME     ,              , '|'          , NEWLINE    , 1        
+INS  , NEWLINE  ,              , '|'          , NAME       , 1        
+DEL  , ','      , STRING       , '='          ,            , 1        
+DEL  , ','      , STRING       , '}'          ,            , 1        
+DEL  , NAME     , '/'          , END          ,            , 1        
+DEL  , '='      , '>'          , NAME         ,            , 1        
+DEL  , STRING   , '/'          , ')'          ,            , 1        
+DEL  , NAME     , ':'          , ']'          ,            , 1        
+INS  , ','      ,              , '='          , NAME       , 1        
+SUB  , NAME     , STRING       , ','          , '('        , 1        
+SUB  , '('      , ','          , NAME         , '+'        , 1        
+INS  , '('      ,              , '('          , NAME       , 1        
+DEL  , ')'      , NAME         , ')'          ,            , 1        
+SUB  , NUMBER   , STRING       , NAME         , 'else'     , 1        
+DEL  , '+'      , '|'          , STRING       ,            , 1        
+INS  , START    ,              , NAME         , 'for'      , 1        
+SUB  , STRING   , '['          , ')'          , ']'        , 1        
+DEL  , START    , '/'          , NAME         ,            , 1        
+DEL  , 99       , 'def'        , '('          ,            , 1        
+INS  , 'if'     ,              , 'return'     , STRING     , 1        
+INS  , STRING   ,              , 'return'     , ':'        , 1        
+DEL  , ')'      , ')'          , '['          ,            , 1        
+SUB  , 'True'   , 'for'        , NAME         , 'if'       , 1        
+INS  , ')'      ,              , NAME         , 'else'     , 1        
+DEL  , ')'      , ','          , 'for'        ,            , 1        
+SUB  , STRING   , '/'          , UNKNOWN_CHAR , STRING     , 1        
+SUB  , STRING   , UNKNOWN_CHAR , NEWLINE      , ','        , 1        
+DEL  , '.'      , 'class'      , '.'          ,            , 1        
+DEL  , NAME     , NUMBER       , '.'          ,            , 1        
+INS  , STRING   ,              , NAME         , '='        , 1        
+SUB  , STRING   , UNKNOWN_CHAR , UNKNOWN_CHAR , ','        , 1        
+SUB  , '('      , '...'        , ')'          , NAME       , 1        
+DEL  , NAME     , '.'          , ')'          ,            , 1        
+DEL  , NAME     , '='          , '('          ,            , 1        
+DEL  , ']'      , ']'          , '+='         ,            , 1        
+SUB  , NAME     , 'is'         , NAME         , 'in'       , 1        
+INS  , ')'      ,              , '<='         , ')'        , 1        
+DEL  , NAME     , NAME         , 'and'        ,            , 1        
+DEL  , NAME     , 'and'        , NEWLINE      ,            , 1        
+SUB  , STRING   , NAME         , NAME         , '}'        , 1        
+SUB  , '}'      , NAME         , UNKNOWN_CHAR , ','        , 1        
+INS  , NAME     ,              , '<='         , ')'        , 1        
+INS  , STRING   ,              , 'import'     , ')'        , 1        
+SUB  , START    , 'if'         , '{'          , NAME       , 1        
+SUB  , '}'      , ':'          , END          , ')'        , 1        
+SUB  , NAME     , '.'          , NAME         , ')'        , 1        
+DEL  , START    , ')'          , '.'          ,            , 1        
+DEL  , NAME     , ']'          , NEWLINE      ,            , 1        
+SUB  , START    , NAME         , STRING       , 'if'       , 1        
+INS  , STRING   ,              , '.'          , ':'        , 1        
+SUB  , ')'      , NEWLINE      , NAME         , ','        , 1        
+DEL  , ')'      , '.'          , ')'          ,            , 1        
+SUB  , NEWLINE  , 'pass'       , '='          , NAME       , 1        
+SUB  , '/'      , NUMBER       , '.'          , NAME       , 1        
+INS  , '{'      ,              , 'for'        , NAME       , 1        
+INS  , STRING   ,              , NAME         , '['        , 1        
+DEL  , ')'      , NAME         , '=='         ,            , 1        
+INS  , ')'      ,              , 'import'     , ')'        , 1        
+SUB  , '='      , '<'          , NAME         , NUMBER     , 1        
+DEL  , NUMBER   , NAME         , '>'          ,            , 1        
+DEL  , NUMBER   , '>'          , ')'          ,            , 1        
+INS  , STRING   ,              , 'lambda'     , ','        , 1        
+INS  , STRING   ,              , '.'          , STRING     , 1        
+DEL  , NAME     , '('          , '*'          ,            , 1        
+INS  , 98       ,              , NEWLINE      , NUMBER     , 1        
+INS  , '...'    ,              , END          , NEWLINE    , 1        
+DEL  , ':'      , ')'          , NAME         ,            , 1        
+DEL  , STRING   , '.'          , NEWLINE      ,            , 1        
+SUB  , ')'      , UNKNOWN_CHAR , NAME         , '/'        , 1        
+DEL  , '...'    , '.'          , '-'          ,            , 1        
+DEL  , '='      , '.'          , NAME         ,            , 1        
+DEL  , START    , '@'          , STRING       ,            , 1        
+SUB  , '+'      , UNKNOWN_CHAR , UNKNOWN_CHAR , STRING     , 1        
+SUB  , ']'      , '='          , STRING       , '!='       , 1        
+SUB  , 'import' , 'import'     , NEWLINE      , NAME       , 1        
+DEL  , 'return' , UNKNOWN_CHAR , NAME         ,            , 1        
+INS  , 'if'     ,              , STRING       , NAME       , 1        
+INS  , NAME     ,              , STRING       , ']'        , 1        
+INS  , ']'      ,              , STRING       , '!='       , 1        
+DEL  , ']'      , ','          , 'for'        ,            , 1        
+INS  , 'None'   ,              , '}'          , 'else'     , 1        
+INS  , 'else'   ,              , '}'          , STRING     , 1        
+INS  , '='      ,              , '['          , STRING     , 1        
+SUB  , START    , 'def'        , NAME         , 'del'      , 1        
+SUB  , '('      , 'from'       , '-'          , NAME       , 1        
+SUB  , '*'      , 'from'       , ')'          , NAME       , 1        
+DEL  , NAME     , 'is'         , '<'          ,            , 1        
+DEL  , '='      , STRING       , NAME         ,            , 1        
+DEL  , '='      , '='          , 'True'       ,            , 1        
+SUB  , START    , 'as'         , '='          , NAME       , 1        
+SUB  , '('      , 'as'         , ')'          , NAME       , 1        
+SUB  , '('      , 'as'         , ','          , NAME       , 1        
+DEL  , NAME     , NUMBER       , 'import'     ,            , 1        
+INS  , STRING   ,              , '>'          , ']'        , 1        
+INS  , ':'      ,              , NEWLINE      , 'break'    , 1        
+SUB  , '('      , UNKNOWN_CHAR , '%'          , NUMBER     , 1        
+DEL  , '*'      , '**'         , NAME         ,            , 1        
+DEL  , NAME     , '('          , 'False'      ,            , 1        
+INS  , '='      ,              , '-'          , '('        , 1        
+DEL  , NUMBER   , '<'          , '/'          ,            , 1        
+DEL  , '['      , NAME         , STRING       ,            , 1        
+DEL  , NEWLINE  , 'def'        , NAME         ,            , 1        
+SUB  , STRING   , STRING       , UNKNOWN_CHAR , ','        , 1        
+SUB  , ','      , UNKNOWN_CHAR , ')'          , NAME       , 1        
+INS  , 'if'     ,              , '=='         , NAME       , 1        
+INS  , ':'      ,              , END          , 'continue' , 1        
+SUB  , '='      , NAME         , '*'          , 'lambda'   , 1        
+INS  , '['      ,              , '['          , NAME       , 1        
+INS  , ')'      ,              , '.'          , ']'        , 1        
+DEL  , '('      , '**'         , STRING       ,            , 1        
+DEL  , '['      , '.'          , ']'          ,            , 1        
+SUB  , NEWLINE  , 'from'       , NAME         , 'import'   , 1        
+DEL  , 98       , '...'        , NEWLINE      ,            , 1        
+SUB  , '('      , UNKNOWN_CHAR , ','          , STRING     , 1        
+DEL  , 98       , '**'         , NAME         ,            , 1        
+INS  , NUMBER   ,              , NUMBER       , ':'        , 1        
+DEL  , NUMBER   , UNKNOWN_CHAR , NUMBER       ,            , 1        
+DEL  , START    , '*'          , NAME         ,            , 1        
+SUB  , ','      , 'not'        , 'in'         , NAME       , 1        
+INS  , NEWLINE  ,              , 'pass'       , 98         , 1        
+INS  , 99       ,              , 'if'         , 99         , 1        
+DEL  , '%'      , NAME         , STRING       ,            , 1        
+SUB  , '+'      , '.'          , NAME         , STRING     , 1        
+DEL  , NUMBER   , '='          , NUMBER       ,            , 1        
+DEL  , '}'      , '}'          , ']'          ,            , 1        
+DEL  , 98       , 'for'        , NAME         ,            , 1        
+INS  , NAME     ,              , '!='         , ':'        , 1        
+INS  , ':'      ,              , '!='         , NAME       , 1        
+SUB  , 'else'   , 'continue'   , END          , 'False'    , 1        
+DEL  , NAME     , '>'          , ']'          ,            , 1        
+DEL  , STRING   , 'else'       , 'False'      ,            , 1        
+DEL  , STRING   , 'False'      , ']'          ,            , 1        
+SUB  , ')'      , UNKNOWN_CHAR , NAME         , 'if'       , 1        
+SUB  , ')'      , ':'          , STRING       , 'else'     , 1        
+DEL  , NUMBER   , 'or'         , ':'          ,            , 1        
+DEL  , 'return' , NAME         , '='          ,            , 1        
+DEL  , 'return' , '='          , STRING       ,            , 1        
+SUB  , '='      , '.'          , '/'          , NAME       , 1        
+DEL  , ':'      , '['          , NAME         ,            , 1        
+DEL  , START    , '**'         , END          ,            , 1        
+SUB  , ','      , '%'          , '('          , '='        , 1        
+DEL  , NAME     , '<'          , NAME         ,            , 1        
+DEL  , STRING   , '%'          , '*'          ,            , 1        
+INS  , ')'      ,              , '/'          , ')'        , 1        
+SUB  , NAME     , UNKNOWN_CHAR , '='          , '!='       , 1        
+DEL  , '!='     , '='          , NUMBER       ,            , 1        
+DEL  , ']'      , ']'          , ')'          ,            , 1        
+DEL  , 'raise'  , UNKNOWN_CHAR , NAME         ,            , 1        
+INS  , '...'    ,              , NEWLINE      , '.'        , 1        
+SUB  , NAME     , ')'          , NEWLINE      , ':'        , 1        
+DEL  , '*'      , ')'          , NUMBER       ,            , 1        
+DEL  , NAME     , STRING       , STRING       ,            , 1        
+DEL  , ','      , '%'          , '('          ,            , 1        
+INS  , ')'      ,              , '&'          , ')'        , 1        
+SUB  , STRING   , ')'          , '.'          , ']'        , 1        
+DEL  , '-'      , '->'         , '['          ,            , 1        
+DEL  , 'return' , '='          , NAME         ,            , 1        
+INS  , STRING   ,              , 'if'         , STRING     , 1        
+SUB  , 'True'   , ']'          , '.'          , ')'        , 1        
+SUB  , NAME     , '}'          , 'for'        , ']'        , 1        
