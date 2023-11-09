@@ -144,7 +144,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       val errTks = humanError.lexToStrTypesAsPython()
       val minFixTks = minimumFix.lexToStrTypesAsPython()
 
-      val minFixSize = extractPatch(errTks, minFixTks).changes().size
+      val minFixSize = extractPatch(errTks, minFixTks).changedIndices().size
 
       val seq2parseFix = measureTimedValue { seq2parseFix(humanError) }.let {
         latency = it.duration.inWholeMilliseconds.toInt()
@@ -152,7 +152,7 @@ fun evaluateSeq2ParseOnStackOverflowDataset() {
       }
 
       val seq2parseFixTks = seq2parseFix.lexToStrTypesAsPython()
-      val seq2parseEditSize = extractPatch(errTks, seq2parseFixTks).changes().size
+      val seq2parseEditSize = extractPatch(errTks, seq2parseFixTks).changedIndices().size
 
       val seq2parseWasParseable = seq2parseFix.isValidPython {
         val s2pDiffFullDiff = prettyDiffHorizontal(humanError, seq2parseFix, "human error", "seq2parse fix")
@@ -318,7 +318,7 @@ fun evaluateTidyparseOnStackoverflow() {
         minimumFix.lexToStrTypesAsPython()
       )
 
-      val patchSize = patch.changes().size
+      val patchSize = patch.changedIndices().size
 
       if (2 < patchSize) return@forEach
 
@@ -400,7 +400,7 @@ fun preprocessStackOverflow(
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minfix.isValidPython() &&
-      minpatch.changes().size <= MAX_PATCH_SIZE &&
+      minpatch.changedIndices().size <= MAX_PATCH_SIZE &&
       brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
 //      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
     }
@@ -434,7 +434,7 @@ fun preprocessStackOverflowInParallel(
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minfix.isValidPython() &&
-        minpatch.changes().size <= MAX_PATCH_SIZE &&
+        minpatch.changedIndices().size <= MAX_PATCH_SIZE &&
         brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
     }
 
@@ -750,7 +750,7 @@ Yield_Arg -> From_Keyword Test | Testlist_Endcomma
 fun extractErrProbs(): List<Pair<Σᐩ, Int>> =
   preprocessStackOverflow().take(3000).asStream().parallel().flatMap { (b, _, m) ->
     val patch = extractPatch(b.lexToStrTypesAsPython(), m.lexToStrTypesAsPython())
-    val changes = patch.changes()
+    val changes = patch.changedIndices()
     changes.map { patch[it].new.let { it.ifEmpty { "ε" } } }
       .also { println(it) }
       .stream()

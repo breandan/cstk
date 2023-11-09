@@ -41,7 +41,7 @@ fun Stream<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
 //  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
 
     val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-    val minEdit = deltaDebug(patch.changes()) { idxs -> patch.apply(idxs).isValidPython() }
+    val minEdit = deltaDebug(patch.changedIndices()) { idxs -> patch.apply(idxs).isValidPython() }
 // deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
 //      .minimalSubpatch { patch.apply(this).isValidPython() }
 
@@ -67,7 +67,7 @@ fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
 //  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
 
     val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-    val minEdit = deltaDebug(patch.changes()) { idxs -> patch.apply(idxs).isValidPython() }
+    val minEdit = deltaDebug(patch.changedIndices()) { idxs -> patch.apply(idxs).isValidPython() }
 // deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
 //      .minimalSubpatch { patch.apply(this).isValidPython() }
 
@@ -90,12 +90,12 @@ val Edit.old: Σᐩ get() = first
 val Edit.new: Σᐩ get() = second
 
 // returns when there are at least two types of edits (insertions, deletions, changes) choose 2
-fun Patch.isInteresting() = changes().let {ch ->
+fun Patch.isInteresting() = changedIndices().let { ch ->
   filterIndexed { index, pair -> index in ch }
     .map { (a, b) -> if(b == "") "D" else if(a == "") "I" else "C" }
     .toSet().size > 1
 }
-fun Patch.changes(): List<Int> = indices.filter { this[it].old != this[it].new }
+fun Patch.changedIndices(): List<Int> = indices.filter { this[it].old != this[it].new }
 
 
 fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =

@@ -147,7 +147,6 @@ fun Σᐩ.javac(): Σᐩ =
 
 fun Σᐩ.isValidJava() = javac().isEmpty()
 
-
 fun Σᐩ.isValidPython(onErrorAction: (Σᐩ?) -> Unit = {}): Boolean =
   try {
     Python3Parser(

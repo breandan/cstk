@@ -3,6 +3,8 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
+import java.io.File
+import kotlin.time.TimeSource
 
 /*
 ./gradlew collectSummaryStats
@@ -13,8 +15,15 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  computePatchTrigramStats()
+//  computePatchTrigramStats()
+//  readBIFI()
+  contextualRepair()
 }
+
+fun readBIFI() =
+  readBIFIContents().take(100_000)
+    .map { "\n$it\n".lexToStrTypesAsPython().let { listOf("BOS") + it + "EOS" } }
+    .forEach { println(it.joinToString(" ")) }
 
 /*
 Percentage of snippets with lexical token length <= n
@@ -101,18 +110,17 @@ fun seq2ParseSnips() =
 
 /*
 Number of edits, Frequency
-0, 0.0
 1, 0.512
 2, 0.834
 3, 1.0
- */
+*/
 fun computeErrorSizeFreq() =
   preprocessStackOverflow().map { (broke, humfix, minfix) ->
     val brokeLex = broke.lexToStrTypesAsPython()
     val minfixLex = minfix.lexToStrTypesAsPython()
     val minpatch = extractPatch(brokeLex, minfixLex)
 //    println(prettyDiffs(listOf(brokeLex.joinToString(" "), minfixLex.joinToString(" ")), listOf("broken", "minimized fix")))
-    minpatch.changes().size
+    minpatch.changedIndices().size
   }.take(1000).groupBy { it }.mapValues { it.value.size }
     .toList().sortedBy { it.first }.map { it.first to it.second }
     .runningFold(0 to 0) { (_, prevCount), (n, count) -> n to (prevCount + count) }
@@ -152,7 +160,7 @@ fun computePatchStats() =
     val brokeLexed = broke.lexToStrTypesAsPython()
     val minfixLexed = minfix.lexToStrTypesAsPython()
     val patch = extractPatch(brokeLexed, minfixLexed)
-    patch.changes().map {
+    patch.changedIndices().map {
       if (patch[it].old == "") "INS, ${patch[it].new}"
       else if (patch[it].new == "") "DEL, ${patch[it].old}"
       else "SUB, ${patch[it].old} -> ${patch[it].new}"
@@ -276,21 +284,162 @@ fun Patch.srn(i: Int): String = scan(i, true) { new }!!
 fun Patch.slo(i: Int): String = scan(i, false) { old }!!
 fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
+fun contextualRepair() {
+  var averageTime = 0
+  var totalSamles = 0
+  val contextCSV = File("context_edits.csv").readTrigramStats()
+  preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
+    val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
+    val minFixTks = listOf("START") + minFix.lexToStrTypesAsPython() + "END"
+    val startTime = TimeSource.Monotonic.markNow()
+    var elapsed = 0
+    while (startTime.elapsedNow().inWholeMilliseconds < 10_000) {
+      try {
+        val fix = brokeTks.sampleEditTrajectory(contextCSV)
+        if (fix == minFixTks) {
+//          println("Found human fix in ${startTime.elapsedNow()}")
+          elapsed = startTime.elapsedNow().inWholeMilliseconds.toInt()
+          break
+        }
+      } catch (e: Exception) { e.printStackTrace() }
+    }
+    if (elapsed == 0) { averageTime += 10000 }
+    else {
+      averageTime += elapsed
+      totalSamles++
+    }
+    println("Average time to find human fix: ${averageTime / totalSamles}ms")
+  }
+}
+
+enum class EditType { INS, DEL, SUB }
+data class ContextEdit(val type: EditType, val context: Context, val newMid: Σᐩ) {
+  override fun toString(): String =
+    when (type) {
+      EditType.INS -> context.run { "$left [$newMid] $right" }
+      EditType.DEL -> context.run { "$left ~$mid~ $right" }
+      EditType.SUB -> context.run { "$left [$mid -> $newMid] $right" }
+    }
+}
+data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
+  override fun toString(): String = "[[$cea, $idx, $frequency]]"
+}
+data class Context(val left: String, val mid: String, val right: String)
+data class CEADist(val allProbs: Map<ContextEdit, Int>) {
+  val P_delSub = allProbs.filter { it.key.type != EditType.INS }
+  val P_insert = allProbs.filter { it.key.type == EditType.INS }
+  val P_delSubOnCtx = P_delSub.keys.groupBy { it.context }
+  val P_insertOnCtx = P_insert.keys.groupBy { it.context }
+}
+
+fun File.readTrigramStats(): CEADist =
+  readLines().drop(1).map { it.split(", ") }.associate {
+    ContextEdit(
+      type = EditType.valueOf(it[0].trim()),
+      context = Context(it[1].trim(), it[2].trim(), it[3].trim()),
+      newMid = it[4].trim()
+    ) to it[5].trim().toInt()
+  }.let { CEADist(it) }
+
+fun List<Σᐩ>.sampleEditTrajectory(
+  ceaDist: CEADist,
+  lengthDist: List<Double> = listOf(0.5, 0.3, 0.2)
+): List<Σᐩ> {
+  val sample = Math.random()
+  var sum = 0.0
+  var length = 0
+  for (i in lengthDist.indices) {
+    sum += lengthDist[i]
+    if (sum > sample) { length = i + 1; break }
+  }
+
+  return (0..length).fold (this) { acc, idx ->
+//    println("Start apply: $acc")
+    acc.relevantEditActions(ceaDist)
+//      .also { println("Relevant edit actions: ${it}") }
+      .normalizeAndSample()
+//      .also { println("Sampled: $it") }
+      .let { acc.applyEditAction(it.cea, it.idx + 1) }
+//      .also { println("After apply: $it") }
+  }
+}
+
+fun List<CEAProb>.normalizeAndSample(): CEAProb {
+  val total = sumOf { it.frequency }
+  val sample = (0 until total).random()
+  var sum = 0
+  for (i in indices) {
+    sum += this[i].frequency
+    if (sum > sample) return this[i]
+  }
+  return last()
+}
+
+fun List<Σᐩ>.relevantEditActions(ceaDist: CEADist): List<CEAProb> =
+  ceaDist.run {
+    (
+      windowed(3).map { Context(it[0], it[1], it[2]) }.mapIndexed { idx, ctx ->
+        (P_delSubOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_delSub[it]!!) }
+      } + windowed(2).map { Context(it[0], "", it[1]) }.mapIndexed { idx, ctx ->
+        (P_insertOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_insert[it]!!) }
+      }
+    ).flatten()
+  }
+
+fun List<Σᐩ>.applyEditAction(cea: ContextEdit, idx: Int): List<Σᐩ> =
+  when (cea.type) {
+    EditType.INS -> take(idx) + cea.newMid + drop(idx)
+    EditType.DEL -> take(idx) + drop(idx + 1)
+    EditType.SUB -> take(idx) + cea.newMid + drop(idx + 1)
+  }//.also { println("Start:$this\n${cea.type}/${cea.context}/${cea.newMid}/${idx}\nAfter:$it") }
+
 fun computePatchTrigramStats() =
   preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
     val brokeLexed = listOf("START") + broke.lexToStrTypesAsPython() + listOf("END")
     val minfixLexed = listOf("START") + minfix.lexToStrTypesAsPython() + listOf("END")
     val patch: Patch = extractPatch(brokeLexed, minfixLexed)
     patch.run {
-      changes().map { i ->
+      changedIndices().map { i ->
         val (old, new) = get(i).old to get(i).new
 
-        if (old == "") "INS, ${sln(i)} [$new] ${sro(i)}"
-        else if (new == "") "DEL, ${sln(i)} [$old] ${sro(i)}"
-        else "SUB, ${sln(i)} [$old -> $new] ${sro(i)}"
+        if (old == "") "INS, ${sln(i)}, , ${sro(i)}, $new"
+        else if (new == "") "DEL, ${sln(i)}, $old, ${sro(i)}, "
+        else "SUB, ${sln(i)}, $old, ${sro(i)}, $new"
       }
     }
   }.toList().flatten().groupingBy { it }.eachCount()
-    .toList().sortedByDescending { it.second }.take(100)
-    .joinToString("\n") { "${it.first}, ${it.second}" }
-    .also { println("Type, Edit, Frequency\n$it") }
+    .toList().sortedByDescending { it.second }
+    .joinToString("\n", "Type, Left, Old Mid, Right, New Mid, Frequency\n") { "${it.first}, ${it.second}" }
+    .also {
+      File("context_edits.csv").apply {
+        writeText(it.reformatCSVIntoPrettyColumns())
+        println(readLines().take(100).joinToString("\n"))
+        println("Edit trigrams written to: $absolutePath")
+      }
+    }
+
+fun String.reformatCSVIntoPrettyColumns(): String {
+  val lines = split('\n')
+  if (lines.isEmpty()) return this
+
+  // Split each line into columns
+  val linesByColumns = lines.map { it.split(", ").toMutableList() }
+
+  // Find the max length of each column
+  val maxLengths = IntArray(linesByColumns[0].size) { 0 }
+  for (columns in linesByColumns) {
+    for ((index, column) in columns.withIndex()) {
+      maxLengths[index] = maxOf(maxLengths[index], column.trim().length)
+    }
+  }
+
+  // Pad each element in the columns
+  for (columns in linesByColumns) {
+    for ((index, column) in columns.withIndex()) {
+      columns[index] = column.trim().padEnd(maxLengths[index], ' ')
+    }
+  }
+
+  // Reassemble the lines and then the entire string
+  return linesByColumns.joinToString("\n") { it.joinToString(" , ") }
+}
