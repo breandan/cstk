@@ -287,28 +287,31 @@ fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 fun contextualRepair() {
   var averageTime = 0
   var totalSamles = 0
+  var totSmplSize = 0
   val contextCSV = File("context_edits.csv").readTrigramStats()
   preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
     val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
     val minFixTks = listOf("START") + minFix.lexToStrTypesAsPython() + "END"
+    val patchSize =  extractPatch(brokeTks, minFixTks).changedIndices().size
     val startTime = TimeSource.Monotonic.markNow()
     var elapsed = 0
-    while (startTime.elapsedNow().inWholeMilliseconds < 10_000) {
-      try {
-        val fix = brokeTks.sampleEditTrajectory(contextCSV)
-        if (fix == minFixTks) {
-//          println("Found human fix in ${startTime.elapsedNow()}")
-          elapsed = startTime.elapsedNow().inWholeMilliseconds.toInt()
-          break
-        }
-      } catch (e: Exception) { e.printStackTrace() }
-    }
-    if (elapsed == 0) { averageTime += 10000 }
-    else {
-      averageTime += elapsed
-      totalSamles++
-    }
-    println("Average time to find human fix: ${averageTime / totalSamles}ms")
+
+    val initREA = brokeTks.relevantEditActions(contextCSV)
+    var sampleSize = 0
+    while (startTime.elapsedNow().inWholeMilliseconds < 10_000) try {
+      sampleSize++
+      val fix = brokeTks.sampleEditTrajectory(contextCSV, initREA)
+//      fix.joinToString(" ").isValidPython()
+      if (fix == minFixTks) {
+        println("Found length-${patchSize} human fix in ${startTime.elapsedNow()} after $sampleSize samples")
+        elapsed = startTime.elapsedNow().inWholeMilliseconds.toInt()
+        break
+      }
+    } catch (e: Exception) { e.printStackTrace() }
+    averageTime += if (elapsed == 0) 10000 else elapsed
+    totSmplSize += sampleSize
+    println("Average time to find human fix: ${averageTime / ++totalSamles}ms")
+    println("Average samples before finding: ${totSmplSize/ ++totalSamles}")
   }
 }
 
@@ -324,7 +327,11 @@ data class ContextEdit(val type: EditType, val context: Context, val newMid: Σ�
 data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
   override fun toString(): String = "[[$cea, $idx, $frequency]]"
 }
-data class Context(val left: String, val mid: String, val right: String)
+data class Context(val left: String, val mid: String, val right: String) {
+  private val hash = left.hashCode() + mid.hashCode() + right.hashCode()
+  override fun hashCode(): Int = hash
+  override fun equals(other: Any?) = (other as? Context)?.hash == hash
+}
 data class CEADist(val allProbs: Map<ContextEdit, Int>) {
   val P_delSub = allProbs.filter { it.key.type != EditType.INS }
   val P_insert = allProbs.filter { it.key.type == EditType.INS }
@@ -343,6 +350,7 @@ fun File.readTrigramStats(): CEADist =
 
 fun List<Σᐩ>.sampleEditTrajectory(
   ceaDist: CEADist,
+  initREA: List<CEAProb>,
   lengthDist: List<Double> = listOf(0.5, 0.3, 0.2)
 ): List<Σᐩ> {
   val sample = Math.random()
@@ -353,7 +361,10 @@ fun List<Σᐩ>.sampleEditTrajectory(
     if (sum > sample) { length = i + 1; break }
   }
 
-  return (0..length).fold (this) { acc, idx ->
+  val firstEdit =
+    initREA.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
+
+  return (0..length).fold (firstEdit) { acc, _ ->
 //    println("Start apply: $acc")
     acc.relevantEditActions(ceaDist)
 //      .also { println("Relevant edit actions: ${it}") }
@@ -364,8 +375,7 @@ fun List<Σᐩ>.sampleEditTrajectory(
   }
 }
 
-fun List<CEAProb>.normalizeAndSample(): CEAProb {
-  val total = sumOf { it.frequency }
+fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAProb {
   val sample = (0 until total).random()
   var sum = 0
   for (i in indices) {
@@ -377,13 +387,12 @@ fun List<CEAProb>.normalizeAndSample(): CEAProb {
 
 fun List<Σᐩ>.relevantEditActions(ceaDist: CEADist): List<CEAProb> =
   ceaDist.run {
-    (
-      windowed(3).map { Context(it[0], it[1], it[2]) }.mapIndexed { idx, ctx ->
-        (P_delSubOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_delSub[it]!!) }
-      } + windowed(2).map { Context(it[0], "", it[1]) }.mapIndexed { idx, ctx ->
-        (P_insertOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_insert[it]!!) }
-      }
-    ).flatten()
+    windowed(3).map { Context(it[0], it[1], it[2]) }.mapIndexed { idx, ctx ->
+      (P_insertOnCtx[Context(ctx.left, "", ctx.mid)] ?: listOf()).map { CEAProb(it, idx, P_insert[it]!!) } +
+        (if (idx + 3 != size) listOf() else (P_insertOnCtx[Context(ctx.mid, "", ctx.right)] ?: listOf())
+          .map { CEAProb(it, idx + 1, P_insert[it]!!) }) +
+      (P_delSubOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_delSub[it]!!) }
+    }.flatten()
   }
 
 fun List<Σᐩ>.applyEditAction(cea: ContextEdit, idx: Int): List<Σᐩ> =
