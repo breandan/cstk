@@ -285,13 +285,17 @@ fun Patch.srn(i: Int): String = scan(i, true) { new }!!
 fun Patch.slo(i: Int): String = scan(i, false) { old }!!
 fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
-// Average time to find human fix: 551ms (127 repairs)
-// Average samples before finding: 41648
+//Found length-2 fix in 761.688750ms after 6362 total and 8 valid samples
+//Average time to find human fix: ~831ms (78 trials, 14 expired after 5000ms)
+//Average samples before finding: ~20272
+//Average number of valid repair: ~144
+
 fun contextualRepair() {
   var averageTime = 0
-  var totalSamples = 0
+  var totalTrials = 0
   var totSmplSize = 0
   var valSmplSize = 0
+  var expiredSize = 0
   val contextCSV = File("context_edits.csv").readTrigramStats()
   preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
     val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
@@ -311,29 +315,27 @@ fun contextualRepair() {
       .takeWhile { it != minFixTks
         && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
       }
-      .map { Triple(it, 1,
-//        if (Math.random() < 0.5 && it.joinToString(" ").isValidPython()) 1 else 0
-        0
-      ) }
+      .map { Triple(it, 1, if (it.drop(1).dropLast(1).isValidPython()) 1 else 0) }
       .asSequence().fold(0 to 0) { (total, valid), (_, t, v) -> total + t to valid + v }
 
     if (startTime.elapsedNow().inWholeMilliseconds < samplerTimeout) {
       averageTime += startTime.elapsedNow().inWholeMilliseconds.toInt()
       totSmplSize += sampleSize.first
       valSmplSize += sampleSize.second
-      totalSamples++
+      totalTrials++
+
       println("""
-        Found length-${patchSize} human fix in ${startTime.elapsedNow()} after $sampleSize samples
-        Average time to find human fix: ${averageTime / totalSamples}ms ($totalSamples trials)
-        Average samples before finding: ${totSmplSize / totalSamples}
-        Average total of valid repairs: ${valSmplSize / totalSamples}
+        Found length-${patchSize} fix in ${startTime.elapsedNow()} after ${sampleSize.first} total and ${sampleSize.second} valid samples
+        Average time to find human fix: ~${averageTime / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
+        Average samples before matched: ~${totSmplSize / totalTrials}
+        Average valid repairs detected: ~${valSmplSize / totalTrials}
       """.trimIndent())
     } else
       println("""
-        Sampler timed out after $sampleSize samples, ground truth repair was:
+        Sampling timeout expired after $sampleSize (total, valid) samples, ground truth repair was:
         ${brokeTks.joinToString(" ")}
         ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
-      """.trimIndent())
+      """.trimIndent()).also { expiredSize += 1 }
 
     println("\n\n")
   }
@@ -401,7 +403,7 @@ fun List<Σᐩ>.sampleEditTrajectory(
   }
 }
 
-fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAProb {
+fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }.coerceAtLeast(0)): CEAProb {
   val sample = (0 until total).random()
   var sum = 0
   for (i in indices) {

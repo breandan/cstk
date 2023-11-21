@@ -336,7 +336,7 @@ fun evaluateTidyparseOnStackoverflow() {
         fillers = topTokens,
 //        hints = pythonErrorLocations(humanError.lexToIntTypesAsPython()),
         maxEdits = 4,
-        admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
+        admissibilityFilter = { isValidPython() },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
         // TODO: only score the locations that are actually being modified to avoid redundant work
         scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }

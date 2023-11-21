@@ -74,6 +74,13 @@ fun List<Int>.getIndexOfFirstPythonError(): Int {
   } catch (e: Exception) { e.message?.toIntOrNull() ?: -1 }
 }
 
+@JvmName("isValidPyLStr")
+fun List<Σᐩ>.isValidPython(): Boolean =
+  map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }
+    .let { if(it.last() != 39) it + 39 else it }
+    .isValidPython()
+
+@JvmName("isValidPyLInt")
 fun List<Int>.isValidPython(): Boolean {
   val tokenSource = ListTokenSource(map { CommonToken(it) })
   val tokens = CommonTokenStream(tokenSource)
