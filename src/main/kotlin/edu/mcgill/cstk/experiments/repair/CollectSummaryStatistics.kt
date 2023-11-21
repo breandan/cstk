@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
+import kotlin.streams.*
 import kotlin.time.TimeSource
 
 /*
@@ -286,7 +287,7 @@ fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
 fun contextualRepair() {
   var averageTime = 0
-  var totalSamles = 0
+  var totalSamples = 0
   var totSmplSize = 0
   val contextCSV = File("context_edits.csv").readTrigramStats()
   preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
@@ -294,24 +295,33 @@ fun contextualRepair() {
     val minFixTks = listOf("START") + minFix.lexToStrTypesAsPython() + "END"
     val patchSize =  extractPatch(brokeTks, minFixTks).changedIndices().size
     val startTime = TimeSource.Monotonic.markNow()
-    var elapsed = 0
 
     val initREA = brokeTks.relevantEditActions(contextCSV)
-    var sampleSize = 0
-    while (startTime.elapsedNow().inWholeMilliseconds < 10_000) try {
-      sampleSize++
-      val fix = brokeTks.sampleEditTrajectory(contextCSV, initREA)
-//      fix.joinToString(" ").isValidPython()
-      if (fix == minFixTks) {
-        println("Found length-${patchSize} human fix in ${startTime.elapsedNow()} after $sampleSize samples")
-        elapsed = startTime.elapsedNow().inWholeMilliseconds.toInt()
-        break
-      }
-    } catch (e: Exception) { e.printStackTrace() }
-    averageTime += if (elapsed == 0) 10000 else elapsed
-    totSmplSize += sampleSize
-    println("Average time to find human fix: ${averageTime / ++totalSamles}ms")
-    println("Average samples before finding: ${totSmplSize/ ++totalSamles}")
+    val samplerTimeout = 5000L
+    val sampleSize =
+      generateSequence { brokeTks }.asStream().parallel().map {
+        try { brokeTks.sampleEditTrajectory(contextCSV, initREA) }
+        catch (e: Exception) { println(brokeTks); e.printStackTrace()}
+      }.takeWhile { it != minFixTks
+        && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
+      }.map { 1 }.asSequence().sum()
+
+    if (startTime.elapsedNow().inWholeMilliseconds < samplerTimeout) {
+      averageTime += startTime.elapsedNow().inWholeMilliseconds.toInt()
+      totSmplSize += sampleSize
+
+      println("""
+        Found length-${patchSize} human fix in ${startTime.elapsedNow()} after $sampleSize samples
+        Average time to find human fix: ${averageTime / ++totalSamples}ms ($totalSamples repairs)
+        Average samples before finding: ${totSmplSize/ ++totalSamples}
+      """.trimIndent())
+    } else {
+      println("Sampler timed out after $sampleSize samples:")
+      println(brokeTks.joinToString(" "))
+      println(prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" ")))
+    }
+
+    println("\n\n")
   }
 }
 
@@ -353,6 +363,7 @@ fun List<Σᐩ>.sampleEditTrajectory(
   initREA: List<CEAProb>,
   lengthDist: List<Double> = listOf(0.5, 0.3, 0.2)
 ): List<Σᐩ> {
+  // First sample the length of the edit trajectory from the length distribution
   val sample = Math.random()
   var sum = 0.0
   var length = 0
@@ -361,10 +372,11 @@ fun List<Σᐩ>.sampleEditTrajectory(
     if (sum > sample) { length = i + 1; break }
   }
 
+  // Now sample an edit trajectory of that length from the edit distribution
   val firstEdit =
     initREA.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
 
-  return (0..length).fold (firstEdit) { acc, _ ->
+  return (1..length).fold (firstEdit) { acc, _ ->
 //    println("Start apply: $acc")
     acc.relevantEditActions(ceaDist)
 //      .also { println("Relevant edit actions: ${it}") }

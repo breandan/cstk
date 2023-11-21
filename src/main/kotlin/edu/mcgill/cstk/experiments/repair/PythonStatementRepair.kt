@@ -51,7 +51,7 @@ private fun syntheticErrorCorrection() {
     }
 }
 
-fun organicErrorCorrection() {
+fun organicErrorCorrection() =
   invalidPythonStatements.lines().shuffled().filter { it.isNotBlank() }
 //    .parallelStream()
 //    .filter { !it.tokenizeAsPython().joinToString(" ").matches(pythonStatementCFG) }
@@ -63,7 +63,6 @@ fun organicErrorCorrection() {
         .forEachIndexed { i, it -> println("$i.) ${prettyDiffNoFrills(prompt, it)}") }
       println("\n")
     }
-}
 
 private fun optRepair(clock: TimeSource.Monotonic.ValueTimeMark): CFG.(List<Σᐩ>) -> Sequence<Σᐩ> =
   { a: List<Σᐩ> ->
