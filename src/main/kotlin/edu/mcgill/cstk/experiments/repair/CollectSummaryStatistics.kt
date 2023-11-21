@@ -285,10 +285,13 @@ fun Patch.srn(i: Int): String = scan(i, true) { new }!!
 fun Patch.slo(i: Int): String = scan(i, false) { old }!!
 fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
+// Average time to find human fix: 551ms (127 repairs)
+// Average samples before finding: 41648
 fun contextualRepair() {
   var averageTime = 0
   var totalSamples = 0
   var totSmplSize = 0
+  var valSmplSize = 0
   val contextCSV = File("context_edits.csv").readTrigramStats()
   preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
     val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
@@ -299,27 +302,38 @@ fun contextualRepair() {
     val initREA = brokeTks.relevantEditActions(contextCSV)
     val samplerTimeout = 5000L
     val sampleSize =
-      generateSequence { brokeTks }.asStream().parallel().map {
+      generateSequence { brokeTks }.asStream()
+      .parallel() // Measure latency with and without parallelism
+      .map {
         try { brokeTks.sampleEditTrajectory(contextCSV, initREA) }
-        catch (e: Exception) { println(brokeTks); e.printStackTrace()}
-      }.takeWhile { it != minFixTks
+        catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf() }
+      }
+      .takeWhile { it != minFixTks
         && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-      }.map { 1 }.asSequence().sum()
+      }
+      .map { Triple(it, 1,
+//        if (Math.random() < 0.5 && it.joinToString(" ").isValidPython()) 1 else 0
+        0
+      ) }
+      .asSequence().fold(0 to 0) { (total, valid), (_, t, v) -> total + t to valid + v }
 
     if (startTime.elapsedNow().inWholeMilliseconds < samplerTimeout) {
       averageTime += startTime.elapsedNow().inWholeMilliseconds.toInt()
-      totSmplSize += sampleSize
-
+      totSmplSize += sampleSize.first
+      valSmplSize += sampleSize.second
+      totalSamples++
       println("""
         Found length-${patchSize} human fix in ${startTime.elapsedNow()} after $sampleSize samples
-        Average time to find human fix: ${averageTime / ++totalSamples}ms ($totalSamples repairs)
-        Average samples before finding: ${totSmplSize/ ++totalSamples}
+        Average time to find human fix: ${averageTime / totalSamples}ms ($totalSamples trials)
+        Average samples before finding: ${totSmplSize / totalSamples}
+        Average total of valid repairs: ${valSmplSize / totalSamples}
       """.trimIndent())
-    } else {
-      println("Sampler timed out after $sampleSize samples:")
-      println(brokeTks.joinToString(" "))
-      println(prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" ")))
-    }
+    } else
+      println("""
+        Sampler timed out after $sampleSize samples, ground truth repair was:
+        ${brokeTks.joinToString(" ")}
+        ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
+      """.trimIndent())
 
     println("\n\n")
   }
