@@ -97,6 +97,9 @@ fun Patch.isInteresting() = changedIndices().let { ch ->
 }
 fun Patch.changedIndices(): List<Int> = indices.filter { this[it].old != this[it].new }
 
+fun Patch.totalCharacterwiseEditDistance(): Int =
+  filter { (a, b) -> a != b }
+    .sumOf { (a, b) -> levenshtein(a, b) }
 
 fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =
   (1..size).asSequence().map { choose(it).map { it.toList() } }

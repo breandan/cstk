@@ -4,6 +4,8 @@ import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
+import java.util.concurrent.ForkJoinPool
+import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.streams.asStream
 import kotlin.time.TimeSource
@@ -19,6 +21,9 @@ fun main() {
 //  computePatchStats()
 //  computePatchTrigramStats()
 //  readBIFI()
+//  computeEditLocationFrequency()
+//  computeRelativeIntraEditDistance()
+//  totalCharacterEditDistance()
   contextualRepair()
 }
 
@@ -129,6 +134,112 @@ fun computeErrorSizeFreq() =
     .let { it.map { (n, count) -> n to count.toDouble() / it.last().second } }
     .joinToString("\n") { "${it.first}, ${it.second}" }
       .also { println("Number of edits, Frequency\n$it") }
+
+// Approximate location of edits normalized by snippet length
+//0%, 7%
+//5%, 3%
+//10%, 2%
+//15%, 2%
+//20%, 2%
+//25%, 3%
+//30%, 3%
+//35%, 2%
+//40%, 3%
+//45%, 2%
+//50%, 4%
+//55%, 3%
+//60%, 3%
+//65%, 3%
+//70%, 3%
+//75%, 4%
+//80%, 5%
+//85%, 7%
+//90%, 11%
+//95%, 18%
+fun computeEditLocationFrequency() =
+  preprocessStackOverflow().runningFold(List(20) { 0 }.toMutableList()) { hist, (b, h, m) ->
+    val brokeLex = b.lexToStrTypesAsPython()
+    val minfixLex = m.lexToStrTypesAsPython()
+    val minpatch = extractPatch(brokeLex, minfixLex)
+//    println(prettyDiffs(listOf(brokeLex.joinToString(" "), minfixLex.joinToString(" ")), listOf("broken", "minimized fix")))
+    minpatch.changedIndices()
+      .map { ((100.0 * it / minfixLex.size) / 5).toInt().coerceAtMost(19) }
+      .forEach { hist[it]++ }
+
+    hist
+  }.forEachIndexed { i, rawCounts ->
+    if (i % 10 == 0) {
+      val sum = rawCounts.sum()
+      rawCounts.forEachIndexed { i, it ->
+        println("${i * 5}%, ${"%.4f".format(100.0 * it / sum)}")
+      }; println()
+    }
+  }
+
+//1, 40.66%
+//2, 15.00%
+//3, 5.80%
+//4, 4.86%
+//5, 4.26%
+//6, 2.98%
+//7, 2.05%
+//8, 2.73%
+//9, 1.62%
+//10, 2.30%
+//11, 1.88%
+//12, 2.81%
+//13, 1.11%
+//14, 0.60%
+//15, 1.28%
+//16, 1.45%
+//17, 1.02%
+//18, 0.68%
+//19, 0.51%
+// Relative distance between edits in multi-edit patches
+fun computeRelativeIntraEditDistance() =
+  preprocessStackOverflow().map { (b, h, m) ->
+    val brokeLex = b.lexToStrTypesAsPython()
+    val minfixLex = m.lexToStrTypesAsPython()
+    extractPatch(brokeLex, minfixLex)
+  }.filter { 1 < it.size }.runningFold(mutableMapOf<Int, Int>()) { hist, patch ->
+    patch.changedIndices().zipWithNext().forEach { (i, j) ->
+      val d = (j - i).absoluteValue
+      hist[d] = hist.getOrDefault(d, 0) + 1
+    }
+    hist
+  }.forEachIndexed { i, rawCounts ->
+    if (i % 10 == 0) {
+      val sum = rawCounts.values.sum()
+      rawCounts.toList().sortedBy { it.first }.forEach { (dist, count) ->
+        println("${dist}, ${"%.2f".format(100.0 * count / sum)}")
+      }; println()
+    }
+  }
+
+//1, 0.72%
+//2, 53.48%
+//3, 29.48%
+//4, 11.35%
+//5, 3.32%
+//6, 0.83%
+//7, 0.29%
+//9, 0.20%
+//10, 0.04%
+fun totalCharacterEditDistance() =
+  preprocessStackOverflow().map { (b, h, m) ->
+    val brokeLex = b.tokenizeAsPython()
+    val minfixLex = m.tokenizeAsPython()
+    extractPatch(brokeLex, minfixLex).totalCharacterwiseEditDistance()
+  }.runningFold(mutableMapOf<Int, Int>()) { h, p ->
+    h[p] = h.getOrDefault(p, 0) + 1; h
+  }.forEachIndexed { i, rawCounts ->
+    if (i % 10 == 0) {
+      val sum = rawCounts.values.sum()
+      rawCounts.toList().sortedBy { it.first }.forEach { (dist, count) ->
+        println("${dist + 1}, ${"%.2f".format(100.0 * count / sum)}")
+      }; println()
+    }
+  }
 
 /*
 Insertion, Frequency, Deletion     , Frequency, Substitution            , Frequency
@@ -325,15 +436,35 @@ fun contextualRepair() {
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
     val samplerTimeout = 10000L
     var (total, valid) = 0 to 0
+
+    // 1 core results:
+    //Found length-1 fix in 87.208375ms after 1720 total and 11 valid samples (19 samples/ms)
+    //Average time to find human fix: ~709ms (71 trials, 16 expired after 10000ms)
+    //Average samples before matched: ~14864
+    //Average repair throughput / ms: ~20
+    //Average valid repairs detected: ~54
+    // 8 core results:
+    //Found length-1 fix in 59.953584ms after 5288 total and 13 valid samples (88 samples/ms)
+    //Average time to find human fix: ~814ms (71 trials, 7 expired after 10000ms)
+    //Average samples before matched: ~80673
+    //Average repair throughput / ms: ~55
+    //Average valid repairs detected: ~82
+    ForkJoinPool(8).submit {
       generateSequence { brokeTksInt }
-     .asStream().parallel() // Measure latency with and without parallelism
-      .map {
-        try { it.sampleEditTrajectory(contextCSV, initREAs) }
-        catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf() }
-      }.takeWhile {
-        it != minFixTksInt
-        && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-      }.forEach { total++; if (it.drop(1).dropLast(1).isValidPython()) valid++ }
+        .asStream().parallel() // Measure latency with and without parallelism
+        .map {
+          try {
+            it.sampleEditTrajectory(contextCSV, initREAs)
+          } catch (e: Exception) {
+            println(brokeTks); e.printStackTrace(); listOf()
+          }
+        }.takeWhile {
+          it != minFixTksInt
+            && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
+        }.forEach {
+          total++; if (it.drop(1).dropLast(1).isValidPython()) valid++
+        }
+    }.get()
 
     val sampleSize = total to valid.coerceAtLeast(1)
 
@@ -422,7 +553,7 @@ fun List<Int>.sampleEditTrajectory(
     ceaDist.relevantEditActions(acc)
       .also {
         if (it.isEmpty()) {
-          println("$i-th iteration, no relevant edit actions for: ${acc.map { it.toPyRuleName() }.joinToString(" ")}")
+          println("$i-th iteration, no relevant edit actions for: ${acc.joinToString(" "){ it.toPyRuleName() }}")
           return@foldIndexed acc
         }
 //        else println("Relevant edit actions: ${it}")

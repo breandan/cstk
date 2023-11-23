@@ -421,3 +421,18 @@ fun Σᐩ.isANontrivialStatementWithBalancedBrackets(
 ) = statementCriteria() && parensAndDepth.let { (p, d) -> p == 0 && depth < d }
 
 fun Σᐩ.isBracket() = length == 1 && this in COMMON_BRACKETS
+
+val p: (Char) -> Complex = { c ->
+  val a = ".LO,KIMJUNHYBGTVFRCDEXSWZAQ".indexOf(c)
+  Complex((a % 3) * 4.0, a - a.toDouble() / 3)
+}
+
+fun qwertyFingerTravelDist(x: Char, y: Char) =
+  (p(x) - p(y)).abs() * 4.76
+
+data class Complex(val real: Double, val imaginary: Double) {
+  operator fun minus(other: Complex) =
+    Complex(real - other.real, imaginary - other.imaginary)
+
+  fun abs() = Math.sqrt(real * real + imaginary * imaginary)
+}
