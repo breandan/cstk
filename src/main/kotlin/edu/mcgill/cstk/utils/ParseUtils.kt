@@ -76,13 +76,15 @@ fun List<Int>.getIndexOfFirstPythonError(): Int {
 
 @JvmName("isValidPyLStr")
 fun List<Σᐩ>.isValidPython(): Boolean =
-  map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }
-    .let { if(it.last() != 39) it + 39 else it }
-    .isValidPython()
+  if (isNotEmpty()) map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }
+    .let { if (it.last() != 39) it + 39 else it }
+    .isValidPython() else false
 
 @JvmName("isValidPyLInt")
 fun List<Int>.isValidPython(): Boolean {
-  val tokenSource = ListTokenSource(map { CommonToken(it) })
+  if (isEmpty()) return false
+  val withNewline = let { if (it.last() != 39) it + 39 else it }
+  val tokenSource = ListTokenSource(withNewline.map { CommonToken(it) })
   val tokens = CommonTokenStream(tokenSource)
   val listener = ErrorListener()
 
@@ -95,8 +97,20 @@ fun List<Int>.isValidPython(): Boolean {
   } catch (e: Exception) { false }
 }
 
+val PYMAP = Python3Lexer.VOCABULARY.let {  v ->
+  (0..v.maxTokenType).associateBy { v.getDisplayName(it) }
+}
+
+fun Σᐩ.lexAsPythonIntType(trimmed: Σᐩ = trim()) =
+  when (trimmed) {
+    "START" -> Int.MIN_VALUE
+    "END" -> Int.MAX_VALUE
+    "" -> -1
+    else -> PYMAP[trimmed] ?: trimmed.toInt()
+  }
+
 fun Σᐩ.lexToIntTypesAsPython(
-  lexer: Lexer = Python3Lexer(CharStreams.fromString(this + "\n"))
+  lexer: Lexer = Python3Lexer(CharStreams.fromString(this))
 ) = lexer.allTokens.map { it.type }
 
 val pythonVocabBindex: Bindex<Σᐩ> =
@@ -119,6 +133,11 @@ fun Σᐩ.lexAsPython(): Python3Lexer =
 
 fun Σᐩ.lexAsJava(): Java8Lexer =
   Java8Lexer(CharStreams.fromStream(byteInputStream()))
+
+fun Int.toPyRuleName(): String =
+  if (this == Int.MIN_VALUE) "START"
+  else if (this == Int.MAX_VALUE) "END"
+  else Python3Lexer.VOCABULARY.getDisplayName(this)
 
 //val KOTLIN_LEXER = KotlinLexer()
 //fun String.lexAsKotlin(): List<String> =

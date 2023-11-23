@@ -4,7 +4,8 @@ import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
-import kotlin.streams.*
+import kotlin.random.Random
+import kotlin.streams.asStream
 import kotlin.time.TimeSource
 
 /*
@@ -285,10 +286,11 @@ fun Patch.srn(i: Int): String = scan(i, true) { new }!!
 fun Patch.slo(i: Int): String = scan(i, false) { old }!!
 fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
-//Found length-2 fix in 761.688750ms after 6362 total and 8 valid samples
-//Average time to find human fix: ~831ms (78 trials, 14 expired after 5000ms)
-//Average samples before finding: ~20272
-//Average number of valid repair: ~144
+//Found length-3 fix in 50.966458ms after 146 total and 1 valid samples (2 samples/ms)
+//Average time to find human fix: ~347ms (44 trials, 4 expired after 10000ms)
+//Average samples before matched: ~29838
+//Average repair throughput / ms: ~48
+//Average valid repairs detected: ~50
 
 fun contextualRepair() {
   var averageTime = 0
@@ -296,67 +298,93 @@ fun contextualRepair() {
   var totSmplSize = 0
   var valSmplSize = 0
   var expiredSize = 0
+  var avrgThruput = 0
   val contextCSV = File("context_edits.csv").readTrigramStats()
   preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
     val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
     val minFixTks = listOf("START") + minFix.lexToStrTypesAsPython() + "END"
-    val patchSize =  extractPatch(brokeTks, minFixTks).changedIndices().size
+//    val brokeTksInt = listOf(Int.MIN_VALUE) + broke.lexToIntTypesAsPython() + Int.MAX_VALUE
+    val minFixTksItt = listOf(Int.MIN_VALUE) + minFix.lexToIntTypesAsPython() + Int.MAX_VALUE
+    val brokeTksInt = brokeTks.map { it.lexAsPythonIntType() }
+    val minFixTksInt = minFixTks.map { it.lexAsPythonIntType() }
+
+    val patchSize = extractPatch(brokeTks, minFixTks).changedIndices().size
     val startTime = TimeSource.Monotonic.markNow()
 
-    val initREA = brokeTks.relevantEditActions(contextCSV)
-    val samplerTimeout = 5000L
-    val sampleSize =
-      generateSequence { brokeTks }.asStream()
-      .parallel() // Measure latency with and without parallelism
-      .map {
-        try { brokeTks.sampleEditTrajectory(contextCSV, initREA) }
-        catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf() }
-      }
-      .takeWhile { it != minFixTks
-        && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-      }
-      .map { Triple(it, 1, if (it.drop(1).dropLast(1).isValidPython()) 1 else 0) }
-      .asSequence().fold(0 to 0) { (total, valid), (_, t, v) -> total + t to valid + v }
+    val clr = minFixTksInt.drop(1).dropLast(1)
+    if (!clr.isValidPython()) {
+      println()
+      println("Invalid Python: ${clr.joinToString(" ")}")
+      println("Invalid Python: ${minFixTksItt.drop(1).dropLast(1).joinToString(" ")}")
+      println("Invalid Python: ${minFixTks.joinToString(" ")}")
+      println()
+      return@forEach
+    }
 
-    if (startTime.elapsedNow().inWholeMilliseconds < samplerTimeout) {
-      averageTime += startTime.elapsedNow().inWholeMilliseconds.toInt()
+    val initREAs: List<CEAProb> = contextCSV.relevantEditActions(brokeTksInt)
+//    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
+    val samplerTimeout = 10000L
+    var (total, valid) = 0 to 0
+      generateSequence { brokeTksInt }
+     .asStream().parallel() // Measure latency with and without parallelism
+      .map {
+        try { it.sampleEditTrajectory(contextCSV, initREAs) }
+        catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf() }
+      }.takeWhile {
+        it != minFixTksInt
+        && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
+      }.forEach { total++; if (it.drop(1).dropLast(1).isValidPython()) valid++ }
+
+    val sampleSize = total to valid.coerceAtLeast(1)
+
+    val elapsedTime = startTime.elapsedNow().inWholeMilliseconds.toInt()
+    val throughput = sampleSize.first / (elapsedTime + 1)
+    if (elapsedTime < samplerTimeout) {
+      averageTime += elapsedTime
       totSmplSize += sampleSize.first
       valSmplSize += sampleSize.second
+      avrgThruput += throughput
       totalTrials++
 
       println("""
-        Found length-${patchSize} fix in ${startTime.elapsedNow()} after ${sampleSize.first} total and ${sampleSize.second} valid samples
+        Found length-${patchSize} fix in ${startTime.elapsedNow()} after ${sampleSize.first} total and ${sampleSize.second} valid samples (${throughput} samples/ms)
         Average time to find human fix: ~${averageTime / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
         Average samples before matched: ~${totSmplSize / totalTrials}
+        Average repair throughput / ms: ~${avrgThruput / totalTrials}
         Average valid repairs detected: ~${valSmplSize / totalTrials}
       """.trimIndent())
-    } else
-      println("""
-        Sampling timeout expired after $sampleSize (total, valid) samples, ground truth repair was:
-        ${brokeTks.joinToString(" ")}
-        ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
-      """.trimIndent()).also { expiredSize += 1 }
+    } else println("""
+      Sampling timeout expired after $sampleSize (total, valid) samples, ground truth repair was $patchSize edits:
+      ${brokeTks.joinToString(" ")}
+      ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
+      ${brokeTksInt.joinToString(" ")}
+      ${prettyDiffNoFrills(brokeTksInt.joinToString(" "), minFixTksInt.joinToString(" "))}
+    """.trimIndent()).also { expiredSize += 1 }
 
     println("\n\n")
   }
 }
 
 enum class EditType { INS, DEL, SUB }
-data class ContextEdit(val type: EditType, val context: Context, val newMid: Σᐩ) {
-  override fun toString(): String =
-    when (type) {
-      EditType.INS -> context.run { "$left [$newMid] $right" }
-      EditType.DEL -> context.run { "$left ~$mid~ $right" }
-      EditType.SUB -> context.run { "$left [$mid -> $newMid] $right" }
-    }
+data class ContextEdit(val type: EditType, val context: Context, val newMid: Int) {
+  override fun toString(): String = context.run {
+    "$type, ((" + when (type) {
+      EditType.INS -> "${left.toPyRuleName()} [${newMid.toPyRuleName()}] ${right.toPyRuleName()}"
+      EditType.DEL -> "${left.toPyRuleName()} ~${mid.toPyRuleName()}~ ${right.toPyRuleName()}"
+      EditType.SUB -> "${left.toPyRuleName()} [${mid.toPyRuleName()} -> ${newMid.toPyRuleName()}] ${right.toPyRuleName()}"
+    } + " // " + when (type) {
+      EditType.INS -> "$left [${newMid}] $right"
+      EditType.DEL -> "$left ~${mid}~ $right"
+      EditType.SUB -> "$left [${mid} -> ${newMid}] $right"
+    } + "))"
+  }
 }
 data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
   override fun toString(): String = "[[$cea, $idx, $frequency]]"
 }
-data class Context(val left: String, val mid: String, val right: String) {
-  private val hash = left.hashCode() + mid.hashCode() + right.hashCode()
-  override fun hashCode(): Int = hash
-  override fun equals(other: Any?) = (other as? Context)?.hash == hash
+data class Context(val left: Int, val mid: Int, val right: Int) {
+  constructor(left: String, mid: String, right: String) :
+    this(left.lexAsPythonIntType(), mid.lexAsPythonIntType(), right.lexAsPythonIntType())
 }
 data class CEADist(val allProbs: Map<ContextEdit, Int>) {
   val P_delSub = allProbs.filter { it.key.type != EditType.INS }
@@ -367,44 +395,54 @@ data class CEADist(val allProbs: Map<ContextEdit, Int>) {
 
 fun File.readTrigramStats(): CEADist =
   readLines().drop(1).map { it.split(", ") }.associate {
-    ContextEdit(
+    (ContextEdit(
       type = EditType.valueOf(it[0].trim()),
-      context = Context(it[1].trim(), it[2].trim(), it[3].trim()),
-      newMid = it[4].trim()
+      context = Context(it[1], it[2], it[3]),
+      newMid = it[4].lexAsPythonIntType()
+    )
+      .also { t -> println(it.joinToString(", ") + " :: $t") }
     ) to it[5].trim().toInt()
   }.let { CEADist(it) }
 
-fun List<Σᐩ>.sampleEditTrajectory(
+fun List<Int>.sampleEditTrajectory(
   ceaDist: CEADist,
-  initREA: List<CEAProb>,
-  lengthDist: List<Double> = listOf(0.5, 0.3, 0.2)
-): List<Σᐩ> {
+  initREAs: List<CEAProb>,
+  lengthCDF: List<Double> = listOf(0.5, 0.8, 1.0)
+): List<Int> {
   // First sample the length of the edit trajectory from the length distribution
-  val sample = Math.random()
-  var sum = 0.0
-  var length = 0
-  for (i in lengthDist.indices) {
-    sum += lengthDist[i]
-    if (sum > sample) { length = i + 1; break }
-  }
+  val rand = Math.random()
+  val length = lengthCDF.indexOfFirst { rand < it } + 1
 
+  if (initREAs.isEmpty()) return this
   // Now sample an edit trajectory of that length from the edit distribution
   val firstEdit =
-    initREA.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
+    initREAs.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
 
-  return (1..length).fold (firstEdit) { acc, _ ->
-//    println("Start apply: $acc")
-    acc.relevantEditActions(ceaDist)
-//      .also { println("Relevant edit actions: ${it}") }
+  return (1..length).foldIndexed(firstEdit) { i, acc, _ ->
+    ceaDist.relevantEditActions(acc)
+      .also {
+        if (it.isEmpty()) {
+          println("$i-th iteration, no relevant edit actions for: ${acc.map { it.toPyRuleName() }.joinToString(" ")}")
+          return@foldIndexed acc
+        }
+//        else println("Relevant edit actions: ${it}")
+      }
       .normalizeAndSample()
-//      .also { println("Sampled: $it") }
+//      .also { println("Sampled edit action: $it") }
       .let { acc.applyEditAction(it.cea, it.idx + 1) }
-//      .also { println("After apply: $it") }
+//      .also {
+//        println("""
+//          Sampled length-$length edit, diff:
+//          Before: ${joinToString(" ")}
+//          After:  ${prettyDiffNoFrills(joinToString(" "), it.joinToString(" "))}
+//        """.trimIndent())
+//      }
   }
 }
 
-fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }.coerceAtLeast(0)): CEAProb {
-  val sample = (0 until total).random()
+fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAProb {
+  if (total <= 0) throw IllegalArgumentException("Total frequency must be positive!\n$this")
+  val sample = Random.nextInt(total)
   var sum = 0
   for (i in indices) {
     sum += this[i].frequency
@@ -413,17 +451,18 @@ fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }.coerceA
   return last()
 }
 
-fun List<Σᐩ>.relevantEditActions(ceaDist: CEADist): List<CEAProb> =
-  ceaDist.run {
-    windowed(3).map { Context(it[0], it[1], it[2]) }.mapIndexed { idx, ctx ->
-      (P_insertOnCtx[Context(ctx.left, "", ctx.mid)] ?: listOf()).map { CEAProb(it, idx, P_insert[it]!!) } +
-        (if (idx + 3 != size) listOf() else (P_insertOnCtx[Context(ctx.mid, "", ctx.right)] ?: listOf())
-          .map { CEAProb(it, idx + 1, P_insert[it]!!) }) +
-      (P_delSubOnCtx[ctx] ?: listOf()).map { CEAProb(it, idx, P_delSub[it]!!) }
+fun CEADist.relevantEditActions(snippet: List<Int>): List<CEAProb> =
+  snippet.windowed(3)
+    .map { Context(it[0], it[1], it[2]) }
+    .mapIndexed { idx, ctx ->
+      ((P_insertOnCtx[Context(ctx.left, -1, ctx.mid)] ?: listOf()) +
+        (P_insertOnCtx[Context(ctx.mid, -1, ctx.right)] ?: listOf()))
+        .map { CEAProb(it, idx, P_insert[it]!!) } +
+      (P_delSubOnCtx[ctx] ?: listOf())
+        .map { CEAProb(it, idx, P_delSub[it]!!) }
     }.flatten()
-  }
 
-fun List<Σᐩ>.applyEditAction(cea: ContextEdit, idx: Int): List<Σᐩ> =
+fun List<Int>.applyEditAction(cea: ContextEdit, idx: Int): List<Int> =
   when (cea.type) {
     EditType.INS -> take(idx) + cea.newMid + drop(idx)
     EditType.DEL -> take(idx) + drop(idx + 1)
@@ -464,18 +503,14 @@ fun String.reformatCSVIntoPrettyColumns(): String {
 
   // Find the max length of each column
   val maxLengths = IntArray(linesByColumns[0].size) { 0 }
-  for (columns in linesByColumns) {
-    for ((index, column) in columns.withIndex()) {
+  for (columns in linesByColumns)
+    for ((index, column) in columns.withIndex())
       maxLengths[index] = maxOf(maxLengths[index], column.trim().length)
-    }
-  }
 
   // Pad each element in the columns
-  for (columns in linesByColumns) {
-    for ((index, column) in columns.withIndex()) {
+  for (columns in linesByColumns)
+    for ((index, column) in columns.withIndex())
       columns[index] = column.trim().padEnd(maxLengths[index], ' ')
-    }
-  }
 
   // Reassemble the lines and then the entire string
   return linesByColumns.joinToString("\n") { it.joinToString(" , ") }
