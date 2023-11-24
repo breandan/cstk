@@ -24,8 +24,21 @@ fun main() {
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
 //  totalCharacterEditDistance()
-  contextualRepair()
+  mostCommonSubstitutions()
+//  contextualRepair()
 }
+
+fun mostCommonSubstitutions() =
+  File("context_edits.csv").readTrigramStats()
+    .allProbs.map { it }.filter { it.key.type == EditType.SUB }
+    .filter { it.key.context.mid.toPyRuleName().contains('\'') }
+    .filter { it.key.newMid.toPyRuleName().contains('\'') }
+    .map { Triple(it.value, it.key.context.mid, it.key.newMid) }
+    .groupBy { it.second to it.third }.mapValues { it.value.sumOf { it.first } }
+    .entries.sortedByDescending { it.value }
+    .joinToString("\n") { (pair, freq) ->
+      "$freq, ${pair.first.toPyRuleName()}, ${pair.second.toPyRuleName()}" }
+    .also { println(("freq, before, after\n$it").reformatCSVIntoPrettyColumns()) }
 
 fun readBIFI() =
   readBIFIContents().take(100_000)
@@ -136,34 +149,24 @@ fun computeErrorSizeFreq() =
       .also { println("Number of edits, Frequency\n$it") }
 
 // Approximate location of edits normalized by snippet length
-//0%, 7%
-//5%, 3%
-//10%, 2%
-//15%, 2%
-//20%, 2%
-//25%, 3%
-//30%, 3%
-//35%, 2%
-//40%, 3%
-//45%, 2%
-//50%, 4%
-//55%, 3%
-//60%, 3%
-//65%, 3%
-//70%, 3%
-//75%, 4%
-//80%, 5%
-//85%, 7%
-//90%, 11%
-//95%, 18%
+//10%, 11.6539%
+//20%, 5.7252%
+//30%, 6.2087%
+//40%, 5.9542%
+//50%, 5.5980%
+//60%, 7.9389%
+//70%, 7.0738%
+//80%, 6.9466%
+//90%, 12.4173%
+//100%, 30.4835%
 fun computeEditLocationFrequency() =
-  preprocessStackOverflow().runningFold(List(20) { 0 }.toMutableList()) { hist, (b, h, m) ->
+  preprocessStackOverflow().runningFold(List(10) { 0 }.toMutableList()) { hist, (b, h, m) ->
     val brokeLex = b.lexToStrTypesAsPython()
     val minfixLex = m.lexToStrTypesAsPython()
     val minpatch = extractPatch(brokeLex, minfixLex)
 //    println(prettyDiffs(listOf(brokeLex.joinToString(" "), minfixLex.joinToString(" ")), listOf("broken", "minimized fix")))
     minpatch.changedIndices()
-      .map { ((100.0 * it / minfixLex.size) / 5).toInt().coerceAtMost(19) }
+      .map { ((100.0 * it / minfixLex.size) / 10).toInt().coerceAtMost(9) }
       .forEach { hist[it]++ }
 
     hist
@@ -171,7 +174,7 @@ fun computeEditLocationFrequency() =
     if (i % 10 == 0) {
       val sum = rawCounts.sum()
       rawCounts.forEachIndexed { i, it ->
-        println("${i * 5}%, ${"%.4f".format(100.0 * it / sum)}")
+        println("${(i + 1) * 10}%, ${"%.4f".format(100.0 * it / sum)}%")
       }; println()
     }
   }
@@ -211,7 +214,7 @@ fun computeRelativeIntraEditDistance() =
     if (i % 10 == 0) {
       val sum = rawCounts.values.sum()
       rawCounts.toList().sortedBy { it.first }.forEach { (dist, count) ->
-        println("${dist}, ${"%.2f".format(100.0 * count / sum)}")
+        println("${dist}, ${"%.2f".format(100.0 * count / sum)}%")
       }; println()
     }
   }
@@ -236,7 +239,7 @@ fun totalCharacterEditDistance() =
     if (i % 10 == 0) {
       val sum = rawCounts.values.sum()
       rawCounts.toList().sortedBy { it.first }.forEach { (dist, count) ->
-        println("${dist + 1}, ${"%.2f".format(100.0 * count / sum)}")
+        println("${dist + 1}, ${"%.2f".format(100.0 * count / sum)}%")
       }; println()
     }
   }

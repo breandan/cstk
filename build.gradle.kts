@@ -1,8 +1,8 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "1.9.20"
-  id("com.github.ben-manes.versions") version "0.49.0"
+  kotlin("jvm") version "2.0.0-Beta1"
+  id("com.github.ben-manes.versions") version "0.50.0"
   id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.8.3"
+  val openrwVersion = "8.9.8"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -83,19 +83,19 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.317")
+  implementation("org.kohsuke:github-api:1.318")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.2")
+  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.3")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.1.0")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.4.3")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.5.0")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.24.0")
+  implementation("org.apache.commons:commons-compress:1.25.0")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.7.2996"
+  val ortoolsVersion = "9.8.3296"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -152,7 +152,7 @@ dependencies {
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.2")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.5.1")
