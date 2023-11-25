@@ -381,7 +381,7 @@ fun pythonErrorLocations(coarseBrokeTks: List<Int>): List<Int> =
 // Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
 fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
-  fixedSnippets: Sequence<String> = readContents("parse_fixes.json")
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
   brokeSnippets.zip(fixedSnippets)
     .filter { (broke, fixed) ->

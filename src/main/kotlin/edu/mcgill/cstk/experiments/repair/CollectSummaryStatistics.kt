@@ -4,7 +4,6 @@ import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
-import java.util.concurrent.ForkJoinPool
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.streams.asStream
@@ -20,12 +19,12 @@ fun main() {
 //  computeErrorSizeFreq()
 //  computePatchStats()
 //  computePatchTrigramStats()
-//  readBIFI()
+//  readBIFI().toList()
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
 //  totalCharacterEditDistance()
-  mostCommonSubstitutions()
-//  contextualRepair()
+//  mostCommonSubstitutions()
+  contextualRepair()
 }
 
 fun mostCommonSubstitutions() =
@@ -39,11 +38,6 @@ fun mostCommonSubstitutions() =
     .joinToString("\n") { (pair, freq) ->
       "$freq, ${pair.first.toPyRuleName()}, ${pair.second.toPyRuleName()}" }
     .also { println(("freq, before, after\n$it").reformatCSVIntoPrettyColumns()) }
-
-fun readBIFI() =
-  readBIFIContents().take(100_000)
-    .map { "\n$it\n".lexToStrTypesAsPython().let { listOf("BOS") + it + "EOS" } }
-    .forEach { println(it.joinToString(" ")) }
 
 /*
 Percentage of snippets with lexical token length <= n
@@ -413,17 +407,16 @@ fun contextualRepair() {
   var valSmplSize = 0
   var expiredSize = 0
   var avrgThruput = 0
-  val contextCSV = File("context_edits.csv").readTrigramStats()
-  preprocessStackOverflow().take(1000).forEach { (broke, humFix, minFix) ->
-    val brokeTks = listOf("START") + broke.lexToStrTypesAsPython() + "END"
-    val minFixTks = listOf("START") + minFix.lexToStrTypesAsPython() + "END"
+//  readGoodBIFIAndCorrupt().take(1000).forEach { (broke, minFix) ->
+  readSeq2ParseAndTokenize().take(1000).forEach { (broke, _, minFix) ->
+    val brokeTks = listOf("START") + broke.tokenizeByWhitespace() + "END"
+    val minFixTks = listOf("START") + minFix.tokenizeByWhitespace() + "END"
 //    val brokeTksInt = listOf(Int.MIN_VALUE) + broke.lexToIntTypesAsPython() + Int.MAX_VALUE
     val minFixTksItt = listOf(Int.MIN_VALUE) + minFix.lexToIntTypesAsPython() + Int.MAX_VALUE
-    val brokeTksInt = brokeTks.map { it.lexAsPythonIntType() }
-    val minFixTksInt = minFixTks.map { it.lexAsPythonIntType() }
+    val brokeTksInt = brokeTks.map { it.toPythonIntType() }
+    val minFixTksInt = minFixTks.map { it.toPythonIntType() }
 
     val patchSize = extractPatch(brokeTks, minFixTks).changedIndices().size
-    val startTime = TimeSource.Monotonic.markNow()
 
     val clr = minFixTksInt.drop(1).dropLast(1)
     if (!clr.isValidPython()) {
@@ -434,6 +427,10 @@ fun contextualRepair() {
       println()
       return@forEach
     }
+
+    println("Repairing: ${brokeTks.joinToString(" ")}")
+
+    val startTime = TimeSource.Monotonic.markNow()
 
     val initREAs: List<CEAProb> = contextCSV.relevantEditActions(brokeTksInt)
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
@@ -452,22 +449,20 @@ fun contextualRepair() {
     //Average samples before matched: ~80673
     //Average repair throughput / ms: ~55
     //Average valid repairs detected: ~82
-    ForkJoinPool(8).submit {
-      generateSequence { brokeTksInt }
-        .asStream().parallel() // Measure latency with and without parallelism
-        .map {
-          try {
-            it.sampleEditTrajectory(contextCSV, initREAs)
-          } catch (e: Exception) {
-            println(brokeTks); e.printStackTrace(); listOf()
-          }
-        }.takeWhile {
-          it != minFixTksInt
-            && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-        }.forEach {
-          total++; if (it.drop(1).dropLast(1).isValidPython()) valid++
+    generateSequence { brokeTksInt }
+      .asStream().parallel() // Measure latency with and without parallelism
+      .map {
+        try {
+          it.sampleEditTrajectory(contextCSV, initREAs)
+        } catch (e: Exception) {
+          println(brokeTks); e.printStackTrace(); listOf()
         }
-    }.get()
+      }.takeWhile {
+        it != minFixTksInt
+          && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
+      }.forEach {
+        total++; if (it.drop(1).dropLast(1).isValidPython()) valid++
+      }
 
     val sampleSize = total to valid.coerceAtLeast(1)
 
@@ -499,6 +494,8 @@ fun contextualRepair() {
   }
 }
 
+val contextCSV by lazy { File("context_edits.csv").readTrigramStats() }
+
 enum class EditType { INS, DEL, SUB }
 data class ContextEdit(val type: EditType, val context: Context, val newMid: Int) {
   override fun toString(): String = context.run {
@@ -518,8 +515,16 @@ data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
 }
 data class Context(val left: Int, val mid: Int, val right: Int) {
   constructor(left: String, mid: String, right: String) :
-    this(left.lexAsPythonIntType(), mid.lexAsPythonIntType(), right.lexAsPythonIntType())
+    this(left.toPythonIntType(), mid.toPythonIntType(), right.toPythonIntType())
+
+  override fun hashCode(): Int {
+    var result = left.hashCode()
+    result = 31 * result + mid.hashCode()
+    result = 31 * result + right.hashCode()
+    return result
+  }
 }
+
 data class CEADist(val allProbs: Map<ContextEdit, Int>) {
   val P_delSub = allProbs.filter { it.key.type != EditType.INS }
   val P_insert = allProbs.filter { it.key.type == EditType.INS }
@@ -532,7 +537,7 @@ fun File.readTrigramStats(): CEADist =
     (ContextEdit(
       type = EditType.valueOf(it[0].trim()),
       context = Context(it[1], it[2], it[3]),
-      newMid = it[4].lexAsPythonIntType()
+      newMid = it[4].toPythonIntType()
     )
       .also { t -> println(it.joinToString(", ") + " :: $t") }
     ) to it[5].trim().toInt()
@@ -553,7 +558,7 @@ fun List<Int>.sampleEditTrajectory(
     initREAs.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
 
   return (1..length).foldIndexed(firstEdit) { i, acc, _ ->
-    ceaDist.relevantEditActions(acc)
+    ceaDist.relevantEditActions(acc) // 821,071ms@6m, ~85% of sampleEditTrajectory
       .also {
         if (it.isEmpty()) {
           println("$i-th iteration, no relevant edit actions for: ${acc.joinToString(" "){ it.toPyRuleName() }}")
@@ -585,16 +590,21 @@ fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAPr
   return last()
 }
 
+//Found length-3 fix in 1.289318375s after 103328 total and 1 valid samples (80 samples/ms)
+//Average time to find human fix: ~629ms (74 trials, 12 expired after 10000ms)
+//Average samples before matched: ~62480
+//Average repair throughput / ms: ~58
+//Average valid repairs detected: ~52
+
 fun CEADist.relevantEditActions(snippet: List<Int>): List<CEAProb> =
-  snippet.windowed(3)
-    .map { Context(it[0], it[1], it[2]) }
-    .mapIndexed { idx, ctx ->
-      ((P_insertOnCtx[Context(ctx.left, -1, ctx.mid)] ?: listOf()) +
-        (P_insertOnCtx[Context(ctx.mid, -1, ctx.right)] ?: listOf()))
-        .map { CEAProb(it, idx, P_insert[it]!!) } +
-      (P_delSubOnCtx[ctx] ?: listOf())
-        .map { CEAProb(it, idx, P_delSub[it]!!) }
-    }.flatten()
+  snippet.windowed(3)                                             // 39,158ms@6m
+    .mapIndexed { idx, ctx ->                                          // 663,558ms
+      ((P_insertOnCtx[Context(ctx[0], -1, ctx[1])] ?: listOf()) + // 256,676ms
+        (P_insertOnCtx[Context(ctx[1], -1, ctx[2])] ?: listOf())) // 111,319ms
+        .map { CEAProb(it, idx, P_insert[it]!!) } +                    // 112,398ms
+      (P_delSubOnCtx[Context(ctx[0], ctx[1], ctx[2])] ?: listOf())     // 182ms
+        .map { CEAProb(it, idx, P_delSub[it]!!) }                      // 11,855ms
+    }.flatten()                                                        // 117,924ms
 
 fun List<Int>.applyEditAction(cea: ContextEdit, idx: Int): List<Int> =
   when (cea.type) {
@@ -602,6 +612,32 @@ fun List<Int>.applyEditAction(cea: ContextEdit, idx: Int): List<Int> =
     EditType.DEL -> take(idx) + drop(idx + 1)
     EditType.SUB -> take(idx) + cea.newMid + drop(idx + 1)
   }//.also { println("Start:$this\n${cea.type}/${cea.context}/${cea.newMid}/${idx}\nAfter:$it") }
+
+fun readGoodBIFIAndCorrupt() =
+  readBIFIContents().take(100_000)
+    .map { "\n$it\n".lexToStrTypesAsPython().joinToString(" ") }
+    .map { it.syntheticallyCorrupt() to it }
+
+fun String.syntheticallyCorrupt(): String =
+  tokenizeByWhitespace().toMutableList().let { tokens ->
+    var corrupted = tokens.map { it.toPythonIntType() }
+
+    val initREAs = contextCSV.relevantEditActions(corrupted)
+    while (corrupted.isValidPython()) {
+      corrupted = corrupted.sampleEditTrajectory(contextCSV, initREAs)
+    }
+
+    corrupted.joinToString(" ") { it.toPyRuleName() }
+  }
+
+fun readSeq2ParseAndTokenize() =
+  preprocessStackOverflow().map { (a, b, c) ->
+    Triple(
+      a.lexToStrTypesAsPython().joinToString(" "),
+      b.lexToStrTypesAsPython().joinToString(" "),
+      c.lexToStrTypesAsPython().joinToString(" ")
+    )
+  }
 
 fun computePatchTrigramStats() =
   preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->

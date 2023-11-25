@@ -38,7 +38,9 @@ private fun selectionCriteria(it: String) =
   it.isANontrivialStatementWithBalancedBrackets(1, statementCriteria = { true })
 
 fun readBIFIContents(
-  filename: String = "bifi/data/orig_good_code/orig.good.json",
+  good: Boolean = true,
+  kind: String = if (good) "good" else "bad",
+  filename: String = "bifi/data/orig_${kind}_code/orig.${kind}.json",
   file: File = File(filename)
 ): Sequence<String> =
   file.readLines().asSequence()

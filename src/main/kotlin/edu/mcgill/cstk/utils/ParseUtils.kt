@@ -101,7 +101,7 @@ val PYMAP = Python3Lexer.VOCABULARY.let {  v ->
   (0..v.maxTokenType).associateBy { v.getDisplayName(it) }
 }
 
-fun Σᐩ.lexAsPythonIntType(trimmed: Σᐩ = trim()) =
+fun Σᐩ.toPythonIntType(trimmed: Σᐩ = trim()) =
   when (trimmed) {
     "START" -> Int.MIN_VALUE
     "END" -> Int.MAX_VALUE
