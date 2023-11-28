@@ -429,27 +429,34 @@ fun contextualRepair() {
     var (total, valid) = 0 to 0
     var firstValidFoundAfter = 0L
 
-    // Average time to find human fix: ~661ms (151 trials, 27 expired after 10000ms)
-    // Average time to find valid fix: ~338ms
-    // Average samples before matched: ~60122
-    // Average repair throughput / ms: ~57
-    // Average valid repairs detected: ~176
+    // Average time to find human fix: ~578ms (459 trials, 69 expired after 10000ms)
+    // Average time to find valid fix: ~326ms
+    // Average samples before matched: ~51650
+    // Average repair throughput / ms: ~55
+    // Average valid repairs detected: ~143
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency with and without parallelism
       .map {
         try {
-          it.sampleEditTrajectory(contextCSV, initREAs)
+            it.sampleEditTrajectory(contextCSV, initREAs)
         } catch (e: Exception) {
-          println(brokeTks); e.printStackTrace(); listOf()
+          println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf()
         }
-      }.takeWhile {
-        it != minFixTksInt
+      }.takeWhile { (finalSeq, edits) ->
+        finalSeq != minFixTksInt
           && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-      }.forEach {
+      }.forEach {  (finalSeq, edits) ->
         total++
-        if (it.drop(1).dropLast(1).isValidPython()) {
+
+        if (finalSeq.drop(1).dropLast(1).isValidPython()) {
+//          println("Valid fix: ${prettyDiffNoFrills(brokeTks.joinToString(" "),
+//                finalSeq.joinToString(" ") { it.toPyRuleName() })}")
           if (valid == 0 && firstValidFoundAfter == 0L)
             firstValidFoundAfter = startTime.elapsedNow().inWholeMilliseconds
+
+          // Adaptive sampler: increases probability of resampling edits
+          // that result in valid repairs by a linear factor (+10 here)
+          edits.forEach { it.frequency += 10 }
 
           valid++
         }
@@ -541,15 +548,18 @@ fun List<Int>.sampleEditTrajectory(
   ceaDist: CEADist,
   initREAs: List<CEAProb>,
   lengthCDF: List<Double> = listOf(0.5, 0.8, 1.0)
-): List<Int> {
+): Pair<List<Int>, List<CEAProb>> {
   // First sample the length of the edit trajectory from the length distribution
   val rand = Math.random()
   val length = lengthCDF.indexOfFirst { rand < it } + 1
 
-  if (initREAs.isEmpty()) return this
+  if (initREAs.isEmpty()) return this to listOf()
+  val ceaProbs = mutableListOf<CEAProb>()
   // Now sample an edit trajectory of that length from the edit distribution
   val firstEdit =
-    initREAs.normalizeAndSample().let { applyEditAction(it.cea, it.idx + 1) }
+    initREAs.normalizeAndSample()
+      .also { ceaProbs.add(it) }
+      .let { applyEditAction(it.cea, it.idx + 1) }
 
   return (1..length).foldIndexed(firstEdit) { i, acc, _ ->
     ceaDist.relevantEditActions(acc) // 821,071ms@6m, ~85% of sampleEditTrajectory
@@ -560,7 +570,7 @@ fun List<Int>.sampleEditTrajectory(
         }
 //        else println("Relevant edit actions: ${it}")
       }
-      .normalizeAndSample()
+      .normalizeAndSample().also { ceaProbs.add(it) }
 //      .also { println("Sampled edit action: $it") }
       .let { acc.applyEditAction(it.cea, it.idx + 1) }
 //      .also {
@@ -570,7 +580,7 @@ fun List<Int>.sampleEditTrajectory(
 //          After:  ${prettyDiffNoFrills(joinToString(" "), it.joinToString(" "))}
 //        """.trimIndent())
 //      }
-  }
+  } to ceaProbs
 }
 
 fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAProb {
@@ -618,7 +628,7 @@ fun String.syntheticallyCorrupt(): String =
 
     val initREAs = contextCSV.relevantEditActions(corrupted)
     while (corrupted.isValidPython()) {
-      corrupted = corrupted.sampleEditTrajectory(contextCSV, initREAs)
+      corrupted = corrupted.sampleEditTrajectory(contextCSV, initREAs).first
     }
 
     corrupted.joinToString(" ") { it.toPyRuleName() }
