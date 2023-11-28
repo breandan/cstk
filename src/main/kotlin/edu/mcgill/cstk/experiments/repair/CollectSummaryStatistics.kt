@@ -384,16 +384,6 @@ INS, NEWLINE [98] 'for', 20
 SUB, 98 ['break' -> NAME] NEWLINE, 20
 */
 
-fun Patch.scan(i: Int, direction: Boolean, age: Edit.() -> Σᐩ): Σᐩ? =
-  (if (direction) (i + 1 until size) else (i - 1 downTo 0))
-    .firstOrNull { this[it].age() != "" }?.let { this[it].age() }
-
-// Scan [l]eft/[r]ight for first non-empty [n]ew/[o]ld token
-fun Patch.sln(i: Int): String = scan(i, false) { new }!!
-fun Patch.srn(i: Int): String = scan(i, true) { new }!!
-fun Patch.slo(i: Int): String = scan(i, false) { old }!!
-fun Patch.sro(i: Int): String = scan(i, true) { old }!!
-
 //Found length-3 fix in 50.966458ms after 146 total and 1 valid samples (2 samples/ms)
 //Average time to find human fix: ~347ms (44 trials, 4 expired after 10000ms)
 //Average samples before matched: ~29838
@@ -401,12 +391,13 @@ fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 //Average valid repairs detected: ~50
 
 fun contextualRepair() {
-  var averageTime = 0
+  var avgHumFixMs = 0
   var totalTrials = 0
   var totSmplSize = 0
   var valSmplSize = 0
   var expiredSize = 0
   var avrgThruput = 0
+  var avgFVFindMs = 0
 //  readGoodBIFIAndCorrupt().take(1000).forEach { (broke, minFix) ->
   readSeq2ParseAndTokenize().take(1000).forEach { (broke, _, minFix) ->
     val brokeTks = listOf("START") + broke.tokenizeByWhitespace() + "END"
@@ -436,6 +427,7 @@ fun contextualRepair() {
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
     val samplerTimeout = 10000L
     var (total, valid) = 0 to 0
+    var firstValidFoundAfter = 0L
 
     // 1 core results:
     //Found length-1 fix in 87.208375ms after 1720 total and 11 valid samples (19 samples/ms)
@@ -461,36 +453,45 @@ fun contextualRepair() {
         it != minFixTksInt
           && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
       }.forEach {
-        total++; if (it.drop(1).dropLast(1).isValidPython()) valid++
+        total++
+        if (it.drop(1).dropLast(1).isValidPython()) {
+          if (valid == 0 && firstValidFoundAfter == 0L)
+            firstValidFoundAfter = startTime.elapsedNow().inWholeMilliseconds
+
+          valid++
+        }
       }
 
     val sampleSize = total to valid.coerceAtLeast(1)
 
     val elapsedTime = startTime.elapsedNow().inWholeMilliseconds.toInt()
     val throughput = sampleSize.first / (elapsedTime + 1)
+
     if (elapsedTime < samplerTimeout) {
-      averageTime += elapsedTime
+      avgHumFixMs += elapsedTime
       totSmplSize += sampleSize.first
       valSmplSize += sampleSize.second
       avrgThruput += throughput
+      avgFVFindMs += firstValidFoundAfter.toInt()
       totalTrials++
 
-      println("""
-        Found length-${patchSize} fix in ${startTime.elapsedNow()} after ${sampleSize.first} total and ${sampleSize.second} valid samples (${throughput} samples/ms)
-        Average time to find human fix: ~${averageTime / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
+      println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${sampleSize.first} total and ${sampleSize.second} valid samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms)
+        
+        Average time to find human fix: ~${avgHumFixMs / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
+        Average time to find valid fix: ~${avgFVFindMs / totalTrials}ms
         Average samples before matched: ~${totSmplSize / totalTrials}
         Average repair throughput / ms: ~${avrgThruput / totalTrials}
         Average valid repairs detected: ~${valSmplSize / totalTrials}
       """.trimIndent())
     } else println("""
-      Sampling timeout expired after $sampleSize (total, valid) samples, ground truth repair was $patchSize edits:
+      Sampling timeout expired after $sampleSize (total, valid) samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms), ground truth repair was $patchSize edits:
       ${brokeTks.joinToString(" ")}
       ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
       ${brokeTksInt.joinToString(" ")}
       ${prettyDiffNoFrills(brokeTksInt.joinToString(" "), minFixTksInt.joinToString(" "))}
     """.trimIndent()).also { expiredSize += 1 }
 
-    println("\n\n")
+    println()
   }
 }
 
@@ -510,7 +511,7 @@ data class ContextEdit(val type: EditType, val context: Context, val newMid: Int
     } + "))"
   }
 }
-data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
+data class CEAProb(val cea: ContextEdit, val idx: Int, var frequency: Int) {
   override fun toString(): String = "[[$cea, $idx, $frequency]]"
 }
 data class Context(val left: Int, val mid: Int, val right: Int) {
@@ -638,6 +639,16 @@ fun readSeq2ParseAndTokenize() =
       c.lexToStrTypesAsPython().joinToString(" ")
     )
   }
+
+fun Patch.scan(i: Int, direction: Boolean, age: Edit.() -> Σᐩ): Σᐩ? =
+  (if (direction) (i + 1 until size) else (i - 1 downTo 0))
+    .firstOrNull { this[it].age() != "" }?.let { this[it].age() }
+
+// Scan [l]eft/[r]ight for first non-empty [n]ew/[o]ld token
+fun Patch.sln(i: Int): String = scan(i, false) { new }!!
+fun Patch.srn(i: Int): String = scan(i, true) { new }!!
+fun Patch.slo(i: Int): String = scan(i, false) { old }!!
+fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
 fun computePatchTrigramStats() =
   preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
