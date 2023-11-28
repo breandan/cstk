@@ -429,18 +429,11 @@ fun contextualRepair() {
     var (total, valid) = 0 to 0
     var firstValidFoundAfter = 0L
 
-    // 1 core results:
-    //Found length-1 fix in 87.208375ms after 1720 total and 11 valid samples (19 samples/ms)
-    //Average time to find human fix: ~709ms (71 trials, 16 expired after 10000ms)
-    //Average samples before matched: ~14864
-    //Average repair throughput / ms: ~20
-    //Average valid repairs detected: ~54
-    // 8 core results:
-    //Found length-1 fix in 59.953584ms after 5288 total and 13 valid samples (88 samples/ms)
-    //Average time to find human fix: ~814ms (71 trials, 7 expired after 10000ms)
-    //Average samples before matched: ~80673
-    //Average repair throughput / ms: ~55
-    //Average valid repairs detected: ~82
+    // Average time to find human fix: ~661ms (151 trials, 27 expired after 10000ms)
+    // Average time to find valid fix: ~338ms
+    // Average samples before matched: ~60122
+    // Average repair throughput / ms: ~57
+    // Average valid repairs detected: ~176
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency with and without parallelism
       .map {
