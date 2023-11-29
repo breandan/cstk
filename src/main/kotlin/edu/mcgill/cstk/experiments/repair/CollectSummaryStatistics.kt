@@ -5,7 +5,7 @@ import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
-import kotlin.math.absoluteValue
+import kotlin.math.*
 import kotlin.random.Random
 import kotlin.streams.asStream
 import kotlin.time.TimeSource
@@ -402,8 +402,8 @@ fun contextualRepair() {
   val timingFile = File("repair_timings_${System.currentTimeMillis()}.csv")
     .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Throughput\n") }
 
-//  readGoodBIFIAndCorrupt().take(1000).forEach { (broke, minFix) ->
-  readSeq2ParseAndTokenize().take(1000).forEach { (broke, _, minFix) ->
+//  readGoodBIFIAndCorrupt().forEach { (broke, minFix) ->
+  readSeq2ParseAndTokenize().forEach { (broke, _, minFix) ->
     val brokeTks = listOf("START") + broke.tokenizeByWhitespace() + "END"
     val minFixTks = listOf("START") + minFix.tokenizeByWhitespace() + "END"
 //    val brokeTksInt = listOf(Int.MIN_VALUE) + broke.lexToIntTypesAsPython() + Int.MAX_VALUE
@@ -549,7 +549,8 @@ data class CEADist(val allProbs: Map<ContextEdit, Int>) {
   val P_insertOnCtx = P_insert.keys.groupBy { it.context }
 }
 
-fun File.readTrigramStats(): CEADist =
+// Divesity: lower is more diverse, higher is less diverse, 1.0 is natural frequencies
+fun File.readTrigramStats(diversity: Double = 0.8): CEADist =
   readLines().drop(1).map { it.split(", ") }.associate {
     (ContextEdit(
       type = EditType.valueOf(it[0].trim()),
@@ -557,7 +558,7 @@ fun File.readTrigramStats(): CEADist =
       newMid = it[4].toPythonIntType()
     )
       .also { t -> println(it.joinToString(", ") + " :: $t") }
-    ) to it[5].trim().toInt()
+    ) to it[5].trim().toDouble().pow(diversity).toInt().coerceAtLeast(1)
   }.let { CEADist(it) }
 
 fun List<Int>.sampleEditTrajectory(
@@ -574,31 +575,22 @@ fun List<Int>.sampleEditTrajectory(
   if (initREAs.isEmpty()) return this to listOf()
   val ceaProbs = mutableListOf<CEAProb>()
   // Now sample an edit trajectory of that length from the edit distribution
-  val firstEdit =
+  var listPrime =
     initREAs.normalizeAndSample(bonusProbs)
       .also { ceaProbs.add(it) }
       .let { applyEditAction(it.cea, it.idx + 1) }
 
-  return (1..length).foldIndexed(firstEdit) { i, acc, _ ->
-    ceaDist.relevantEditActions(acc) // 821,071ms@6m, ~85% of sampleEditTrajectory
-      .also {
-        if (it.isEmpty()) {
-          println("$i-th iteration, no relevant edit actions for: ${acc.joinToString(" "){ it.toPyRuleName() }}")
-          return@foldIndexed acc
-        }
-//        else println("Relevant edit actions: ${it}")
-      }
-      .normalizeAndSample(bonusProbs).also { ceaProbs.add(it) }
-//      .also { println("Sampled edit action: $it") }
-      .let { acc.applyEditAction(it.cea, it.idx + 1) }
-//      .also {
-//        println("""
-//          Sampled length-$length edit, diff:
-//          Before: ${joinToString(" ")}
-//          After:  ${prettyDiffNoFrills(joinToString(" "), it.joinToString(" "))}
-//        """.trimIndent())
-//      }
-  } to ceaProbs
+  for (i in 1..length) {
+    val relevantEditActions = ceaDist.relevantEditActions(listPrime)
+    if (relevantEditActions.isEmpty()) {
+      println("$i-th iteration, no relevant edit actions for: ${listPrime.joinToString(" "){ it.toPyRuleName() }}")
+      return listPrime to ceaProbs
+    }
+    val sampledEdit = relevantEditActions.normalizeAndSample(bonusProbs)
+      .also { ceaProbs.add(it) }
+    listPrime = listPrime.applyEditAction(sampledEdit.cea, sampledEdit.idx + 1)
+  }
+  return listPrime to ceaProbs
 }
 
 // Faster than the above
