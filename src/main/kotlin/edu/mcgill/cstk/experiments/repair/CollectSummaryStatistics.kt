@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.*
+import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import edu.mcgill.cstk.utils.Edit
 import java.io.File
@@ -55,7 +56,7 @@ Percentage of snippets with lexical token length <= n
 fun Sequence<List<String>>.computeLengthDistributionStats(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
 ) =
-    map { it.size }.take(10000).groupBy { it / 10 }.mapValues { it.value.size }
+  map { it.size }.take(10000).groupBy { it / 10 }.mapValues { it.value.size }
     .toList().sortedBy { it.first }.map { it.first * 10 to it.second }
     .runningFold(0 to 0) { (_, prevCount), (n, count) -> n to (prevCount + count) }
     .let { it.map { (n, count) -> n to count.toDouble() / it.last().second } }
@@ -424,67 +425,75 @@ fun contextualRepair() {
     val startTime = TimeSource.Monotonic.markNow()
 
     val initREAs: List<CEAProb> = contextCSV.relevantEditActions(brokeTksInt)
+    // Bonuses for previously sampled edits that produced a valid repair
+    val bonusProbs = AtomicLongMap.create<ContextEdit>()
+    val uniqRepairs = AtomicLongMap.create<List<Int>>()
+
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
     val samplerTimeout = 10000L
-    var (total, valid) = 0 to 0
+    var (total, uniqueValid) = 0 to 0
     var firstValidFoundAfter = 0L
 
-    // Average time to find human fix: ~578ms (459 trials, 69 expired after 10000ms)
-    // Average time to find valid fix: ~326ms
-    // Average samples before matched: ~51650
-    // Average repair throughput / ms: ~55
-    // Average valid repairs detected: ~143
+    // Average time to find human fix: ~665ms (870 trials, 121 expired after 10000ms)
+    // Average time to find valid fix: ~329ms
+    // Average samples before matched: ~67017
+    // Average repair throughput / ms: ~59
+    // Average # unique valid repairs: ~37
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency with and without parallelism
       .map {
-        try {
-            it.sampleEditTrajectory(contextCSV, initREAs)
-        } catch (e: Exception) {
+        try { it.sampleEditTrajectory(contextCSV, initREAs,
+          if (firstValidFoundAfter != 0L) bonusProbs else null) }
+        catch (e: Exception) {
           println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf()
         }
-      }.takeWhile { (finalSeq, edits) ->
+      }.takeWhile { (finalSeq, _) ->
         finalSeq != minFixTksInt
           && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
-      }.forEach {  (finalSeq, edits) ->
+      }.forEach { (finalSeq, edits) ->
         total++
 
         if (finalSeq.drop(1).dropLast(1).isValidPython()) {
 //          println("Valid fix: ${prettyDiffNoFrills(brokeTks.joinToString(" "),
 //                finalSeq.joinToString(" ") { it.toPyRuleName() })}")
-          if (valid == 0 && firstValidFoundAfter == 0L)
+          if (uniqueValid == 0 && firstValidFoundAfter == 0L)
             firstValidFoundAfter = startTime.elapsedNow().inWholeMilliseconds
 
-          // Adaptive sampler: increases probability of resampling edits
-          // that result in valid repairs by a linear factor (+10 here)
-          edits.forEach { it.frequency += 10 }
+          // Timings with adaptive sampling enabled:
 
-          valid++
+          // Adaptive sampler: increases probability of resampling edits
+          // that result in valid repairs
+          if (uniqRepairs.incrementAndGet(finalSeq) == 1L) {
+            edits.forEach { bonusProbs.incrementAndGet(it.cea) }
+
+            uniqueValid++
+          }
         }
       }
 
-    val sampleSize = total to valid.coerceAtLeast(1)
+    val repairCount = total to uniqueValid.coerceAtLeast(1)
 
     val elapsedTime = startTime.elapsedNow().inWholeMilliseconds.toInt()
-    val throughput = sampleSize.first / (elapsedTime + 1)
+    val throughput = repairCount.first / (elapsedTime + 1)
 
     if (elapsedTime < samplerTimeout) {
       avgHumFixMs += elapsedTime
-      totSmplSize += sampleSize.first
-      valSmplSize += sampleSize.second
+      totSmplSize += repairCount.first
+      valSmplSize += repairCount.second
       avrgThruput += throughput
       avgFVFindMs += firstValidFoundAfter.toInt()
       totalTrials++
 
-      println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${sampleSize.first} total and ${sampleSize.second} valid samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms)
+      println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${repairCount.first} total and ${repairCount.second} valid samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms)
         
         Average time to find human fix: ~${avgHumFixMs / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
         Average time to find valid fix: ~${avgFVFindMs / totalTrials}ms
         Average samples before matched: ~${totSmplSize / totalTrials}
         Average repair throughput / ms: ~${avrgThruput / totalTrials}
-        Average valid repairs detected: ~${valSmplSize / totalTrials}
+        Average # unique valid repairs: ~${valSmplSize / totalTrials}
       """.trimIndent())
     } else println("""
-      Sampling timeout expired after $sampleSize (total, valid) samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms), ground truth repair was $patchSize edits:
+      Sampling timeout expired after $repairCount (total, valid) samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms), ground truth repair was $patchSize edits:
       ${brokeTks.joinToString(" ")}
       ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
       ${brokeTksInt.joinToString(" ")}
@@ -511,7 +520,7 @@ data class ContextEdit(val type: EditType, val context: Context, val newMid: Int
     } + "))"
   }
 }
-data class CEAProb(val cea: ContextEdit, val idx: Int, var frequency: Int) {
+data class CEAProb(val cea: ContextEdit, val idx: Int, val frequency: Int) {
   override fun toString(): String = "[[$cea, $idx, $frequency]]"
 }
 data class Context(val left: Int, val mid: Int, val right: Int) {
@@ -547,6 +556,8 @@ fun File.readTrigramStats(): CEADist =
 fun List<Int>.sampleEditTrajectory(
   ceaDist: CEADist,
   initREAs: List<CEAProb>,
+  // Bonuses for previously sampled edits that produced a valid repair
+  bonusProbs: AtomicLongMap<ContextEdit>? = null,
   lengthCDF: List<Double> = listOf(0.5, 0.8, 1.0)
 ): Pair<List<Int>, List<CEAProb>> {
   // First sample the length of the edit trajectory from the length distribution
@@ -557,7 +568,7 @@ fun List<Int>.sampleEditTrajectory(
   val ceaProbs = mutableListOf<CEAProb>()
   // Now sample an edit trajectory of that length from the edit distribution
   val firstEdit =
-    initREAs.normalizeAndSample()
+    initREAs.normalizeAndSample(bonusProbs)
       .also { ceaProbs.add(it) }
       .let { applyEditAction(it.cea, it.idx + 1) }
 
@@ -570,7 +581,7 @@ fun List<Int>.sampleEditTrajectory(
         }
 //        else println("Relevant edit actions: ${it}")
       }
-      .normalizeAndSample().also { ceaProbs.add(it) }
+      .normalizeAndSample(bonusProbs).also { ceaProbs.add(it) }
 //      .also { println("Sampled edit action: $it") }
       .let { acc.applyEditAction(it.cea, it.idx + 1) }
 //      .also {
@@ -583,15 +594,21 @@ fun List<Int>.sampleEditTrajectory(
   } to ceaProbs
 }
 
-fun List<CEAProb>.normalizeAndSample(total: Int = sumOf { it.frequency }): CEAProb {
-  if (total <= 0) throw IllegalArgumentException("Total frequency must be positive!\n$this")
-  val sample = Random.nextInt(total)
-  var sum = 0
-  for (i in indices) {
-    sum += this[i].frequency
-    if (sum > sample) return this[i]
-  }
-  return last()
+// Faster than the above
+fun List<CEAProb>.normalizeAndSample(bonusProbs: AtomicLongMap<ContextEdit>?): CEAProb {
+  val cdf: List<Int> = (if (bonusProbs == null) map { it.frequency }
+  else map { it.frequency + bonusProbs[it.cea].toInt() * 100 })
+    .let { freqs ->
+      val cdf = mutableListOf<Int>()
+      var sum = 0
+      for (i in freqs.indices) {
+        sum += freqs[i]
+        cdf.add(sum)
+      }
+      cdf
+    }
+  val sample: Int = Random.nextInt(cdf.last())
+  return this[cdf.binarySearch(sample).let { if (it < 0) -it - 1 else it }.coerceIn(indices)]
 }
 
 //Found length-3 fix in 1.289318375s after 103328 total and 1 valid samples (80 samples/ms)
