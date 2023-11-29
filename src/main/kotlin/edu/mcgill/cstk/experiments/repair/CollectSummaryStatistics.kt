@@ -399,6 +399,9 @@ fun contextualRepair() {
   var expiredSize = 0
   var avrgThruput = 0
   var avgFVFindMs = 0
+  val timingFile = File("repair_timings_${System.currentTimeMillis()}.csv")
+    .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Throughput\n") }
+
 //  readGoodBIFIAndCorrupt().take(1000).forEach { (broke, minFix) ->
   readSeq2ParseAndTokenize().take(1000).forEach { (broke, _, minFix) ->
     val brokeTks = listOf("START") + broke.tokenizeByWhitespace() + "END"
@@ -483,6 +486,10 @@ fun contextualRepair() {
       avrgThruput += throughput
       avgFVFindMs += firstValidFoundAfter.toInt()
       totalTrials++
+
+      // "Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Throughput"
+      val timing = listOf(brokeTksInt.size, patchSize, elapsedTime, firstValidFoundAfter.toInt(), repairCount.first, repairCount.second, throughput)
+      timingFile.appendText(timing.joinToString(", ") + "\n")
 
       println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${repairCount.first} total and ${repairCount.second} valid samples (${throughput} samples/ms, first valid sample: ${firstValidFoundAfter}ms)
         
