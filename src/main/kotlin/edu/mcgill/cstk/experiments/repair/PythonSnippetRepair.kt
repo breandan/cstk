@@ -419,12 +419,12 @@ fun preprocessStackOverflow(
 fun preprocessStackOverflowInParallel(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
-  take: Int = 1000
+  take: Int
 ): Stream<Π3A<Σᐩ>> =
   brokeSnippets.zip(fixedSnippets).take(take).asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 40 &&
+//      broke.tokenizeAsPython().size < 40 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
@@ -434,7 +434,7 @@ fun preprocessStackOverflowInParallel(
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minfix.isValidPython() &&
-        minpatch.changedIndices().size <= MAX_PATCH_SIZE &&
+        minpatch.changedIndices().size <= 5 &&
         brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
     }
 

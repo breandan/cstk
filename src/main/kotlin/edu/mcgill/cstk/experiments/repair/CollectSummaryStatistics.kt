@@ -19,13 +19,13 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-//  computePatchTrigramStats()
+  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
-  contextualRepair()
+//  contextualRepair()
 }
 
 fun mostCommonSubstitutions() =
@@ -669,11 +669,13 @@ fun Patch.srn(i: Int): String = scan(i, true) { new }!!
 fun Patch.slo(i: Int): String = scan(i, false) { old }!!
 fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
-fun computePatchTrigramStats() =
-  preprocessStackOverflowInParallel(take = 100_000).map { (broke, _, minfix) ->
+var progress = 0
+fun computePatchTrigramStats(toTake: Int = 100000) =
+  preprocessStackOverflowInParallel(take=toTake).map { (broke, _, minfix) ->
     val brokeLexed = listOf("START") + broke.lexToStrTypesAsPython() + listOf("END")
     val minfixLexed = listOf("START") + minfix.lexToStrTypesAsPython() + listOf("END")
     val patch: Patch = extractPatch(brokeLexed, minfixLexed)
+    progress++.also { if (it % 100 == 0) println("Processed $it/$toTake patches") }
     patch.run {
       changedIndices().map { i ->
         val (old, new) = get(i).old to get(i).new
