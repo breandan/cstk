@@ -19,13 +19,13 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  computePatchTrigramStats()
+//  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
-//  contextualRepair()
+  contextualRepair()
 }
 
 fun mostCommonSubstitutions() =
