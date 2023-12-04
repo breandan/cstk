@@ -447,7 +447,8 @@ fun contextualRepair() {
       .let { val last = it.last(); it + CEAProb(last.cea, last.idx, it.sumOf { it.frequency }) }
     // Bonuses for previously sampled edits that produced a valid repair
     val bonusProbs = AtomicLongMap.create<ContextEdit>()
-    val uniqRepairs = AtomicLongMap.create<List<Int>>()
+    val uniqRepairs = AtomicLongMap.create<Int>()
+    val allEdits = AtomicLongMap.create<Int>()
 
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
     val samplerTimeout = 10000L
@@ -468,11 +469,13 @@ fun contextualRepair() {
         catch (e: Exception) {
           println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf()
         }
-      }.takeWhile { (finalSeq, _) ->
+      }
+      .filter { (_, edits) -> !allEdits.containsKey(edits.hashCode()) }
+      .takeWhile { (finalSeq, _) ->
         finalSeq != minFixTksInt
           && startTime.elapsedNow().inWholeMilliseconds < samplerTimeout
       }.forEach { (finalSeq, edits) ->
-        total++
+        total++; allEdits.incrementAndGet(edits.hashCode())
 
         if (finalSeq.drop(1).dropLast(1).isValidPython()) {
 //          println("Valid fix: ${prettyDiffNoFrills(brokeTks.joinToString(" "),
@@ -484,7 +487,7 @@ fun contextualRepair() {
 
           // Adaptive sampler: increases probability of resampling edits
           // that result in valid repairs
-          if (uniqRepairs.incrementAndGet(finalSeq) == 1L) {
+          if (uniqRepairs.incrementAndGet(edits.hashCode()) == 1L) {
             edits.forEach { bonusProbs.incrementAndGet(it.cea) }
 
             uniqueValid++
@@ -633,16 +636,13 @@ fun List<Int>.sampleEditTrajectory(
 
   for (i in 1..length) {
     val relevantEditActions = ceaDist.relevantEditActions(listPrime)
-    if (relevantEditActions.isEmpty()) {
-//      println("$i-th iteration, no relevant edit actions for: ${listPrime.joinToString(" ") { it.toPyRuleName() }}")
-      return listPrime to usedCEAProbs
-    }
+    if (relevantEditActions.isEmpty()) break
     val sampledEdit = relevantEditActions
       .normalizeAndSample(bonusProbs = bonusProbs)
       .also { usedCEAProbs.add(it) }
     listPrime = listPrime.applyEditAction(sampledEdit.cea, sampledEdit.idx + 1)
   }
-  return listPrime to usedCEAProbs
+  return listPrime to usedCEAProbs.sortedBy { it.idx }
 }
 
 fun List<CEAProb>.normalizeAndSample(normConst: Int = -1, bonusProbs: AtomicLongMap<ContextEdit>?): CEAProb =
