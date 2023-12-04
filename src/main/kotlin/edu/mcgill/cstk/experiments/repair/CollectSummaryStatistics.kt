@@ -8,7 +8,7 @@ import java.io.File
 import kotlin.math.*
 import kotlin.random.Random
 import kotlin.streams.asStream
-import kotlin.time.TimeSource
+import kotlin.time.*
 
 /*
 ./gradlew collectSummaryStats
@@ -406,12 +406,13 @@ SUB, 98 ['break' -> NAME] NEWLINE, 20
 
 fun contextualRepair() {
   var avgHumFixMs = 0
-  var totalTrials = 0
+  var succTrials = 0
   var totSmplSize = 0
   var valSmplSize = 0
-  var expiredSize = 0
+  var expirTrials = 0
   var avrgThruput = 0
   var avgFVFindMs = 0
+  var avgSeq2PAcc = 0
   val startTimeMs = System.currentTimeMillis()
   val timingFile = File("repair_timings_$startTimeMs.csv")
     .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Throughput\n") }
@@ -419,20 +420,20 @@ fun contextualRepair() {
     .also { it.writeText("Snippet length, Patch size, Bonus Actions, Bonus Total, Possible, Distinct valid repairs, Relevant edit actions, Saturation\n") }
 
 //  readGoodBIFIAndCorrupt().forEach { (broke, minFix) ->
-  readSeq2ParseAndTokenize().forEach { (broke, _, minFix) ->
+  readSeq2ParseAndTokenize().forEach { (broke, minFix, seq2ParseMatched) ->
     val brokeTks = listOf("START") + broke.tokenizeByWhitespace() + "END"
     val minFixTks = listOf("START") + minFix.tokenizeByWhitespace() + "END"
 //    val brokeTksInt = listOf(Int.MIN_VALUE) + broke.lexToIntTypesAsPython() + Int.MAX_VALUE
     val minFixTksItt = listOf(Int.MIN_VALUE) + minFix.lexToIntTypesAsPython() + Int.MAX_VALUE
     val brokeTksInt = brokeTks.map { it.toPythonIntType() }
     val minFixTksInt = minFixTks.map { it.toPythonIntType() }
+    val plainTksInt = minFixTksInt.drop(1).dropLast(1)
 
     val patchSize = extractPatch(brokeTks, minFixTks).changedIndices().size
 
-    val clr = minFixTksInt.drop(1).dropLast(1)
-    if (!clr.isValidPython()) {
+    if (!plainTksInt.isValidPython()) {
       println()
-      println("Invalid Python: ${clr.joinToString(" ")}")
+      println("Invalid Python: ${plainTksInt.joinToString(" ")}")
       println("Invalid Python: ${minFixTksItt.drop(1).dropLast(1).joinToString(" ")}")
       println("Invalid Python: ${minFixTks.joinToString(" ")}")
       println()
@@ -464,11 +465,8 @@ fun contextualRepair() {
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency with and without parallelism
       .map {
-        try { it.sampleEditTrajectory(contextCSV, initREAs,
-          if (firstValidFoundAfter != 0L) bonusProbs else null) }
-        catch (e: Exception) {
-          println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf()
-        }
+        try { it.sampleEditTrajectory(contextCSV, initREAs, if (firstValidFoundAfter != 0L) bonusProbs else null) }
+        catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf() }
       }
       .filter { (_, edits) -> !allEdits.containsKey(edits.hashCode()) }
       .takeWhile { (finalSeq, _) ->
@@ -498,6 +496,7 @@ fun contextualRepair() {
     val repairCount = total to uniqueValid + 1
     val elapsedTime = startTime.elapsedNow().inWholeMilliseconds.toInt()
     val throughput = total / (elapsedTime + 1)
+    avgSeq2PAcc += if (seq2ParseMatched) 1 else 0
     saturation = total / saturation
 
     if (elapsedTime < samplerTimeout) {
@@ -506,7 +505,8 @@ fun contextualRepair() {
       valSmplSize += repairCount.second
       avrgThruput += throughput
       avgFVFindMs += firstValidFoundAfter.toInt()
-      totalTrials++
+
+      succTrials++
 
       // "Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Throughput"
       val timingInfo = listOf(brokeTksInt.size, patchSize, elapsedTime, firstValidFoundAfter.toInt(), repairCount.first, repairCount.second, throughput)
@@ -515,11 +515,13 @@ fun contextualRepair() {
       println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${repairCount.first} total and ${repairCount.second} valid samples 
 (${throughput} samples/ms, |REAs| = ${initREAs.size}, saturation: $saturation, bonus probs: (${bonusProbs.size()}, ${bonusProbs.sum()}), first valid sample: ${firstValidFoundAfter}ms)
         
-        Average time to find human fix: ~${avgHumFixMs / totalTrials}ms ($totalTrials trials, $expiredSize expired after ${samplerTimeout}ms)
-        Average time to find valid fix: ~${avgFVFindMs / totalTrials}ms
-        Average samples before matched: ~${totSmplSize / totalTrials}
-        Average repair throughput / ms: ~${avrgThruput / totalTrials}
-        Average # unique valid repairs: ~${valSmplSize / totalTrials}
+        Average time to find human fix: ~${avgHumFixMs / succTrials}ms ($succTrials trials, $expirTrials expired after ${samplerTimeout}ms)
+        Average time to find valid fix: ~${avgFVFindMs / succTrials}ms
+        Average samples before matched: ~${totSmplSize / succTrials}
+        Average repair throughput / ms: ~${avrgThruput / succTrials}
+        Average # unique valid repairs: ~${valSmplSize / succTrials}
+        Average Seq2Parse Precision@1: ~${avgSeq2PAcc.toDouble() / succTrials}
+        Average TidyParse Precision@*: ${succTrials.toDouble() / (succTrials + expirTrials)}
       """.trimIndent())
     } else {
       val (bonusEdits, bonusTotal) = bonusProbs.size() to bonusProbs.sum()
@@ -543,7 +545,7 @@ fun contextualRepair() {
       ${prettyDiffNoFrills(brokeTks.joinToString(" "), minFixTks.joinToString(" "))}
       ${brokeTksInt.joinToString(" ")}
       ${prettyDiffNoFrills(brokeTksInt.joinToString(" "), minFixTksInt.joinToString(" "))}
-      """.trimIndent()).also { expiredSize += 1 }
+      """.trimIndent()).also { expirTrials += 1 }
 //    "Snippet length, Patch size, Bonus Actions, Bonus Total, Possible, Distinct valid repairs"
       val timeoutInfo = listOf(brokeTksInt.size, patchSize, bonusEdits, bonusTotal, possibleToSample, uniqRepairs.size(), initREAs.size, saturation)
       timeoutFile.appendText(timeoutInfo.joinToString(", ") + "\n")
@@ -721,11 +723,36 @@ fun String.syntheticallyCorrupt(): String =
   }
 
 fun readSeq2ParseAndTokenize() =
-  preprocessStackOverflow().map { (a, b, c) ->
+  preprocessStackOverflow().map { (broke, humFix, minFix) ->
+    val seq2ParseFix = measureTimedValue { seq2parseFix(broke) }
+      .value.lexToIntTypesAsPython()
+
+    val plainTksInt = minFix.lexToIntTypesAsPython()
+    val brokeTksInt = minFix.lexToIntTypesAsPython()
+
+    var seq2ParseMatched = true
+    if (seq2ParseFix == plainTksInt) println("Seq2Parse fix is the same as the minimized fix")
+    else {
+//      println("Seq2Parse fix is different from the minimized fix:")
+//      println("Orig snip:" + brokeTksInt.joinToString(" ") { it.toPyRuleName() })
+//      println("Human fix:" +
+//        prettyDiffNoFrills(
+//          brokeTksInt.joinToString(" ") { it.toPyRuleName() },
+//          plainTksInt.joinToString(" ") { it.toPyRuleName() })
+//      )
+//      println(plainTksInt.joinToString(" ") { it.toPyRuleName() })
+//      println("Seq2Parse:" +
+//        prettyDiffNoFrills(
+//          plainTksInt.joinToString(" ") { it.toPyRuleName() },
+//          seq2ParseFix.joinToString(" ") { it.toPyRuleName() })
+//      )
+      seq2ParseMatched = false
+    }
     Triple(
-      a.lexToStrTypesAsPython().joinToString(" "),
-      b.lexToStrTypesAsPython().joinToString(" "),
-      c.lexToStrTypesAsPython().joinToString(" ")
+      broke.lexToStrTypesAsPython().joinToString(" "),
+//      humFix.lexToStrTypesAsPython().joinToString(" "),
+      minFix.lexToStrTypesAsPython().joinToString(" "),
+      seq2ParseMatched
     )
   }
 
