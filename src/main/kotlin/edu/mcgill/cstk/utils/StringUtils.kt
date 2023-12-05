@@ -348,7 +348,7 @@ fun prettyDiffNoFrills(original: Σᐩ, new: Σᐩ) =
   DiffRowGenerator.create()
     .showInlineDiffs(true)
     .inlineDiffByWord(true)
-    .newTag { l -> if(l) "<begin>" else "<end>" }
+    .newTag { l -> if (l) "<begin>" else "<end>" }
     .oldTag { _ -> "" }
     .build()
     .generateDiffRows(original.split(' '), new.split(' ')).joinToString(" ") {
@@ -359,6 +359,45 @@ fun prettyDiffNoFrills(original: Σᐩ, new: Σᐩ) =
         else -> it.newLine.replace("<begin>", "").replace("<end>", "")
       }
     }.replace("&lt;", "<").replace("&gt;", ">")
+
+// Trim the section before the first change and after the last change, then trim the original and align to the same length
+fun prettyDiffNoFrillsTrimAndAlignWithOriginal(original: Σᐩ, new: Σᐩ) =
+  DiffRowGenerator.create()
+    .showInlineDiffs(true)
+    .inlineDiffByWord(true)
+    .newTag { l -> if (l) "<begin>" else "<end>" }
+    .oldTag { _ -> "" }
+    .build()
+    .generateDiffRows(original.split(' '), new.split(' ')).let {
+      fun String.redo(sub: String) = replace("<begin>", sub).replace("<end>", ANSI_RESET)
+      fun String.stripTags() = replace("<begin>", "").replace("<end>", "")
+      fun String.strippedLen() = stripTags().length
+      it.joinToString(" ") {
+        when (it.tag) {
+          INSERT -> List(it.newLine.strippedLen()){ " " }.joinToString("")
+          CHANGE -> "${ANSI_YELLOW_BACKGROUND}${it.oldLine}${ANSI_RESET}" +
+            it.oldLine.padEnd(maxOf(it.oldLine.strippedLen(), it.newLine.strippedLen())).drop(it.oldLine.length)
+          DELETE -> "$ANSI_RED_BACKGROUND${it.oldLine}$ANSI_RESET"
+          else -> it.oldLine
+        }
+      }.replace("&lt;", "<").replace("&gt;", ">") + "\n" +
+      it.joinToString(" ") {
+        when (it.tag) {
+          INSERT -> it.newLine.redo(ANSI_GREEN_BACKGROUND)
+          CHANGE -> it.newLine.redo(ANSI_YELLOW_BACKGROUND) +
+            it.newLine.stripTags().let { nl -> nl.padEnd(maxOf(it.oldLine.strippedLen(), it.newLine.strippedLen())).drop(nl.length) }
+          DELETE -> List(it.oldLine.strippedLen()) { " " }.joinToString("")
+          else -> it.newLine.stripTags()
+        }
+      }.replace("&lt;", "<").replace("&gt;", ">")
+    }.let {
+      val tokenizedLines = it.lines()
+      val minFirstChange = tokenizedLines.minOf { s -> s.indexOf("\u001B").let { if (it < 0) s.length else it } }
+      val maxLastChange = tokenizedLines.minOf { it.length - (it.lastIndexOf("\u001B") + 5) }
+      val prefix = tokenizedLines.first().substring(0, minFirstChange).tokenizeByWhitespace().takeLast(3).joinToString(" ")
+      val suffix = tokenizedLines.first().let { it.substring(it.length - maxLastChange)}.tokenizeByWhitespace().take(3).joinToString(" ")
+      tokenizedLines.joinToString("\n") { "... $prefix ${it.drop(minFirstChange).dropLast(maxLastChange)}$suffix ..." }
+    }
 
 // Print the side-by-side diff with ASCII colors and a border
 // https://en.wikipedia.org/wiki/Box-drawing_character

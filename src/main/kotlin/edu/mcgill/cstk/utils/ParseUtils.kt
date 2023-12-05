@@ -103,8 +103,8 @@ val PYMAP = Python3Lexer.VOCABULARY.let {  v ->
 
 fun Σᐩ.toPythonIntType(trimmed: Σᐩ = trim()) =
   when (trimmed) {
-    "START" -> Int.MIN_VALUE
-    "END" -> Int.MAX_VALUE
+    "BOS" -> Int.MIN_VALUE
+    "EOS" -> Int.MAX_VALUE
     "" -> -1
     else -> PYMAP[trimmed] ?: trimmed.toInt()
   }
@@ -135,8 +135,8 @@ fun Σᐩ.lexAsJava(): Java8Lexer =
   Java8Lexer(CharStreams.fromStream(byteInputStream()))
 
 fun Int.toPyRuleName(): String =
-  if (this == Int.MIN_VALUE) "START"
-  else if (this == Int.MAX_VALUE) "END"
+  if (this == Int.MIN_VALUE) "BOS"
+  else if (this == Int.MAX_VALUE) "EOS"
   else Python3Lexer.VOCABULARY.getDisplayName(this)
 
 //val KOTLIN_LEXER = KotlinLexer()
