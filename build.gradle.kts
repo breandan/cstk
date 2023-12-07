@@ -209,6 +209,7 @@ tasks {
     "kotlinStatementRepair" to "edu.mcgill.cstk.experiments.repair.KotlinStatementRepairKt",
     "pythonStatementRepair" to "edu.mcgill.cstk.experiments.repair.PythonStatementRepairKt",
     "pythonSnippetRepair" to "edu.mcgill.cstk.experiments.repair.PythonSnippetRepairKt",
+    "contextualRepair" to "edu.mcgill.cstk.experiments.repair.ContextualSyntaxRepairKt",
     "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",

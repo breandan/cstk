@@ -385,7 +385,7 @@ fun preprocessStackOverflow(
   brokeSnippets.zip(fixedSnippets)
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size < 24 &&
+//      broke.tokenizeAsPython().size < 24 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
