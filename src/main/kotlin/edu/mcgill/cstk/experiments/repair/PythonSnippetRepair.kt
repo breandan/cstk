@@ -322,8 +322,7 @@ fun evaluateTidyparseOnStackoverflow() {
 
       if (2 < patchSize) return@forEach
 
-      println("Original broken source: ${prettyDiffNoFrills(coarseFixedStr, coarseBrokeStr)}")
-      println("Minimized human repair: ${prettyDiffNoFrills(coarseBrokeStr, coarseFixedStr)}")
+      println("Original vs. fixed source:\n${prettyDiffNoFrillsTrimAndAlignWithOriginal(coarseBrokeStr, coarseFixedStr)}")
       println("\n\n")
 
       val startTime = System.currentTimeMillis()
@@ -386,7 +385,7 @@ fun preprocessStackOverflow(
   brokeSnippets.zip(fixedSnippets)
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-//      broke.tokenizeAsPython().size < 200 &&
+      broke.tokenizeAsPython().size < 24 &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
