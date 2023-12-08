@@ -10,6 +10,7 @@ import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
 import java.util.stream.Stream
 import kotlin.math.*
+import kotlin.streams.*
 import kotlin.time.TimeSource
 
 fun Σᐩ.constructPromptByMaskingRandomSyntax(
@@ -32,42 +33,25 @@ fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
   split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
 
 fun Stream<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
-  map { (broke, fixed) ->
-//    val startTime = TimeSource.Monotonic.markNow()
-    val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
-
-//  val brokeJoin = brokeTokens.joinToString("")
-    val fixedJoin = fixedTokens.joinToString("")
-//  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
-
-    val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-    val minEdit = deltaDebug(patch.changedIndices()) { idxs -> patch.apply(idxs).isValidPython() }
-// deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
-//      .minimalSubpatch { patch.apply(this).isValidPython() }
-
-//  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
-//  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
-
-//    println("Reduced from ${patch.changes().size} to ${minEdit.size} edits in ${startTime.elapsedNow().inWholeMilliseconds}ms")
-
-//    if(!minFix.isValidPython()) println("Minimized fix is invalid Python: $minFix")
-
-    val minfix= patch.apply(minEdit)
-
-    broke to fixedJoin to minfix
-  }
+  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed) }
 
 fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
-  map { (broke, fixed) ->
-//    val startTime = TimeSource.Monotonic.markNow()
-    val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
+  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed) }
+
+private fun minimizeFix(broke: Σᐩ, tokenize: Σᐩ.() -> List<Σᐩ>, fixed: Σᐩ): Π3<Σᐩ, String, Σᐩ> {
+  //    val startTime = TimeSource.Monotonic.markNow()
+  val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
 
 //  val brokeJoin = brokeTokens.joinToString("")
-    val fixedJoin = fixedTokens.joinToString("")
+  val fixedJoin = fixedTokens.joinToString("")
 //  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
 
-    val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-    val minEdit = deltaDebug(patch.changedIndices()) { idxs -> patch.apply(idxs).isValidPython() }
+  val patch: Patch = extractPatch(brokeTokens, fixedTokens)
+  val time = TimeSource.Monotonic.markNow()
+  val minEdit = deltaDebug(
+    patch.changedIndices(),
+    timeout = { 5 < time.elapsedNow().inWholeSeconds }
+  ) { idxs -> patch.apply(idxs).isValidPython() }
 // deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
 //      .minimalSubpatch { patch.apply(this).isValidPython() }
 
@@ -78,10 +62,10 @@ fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
 
 //    if(!minFix.isValidPython()) println("Minimized fix is invalid Python: $minFix")
 
-    val minfix= patch.apply(minEdit)
+  val minfix = patch.apply(minEdit)
 
-    broke to fixedJoin to minfix
-  }
+  return broke to fixedJoin to minfix
+}
 
 typealias Edit = Π2A<Σᐩ>
 typealias Patch = List<Edit>
@@ -121,32 +105,35 @@ fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
       }
     }
 
-fun <T> deltaDebug(elements: List<T>, n: Int = 2, checkValid: (List<T>) -> Boolean): List<T> {
+fun <T> deltaDebug(elements: List<T>, n: Int = 2, timeout: () -> Boolean, checkValid: (List<T>) -> Boolean): List<T> {
   // If n granularity is greater than number of tests, then finished, simply return passed in tests
-  if (elements.size < n) { return elements }
+  if (elements.size < n || timeout()) { return elements }
 
   // Cut the elements into n equal chunks and try each chunk
   val chunkSize = (elements.size.toDouble() / n).roundToInt()
 
   val chunks = elements.windowed(chunkSize, chunkSize, true)
 
-  chunks.forEachIndexed { index, chunk ->
+  var index = 0
+  for (chunk in chunks) {
+    if (timeout()) break
     val otherChunk = elements.subList(0, index*chunkSize) +
       elements.subList(min((index+1)*chunkSize, elements.size), elements.size)
 
     // Try to other, complement chunk first, with theory that valid elements are closer to end
-    if (checkValid(otherChunk)) return deltaDebug(otherChunk, 2, checkValid)
+    if (checkValid(otherChunk)) return deltaDebug(otherChunk, 2, timeout, checkValid)
 
     // Check if running this chunk works
-    if (checkValid(chunk)) return deltaDebug(chunk, 2, checkValid)
+    if (checkValid(chunk)) return deltaDebug(chunk, 2, timeout, checkValid)
+    index++
   }
 
   // If size is equal to number of chunks, we are finished, cannot go down more
   if (elements.size == n) return elements
 
   // If not chunk/complement work, increase granularity and try again
-  return if (elements.size < n * 2) deltaDebug(elements, elements.size, checkValid)
-  else deltaDebug(elements, n * 2, checkValid)
+  return if (elements.size < n * 2) deltaDebug(elements, elements.size, timeout, checkValid)
+  else deltaDebug(elements, n * 2, timeout, checkValid)
 }
 
 fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair> =

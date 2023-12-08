@@ -55,9 +55,9 @@ fun contextualRepair() {
   var avgSeq2PAcc = 0
   val startTimeMs = System.currentTimeMillis()
   val timingFile = File("repair_timings_$startTimeMs.csv")
-    .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total repairs sampled, Distinct valid repairs, Rank of human repair, Throughput, Saturation, Seq2Parse matched, Seq2Parse time\n") }
+    .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total hypotheses checked, Distinct valid repairs, Rank of human repair, Throughput, Saturation, Seq2Parse matched, Seq2Parse time\n") }
   val timeoutFile = File("repair_timeouts_$startTimeMs.csv")
-    .also { it.writeText("Snippet length, Patch size, Bonus Actions, Bonus Total, Possible, Distinct valid repairs, Relevant edit actions, Saturation, Seq2Parse matched, Seq2Parse time\n") }
+    .also { it.writeText("Snippet length, Patch size, Bonus Actions, Bonus Total, Possible, Distinct valid repairs, Total hypotheses checked, Relevant edit actions, Saturation, Seq2Parse matched, Seq2Parse time\n") }
 
   fun <T> List<T>.dropBOSEOS() = drop(1).dropLast(1)
 
@@ -95,7 +95,7 @@ fun contextualRepair() {
     val goodECs = ConcurrentRankedProbabilisticSet<Context>()
 
 //    println("Total relevant edit actions: ${initREAs.size}\n${initREAs.take(5).joinToString("\n")}\n...")
-    val samplerTimeout = 5_000L
+    val samplerTimeout = s2pRepairInfo.time.coerceAtLeast(5_000)
     var (total, uniqueValid) = 0 to 0
     var firstValidFoundAfter = 0L
     var saturation = (initREAs.size - 1).toDouble().let { p -> (1..3).sumOf { p.pow(it) } }
@@ -167,12 +167,12 @@ fun contextualRepair() {
       val timingInfo = listOf(brokeTksInt.size, patchSize,
         elapsedTime, firstValidFoundAfter.toInt(), repairCount.first,
         repairCount.second, repairRank, throughput, saturation,
-        s2pMatchId, s2pRepairInfo)
+        s2pMatchId, s2pRepairInfo.time)
       timingFile.appendText(timingInfo.joinToString(", ") + "\n")
 
       println("""Found length-${patchSize} fix in ${elapsedTime}ms after ${repairCount.first} total and ${repairCount.second} valid samples 
 (${throughput} samples/ms, |REAs| = ${initREAs.size}, saturation: $saturation, bonus probs: (${bonusProbs.size()}, ${bonusProbs.sum()}), first valid sample: ${firstValidFoundAfter}ms)
-(Rank of human fix: $repairRank/${repairCount.second}, Seq2Parse matched: $s2pRepairInfo)
+(Rank of human fix: $repairRank/${repairCount.second}, Seq2Parse matched: ${s2pRepairInfo.matched})
 
         Average time to find human fix: ~${avgHumFixMs / succTrials}ms ($succTrials successful trials, $expirTrials expired after ${samplerTimeout}ms)
         Average time to find valid fix: ~${avgFVFindMs / succTrials}ms
@@ -205,10 +205,10 @@ ${prettyDiffNoFrillsTrimAndAlignWithOriginal(brokeTks.joinToString(" "), minFixT
 ${prettyDiffNoFrillsTrimAndAlignWithOriginal(brokeTksInt.joinToString(" "), minFixTksInt.joinToString(" "))}
       """).also { expirTrials += 1 }
 //    "Snippet length, Patch size, Bonus Actions, Bonus Total, Possible,
-//    Distinct valid repairs, Relevant edit actions, Saturation, Seq2Parse matched, Seq2Parse time
+//    Distinct valid repairs, Total hypotheses checked, Relevant edit actions, Saturation, Seq2Parse matched, Seq2Parse time
       val timeoutInfo = listOf(brokeTksInt.size,
         patchSize, bonusEdits, bonusTotal, possibleToSample, repairCount.second,
-        initREAs.size, saturation, s2pMatchId, s2pRepairInfo.time)
+        repairCount.first, initREAs.size, saturation, s2pMatchId, s2pRepairInfo.time)
       timeoutFile.appendText(timeoutInfo.joinToString(", ") + "\n")
     }
 
@@ -288,7 +288,7 @@ fun List<Int>.sampleEditTrajectory(
   val rand = Math.random()
   val length = lengthCDF.indexOfFirst { rand < it } + 1
 
-  if (initREAs.isEmpty()) return this to listOf()
+  if (initREAs.size < 2) return this to listOf()
   val usedCEAProbs = mutableListOf<CEAProb>()
   // Now sample an edit trajectory of that length from the edit distribution
   val normConst = initREAs.last().frequency
