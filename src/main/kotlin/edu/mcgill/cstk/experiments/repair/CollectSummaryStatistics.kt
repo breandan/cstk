@@ -414,23 +414,6 @@ fun String.syntheticallyCorrupt(): String =
     corrupted.joinToString(" ") { it.toPyRuleName() }
   }
 
-fun readSeq2ParseAndTokenize() =
-  preprocessStackOverflow().map { (broke, humFix, minFix) ->
-    val seq2ParseFix = measureTimedValue { seq2parseFix(broke) }
-      .value.lexToIntTypesAsPython()
-
-    val plainTksInt = minFix.lexToIntTypesAsPython()
-    val brokeTksInt = minFix.lexToIntTypesAsPython()
-    val seq2ParseMatched = seq2ParseFix == plainTksInt
-
-    Triple(
-      broke.lexToStrTypesAsPython().joinToString(" "),
-//      humFix.lexToStrTypesAsPython().joinToString(" "),
-      minFix.lexToStrTypesAsPython().joinToString(" "),
-      seq2ParseMatched
-    )
-  }
-
 fun Patch.scan(i: Int, direction: Boolean, age: Edit.() -> Σᐩ): Σᐩ? =
   (if (direction) (i + 1 until size) else (i - 1 downTo 0))
     .firstOrNull { this[it].age() != "" }?.let { this[it].age() }
