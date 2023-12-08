@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load your data
-df = pd.read_csv('repair_timings_1701677682309.csv', sep=r'\s*,\s*')
+df = pd.read_csv('repair_timeouts_1701940808259.csv', sep=r'\s*,\s*')
 
 # Plotting setup
 plt.figure(figsize=(10, 6))
 colors = {1: 'red', 2: 'green', 3: 'blue'}
 
-yaxis = 'Time to find human repair (ms)'
+yaxis = 'Distinct valid repairs'
 # Scatter plot
 for patch_size in df['Patch size'].unique():
     subset = df[df['Patch size'] == patch_size]
