@@ -110,6 +110,32 @@ sbatch submit_job.sh
 
 Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 17.
 
+### Syntax repair
+
+First, fetch the [Break-It-Fix-It](https://arxiv.org/pdf/2106.06600.pdf) and [StackOverflow](https://arxiv.org/pdf/1907.07803.pdf) datasets as follows:
+
+```bash
+export DATASET_DIR=src/main/resources/datasets/python && \
+wget -O $DATASET_DIR/stack_overflow.zip https://figshare.com/ndownloader/articles/8244686/versions/1 && \
+mkdir -p $DATASET_DIR/stack_overflow && \
+unzip $DATASET_DIR/stack_overflow.zip -d $DATASET_DIR/stack_overflow && \
+wget -O $DATASET_DIR/bifi.zip https://nlp.stanford.edu/projects/myasu/BIFI/data_minimal.zip && \
+mkdir -p $DATASET_DIR/bifi && \
+unzip $DATASET_DIR/bifi.zip -d $DATASET_DIR/bifi
+```
+
+The following commands will run the one of the [syntax repair experiments](src/main/kotlin/edu/mcgill/cstk/experiments/repair/):
+
+```bash
+./gradlew contextualRepair
+./gradlew pythonSnippetRepair
+./gradlew pythonStatementRepair
+./gradlew kotlinSemanticRepair
+./gradlew kotlinStatementRepair
+```
+
+Most of these experiments leverage parallelism, so the more CPUs are available, the better. We use AWS EC2 `c7a.24xlarge` instances with 96 vCPUs and 192 GB of RAM.
+
 ### Mining software repositories
 
 Tokens for accessing the [GitHub](https://docs.github.com/en/rest/reference/search) and [GitLab](https://docs.github.com/en/rest/reference/search) developer APIs should be placed in the `.ghtoken` and `.gltoken` files, respectively.
@@ -166,7 +192,7 @@ This will embed the snippets and construct edges between the nearest neighbors. 
 
 </details>
 
-### Source Code Transformations
+### Source code transformations
 
 CSTK supports a number of source code transformations for studying the effect on neural language models. Some examples are given below.
 
@@ -558,7 +584,7 @@ Reranked nearest neighbors in 1.412775ms
 ```
 </details>
 
-### Semantic vs. Syntactic Similarity
+### Semantic vs. syntactic similarity
 
 What do nearest neighbors share in common?
 

@@ -1,7 +1,7 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "2.0.0-Beta1"
+  kotlin("jvm") version "2.0.0-Beta2"
   id("com.github.ben-manes.versions") version "0.50.0"
   id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.9.9"
+  val openrwVersion = "8.11.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -147,15 +147,15 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "java-smt")
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
-  implementation("org.apache.datasketches:datasketches-java:4.2.0")
+  implementation("org.apache.datasketches:datasketches-java:5.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-7")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-10")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.6.1")
+  implementation("com.aallam.openai:openai-client:3.6.2")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.0")
@@ -163,7 +163,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.1")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:1.9.20")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-Beta2")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 

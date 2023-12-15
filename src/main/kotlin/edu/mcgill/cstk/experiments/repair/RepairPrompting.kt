@@ -46,8 +46,8 @@ val user_prompt = """
  */
 
 fun main() {
-  val badJson = File("bifi/data/orig_bad_code/orig.bad.json").readText()
-  val goodJson = File("bifi/data/orig_good_code/orig.good.json").readLines().take(997).joinToString("\n") .dropLast(1) + "}"
+  val badJson = File("/src/main/resources/datasets/python/bifi/data/orig_bad_code/orig.bad.json").readText()
+  val goodJson = File("/src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json").readLines().take(997).joinToString("\n") .dropLast(1) + "}"
   val badCode = Klaxon().parse<Map<String, Map<String, Any>>>(badJson)
   val goodCode = Klaxon().parse<Map<String, Map<String, Any>>>(goodJson)
 

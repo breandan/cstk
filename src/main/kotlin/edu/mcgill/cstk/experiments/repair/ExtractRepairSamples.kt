@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 fun main() {
   var i = 0
-  val json = File("bifi/data/orig_bad_code/orig.bad.json").readText()
+  val json = File("/src/main/resources/datasets/python/bifi/data/orig_bad_code/orig.bad.json").readText()
 //    .readLines().takeWhile { if (it == "  },") i++ < 20000 else true }
 //    .joinToString("\n") + "\n}}"
 
@@ -40,7 +40,7 @@ private fun selectionCriteria(it: String) =
 fun readBIFIContents(
   good: Boolean = true,
   kind: String = if (good) "good" else "bad",
-  filename: String = "bifi/data/orig_${kind}_code/orig.${kind}.json",
+  filename: String = "/src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
   file: File = File(filename)
 ): Sequence<String> =
   file.readLines().asSequence()
