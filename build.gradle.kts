@@ -151,6 +151,8 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
+  implementation("de.kherud:llama:2.3.0")
+
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-10")
 
@@ -216,11 +218,13 @@ tasks {
     "collectStats" to "edu.mcgill.cstk.crawler.CollectStatsKt",
     "transformJson" to "edu.mcgill.cstk.experiments.TransformCodeXGlueDataKt",
     "tokenize" to "edu.mcgill.cstk.utils.TokenizerKt",
+    "probeLLaMA" to "edu.mcgill.cstk.experiments.probing.ProbeLLaMAKt",
   ).forEach { (cmd, main) ->
     register(cmd, JavaExec::class) {
       mainClass = main
       minHeapSize = "4g"
       maxHeapSize = "8g"
+      if (cmd == "probeLLaMA") standardInput = System.`in`
       classpath = sourceSets["main"].runtimeClasspath
       outputs.upToDateWhen { false }
     }
