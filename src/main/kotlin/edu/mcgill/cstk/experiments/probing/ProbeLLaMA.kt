@@ -11,15 +11,14 @@ import java.nio.charset.StandardCharsets
 fun main() {
   LlamaModel.setLogger { level: LogLevel?, message: String? -> print(message) }
 
-  val modelParams = ModelParameters()
-    .setNGpuLayers(43)
+  val modelParams = ModelParameters().setNGpuLayers(43)
   val inferParams = InferenceParameters()
     .setTemperature(0.7f)
     .setPenalizeNl(true) //                .setNProbs(10)
     .setMirostat(InferenceParameters.MiroStat.V2)
     .setAntiPrompt("User:")
 
-  val modelPath = "/Users/breandan/Downloads/ggml-model-Q6_K.gguf"
+  val modelPath = "/models/mistral-7b-instruct-v0.2.Q6_K.gguf"
   val system =
     """
     This is a conversation between User and Llama, a friendly chatbot.

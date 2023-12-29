@@ -2,6 +2,7 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.markovian.mcmc.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType

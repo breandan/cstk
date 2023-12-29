@@ -2,6 +2,7 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.disk.Model

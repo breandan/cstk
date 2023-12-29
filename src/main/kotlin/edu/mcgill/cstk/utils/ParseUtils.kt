@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import me.vovak.antlr.parser.*
 import org.antlr.v4.runtime.*
 import org.jetbrains.kotlin.lexer.KotlinLexer

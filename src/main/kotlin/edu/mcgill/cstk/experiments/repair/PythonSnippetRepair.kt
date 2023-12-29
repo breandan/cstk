@@ -3,6 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import NUM_CORES
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
 import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*

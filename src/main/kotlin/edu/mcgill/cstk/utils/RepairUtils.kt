@@ -2,6 +2,7 @@ package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
 import ai.hypergraph.kaliningraph.sampling.choose
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.markovian.mcmc.*

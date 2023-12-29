@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*

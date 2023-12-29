@@ -9,12 +9,14 @@ import kotlin.math.*
 
 // Does edit distance correlate with embedding distance?
 fun main() {
-  val data = fetchOrLoadSampleData().let { (l, v) -> l.zip(v) }
+  val data = fetchOrLoadSampleData()
+    .let { (l, v) -> l.zip(v) }
     .map { (a, b) -> a to b }.take(100)
   println("strdist,embdist,variance")
   println(
     compareDistanceMetrics(data.toSet(), MetricLCS())
-    .joinToString("\n") { "" + it.first + "," + it.second + "," + it.third })
+      .joinToString("\n") { "" + it.first + "," + it.second + "," + it.third }
+  )
 }
 
 private fun compareDistanceMetrics(

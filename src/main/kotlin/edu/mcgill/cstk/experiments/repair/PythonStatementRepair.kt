@@ -3,7 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.utils.*
-import ai.hypergraph.kaliningraph.parsing.repair
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.sat.*
 import org.intellij.lang.annotations.Language
 import kotlin.time.*
