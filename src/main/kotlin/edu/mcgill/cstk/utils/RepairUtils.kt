@@ -2,16 +2,12 @@ package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
-import ai.hypergraph.kaliningraph.sampling.choose
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
-import ai.hypergraph.markovian.mcmc.*
+import ai.hypergraph.markovian.mcmc.MarkovChain
 import bijectiveRepair
-import com.github.difflib.text.*
 import edu.mcgill.cstk.experiments.repair.MSK
 import java.util.stream.Stream
-import kotlin.math.*
-import kotlin.streams.*
 import kotlin.time.TimeSource
 
 fun Σᐩ.constructPromptByMaskingRandomSyntax(
@@ -29,113 +25,17 @@ fun Σᐩ.constructPromptByMaskingRandomSyntax(
     codeTokens
   }.joinToString(" ")
 
-val COMMON_BRACKETS = "()[]{}".map { "$it" }.toSet()
-fun Σᐩ.defaultTokenizer(): List<Σᐩ> =
-  split(Regex("[\\(\\)\\[\\]{}]|___".let { "((?<=($it))|(?=($it)))" }))
+fun Stream<Π2A<Σᐩ>>.minimizeFix(
+  tokenize: Σᐩ.() -> List<Σᐩ>,
+  isValid: Σᐩ.() -> Boolean
+): Stream<Π3A<Σᐩ>> =
+  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed, isValid) }
 
-fun Stream<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
-  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed) }
-
-fun Sequence<Π2A<Σᐩ>>.minimizeFix(tokenize: Σᐩ.() -> List<Σᐩ>) =
-  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed) }
-
-private fun minimizeFix(broke: Σᐩ, tokenize: Σᐩ.() -> List<Σᐩ>, fixed: Σᐩ): Π3<Σᐩ, String, Σᐩ> {
-  //    val startTime = TimeSource.Monotonic.markNow()
-  val (brokeTokens, fixedTokens) = broke.tokenize() to fixed.tokenize()
-
-//  val brokeJoin = brokeTokens.joinToString("")
-  val fixedJoin = fixedTokens.joinToString("")
-//  val pdiffTok = prettyDiffs(listOf(brokeJoin, fixedJoin), listOf("broken", "original fix"))
-
-  val patch: Patch = extractPatch(brokeTokens, fixedTokens)
-  val time = TimeSource.Monotonic.markNow()
-  val minEdit = deltaDebug(
-    patch.changedIndices(),
-    timeout = { 5 < time.elapsedNow().inWholeSeconds }
-  ) { idxs -> patch.apply(idxs).isValidPython() }
-// deltaDebug only minimizes contiguous chunks, so here we find the minimal configuration of edits
-//      .minimalSubpatch { patch.apply(this).isValidPython() }
-
-//  val pdiff = prettyDiffs(listOf(brokeJoin, minFix), listOf("broken", "minimized fix"))
-//  if(pdiff.any { it == '\u001B' } && pdiffTok.filter { !it.isWhitespace() } != pdiff.filter { !it.isWhitespace() }) println(pdiffTok + "\n\n" + pdiff)
-
-//    println("Reduced from ${patch.changes().size} to ${minEdit.size} edits in ${startTime.elapsedNow().inWholeMilliseconds}ms")
-
-//    if(!minFix.isValidPython()) println("Minimized fix is invalid Python: $minFix")
-
-  val minfix = patch.apply(minEdit)
-
-  return broke to fixedJoin to minfix
-}
-
-typealias Edit = Π2A<Σᐩ>
-typealias Patch = List<Edit>
-val Edit.old: Σᐩ get() = first
-// If new is empty, then this is a deletion
-val Edit.new: Σᐩ get() = second
-
-// returns when there are at least two types of edits (insertions, deletions, changes) choose 2
-fun Patch.isInteresting() = changedIndices().let { ch ->
-  filterIndexed { index, pair -> index in ch }
-    .map { (a, b) -> if(b == "") "D" else if(a == "") "I" else "C" }
-    .toSet().size > 1
-}
-fun Patch.changedIndices(): List<Int> = indices.filter { this[it].old != this[it].new }
-
-fun Patch.totalCharacterwiseEditDistance(): Int =
-  filter { (a, b) -> a != b }
-    .sumOf { (a, b) -> levenshtein(a, b) }
-
-fun List<Int>.minimalSubpatch(filter: List<Int>.() -> Boolean): List<Int> =
-  (1..size).asSequence().map { choose(it).map { it.toList() } }
-  .map { it.filter { it.filter() } }.firstOrNull { it.any() }?.firstOrNull() ?: this
-
-fun Patch.apply(indices: List<Int>, separator: Σᐩ = ""): Σᐩ =
-  mapIndexed { i, it -> if (i in indices) it.new else it.old }.joinToString(separator)
-
-fun extractPatch(original: List<Σᐩ>, new: List<Σᐩ>): Patch =
-  DiffRowGenerator.create().build()
-    .generateDiffRows(original, new).mapIndexed { i, it ->
-      val new = it.newLine.replace("&lt;", "<").replace("&gt;", ">")
-      val old = it.oldLine.replace("&lt;", "<").replace("&gt;", ">")
-      when (it.tag) {
-        DiffRow.Tag.INSERT -> ("" to new)
-        DiffRow.Tag.CHANGE -> (old to new)
-        DiffRow.Tag.DELETE -> (old to "")
-        DiffRow.Tag.EQUAL ->  (old to new)
-      }
-    }
-
-fun <T> deltaDebug(elements: List<T>, n: Int = 2, timeout: () -> Boolean, checkValid: (List<T>) -> Boolean): List<T> {
-  // If n granularity is greater than number of tests, then finished, simply return passed in tests
-  if (elements.size < n || timeout()) { return elements }
-
-  // Cut the elements into n equal chunks and try each chunk
-  val chunkSize = (elements.size.toDouble() / n).roundToInt()
-
-  val chunks = elements.windowed(chunkSize, chunkSize, true)
-
-  var index = 0
-  for (chunk in chunks) {
-    if (timeout()) break
-    val otherChunk = elements.subList(0, index*chunkSize) +
-      elements.subList(min((index+1)*chunkSize, elements.size), elements.size)
-
-    // Try to other, complement chunk first, with theory that valid elements are closer to end
-    if (checkValid(otherChunk)) return deltaDebug(otherChunk, 2, timeout, checkValid)
-
-    // Check if running this chunk works
-    if (checkValid(chunk)) return deltaDebug(chunk, 2, timeout, checkValid)
-    index++
-  }
-
-  // If size is equal to number of chunks, we are finished, cannot go down more
-  if (elements.size == n) return elements
-
-  // If not chunk/complement work, increase granularity and try again
-  return if (elements.size < n * 2) deltaDebug(elements, elements.size, timeout, checkValid)
-  else deltaDebug(elements, n * 2, timeout, checkValid)
-}
+fun Sequence<Π2A<Σᐩ>>.minimizeFix(
+  tokenize: Σᐩ.() -> List<Σᐩ>,
+  isValid: Σᐩ.() -> Boolean
+): Sequence<Π3A<Σᐩ>> =
+  map { (broke, fixed) -> minimizeFix(broke, tokenize, fixed, isValid) }
 
 fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair> =
   solve(List(refStr.size + 3) { "_" }) {

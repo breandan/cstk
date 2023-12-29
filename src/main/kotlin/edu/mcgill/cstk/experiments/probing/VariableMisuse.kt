@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.times
 import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.rewriting.*

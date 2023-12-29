@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.defaultTokenizer
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.disk.defaultModel
 import edu.mcgill.cstk.utils.*

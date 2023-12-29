@@ -3,7 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import NUM_CORES
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
@@ -390,7 +390,7 @@ fun preprocessStackOverflow(
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
-    .minimizeFix { tokenizeAsPython(true) }
+    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
     .filter { (broke, fixed, minfix) ->
 //      val (brokeTokens, minFixedTokens) =
 //        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
@@ -428,7 +428,7 @@ fun preprocessStackOverflowInParallel(
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
-    .minimizeFix { tokenizeAsPython(true) }
+    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
     .filter { (broke, fixed, minfix) ->
       val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()

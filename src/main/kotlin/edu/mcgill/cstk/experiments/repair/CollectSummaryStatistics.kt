@@ -1,10 +1,11 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.repair.Edit
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
-import edu.mcgill.cstk.utils.Edit
 import java.io.File
 import kotlin.math.*
 import kotlin.random.Random
@@ -414,16 +415,6 @@ fun String.syntheticallyCorrupt(): String =
 
     corrupted.joinToString(" ") { it.toPyRuleName() }
   }
-
-fun Patch.scan(i: Int, direction: Boolean, age: Edit.() -> Σᐩ): Σᐩ? =
-  (if (direction) (i + 1 until size) else (i - 1 downTo 0))
-    .firstOrNull { this[it].age() != "" }?.let { this[it].age() }
-
-// Scan [l]eft/[r]ight for first non-empty [n]ew/[o]ld token
-fun Patch.sln(i: Int): String = scan(i, false) { new }!!
-fun Patch.srn(i: Int): String = scan(i, true) { new }!!
-fun Patch.slo(i: Int): String = scan(i, false) { old }!!
-fun Patch.sro(i: Int): String = scan(i, true) { old }!!
 
 var progress = 0
 fun computePatchTrigramStats(toTake: Int = 100000) =

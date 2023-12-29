@@ -2,6 +2,7 @@ package edu.mcgill.cstk.utils
 
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.COMMON_BRACKETS
 import ai.hypergraph.kaliningraph.types.cc
 import com.github.difflib.text.*
 import com.github.difflib.text.DiffRow.Tag.*
