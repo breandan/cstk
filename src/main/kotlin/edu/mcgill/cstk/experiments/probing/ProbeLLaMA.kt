@@ -1,6 +1,9 @@
 package edu.mcgill.cstk.experiments.probing
 
+import ai.hypergraph.kaliningraph.repair.extractPatch
 import de.kherud.llama.*
+import edu.mcgill.cstk.experiments.repair.invalidPythonStatements
+import edu.mcgill.cstk.utils.*
 import java.io.*
 import java.nio.charset.StandardCharsets
 
@@ -18,31 +21,33 @@ fun main() {
     .setMirostat(InferenceParameters.MiroStat.V2)
     .setAntiPrompt("User:")
 
-  val modelPath = "/models/mistral-7b-instruct-v0.2.Q6_K.gguf"
-  val system =
-    """
-    This is a conversation between User and Llama, a friendly chatbot.
-    Llama is helpful, kind, honest, good at writing, and never fails to answer any requests immediately and with precision.
-    
-    User: Hello Llama
-    Llama: Hello.  How may I help you today?
-    """.trimIndent()
+  val modelPath = File("").absolutePath +
+    "/models/ggml-model-Q6_K.gguf"
 
-  val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
   LlamaModel(modelPath, modelParams).use { model ->
-    print(system)
-    var prompt: String? = system
-    while (true) {
-      prompt += "\nUser: "
-      print("\nUser: ")
-      val input = reader.readLine()
-      prompt += input
-      print("Llama: ")
-      prompt += "\nLlama: "
+    invalidPythonStatements.lines().forEach { invalidCodeSnippet ->
+      val prompt = """
+        The following line of Python code contains a syntax error:
+        
+        ```
+        $invalidCodeSnippet 
+        ``` 
+         
+        Below is the most likely syntactically valid repair:
+        
+        ```
+        """.trimIndent()
+
+      BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
+      val sb = StringBuilder()
       for (output in model.generate(prompt, inferParams)) {
-        print(output)
-        prompt += output
+        sb.append(output)
       }
+
+      val line = sb.toString().substringBefore("```").trim().lines().last()
+      println(invalidCodeSnippet)
+      println(prettyDiffNoFrills(invalidCodeSnippet, line))
+      println("Was valid: " + sb.toString().isValidPython())
     }
   }
 }

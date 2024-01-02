@@ -243,6 +243,15 @@ S -> lambda w : S | lambda w , w : S | lambda w , w , w : S | lambda w , w , w ,
   .apply { blocked.add("w") }
 //  .apply { blocked.addAll(terminals.filter { !it.isBracket() })  }
 
+fun printTokenizedSnippets(snippets: String = invalidPythonStatements) {
+  snippets.lines().forEach {
+    println(it.lexToStrTypesAsPython().joinToString(" ") {
+      if (it.startsWith("'") && it.endsWith("'")) it.drop(1).dropLast(1)
+      else it
+    })
+  }
+}
+
 @Language("py")
 val invalidPythonStatements = """
   labels = dict(map(lambda(x, y): [y, x], raw_labels))
