@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.repair.Edit
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -21,13 +22,38 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  computePatchTrigramStats()
+  collectPairwisePythonRepairs()
+//  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+fun collectPairwisePythonRepairs() {
+  MAX_PATCH_SIZE = 2
+  val lengthBounds = 20..30
+  val (brokeSnips, fixedSnips) = mutableListOf<Σᐩ>() to mutableListOf<Σᐩ>()
+  preprocessStackOverflow(lengthBounds)
+    .forEach { (broke, fixed, minFix) ->
+      broke.mapToUnquotedPythonTokens().also { brokeSnips.add(it) }
+      minFix.mapToUnquotedPythonTokens().also { fixedSnips.add(it) }
+      println(levenshteinAlign(broke.mapToUnquotedPythonTokens(),
+        minFix.mapToUnquotedPythonTokens()).paintANSIColors())
+    }
+
+  """
+  // The following are length $lengthBounds Python statements with a human fix <=$MAX_PATCH_SIZE Levenshtein edits away
+  val invalidPythonStatements = ""${'"'}
+     ${brokeSnips.joinToString("\n")} 
+  ""${'"'}.trimIndent()
+
+  val validPythonStatements = ""${'"'}
+     ${fixedSnips.joinToString("\n")} 
+  ""${'"'}.trimIndent()
+  """.trimIndent().also { it.alsoCopy() }
 }
 
 fun testContextEditIssue() {

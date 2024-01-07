@@ -289,7 +289,7 @@ class RankStats(val name: String = "Total") {
   }
 }
 
-val MAX_PATCH_SIZE = 3
+var MAX_PATCH_SIZE = 3
 
 // Tracks ranking statistics for each patch size and across all patch sizes
 class MultiRankStats {
@@ -378,19 +378,34 @@ fun evaluateTidyparseOnStackoverflow() {
 fun pythonErrorLocations(coarseBrokeTks: List<Int>): List<Int> =
   listOf(coarseBrokeTks.getIndexOfFirstPythonError())
 
+fun Σᐩ.mapToUnquotedPythonTokens() =
+  lexToStrTypesAsPython().joinToString(" ") {
+    if (1 < it.length && it.startsWith("'") &&
+      it.endsWith("'")) it.drop(1).dropLast(1)
+    else it
+  }
+
 // Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
 fun preprocessStackOverflow(
+  lengthBounds: IntRange =0..Int.MAX_VALUE,
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
-  brokeSnippets.zip(fixedSnippets)
+  brokeSnippets.zip(fixedSnippets).asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-//      broke.tokenizeAsPython().size < 24 &&
+      broke.tokenizeAsPython().size in lengthBounds &&
         (!broke.isValidPython() && fixed.isValidPython()) &&
         (broke.lines().size - fixed.lines().size).absoluteValue < 4
     }
+    .distinct()
     .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
+    .filter { (broke, fixed, minfix) ->
+      val mftks = minfix.mapToUnquotedPythonTokens()
+      "$mftks NEWLINE" in seq2parsePythonCFG.language &&
+      broke.mapToUnquotedPythonTokens().tokenizeByWhitespace()
+        .all { it in seq2parsePythonCFG.terminals }
+    }
     .filter { (broke, fixed, minfix) ->
 //      val (brokeTokens, minFixedTokens) =
 //        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
@@ -403,7 +418,7 @@ fun preprocessStackOverflow(
       minpatch.changedIndices().size <= MAX_PATCH_SIZE &&
       brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
 //      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
-    }
+    }.asSequence()
 //    .map { (broke, fixed, minfix) ->
 //      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
 //        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
@@ -413,8 +428,7 @@ fun preprocessStackOverflow(
 //        }
 //      }
 //    }
-    .distinctBy { it.π3 }
-    .shuffleOnline()
+//    .shuffleOnline()
 
 fun preprocessStackOverflowInParallel(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
