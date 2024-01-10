@@ -40,7 +40,7 @@ private fun selectionCriteria(it: String) =
 fun readBIFIContents(
   good: Boolean = true,
   kind: String = if (good) "good" else "bad",
-  filename: String = "/src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
+  filename: String = "src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
   file: File = File(filename)
 ): Sequence<String> =
   file.readLines().asSequence()

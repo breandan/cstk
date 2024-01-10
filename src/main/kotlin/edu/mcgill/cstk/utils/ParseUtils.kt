@@ -108,7 +108,7 @@ fun Σᐩ.toPythonIntType(trimmed: Σᐩ = trim()) =
     "BOS" -> Int.MIN_VALUE
     "EOS" -> Int.MAX_VALUE
     "" -> -1
-    else -> PYMAP[trimmed] ?: trimmed.toInt()
+    else -> PYMAP[trimmed] ?: PYMAP["'$trimmed'"] ?: trimmed.toInt()
   }
 
 fun Σᐩ.lexToIntTypesAsPython(
@@ -140,6 +140,13 @@ fun Int.toPyRuleName(): String =
   if (this == Int.MIN_VALUE) "BOS"
   else if (this == Int.MAX_VALUE) "EOS"
   else Python3Lexer.VOCABULARY.getDisplayName(this)
+
+fun Int.toPyRuleNameUnquoted(): String =
+  Python3Lexer.VOCABULARY.getDisplayName(this).let {
+    if (it.startsWith("'") && it.endsWith("'") && 1 < it.length)
+      it.substring(1, it.length - 1)
+    else it
+  }
 
 //val KOTLIN_LEXER = KotlinLexer()
 //fun String.lexAsKotlin(): List<String> =

@@ -387,7 +387,7 @@ fun Σᐩ.mapToUnquotedPythonTokens() =
 
 // Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
 fun preprocessStackOverflow(
-  lengthBounds: IntRange =0..Int.MAX_VALUE,
+  lengthBounds: IntRange = 0..Int.MAX_VALUE,
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
@@ -548,9 +548,7 @@ val pythonErrProbs =
     "STRING" to 221
   )
 
-// Taken from seq2parse's Python grammar
-val seq2parsePythonCFG: CFG by lazy {
-  """
+val s2pCFGStr =   """
 START -> Stmts_Or_Newlines
 Stmts_Or_Newlines -> Stmt_Or_Newline | Stmt_Or_Newline Stmts_Or_Newlines
 Stmt_Or_Newline -> Stmt | Newline
@@ -741,7 +739,13 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
-""".parseCFG(normalize = false)
+"""
+val seq2ParseCFGNNTs = s2pCFGStr.parseCFG().subgrammar(PYMAP.keys.map { if (1 < it.length && it.startsWith("'") &&
+  it.endsWith("'")) it.drop(1).dropLast(1) else it }.toSet()).noNonterminalStubs.freeze()
+
+// Taken from seq2parse's Python grammar
+val seq2parsePythonCFG: CFG by lazy {
+  s2pCFGStr.parseCFG(normalize = false)
   /** TODO: remove this pain in the future, canonicalize [normalForm]s */
   .run {
     mutableListOf<CFG>().let { rewrites ->

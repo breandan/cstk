@@ -1,8 +1,9 @@
 package edu.mcgill.cstk.experiments.repair
 
 import ConcurrentRankedProbabilisticSet
+import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
-import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -73,7 +74,8 @@ fun contextualRepair() {
   fun <T> List<T>.dropBOSEOS() = drop(1).dropLast(1)
 
 //  readGoodBIFIAndCorrupt().forEach { (broke, minFix) ->
-  readStackOverflowAndGetSeq2ParseRepair().forEach { (broke, minFix, s2pRepairInfo) ->
+  readStackOverflowAndGetSeq2ParseRepair()
+    .forEach { (broke, minFix, s2pRepairInfo) ->
     val brokeTks = listOf("BOS") + broke.tokenizeByWhitespace() + "EOS"
     val minFixTks = listOf("BOS") + minFix.tokenizeByWhitespace() + "EOS"
 //    val brokeTksInt = listOf(Int.MIN_VALUE) + broke.lexToIntTypesAsPython() + Int.MAX_VALUE
@@ -97,6 +99,8 @@ fun contextualRepair() {
 
     val startTime = TimeSource.Monotonic.markNow()
 
+    var levenshteinBlanket = brokeTksInt
+    var blanketSeq: PTree? = null
     val initREAs: List<CEAProb> = contextCSV.relevantEditActions(brokeTksInt)
       .let { val last = it.last(); it + CEAProb(last.cea, last.idx, it.sumOf { it.frequency }) }
     // Bonuses for previously sampled edits that produced a valid repair
@@ -109,7 +113,8 @@ fun contextualRepair() {
     val samplerTimeout = s2pRepairInfo.time.coerceAtLeast(30_000)
     var (total, uniqueValid) = 0 to 0
     var firstValidFoundAfter = 0L
-    var saturation = (initREAs.size - 1).toDouble().let { p -> (1..3).sumOf { p.pow(it) } }
+    var saturation = (initREAs.size - 1).toDouble()
+      .let { p -> (1..3).sumOf { p.pow(it) } }
 
     // Average time to find human fix: ~665ms (870 trials, 121 expired after 10000ms)
     // Average time to find valid fix: ~329ms
@@ -119,7 +124,13 @@ fun contextualRepair() {
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency (and precision!) with and without parallelism
       .map {
-        try { it.sampleEditTrajectory(contextCSV, initREAs, goodECs, if (firstValidFoundAfter != 0L) bonusProbs else null) }
+//        if (blanketSeq != null && Random.nextBoolean() && brokeTks.size > 20 && levenshteinBlanket.count { it == -1 } in 1.. 5)
+//          try { blanketSeq!!.sample().removeEpsilon()
+//            .also { println(it) }
+//            .let { "BOS $it EOS".tokenizeByWhitespace().map { it.toPythonIntType() } } to null
+//          } catch (e: Exception) { e.printStackTrace(); listOf<Int>() to listOf() }
+//        else
+          try { it.sampleEditTrajectory(contextCSV, initREAs, goodECs, if (firstValidFoundAfter != 0L) bonusProbs else null) }
         catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf() }
       }
       .filter { (_, edits) -> !allEdits.containsKey(edits.hashCode()) }
@@ -132,12 +143,24 @@ fun contextualRepair() {
           if (uniqueValid == 0 && firstValidFoundAfter == 0L)
             firstValidFoundAfter = startTime.elapsedNow().inWholeMilliseconds
 
-          // Timings with adaptive sampling enabled:
+//          minimizeFixInt(brokeTksInt, finalSeq) { isValidPython() }.forEach { minfix ->
+//            if (uniqRepairs.incrementAndGet(minfix) == 1L) {
+//              val nextLevBlanket =
+//                updateLevenshteinBlanket(levenshteinBlanket, minfix)
+//              if (nextLevBlanket != levenshteinBlanket) {
+//                levenshteinBlanket = nextLevBlanket
+//                val strLevBlanket = levenshteinBlanket.drop(1)
+//                  .dropLast(1).toStrLevBlanket { it.toPyRuleNameUnquoted() }
+//                println("${edits == null}: ${strLevBlanket.joinToString(" ")}")
+//                blanketSeq = seq2ParseCFGNNTs.startPTree(strLevBlanket)
+//              }
+//            }
+//          }
 
           // Adaptive sampler: increases probability of resampling edits
           // that result in valid repairs
           if (uniqRepairs.incrementAndGet(finalSeq) == 1L) {
-            edits.forEach {
+            edits?.forEach {
               bonusProbs.incrementAndGet(it.cea)
               goodECs.add(it.cea.context, ln(1.0 / it.frequency.toDouble()))
             }
