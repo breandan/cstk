@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time 24:0:0
+#SBATCH --time 4:0:0
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
 #SBATCH --output=/scratch/b/bengioy/breandan/slurm-%j.out
