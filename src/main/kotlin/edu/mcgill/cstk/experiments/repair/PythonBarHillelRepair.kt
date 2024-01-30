@@ -19,6 +19,7 @@ fun main() {
   val s2pg = vanillaS2PCFG
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
+    .shuffled()
     .forEach { (invalid, valid) ->
       val allTime = TimeSource.Monotonic.markNow()
       val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
