@@ -29,11 +29,11 @@ fun main() {
       val levBall = makeLevFSA(toRepair, levDist)
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
       val intGram = try { s2pg.jvmIntersectLevFSA(levBall) }
-      catch (e: Exception) {
-        println("Encountered error: ${e.message}")
-        println("Recall: $recall / $total, errors: ${++errorRate}")
-        return@forEach
-      }
+        catch (e: Exception) {
+          println("Encountered error (${e.message}): $humanRepairANSI")
+          println("Recall: $recall / $total, errors: ${++errorRate}\n")
+          return@forEach
+        }
 
       total++
       assert(humanRepair in s2pg.language)
