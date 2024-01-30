@@ -2,7 +2,7 @@ import de.undercouch.gradle.tasks.download.Download
 
 plugins {
   kotlin("jvm") version "2.0.0-Beta2"
-  id("com.github.ben-manes.versions") version "0.50.0"
+  id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.5.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -27,7 +27,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.25.0"
+  val djlVersion = "0.26.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -38,7 +38,7 @@ dependencies {
   implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "1.1.0"
+  val hnswlibVersion = "1.1.2"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
@@ -50,13 +50,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:4.2.1")
+  implementation("com.github.ajalt.clikt:clikt:4.2.2")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.11.2"
+  val openrwVersion = "8.14.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -87,8 +87,8 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.3")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.1.0")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.5.0")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.2.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.6.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.25.0")
@@ -147,23 +147,25 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "java-smt")
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
-  implementation("org.apache.datasketches:datasketches-java:5.0.0")
+  implementation("org.apache.datasketches:datasketches-java:5.0.1")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:2.3.0")
+  implementation("de.kherud:llama:2.3.4")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-10")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-16")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.6.2")
+  implementation("com.aallam.openai:openai-client:3.6.3")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.0")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.1")
+
+  implementation("com.diffplug.spotless:spotless-lib:2.45.0")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-Beta2")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
@@ -211,7 +213,8 @@ tasks {
     "kotlinStatementRepair" to "edu.mcgill.cstk.experiments.repair.KotlinStatementRepairKt",
     "pythonStatementRepair" to "edu.mcgill.cstk.experiments.repair.PythonStatementRepairKt",
     "pythonSnippetRepair" to "edu.mcgill.cstk.experiments.repair.PythonSnippetRepairKt",
-    "contextualRepair" to "edu.mcgill.cstk.experiments.repair.ContextualSyntaxRepairKt",
+    "contextualRepair" to "edu.mcgill.cstk.experiments.repair.PythonContextualRepairKt",
+    "pythonBarHillelRepair" to "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt",
     "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
@@ -223,7 +226,7 @@ tasks {
     register(cmd, JavaExec::class) {
       mainClass = main
       minHeapSize = "4g"
-      maxHeapSize = "8g"
+      maxHeapSize = "60g"
       if (cmd == "probeLLaMA") standardInput = System.`in`
       classpath = sourceSets["main"].runtimeClasspath
       outputs.upToDateWhen { false }

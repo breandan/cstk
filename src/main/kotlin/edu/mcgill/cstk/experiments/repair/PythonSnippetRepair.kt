@@ -387,6 +387,7 @@ fun Σᐩ.mapToUnquotedPythonTokens() =
 
 // Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
 fun preprocessStackOverflow(
+  maxPatchSize: Int = MAX_PATCH_SIZE,
   lengthBounds: IntRange = 0..Int.MAX_VALUE,
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
@@ -415,10 +416,10 @@ fun preprocessStackOverflow(
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minfix.isValidPython() &&
-      minpatch.changedIndices().size <= MAX_PATCH_SIZE &&
+      minpatch.changedIndices().size <= maxPatchSize &&
       brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
 //      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
-    }.asSequence()
+    }.distinct().asSequence()
 //    .map { (broke, fixed, minfix) ->
 //      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
 //        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->

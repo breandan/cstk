@@ -33,10 +33,11 @@ fun main() {
 }
 
 fun collectPairwisePythonRepairs() {
-  MAX_PATCH_SIZE = 2
-  val lengthBounds = 20..30
+  MAX_PATCH_SIZE = 3
+  val lengthBounds = 20..40
   val (brokeSnips, fixedSnips) = mutableListOf<Σᐩ>() to mutableListOf<Σᐩ>()
-  preprocessStackOverflow(lengthBounds)
+  preprocessStackOverflow(MAX_PATCH_SIZE, lengthBounds)
+    .take(200)
     .forEach { (broke, fixed, minFix) ->
       broke.mapToUnquotedPythonTokens().also { brokeSnips.add(it) }
       minFix.mapToUnquotedPythonTokens().also { fixedSnips.add(it) }

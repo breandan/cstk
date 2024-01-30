@@ -252,7 +252,7 @@ fun printTokenizedSnippets(snippets: String = invalidPythonStatements) {
   }
 }
 
-@Language("py")
+//@Language("py")
 val invalidPythonStatements = """
   labels = dict(map(lambda(x, y): [y, x], raw_labels))
   zeros = zip(* filter(lambda(i, v): v == 0, enumerate(self.grid)))[0]
@@ -291,7 +291,7 @@ val invalidPythonStatements = """
   newrdd = self.rdd.map(lambda(k, v): (k[: : - 1], v)).sortByKey().map(lambda(k, v): (k[: : - 1], v))
 """.trimIndent()
 
-@Language("py")
+//@Language("py")
 val validPythonStatements = """
 numValues = sum([len(i.cache.keys()) for i in _memoizedFunctions])
 expectedGroupedC = [(i, [(i, i * 3 + j) for j in range(3)]) for i in range(5)]
