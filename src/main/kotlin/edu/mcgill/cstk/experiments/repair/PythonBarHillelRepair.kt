@@ -16,6 +16,7 @@ fun main() {
   val sampleTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
+  val s2pg = vanillaS2PCFG
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
     .forEach { (invalid, valid) ->
@@ -27,7 +28,6 @@ fun main() {
 
       val levBall = makeLevFSA(toRepair, levDist)
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
-      val s2pg = seq2parsePythonCFG.noEpsilonOrNonterminalStubs
       val intGram = try { s2pg.jvmIntersectLevFSA(levBall) }
       catch (e: Exception) {
         println("Encountered error: ${e.message}")
@@ -51,17 +51,6 @@ fun main() {
           samplesBeforeMatch++
           if (it == target) {
             matchFound = true
-            val elapsed = clock.elapsedNow().inWholeMilliseconds
-            val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-            println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-            println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples")
-            println("Recall / samples : ${++recall} / $total, errors: $errorRate")
-            sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
-            println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
-            allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
-            println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
-            samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
-            println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
             return@untilDone
 //            } else {
 //              val ascii = levenshteinAlign(toRepair, it.tokenizeByWhitespace()).paintANSIColors()
@@ -70,10 +59,22 @@ fun main() {
         }
       }
 
-      val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
-
-      if (!matchFound) println("Drew $samplesBeforeMatch samples in $timeout, length-$levDist human repair not found")
-      else println("Rank of human repair: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+      if (!matchFound)
+        println("Drew $samplesBeforeMatch samples in $timeout, length-$levDist human repair not found")
+      else {
+        val elapsed = clock.elapsedNow().inWholeMilliseconds
+        val allElapsed = allTime.elapsedNow().inWholeMilliseconds
+        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
+        println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        println("Recall / samples : ${++recall} / $total, errors: $errorRate")
+        sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
+        allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
+        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
+        samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
+        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
+      }
 
       println()
     }
