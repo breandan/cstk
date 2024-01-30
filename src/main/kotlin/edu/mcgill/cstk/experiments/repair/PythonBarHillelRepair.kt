@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import edu.mcgill.cstk.utils.lexToStrTypesAsPython
@@ -17,6 +18,7 @@ fun main() {
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val s2pg = vanillaS2PCFG
+  println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
     .shuffled()
