@@ -19,8 +19,10 @@ fun main() {
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val s2pg = vanillaS2PCFG
-  val positive = File("bar_hillel_results_positive.csv").also { it.appendText("dist, sample_ms, total_ms, total_samples, productions\n") }
-  val negative = File("bar_hillel_results_negative.csv").also { it.appendText("dist, samples, productions\n") }
+  val positive = try { File("bar_hillel_results_positive.csv").also { it.appendText("dist, sample_ms, total_ms, total_samples, productions\n") } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive.csv").also { it.appendText("dist, sample_ms, total_ms, total_samples, productions\n") } }
+  val negative = try { File("bar_hillel_results_negative.csv").also { it.appendText("dist, samples, productions\n") } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative.csv").also { it.appendText("dist, samples, productions\n") } }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
