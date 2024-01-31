@@ -37,8 +37,8 @@ fun collectPairwisePythonRepairs() {
   val lengthBounds = 20..40
   val (brokeSnips, fixedSnips) = mutableListOf<Σᐩ>() to mutableListOf<Σᐩ>()
   preprocessStackOverflow(MAX_PATCH_SIZE, lengthBounds)
-    .take(200)
-    .forEach { (broke, fixed, minFix) ->
+    .map { (a, _, c) -> a to c }.distinct().take(1000)
+    .forEach { (broke, minFix) ->
       broke.mapToUnquotedPythonTokens().also { brokeSnips.add(it) }
       minFix.mapToUnquotedPythonTokens().also { fixedSnips.add(it) }
       println(levenshteinAlign(broke.mapToUnquotedPythonTokens(),
@@ -47,14 +47,22 @@ fun collectPairwisePythonRepairs() {
 
   """
   // The following are length $lengthBounds Python statements with a human fix <=$MAX_PATCH_SIZE Levenshtein edits away
-  val invalidPythonStatements = ""${'"'}
+  val invalidLexedPythonStatements = ""${'"'}
      ${brokeSnips.joinToString("\n")} 
   ""${'"'}.trimIndent()
 
-  val validPythonStatements = ""${'"'}
+  val validLexedPythonStatements = ""${'"'}
      ${fixedSnips.joinToString("\n")} 
   ""${'"'}.trimIndent()
   """.trimIndent().also { it.alsoCopy() }
+    .also {
+      File("src/main/kotlin/edu/mcgill/cstk/experiments/repair/PairwisePythonRepairs.kt")
+        .writeText("""
+          package edu.mcgill.cstk.experiments.repair
+
+          $it
+        """.trimIndent())
+    }
 }
 
 fun testContextEditIssue() {

@@ -4,6 +4,7 @@ import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import edu.mcgill.cstk.utils.lexToStrTypesAsPython
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -18,6 +19,8 @@ fun main() {
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val s2pg = vanillaS2PCFG
+  val positive = File("bar_hillel_results_positive.csv").also { it.appendText("dist, sample_ms, total_ms, total_samples, productions\n") }
+  val negative = File("bar_hillel_results_negative.csv").also { it.appendText("dist, samples, productions\n") }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
@@ -62,14 +65,15 @@ fun main() {
         }
       }
 
-      if (!matchFound)
-        println("Drew $samplesBeforeMatch samples in $timeout, length-$levDist human repair not found")
-      else {
+      if (!matchFound) {
+        println("Drew $samplesBeforeMatch samples in $timeout, ${intGram.size} prods, length-$levDist human repair not found")
+        negative.appendText("$levDist, $samplesBeforeMatch, ${intGram.size}\n")
+      } else {
         val elapsed = clock.elapsedNow().inWholeMilliseconds
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
+//        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
         println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, ${intGram.size} prods")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
         println("Recall / samples : ${++recall} / $total, errors: $errorRate")
         sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
         println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
@@ -77,6 +81,7 @@ fun main() {
         println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
         samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
         println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
+        positive.appendText("$levDist, $elapsed, $allElapsed, $samplesBeforeMatch, ${intGram.size}\n")
       }
 
       println()
