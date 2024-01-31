@@ -36,11 +36,13 @@ fun collectPairwisePythonRepairs() {
   MAX_PATCH_SIZE = 3
   val lengthBounds = 20..40
   val (brokeSnips, fixedSnips) = mutableListOf<Σᐩ>() to mutableListOf<Σᐩ>()
+  val errorMessages = mutableListOf<Σᐩ>()
   preprocessStackOverflow(MAX_PATCH_SIZE, lengthBounds)
     .map { (a, _, c) -> a to c }.distinct().take(1000)
     .forEach { (broke, minFix) ->
       broke.mapToUnquotedPythonTokens().also { brokeSnips.add(it) }
       minFix.mapToUnquotedPythonTokens().also { fixedSnips.add(it) }
+      println("Parsing: $broke\nError message:${broke.getPythonErrorMessage().also { errorMessages.add(it) }}")
       println(levenshteinAlign(broke.mapToUnquotedPythonTokens(),
         minFix.mapToUnquotedPythonTokens()).paintANSIColors())
     }
@@ -53,6 +55,10 @@ fun collectPairwisePythonRepairs() {
 
   val validLexedPythonStatements = ""${'"'}
      ${fixedSnips.joinToString("\n")} 
+  ""${'"'}.trimIndent()
+  
+  val errorMessages = ""${'"'}
+     ${errorMessages.joinToString("\n")}
   ""${'"'}.trimIndent()
   """.trimIndent().also { it.alsoCopy() }
     .also {

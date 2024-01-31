@@ -196,6 +196,17 @@ fun Σᐩ.isValidPython(onErrorAction: (Σᐩ?) -> Unit = {}): Boolean =
     false
   }
 
+fun Σᐩ.getPythonErrorMessage(): Σᐩ =
+  try {
+    Python3Parser(
+      CommonTokenStream((this + "\n")
+        .lexAsPython().apply { removeErrorListeners(); addErrorListener(errorListener) })
+    )
+      .apply { removeErrorListeners(); addErrorListener(errorListener) }
+      .file_input()
+    ""
+  } catch (e: Exception) { e.message!! }
+
 fun Σᐩ.isSyntacticallyValidKotlin(): Boolean =
   try { parseKotlinCode(tokenizeKotlinCode(this)).let { true } }
   catch (_: Throwable) { false }

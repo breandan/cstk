@@ -2006,3 +2006,1006 @@ NAME = [ NUMBER , NUMBER , NUMBER , NUMBER ] NEWLINE NAME = [ NUMBER , NUMBER , 
 from NAME import NAME NEWLINE NAME = NAME ( STRING , NAME = True , NAME = NUMBER ) NEWLINE NAME
 NAME = { STRING : [ { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } ] } 
   """.trimIndent()
+  
+  val errorMessages = """
+     no viable alternative at input 'np'
+no viable alternative at input 'np'
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'url'
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '}'
+no viable alternative at input '{'
+mismatched input '(' expecting {NEWLINE, ';'}
+no viable alternative at input 's'
+mismatched input 'class' expecting NAME
+no viable alternative at input 'else'
+no viable alternative at input 'kegg_entry'
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'signature'
+mismatched input ''.(?=[A-D][．])'' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input ')'
+missing ')' at ']'
+extraneous input '.' expecting {NEWLINE, ';'}
+no viable alternative at input 'np.logical_and(y>C,x>=A,x<=B]'
+no viable alternative at input '('a':'
+mismatched input '<EOF>' expecting ']'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ')'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'obj2'
+extraneous input ']' expecting '}'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'ans'
+extraneous input ')' expecting ']'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input ')' expecting {NEWLINE, ';'}
+extraneous input 'list' expecting {NEWLINE, ';'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input ':'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+no viable alternative at input '1'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input ':'
+mismatched input 'out' expecting {NEWLINE, ';'}
+no viable alternative at input 'b'
+extraneous input 'or' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing ':' at '\n'
+mismatched input ']' expecting {NEWLINE, ';'}
+no viable alternative at input ':'
+missing NAME at '\n'
+extraneous input 'on' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting '}'
+no viable alternative at input 'how'
+mismatched input 'ة' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ',' expecting {NEWLINE, ';'}
+no viable alternative at input '{'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '=' expecting NAME
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ':' at '\n'
+no viable alternative at input ':'
+no viable alternative at input ':'
+mismatched input '<EOF>' expecting '}'
+missing ')' at '='
+no viable alternative at input '["iptables","-t","mangle","-I","OUTPUT","--dst","2.2.2.0/24","-p","gre","-j","MARK","--set-mark","0x04")'
+mismatched input '"target_path"' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '7'
+mismatched input 'df_new' expecting {NEWLINE, ';'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '<EOF>'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '[s.valueforsinstockListifs.value==stockType[0])'
+no viable alternative at input 'struct'
+no viable alternative at input 'table'
+no viable alternative at input '[[True,False,False,[False,True,False]])'
+no viable alternative at input 'list'
+missing NAME at '\n'
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '115' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''0011''
+extraneous input '.' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing ')' at ']'
+no viable alternative at input '[[1,2.0,"three"],[4,5.0,"six"])'
+no viable alternative at input ';//'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '/' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'Students.objects.filter(class'
+no viable alternative at input 'buff'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input 'shell' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '_index'
+mismatched input ']' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', ':', '[', '+', '-', '~', '{'}
+no viable alternative at input ']'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ']' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input 'etc' expecting ']'
+no viable alternative at input '[logical_vector,:'
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'ud'
+extraneous input '...' expecting {NEWLINE, ';'}
+mismatched input '\n' expecting {'import', '.'}
+no viable alternative at input ''text''
+no viable alternative at input '{'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'eliminate_string_without_text' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'or' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'HALIGN_CENTRE'
+extraneous input 'params' expecting ')'
+extraneous input '.' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'id'
+no viable alternative at input 'bs4'
+missing NAME at '\n'
+no viable alternative at input '{'
+mismatched input ':' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ']' expecting '}'
+no viable alternative at input 'id'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+mismatched input ':' expecting {NEWLINE, ';'}
+missing ')' at ']'
+mismatched input 'distinct' expecting {NEWLINE, ';'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '{'
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+no viable alternative at input '<EOF>'
+missing '}' at ']'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ')'
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'Name'
+no viable alternative at input ':'
+no viable alternative at input ':'
+no viable alternative at input '[['3'])'
+mismatched input ']' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'env'
+mismatched input 'enter' expecting {NEWLINE, ';'}
+missing ')' at ':'
+extraneous input '%' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+no viable alternative at input '[axes_rect,**'
+mismatched input '<EOF>' expecting ')'
+no viable alternative at input 'STATIC_PATH'
+no viable alternative at input '['a','b')'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '1'
+no viable alternative at input '<EOF>'
+extraneous input ')' expecting ']'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'for' expecting {'else', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'is' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', '[', ']', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '\n' expecting {':', '->'}
+missing NAME at '\n'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input 'in' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'project_loc'
+no viable alternative at input 's'
+missing NAME at '['
+extraneous input '%' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'tkinter'
+extraneous input '=' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'as'
+no viable alternative at input ']'
+mismatched input ',' expecting {NEWLINE, ';'}
+no viable alternative at input 'd_list'
+mismatched input '<EOF>' expecting ')'
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'Now'
+missing ']' at '.'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'from' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'Mary'
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'should'
+extraneous input ')' expecting ']'
+no viable alternative at input 'Student'
+extraneous input ')' expecting {NEWLINE, ';'}
+extraneous input ''Window Title'' expecting ')'
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+extraneous input ')' expecting ']'
+mismatched input 'fig' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at ':'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ',' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input ',' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'bigrams'
+mismatched input 'for' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '{' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+missing ':' at '\n'
+no viable alternative at input '<EOF>'
+no viable alternative at input 'Result'
+no viable alternative at input 'but'
+no viable alternative at input '='
+mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+no viable alternative at input 'numpy'
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'router' expecting {NEWLINE, ';'}
+extraneous input '\n' expecting NAME
+mismatched input 'enter' expecting {NEWLINE, ';'}
+no viable alternative at input 'datetime'
+extraneous input '/' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input '{'
+no viable alternative at input '{'
+extraneous input '@' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', '**', '[', '+', '-', '~', '{', '}'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '[[1,2,3,4][2,3,4,5][3,4,5,6][4,5,6,7])'
+no viable alternative at input 'I'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''key2''
+mismatched input 'worksheet' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '=' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'R'
+no viable alternative at input '1'
+mismatched input 'for' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at '='
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'Images'
+no viable alternative at input ''file''
+no viable alternative at input '{'
+no viable alternative at input '<EOF>'
+mismatched input ',' expecting {NEWLINE, ';'}
+no viable alternative at input ':'
+mismatched input '0' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '{'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ']'
+no viable alternative at input 'text'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing INDENT at 'name'
+mismatched input '<EOF>' expecting ')'
+no viable alternative at input 'userlist'
+no viable alternative at input 'PyObject'
+mismatched input 'as' expecting {'import', '.'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ':' at '\n'
+no viable alternative at input 'B(0:'
+no viable alternative at input 'be'
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '{'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '[max(x)forxinlist[0:280])'
+no viable alternative at input '[max(x)forxinlist[0:281])'
+extraneous input '.' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input ']' expecting {NEWLINE, ';'}
+missing NAME at '\n'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'first'
+missing ')' at ']'
+no viable alternative at input 'form'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'j'
+no viable alternative at input 'list'
+missing NAME at '\n'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'dictionary'
+mismatched input 'else' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+no viable alternative at input '('cat','tiger':'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'X'
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '...' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '.' expecting NAME
+missing ':' at '{'
+mismatched input 'Date' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ']'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'type' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'f'
+no viable alternative at input '<EOF>'
+no viable alternative at input '{'2016-10-20':{'val_morning':0.0,'val_evening':0.0},{'2016-10-21':{'val_morning':0.0,'val_evening':0.0}}'
+no viable alternative at input 'Output'
+no viable alternative at input 'r_df.lab_key==='
+mismatched input ':' expecting {STRING, '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '@'}
+mismatched input ':' expecting {STRING, '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '@'}
+no viable alternative at input 'numpy'
+no viable alternative at input '<EOF>'
+no viable alternative at input '{id:[firstname,lastname,password],{id:[firstname,lastname,password]}]'
+mismatched input 'arg1' expecting {NEWLINE, ';'}
+no viable alternative at input '[[0,2.5],[0,0])'
+extraneous input ']' expecting ')'
+no viable alternative at input 'of'
+no viable alternative at input 'pytesseract'
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing INDENT at 'keyword'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+mismatched input '<EOF>' expecting ']'
+no viable alternative at input '<EOF>'
+extraneous input '.' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '{' expecting {NEWLINE, ';'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', ':', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'option'
+mismatched input '\n' expecting {':', '->'}
+mismatched input 'Pool' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at '='
+no viable alternative at input 'r'/abc$'.'app.views.foo''
+missing ']' at '}'
+mismatched input 'from' expecting {NEWLINE, ';'}
+extraneous input ',' expecting NAME
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''B''
+mismatched input 'index' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'string>,'
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'code'
+missing 'import' at 'Import'
+missing 'import' at 'Import'
+no viable alternative at input 'lambdax,ysimilarity'
+no viable alternative at input '"Name"'
+extraneous input '<' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing ')' at ':'
+no viable alternative at input '{'A':['2000.02.25',''],'B':['','2003.05.26'])'
+mismatched input '5' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ']' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', ':', '[', '+', '-', '~', '{'}
+no viable alternative at input '"ok"'
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ']'
+extraneous input '...' expecting '}'
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ']'
+no viable alternative at input '(df['date']cw'
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '[[A],[B],[A],[B],[B],[A],[A])'
+mismatched input 'global' expecting NAME
+no viable alternative at input 'requests'
+no viable alternative at input 'tuplelist2dict'
+no viable alternative at input 'tuplelist2dict'
+no viable alternative at input ':'
+no viable alternative at input 'sympy'
+mismatched input 'lw' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ',' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+no viable alternative at input '}'
+missing NAME at '\n'
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'integral'
+mismatched input 'def' expecting ']'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '"ids"'
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input '...'
+no viable alternative at input ':'
+no viable alternative at input 'pyinstaller'
+mismatched input ']' expecting {NEWLINE, ';'}
+no viable alternative at input '[blobforblobinblobsifblob['color']=='red','
+mismatched input '<EOF>' expecting INDENT
+mismatched input '<EOF>' expecting ']'
+mismatched input 'Im' expecting {NEWLINE, ';'}
+no viable alternative at input 'np.array([A[1,1],A[2,2:3],A[3,1:3])'
+no viable alternative at input '{'
+mismatched input '{' expecting {NEWLINE, ';'}
+no viable alternative at input '{'
+no viable alternative at input '<EOF>'
+no viable alternative at input 'Headers'
+mismatched input 'newList' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'time' expecting {NEWLINE, ';'}
+no viable alternative at input 'some'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'df_ticks'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '...' expecting ']'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''b''
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting ']'
+mismatched input 'print' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '='
+no viable alternative at input 'sympy'
+no viable alternative at input 'str'
+mismatched input ',' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '{'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input 'x' expecting {NEWLINE, ';'}
+no viable alternative at input '"other_info"'
+mismatched input '.3' expecting {NEWLINE, ';'}
+mismatched input 'ornegTest' expecting {NEWLINE, ';'}
+mismatched input ''values'' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ':' at '\n'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ')' at '<'
+no viable alternative at input 'a'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '1' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '<' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input ')'
+no viable alternative at input '<EOF>'
+mismatched input ':' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'df' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ']' expecting ')'
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'U1'
+no viable alternative at input 'empty'
+mismatched input ')' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'p8p8p' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '>>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+missing ')' at ':'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input ''  N o r m a l    t e r m i n a t i o n''
+mismatched input 'generate' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'list'
+no viable alternative at input ''\sub\supersub\P''
+mismatched input ''\sub\supersub\P'' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '.' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input '}' expecting {NEWLINE, ';'}
+mismatched input 'l' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', ':', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'print' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ')'
+mismatched input 'profile' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ',' expecting ':'
+no viable alternative at input '...'
+no viable alternative at input '='
+mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting NAME
+extraneous input 'not' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '...' expecting {NEWLINE, ';'}
+no viable alternative at input 'operation'
+no viable alternative at input 'u'googletalk.exe''
+extraneous input 'if' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ']'
+mismatched input '{' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+extraneous input ',' expecting {NEWLINE, ';'}
+extraneous input ']' expecting {NEWLINE, ';'}
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+missing '}' at '//'
+mismatched input '<EOF>' expecting '}'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '<EOF>'
+missing '}' at 'for'
+missing '}' at 'for'
+mismatched input ''baz'' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '...'
+no viable alternative at input 'random'
+mismatched input '}' expecting ')'
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input 'B'
+mismatched input '<EOF>' expecting ']'
+mismatched input '<EOF>' expecting INDENT
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'bar'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '{'
+no viable alternative at input '{'
+no viable alternative at input ''b''
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '='
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+no viable alternative at input ':'
+no viable alternative at input 'outerjoin'
+no viable alternative at input 'outerjoin'
+mismatched input '=' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+mismatched input '}' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting '}'
+no viable alternative at input '<EOF>'
+no viable alternative at input 'list'
+missing NAME at '\n'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''234''
+missing ')' at ']'
+no viable alternative at input ':'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'import' expecting ')'
+no viable alternative at input ':'
+extraneous input ',' expecting {NEWLINE, ';'}
+extraneous input ',' expecting {NEWLINE, ';'}
+extraneous input ',' expecting {NEWLINE, ';'}
+no viable alternative at input 'L'
+missing 'import' at 'impoort'
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+missing ':' at '\n'
+mismatched input '"C"' expecting NAME
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'def' expecting ')'
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'string'
+no viable alternative at input 'string'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'directory/QuickSort.class'
+no viable alternative at input '{'
+extraneous input '/' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'table'
+mismatched input '<EOF>' expecting ']'
+mismatched input ']' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at 'and'
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'u'SRoute'' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '4439' expecting ']'
+missing INDENT at 'Q'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '"Solve the captcha..."'
+missing ')' at ']'
+no viable alternative at input ':'
+missing INDENT at 'import'
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting '}'
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing INDENT at 'email_check'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ')' at '='
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'result'
+no viable alternative at input 'value1'
+no viable alternative at input '[start_end[Startstation'
+no viable alternative at input '(equalityx'
+no viable alternative at input 'Type'
+mismatched input '1' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'Date<='
+missing NAME at '.'
+missing NAME at '.'
+extraneous input '...' expecting ']'
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ']'
+mismatched input '}' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'my_list'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {NEWLINE, ';'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input 'filedialog'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ':' at '2'
+no viable alternative at input '<EOF>'
+no viable alternative at input '{'
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+missing NAME at '\n'
+no viable alternative at input 'code'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '"c"' expecting ')'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'lambdax:x.groupby(x.index,x.B]'
+mismatched input ':' expecting {'import', '.'}
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing NAME at '.'
+extraneous input '>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '.4'
+no viable alternative at input ':'
+no viable alternative at input 'dir'
+missing ':' at '\n'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ':' at '{'
+extraneous input 'or' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing NAME at '\n'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '>' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting INDENT
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'print'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input ''rename name ='' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at ','
+mismatched input '=' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ')' at ']'
+extraneous input ']' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', ':', '[', '+', '-', '~', '{'}
+extraneous input ']' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', ':', '[', '+', '-', '~', '{'}
+mismatched input '%' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'hov' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'for' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'for' expecting {NEWLINE, ';'}
+no viable alternative at input '='
+mismatched input '=' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {NEWLINE, ';'}
+no viable alternative at input '<EOF>'
+no viable alternative at input '<EOF>'
+no viable alternative at input '<EOF>'
+extraneous input ']' expecting ')'
+mismatched input ']' expecting {NEWLINE, ';'}
+extraneous input ']' expecting ')'
+extraneous input ',' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', '[', ']', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ')'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '1'
+mismatched input 'newton' expecting {NEWLINE, ';'}
+missing ')' at ':'
+no viable alternative at input ')'
+extraneous input ',' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing NAME at '\n'
+extraneous input '=' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+mismatched input ''lift 4'' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '**' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', '[', ']', '+', '-', '~', '{'}
+no viable alternative at input 'glob.glob(C:'
+no viable alternative at input 'glob.glob(C:'
+no viable alternative at input 'glob.glob(C:'
+extraneous input ''%s'' expecting ')'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'at'
+no viable alternative at input 'lambda('
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'df'
+missing NAME at '\n'
+missing NAME at '\n'
+no viable alternative at input '"env"'
+no viable alternative at input '"  now time is "'
+no viable alternative at input '{"Pid":"5652f92761be0b14889d9854","Registration":"TN 56 HD 6766","Booked":"${"$"}regex":'
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '('b','c']'
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '='
+mismatched input ',' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'massive'
+no viable alternative at input '__ge__'
+no viable alternative at input 'holder'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'but' expecting {NEWLINE, ';'}
+mismatched input 'color' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'color' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '['
+mismatched input '}' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '7' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ')' at 'for'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'Date'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ']' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', ':', '[', '+', '-', '~', '{'}
+no viable alternative at input 'drugs_tall['date_of_birth'].isnull()=='
+no viable alternative at input ']'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input ''http://maps.googleapis.com/maps/api/geocode/json?address='' expecting {NEWLINE, ';'}
+no viable alternative at input '<EOF>'
+no viable alternative at input 'Extension'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting ']'
+mismatched input 'PyListItems' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '['stock',Grouper(freq='D')['price'].agg(['first','last'])'
+no viable alternative at input 'strings'
+mismatched input 'element' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'Mage'
+no viable alternative at input 'Forset'
+missing ']' at ','
+missing ':' at '\n'
+mismatched input '>' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input 'for' expecting {NEWLINE, ';'}
+mismatched input 'assert' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+no viable alternative at input '[(127.0.0'
+no viable alternative at input ':'
+extraneous input 'or' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing NAME at '\n'
+mismatched input '>' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '{'supplier':['A','B','C'],'coords':['(51.1235,-0.3453)','(52.1245,-0.3423)''(53.1235,-1.4553)'}'
+no viable alternative at input ':'
+mismatched input '...' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting ']'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ',' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+mismatched input '<EOF>' expecting ')'
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '")"' expecting {NEWLINE, ';'}
+no viable alternative at input '{"var1":[1],"var2",'
+no viable alternative at input 'or_(Table.field1==abc,Table.field2==def'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '"Message 2"'
+mismatched input ':' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'print' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''A2''
+mismatched input ')' expecting {NEWLINE, ';'}
+mismatched input 'xNext' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at ')'
+mismatched input 'a' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'my'
+no viable alternative at input ':'
+missing ':' at '\n'
+no viable alternative at input '[data[0]='
+extraneous input ',' expecting {NEWLINE, ';'}
+extraneous input 'yield' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '\n' expecting NAME
+no viable alternative at input '{'
+extraneous input '}' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '<' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '}' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ')' expecting {NEWLINE, ';'}
+no viable alternative at input '[('key',{'keyword':{'blue','yellow'})'
+no viable alternative at input 'import'
+no viable alternative at input ':'
+no viable alternative at input '"title"'
+no viable alternative at input '"title"'
+no viable alternative at input 'list'
+mismatched input 'plt' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+missing NAME at '['
+extraneous input ']' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting '}'
+no viable alternative at input 'E'
+no viable alternative at input 'df[["a0","a1","a2"])'
+extraneous input '...' expecting ']'
+mismatched input 'in' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input 'bt' expecting {NEWLINE, ';'}
+extraneous input ',' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', ')', '[', '+', '-', '~', '{'}
+no viable alternative at input ']'
+mismatched input 'class' expecting '}'
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'image' expecting {NEWLINE, ';'}
+no viable alternative at input '<EOF>'
+missing ']' at '}'
+missing NAME at '\n'
+no viable alternative at input '{'
+mismatched input '<EOF>' expecting ']'
+extraneous input '=' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '6' expecting ']'
+mismatched input '...' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+no viable alternative at input 'x'
+extraneous input ']' expecting ')'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ')'
+mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+extraneous input '}' expecting {NEWLINE, ';'}
+no viable alternative at input '["C:\\Program Files\\operation.exe","execute","-af","createrecord.xml"," -stuName",student,"-gender"gender'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input 'in' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+no viable alternative at input '...'
+no viable alternative at input '='
+missing NAME at '['
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input 'from' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', '[', ']', '+', '-', '~', '{'}
+no viable alternative at input '"model"'
+mismatched input 'names' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at '}'
+missing ']' at '}'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ':'
+no viable alternative at input '((old_tax_df.var_1==1)&(old_tax_df.var_2==1)]'
+no viable alternative at input 'dd833'
+no viable alternative at input ')'
+extraneous input '2' expecting ']'
+extraneous input 'def' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+extraneous input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input ':'
+extraneous input '>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+mismatched input 'print' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '5'
+no viable alternative at input '(srudent_grades['Student_Name']=="Stella",['Grade']]'
+no viable alternative at input ':'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '' >50K'' expecting ']'
+no viable alternative at input 'img[177,340)'
+no viable alternative at input '<EOF>'
+no viable alternative at input 't'
+no viable alternative at input '0.53459687'
+mismatched input 'xx' expecting {NEWLINE, ';'}
+no viable alternative at input ','
+no viable alternative at input 'df'
+mismatched input '.' expecting {NEWLINE, ';'}
+no viable alternative at input ';'
+no viable alternative at input ':'
+missing ')' at ']'
+missing INDENT at 'print'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input 'numpy'
+mismatched input '<EOF>' expecting '}'
+extraneous input '**' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'data' expecting {NEWLINE, ';'}
+no viable alternative at input 'code'
+no viable alternative at input 'replace'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '{'websocket':AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns,))),'
+mismatched input '<EOF>' expecting ']'
+no viable alternative at input '}'
+extraneous input ':' expecting {NEWLINE, ';'}
+mismatched input '=' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ',' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '<EOF>'
+missing NAME at '\n'
+missing ']' at '}'
+mismatched input '<EOF>' expecting INDENT
+no viable alternative at input 'compiled_regex'
+no viable alternative at input 'cls.mydict['var1')'
+extraneous input '*' expecting {STRING, NUMBER, 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input '=' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'm'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+no viable alternative at input '2'
+no viable alternative at input 'strings'
+extraneous input ')' expecting {NEWLINE, ';'}
+missing NAME at '\n'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'need'
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '[['98292','Lake Ketchum'],['98068','Roslyn']...'
+no viable alternative at input '2'
+no viable alternative at input '[x,y,s='
+extraneous input '>' expecting {STRING, NUMBER, 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input ']' expecting {NEWLINE, ';'}
+mismatched input ']' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input '<EOF>'
+mismatched input 'len' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'files_to_remove'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ')'
+missing NAME at '\n'
+mismatched input 'eliminates' expecting {NEWLINE, ';'}
+mismatched input 'for' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '['
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ',' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'S1.index.,'
+mismatched input 'where' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+missing INDENT at 'def'
+no viable alternative at input ':'
+mismatched input ',' expecting {NEWLINE, ';'}
+no viable alternative at input 'x'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '<' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input '<' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at ','
+no viable alternative at input '{'Automotive':17,'Commercial Banks':10,'Insurance':4,'Hospitals':2', ''
+no viable alternative at input '='
+no viable alternative at input '='
+mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '*', '(', ')', '**', '[', '+', '-', '~', '{'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ']'
+extraneous input ']' expecting {NEWLINE, ';'}
+missing '}' at ':'
+mismatched input '<EOF>' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ''j'' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'list_i'
+mismatched input ']' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ''DOWNLOADER_MIDDLEWARE''
+extraneous input 'plugin' expecting {NEWLINE, ';'}
+mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+no viable alternative at input ':'
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input ']' expecting ')'
+no viable alternative at input '10'
+no viable alternative at input '<EOF>'
+mismatched input 'every' expecting {NEWLINE, ';'}
+extraneous input ']' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input '0.63291' expecting ']'
+mismatched input 'cell' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing ']' at '}'
+no viable alternative at input ':'
+no viable alternative at input '{1,3,4,5,8,13print'
+no viable alternative at input 'b'
+no viable alternative at input 'a2'
+no viable alternative at input '{'team':['Warriors','Warriors','Warriors','Rockets','Rockets'],'player':'Stephen Curry','Klay Thompson','
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing INDENT at 'register'
+mismatched input ',' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+extraneous input ')' expecting ']'
+no viable alternative at input '<EOF>'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+no viable alternative at input ')'
+mismatched input '<EOF>' expecting INDENT
+mismatched input ':' expecting {'.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '@'}
+no viable alternative at input '2'
+mismatched input 'level' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+mismatched input '\n' expecting {STRING, NUMBER, 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input '=' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
+extraneous input '>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
+mismatched input 'data' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'None' expecting ']'
+mismatched input ']' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'attempt'
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+extraneous input 'H21' expecting ']'
+mismatched input 'f' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '0.3'
+no viable alternative at input 'np.exp(lambda*T['
+mismatched input '\n' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
+extraneous input '(' expecting NAME
+extraneous input ']' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '}', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '['
+mismatched input '<EOF>' expecting ']'
+mismatched input 'button' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input 'code'
+no viable alternative at input '{'
+missing ')' at ']'
+extraneous input '*' expecting {NEWLINE, ';'}
+mismatched input 'set' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '}' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting ']'
+extraneous input ''ID'' expecting ')'
+extraneous input ')' expecting {NEWLINE, ';'}
+mismatched input '<EOF>' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input '(game_df['Date'].dt.month>2)&(game_df['Date'].dt.month<5]'
+no viable alternative at input '(game_df['Date'].dt.month>2)&(game_df['Date'].dt.month<5]'
+mismatched input ')' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+no viable alternative at input ']'
+no viable alternative at input 'for'
+no viable alternative at input 'with'
+mismatched input 'k' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+mismatched input ':' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
+missing NAME at '\n'
+extraneous input '91' expecting ']'
+no viable alternative at input 'math_output'
+no viable alternative at input '='
+  """.trimIndent()
