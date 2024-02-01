@@ -56,17 +56,18 @@ fun main() {
       val timeout = 120.seconds
       val results = mutableListOf<Σᐩ>()
       run untilDone@{
-        intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout }).distinct().forEach {
-          results.add(it)
-          samplesBeforeMatch++
-          if (it == target) {
-            matchFound = true
-            return@untilDone
-//            } else {
-//              val ascii = levenshteinAlign(toRepair, it.tokenizeByWhitespace()).paintANSIColors()
-//              println("Found valid repair (${clock.elapsedNow()}): $ascii")
+        intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
+          .distinct().forEach {
+            results.add(it)
+            samplesBeforeMatch++
+            if (it == target) {
+              matchFound = true
+              return@untilDone
+  //            } else {
+  //              val ascii = levenshteinAlign(toRepair, it.tokenizeByWhitespace()).paintANSIColors()
+  //              println("Found valid repair (${clock.elapsedNow()}): $ascii")
+            }
           }
-        }
       }
 
       if (!matchFound) {
