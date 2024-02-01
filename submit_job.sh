@@ -17,4 +17,4 @@ module load CCEnv StdEnv java/17.0.2
 # ./gradlew --offline completeCode | tee logfile.txt
 
 date=$(date '+%Y-%m-%d-%H-%M')
-java -Xmx150G -jar gym-fs-fat-1.0-SNAPSHOT.jar 2>&1 | tee /scratch/b/bengioy/breandan/log_${date}.txt
+java -Xmx128G -jar gym-fs-fat-1.0-SNAPSHOT.jar 2>&1 | tee /scratch/b/bengioy/breandan/log_${date}.txt

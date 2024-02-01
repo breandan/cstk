@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import edu.mcgill.cstk.utils.lexToStrTypesAsPython
 import java.io.File
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -22,15 +23,14 @@ fun main() {
   val currentTime = System.currentTimeMillis()
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive.csv").also { it.appendText(positiveHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val negative = try { File("bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative.csv").also { it.appendText(negativeHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
-    .shuffled()
-    .forEach { (invalid, valid) ->
+    .shuffled(Random(1)).forEach { (invalid, valid) ->
       val allTime = TimeSource.Monotonic.markNow()
       val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
       val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
