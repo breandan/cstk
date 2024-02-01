@@ -19,11 +19,12 @@ fun main() {
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val s2pg = vanillaS2PCFG
-  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions\n"
-  val positive = try { File("bar_hillel_results_positive.csv").also { it.appendText(positiveHeader) } }
+  val currentTime = System.currentTimeMillis()
+  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, edit1, edit2, edit3\n"
+  val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive.csv").also { it.appendText(positiveHeader) } }
-  val negativeHeader = "length, lev_dist, samples, productions\n"
-  val negative = try { File("bar_hillel_results_negative.csv").also { it.appendText(negativeHeader) } }
+  val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
+  val negative = try { File("bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative.csv").also { it.appendText(negativeHeader) } }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
 
@@ -34,7 +35,8 @@ fun main() {
       val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
       val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
       val target = humanRepair.joinToString(" ")
-      val levDist = levenshtein(toRepair, humanRepair)
+      val levAlign = levenshteinAlign(toRepair, humanRepair)
+      val levDist = levAlign.patchSize()
 
       val levBall = makeLevFSA(toRepair, levDist)
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
@@ -72,7 +74,8 @@ fun main() {
 
       if (!matchFound) {
         println("Drew $samplesBeforeMatch samples in $timeout, ${intGram.size} prods, length-$levDist human repair not found")
-        negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}\n")
+        negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
+          "${levBall.Q.size}, ${intGram.size}, ${levAlign.summarize()}\n")
       } else {
         val elapsed = clock.elapsedNow().inWholeMilliseconds
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
@@ -86,7 +89,8 @@ fun main() {
         println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
         samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
         println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
-        positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, $samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}\n")
+        positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
+          "$samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}, ${levAlign.summarize()}\n")
       }
 
       println()
