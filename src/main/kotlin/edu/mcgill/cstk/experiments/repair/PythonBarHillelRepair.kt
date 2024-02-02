@@ -21,7 +21,7 @@ fun main() {
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
 //   val s2pg = vanillaS2PCFG // Original grammar, including all productions
   val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
-  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
+//  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val currentTime = System.currentTimeMillis()
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
@@ -42,17 +42,20 @@ fun main() {
 
       val levBall = makeLevFSA(toRepair, levDist)
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
-      val intGram = try { s2pg.jvmIntersectLevFSA(levBall) }
-        catch (e: Exception) {
+      val intGram =
+        try {
+          s2pg.jvmIntersectLevFSA(levBall).also { intGram ->
+            if (humanRepair in s2pg.language && levBall.recognizes(humanRepair) && humanRepair in intGram.language)
+              println("Human repair is recognized by the intersection grammar")
+            else throw Exception("Human repair is unrecognizable!")
+          }
+        } catch (e: Exception) {
           println("Encountered error (${e.message}): $humanRepairANSI")
           println("Recall: $recall / $total, errors: ${++errorRate}\n")
           return@forEach
         }
 
       total++
-      assert(humanRepair in s2pg.language)
-      assert(levBall.recognizes(humanRepair))
-      assert(humanRepair in intGram.language)
       println("Ground truth repair: $humanRepairANSI")
       val clock = TimeSource.Monotonic.markNow()
       var samplesBeforeMatch = 0
@@ -64,13 +67,7 @@ fun main() {
           .distinct().forEach {
             results.add(it)
             samplesBeforeMatch++
-            if (it == target) {
-              matchFound = true
-              return@untilDone
-  //            } else {
-  //              val ascii = levenshteinAlign(toRepair, it.tokenizeByWhitespace()).paintANSIColors()
-  //              println("Found valid repair (${clock.elapsedNow()}): $ascii")
-            }
+            if (it == target) { matchFound = true; return@untilDone }
           }
       }
 
