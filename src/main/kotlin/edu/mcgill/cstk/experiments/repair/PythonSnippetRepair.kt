@@ -77,7 +77,7 @@ Compute Canada run command:
 
 ./gradlew shadowJar &&
 scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk &&
-ssh breandan@niagara.computecanada.ca 'cd /home/b/bengioy/breandan/cstk && sbatch submit_job.sh'
+ssh breandan@niagara.computecanada.ca 'cd /home/b/bengioy/breandan/cstk && git pull && sbatch submit_job.sh'
 
 Local run command:
 

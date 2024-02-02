@@ -1080,6 +1080,16 @@ Interface:
 
 If, for some reason Gradle does not work on Compute Canada, you can build a fat JAR locally then deploy.
 
+To run the CPU experiments:
+
+```bash
+./gradlew shadowJar &&
+scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk &&
+ssh breandan@niagara.computecanada.ca 'cd /home/b/bengioy/breandan/cstk && git pull && sbatch submit_job.sh'
+```
+
+To run the GPU experiments:
+
 ```bash
 ./gradlew shadowJar && scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk
 
