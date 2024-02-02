@@ -745,6 +745,9 @@ val seq2ParseCFGNNTs = s2pCFGStr.parseCFG().subgrammar(PYMAP.keys.map { if (1 < 
   it.endsWith("'")) it.drop(1).dropLast(1) else it }.toSet()).noNonterminalStubs.freeze()
 
 val vanillaS2PCFG = s2pCFGStr.parseCFG().noEpsilonOrNonterminalStubs.freeze()
+val vanillaS2PCFGMinimized by lazy {
+  vanillaS2PCFG.directSubgrammar(vanillaS2PCFG.symbols.filter { (symbolCounts[it] ?: 0) == 0 })
+}
 
 // Taken from seq2parse's Python grammar
 val seq2parsePythonCFG: CFG by lazy {

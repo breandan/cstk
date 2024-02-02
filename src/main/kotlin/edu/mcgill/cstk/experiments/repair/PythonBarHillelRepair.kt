@@ -19,7 +19,9 @@ fun main() {
   val sampleTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
-  val s2pg = vanillaS2PCFG
+//   val s2pg = vanillaS2PCFG // Original grammar, including all productions
+  val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
+  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val currentTime = System.currentTimeMillis()
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }

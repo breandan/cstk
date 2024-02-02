@@ -22,7 +22,8 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  collectPairwisePythonRepairs()
+//  collectPairwisePythonRepairs()
+    println(validLexedPythonStatements.parseAndCountActiveSymbols().alsoCopy())
 //  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
@@ -30,6 +31,21 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+/** See: [symbolCounts] */
+fun Σᐩ.parseAndCountActiveSymbols(): Σᐩ {
+  val ntCounts =
+    lines().parallelStream().map { "$it NEWLINE" }
+      .flatMap { vanillaS2PCFG.parseAll(it, false).flatMap { it.activeSymbols().toList() }.stream() }
+      .toList().groupingBy { it }.eachCount()
+
+  val postProc = ".lines().filter { it.isNotEmpty() }.map { it.split(\" ::: \") }.associate { (nt, count) -> nt.trim() to count.trim().toInt() }"
+
+  return ntCounts.entries.sortedBy { it.value }
+    .joinToString("\n", "val symbolCounts by lazy { \"\"\"\n", "\n\"\"\"$postProc }") {
+      "  ${it.key} ::: ${it.value}"
+    }
 }
 
 fun collectPairwisePythonRepairs() {
@@ -56,6 +72,8 @@ fun collectPairwisePythonRepairs() {
   val validLexedPythonStatements = ""${'"'}
      ${fixedSnips.joinToString("\n")} 
   ""${'"'}.trimIndent()
+  
+  ${fixedSnips.joinToString("\n").parseAndCountActiveSymbols()}
   
   val errorMessages = ""${'"'}
      ${errorMessages.joinToString("\n")}
