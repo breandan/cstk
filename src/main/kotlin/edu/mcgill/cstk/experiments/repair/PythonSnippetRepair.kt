@@ -48,10 +48,12 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
-    readBIFIContents().take(100_000).asStream().parallel()
-      .map { "\n$it\n".lexToStrTypesAsPython().let { listOf("BOS") + it + "EOS" }.asSequence().toMarkovChain(4) }
+    readBIFIContents().take(10_000_000).asStream().parallel()
+      .map { "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
+        .tokenizeByWhitespace().filter { it != "98" && it != "99" }
+        .asSequence().toMarkovChain(4) }
       .reduce { t, u -> t + u }.get()
-  }.let { println("Trained Markov chain on ${it.value.counter.total.get()} BIFI tokens in ${it.duration.inWholeMilliseconds}ms"); it.value }
+  }.let { println("Trained Markov chain on ${it.value.counter.total.get()} BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 
 val topTokens by lazy { P_BIFI.topK(200).map { it.first } + "ε" - "BOS" - "EOS" }// + errDeck

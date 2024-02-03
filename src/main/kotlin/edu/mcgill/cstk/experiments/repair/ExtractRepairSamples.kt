@@ -41,7 +41,8 @@ fun readBIFIContents(
   good: Boolean = true,
   kind: String = if (good) "good" else "bad",
   filename: String = "src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
-  file: File = File(filename)
+  filenameCC: String = "/scratch/b/bengioy/breandan/bifi/data/orig_${kind}_code/orig.${kind}.cc.json",
+  file: File = File(filename).let { if (it.exists()) it else File(filenameCC) }
 ): Sequence<String> =
   file.readLines().asSequence()
     .filter { it.trimStart().startsWith("\"code_string\": \"") }

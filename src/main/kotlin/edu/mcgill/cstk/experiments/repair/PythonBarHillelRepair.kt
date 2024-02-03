@@ -23,13 +23,14 @@ fun main() {
   val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val currentTime = System.currentTimeMillis()
-  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, edit1, edit2, edit3\n"
+  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val negative = try { File("bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
+  validPythonStatements.lines().first().let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
   invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
     .shuffled(Random(1)).forEach { (invalid, valid) ->
@@ -60,14 +61,14 @@ fun main() {
       val clock = TimeSource.Monotonic.markNow()
       var samplesBeforeMatch = 0
       var matchFound = false
-      val timeout = 120.seconds
+      val timeout = 10.seconds
       val results = mutableListOf<Σᐩ>()
       run untilDone@{
         intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
           .distinct().forEach {
             results.add(it)
             samplesBeforeMatch++
-            if (it == target) { matchFound = true; return@untilDone }
+            if (it == target) { matchFound = true/*; return@untilDone*/ }
           }
       }
 
@@ -78,9 +79,10 @@ fun main() {
       } else {
         val elapsed = clock.elapsedNow().inWholeMilliseconds
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-//        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
+        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
+        val indexOfTarget = rankedResults.indexOf(target)
         println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, ${intGram.size} prods")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
         println("Recall / samples : ${++recall} / $total, errors: $errorRate")
         sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
         println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
@@ -89,7 +91,7 @@ fun main() {
         samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
         println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
         positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-          "$samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}, ${levAlign.summarize()}\n")
+          "$samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
       }
 
       println()
@@ -97,4 +99,4 @@ fun main() {
 }
 
 fun Σᐩ.mapToBIFIFmt() =
-  tokenizeByWhitespace().dropLast(1).joinToString(" ", "BOS", "EOS").tokenizeByWhitespace()
+  "BOS NEWLINE $this EOS".tokenizeByWhitespace()

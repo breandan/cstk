@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.14.1"
+  val openrwVersion = "8.15.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -151,7 +151,7 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:2.3.4")
+  implementation("de.kherud:llama:2.3.5")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-16")
