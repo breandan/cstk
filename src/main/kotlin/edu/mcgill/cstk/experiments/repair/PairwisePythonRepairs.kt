@@ -9220,3 +9220,9 @@ mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is',
 mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 extraneous input ''([\d_]+)n\.jpg'' expecting ')'
   """.trimIndent()
+
+val pairwiseUniformAll by lazy {
+  (invalidLexedPythonStatements1.lines().zip(validLexedPythonStatements1.lines()) +
+    invalidLexedPythonStatements2.lines().zip(validLexedPythonStatements2.lines()) +
+    invalidLexedPythonStatements3.lines().zip(validLexedPythonStatements3.lines()))
+}

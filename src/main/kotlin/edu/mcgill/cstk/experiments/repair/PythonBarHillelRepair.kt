@@ -3,7 +3,8 @@ package edu.mcgill.cstk.experiments.repair
 import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
-import edu.mcgill.cstk.utils.lexToStrTypesAsPython
+import astminer.parse.fuzzy.runCommand
+import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -22,18 +23,21 @@ fun main() {
 //   val s2pg = vanillaS2PCFG // Original grammar, including all productions
   val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
-  val currentTime = System.currentTimeMillis()
+  val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
-  val positive = try { File("bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$currentTime.csv").also { it.appendText(positiveHeader) } }
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
-  val negative = try { File("bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$currentTime.csv").also { it.appendText(negativeHeader) } }
+  val (fnPos, fnNeg) =
+    "bar_hillel_results_positive_$latestCommitMessage.csv" to
+    "bar_hillel_results_negative_$latestCommitMessage.csv"
+  val (positive, negative) = try { File(fnPos) to File(fnNeg) }
+  catch (e: Exception) {
+    val scratchDir = "/scratch/b/bengioy/breandan/"
+    File(scratchDir + fnPos) to File(scratchDir + fnNeg)
+  }.also { it.first.appendText(positiveHeader); it.second.appendText(negativeHeader) }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  validPythonStatements.lines().first().let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
+  validLexedPythonStatements.lines().first().let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
-  invalidLexedPythonStatements.lines().zip(validLexedPythonStatements.lines())
-    .shuffled(Random(1)).forEach { (invalid, valid) ->
+  pairwiseUniformAll.shuffled(Random(1)).forEach { (invalid, valid) ->
       val allTime = TimeSource.Monotonic.markNow()
       val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
       val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
@@ -61,14 +65,15 @@ fun main() {
       val clock = TimeSource.Monotonic.markNow()
       var samplesBeforeMatch = 0
       var matchFound = false
-      val timeout = 10.seconds
+      val timeout = 30.seconds
       val results = mutableListOf<Σᐩ>()
+      var elapsed = clock.elapsedNow().inWholeMilliseconds
       run untilDone@{
         intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
           .distinct().forEach {
             results.add(it)
             samplesBeforeMatch++
-            if (it == target) { matchFound = true/*; return@untilDone*/ }
+            if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
           }
       }
 
@@ -77,7 +82,6 @@ fun main() {
         negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
           "${levBall.Q.size}, ${intGram.size}, ${levAlign.summarize()}\n")
       } else {
-        val elapsed = clock.elapsedNow().inWholeMilliseconds
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
         val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
         val indexOfTarget = rankedResults.indexOf(target)
