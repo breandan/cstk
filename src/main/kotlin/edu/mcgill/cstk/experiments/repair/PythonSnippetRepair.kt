@@ -48,7 +48,12 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
-    readBIFIContents().take(10_000_000).asStream().parallel()
+    val filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
+    val filenameCC = "/scratch/b/bengioy/breandan/bifi/data/orig_good_code/orig.good.cc.json"
+    var numToks = 100_000
+    // If running on Compute Canada, use the larger dataset
+    val file: File = File(filename).let { if (it.exists()) { numToks *= 100; it } else File(filenameCC) }
+    readBIFIContents(file = file).take(numToks).asStream().parallel()
       .map { "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().filter { it != "98" && it != "99" }
         .asSequence().toMarkovChain(4) }
@@ -397,9 +402,9 @@ fun preprocessStackOverflow(
   brokeSnippets.zip(fixedSnippets).asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
-      broke.tokenizeAsPython().size in lengthBounds &&
-        (!broke.isValidPython() && fixed.isValidPython()) &&
-        (broke.lines().size - fixed.lines().size).absoluteValue < 4
+      (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
+        broke.tokenizeAsPython().size in lengthBounds &&
+        (!broke.isValidPython() && fixed.isValidPython())
     }
     .distinct()
     .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })

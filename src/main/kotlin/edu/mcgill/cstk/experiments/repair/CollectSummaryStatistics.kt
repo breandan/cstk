@@ -22,8 +22,8 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-//  collectPairwisePythonRepairs()
-    println(validLexedPythonStatements.parseAndCountActiveSymbols().alsoCopy())
+  collectPairwisePythonRepairs()
+//    println(validLexedPythonStatements.parseAndCountActiveSymbols().alsoCopy())
 //  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
@@ -65,28 +65,29 @@ fun collectPairwisePythonRepairs() {
 
   """
   // The following are length $lengthBounds Python statements with a human fix <=$MAX_PATCH_SIZE Levenshtein edits away
-  val invalidLexedPythonStatements = ""${'"'}
+  val invalidLexedPythonStatements$MAX_PATCH_SIZE = ""${'"'}
      ${brokeSnips.joinToString("\n")} 
   ""${'"'}.trimIndent()
 
-  val validLexedPythonStatements = ""${'"'}
+  val validLexedPythonStatements$MAX_PATCH_SIZE = ""${'"'}
      ${fixedSnips.joinToString("\n")} 
   ""${'"'}.trimIndent()
   
-  ${fixedSnips.joinToString("\n").parseAndCountActiveSymbols()}
+  ${""/*fixedSnips.joinToString("\n").parseAndCountActiveSymbols()*/}
   
-  val errorMessages = ""${'"'}
+  val errorMessages$MAX_PATCH_SIZE = ""${'"'}
      ${errorMessages.joinToString("\n")}
   ""${'"'}.trimIndent()
-  """.trimIndent().also { it.alsoCopy() }
-    .also {
-      File("src/main/kotlin/edu/mcgill/cstk/experiments/repair/PairwisePythonRepairs.kt")
-        .writeText("""
-          package edu.mcgill.cstk.experiments.repair
-
-          $it
-        """.trimIndent())
-    }
+  """
+    .trimIndent().also { it.alsoCopy() }
+//    .also {
+//      File("src/main/kotlin/edu/mcgill/cstk/experiments/repair/PairwisePythonRepairs.kt")
+//        .writeText("""
+//          package edu.mcgill.cstk.experiments.repair
+//
+//          $it
+//        """.trimIndent())
+//    }
 }
 
 fun testContextEditIssue() {
