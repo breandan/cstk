@@ -399,20 +399,21 @@ fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
-  brokeSnippets.zip(fixedSnippets).asStream().parallel()
+  brokeSnippets.zip(fixedSnippets)//.asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
-        broke.tokenizeAsPython().size in lengthBounds &&
-        (!broke.isValidPython() && fixed.isValidPython())
+        broke.mapToUnquotedPythonTokens().tokenizeByWhitespace().let {
+          levenshtein(it, fixed.mapToUnquotedPythonTokens().tokenizeByWhitespace()) < maxPatchSize &&
+          it.size in lengthBounds && it.all { it in seq2parsePythonCFG.terminals }
+        } && (!broke.isValidPython() && fixed.isValidPython())
     }
     .distinct()
-    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
+//    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
+    .map { (a, b) -> a to b to b }
     .filter { (broke, fixed, minfix) ->
       val mftks = minfix.mapToUnquotedPythonTokens()
-      "$mftks NEWLINE" in seq2parsePythonCFG.language &&
-      broke.mapToUnquotedPythonTokens().tokenizeByWhitespace()
-        .all { it in seq2parsePythonCFG.terminals }
+      minfix.isValidPython() && "$mftks NEWLINE" in seq2parsePythonCFG.language
     }
     .filter { (broke, fixed, minfix) ->
 //      val (brokeTokens, minFixedTokens) =
@@ -422,7 +423,6 @@ fun preprocessStackOverflow(
       val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
-      minfix.isValidPython() &&
       minpatch.changedIndices().size <= maxPatchSize &&
       brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
 //      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }

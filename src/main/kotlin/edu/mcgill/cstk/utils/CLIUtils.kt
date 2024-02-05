@@ -18,9 +18,10 @@ class FilteredOutputStream(out: OutputStream) : PrintStream(out) {
 }
 
 fun Σᐩ.execute() =
-  ProcessBuilder( split(' ') ).start().waitFor()
+  ProcessBuilder(split(' ')).start().waitFor()
 
 fun Σᐩ.execAndCapture() =
-  ProcessBuilder( split(' ') ).start().inputStream.bufferedReader().readText()
+  ProcessBuilder(split(' ')).start().inputStream.bufferedReader().readText()
 
-fun lastGitMessage() = "git log -1 --pretty=%s".execAndCapture().lines().first()
+fun lastGitMessage() =
+  "git log -1 --pretty=%s".execAndCapture().lines().first()

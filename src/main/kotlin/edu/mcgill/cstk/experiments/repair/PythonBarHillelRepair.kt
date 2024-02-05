@@ -26,14 +26,11 @@ fun main() {
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
-  val (fnPos, fnNeg) =
-    "bar_hillel_results_positive_$latestCommitMessage.csv" to
-    "bar_hillel_results_negative_$latestCommitMessage.csv"
-  val (positive, negative) = try { File(fnPos) to File(fnNeg) }
-  catch (e: Exception) {
-    val scratchDir = "/scratch/b/bengioy/breandan/"
-    File(scratchDir + fnPos) to File(scratchDir + fnNeg)
-  }.also { it.first.appendText(positiveHeader); it.second.appendText(negativeHeader) }
+  val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   validLexedPythonStatements.lines().first().let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 

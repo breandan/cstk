@@ -24,6 +24,7 @@ fun main() {
 //  computePatchStats()
   collectPairwisePythonRepairs()
 //    println(validLexedPythonStatements.parseAndCountActiveSymbols().alsoCopy())
+//  estimateLevenshteinDistanceDistribution()
 //  computePatchTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
@@ -45,6 +46,31 @@ fun Σᐩ.parseAndCountActiveSymbols(): Σᐩ {
   return ntCounts.entries.sortedBy { it.value }
     .joinToString("\n", "val symbolCounts by lazy { \"\"\"\n", "\n\"\"\"$postProc }") {
       "  ${it.key} ::: ${it.value}"
+    }
+}
+
+// Current distribution (1000 samples):
+// 1: 37.90%, 2: 18.90%, 3: 9.50%, 4+: 33.70%
+fun estimateLevenshteinDistanceDistribution() {
+  var sampleSize = 0
+  val totalByLevDist = AtomicLongMap.create<Int>()
+  val lenDist = AtomicLongMap.create<Int>()
+  preprocessStackOverflow(10, 1..100)
+    .map { (a, _, c) -> a to c }.distinct().take(1000)
+    .forEach { (broke, minfix) ->
+      val brokeLexed = broke.lexToStrTypesAsPython()
+      val minfixLexed = minfix.lexToStrTypesAsPython()
+      val levDist = levenshtein(brokeLexed, minfixLexed)
+      totalByLevDist.incrementAndGet(levDist)
+      lenDist.incrementAndGet(brokeLexed.size)
+      sampleSize++
+
+      // Normalize and print the distribution
+      print("Current distribution ($sampleSize samples):\n${totalByLevDist.asMap().entries.filter { it.key <= 3 }
+        .sortedBy { it.key }.joinToString(", ") { (dist, count) -> "$dist: ${"%.2f".format(100.0 * count / sampleSize)}%" }}")
+      // Now print the distribution > 3
+      println(", 4+: ${"%.2f".format(100.0 * totalByLevDist.asMap().entries.filter { it.key > 3 }.sumOf { it.value } / sampleSize)}%")
+//      println("Current distribution:\n${lenDist.asMap().entries.sortedBy { it.key }.joinToString(", ") { (dist, count) -> "$dist: ${"%.2f".format(100.0 * count / sampleSize)}%" }}")
     }
 }
 
