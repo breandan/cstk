@@ -22,8 +22,9 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  collectPairwisePythonRepairs()
-//    println(validLexedPythonStatements.parseAndCountActiveSymbols().alsoCopy())
+  collectNaturallySmallRepairs()
+//  collectPairwisePythonRepairs()
+//    println(naturalSmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
 //  computePatchTrigramStats()
 //  readBIFI().toList()
@@ -74,6 +75,15 @@ fun estimateLevenshteinDistanceDistribution() {
     }
 }
 
+fun collectNaturallySmallRepairs() {
+  MAX_PATCH_SIZE = 6
+  val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
+    .also { File(it).also { if (it.exists()) it.delete(); it.createNewFile() } }
+  preprocessStackOverflow(MAX_PATCH_SIZE, 1..200).map { (a, _, c) -> a to c }
+    .map { (a, c) -> "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
+    .distinct().forEach { File(filename).appendText(it) }
+}
+
 fun collectPairwisePythonRepairs() {
   MAX_PATCH_SIZE = 3
   val lengthBounds = 20..40
@@ -106,14 +116,14 @@ fun collectPairwisePythonRepairs() {
   ""${'"'}.trimIndent()
   """
     .trimIndent().also { it.alsoCopy() }
-//    .also {
-//      File("src/main/kotlin/edu/mcgill/cstk/experiments/repair/PairwisePythonRepairs.kt")
-//        .writeText("""
-//          package edu.mcgill.cstk.experiments.repair
-//
-//          $it
-//        """.trimIndent())
-//    }
+    .also {
+      File("src/main/kotlin/edu/mcgill/cstk/experiments/repair/data/PairwisePythonRepairsL$MAX_PATCH_SIZE.kt")
+        .writeText("""
+          package edu.mcgill.cstk.experiments.repair.data
+
+          $it
+        """.trimIndent())
+    }
 }
 
 fun testContextEditIssue() {

@@ -1,8 +1,8 @@
-          package edu.mcgill.cstk.experiments.repair
+package edu.mcgill.cstk.experiments.repair.data
 
-            // The following are length 20..40 Python statements with a human fix <=3 Levenshtein edits away
-  val invalidLexedPythonStatements = """
-     NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
+// The following are length 20..40 Python statements with a human fix <=3 Levenshtein edits away
+val invalidLexedPythonStatements = """
+NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 { STRING : NAME , STRING . NAME } . NAME ( NAME ) ( ) . NAME ( NAME )
 { STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : STRING , STRING : NAME }
@@ -1002,10 +1002,10 @@ NAME = [ NUMBER , NUMBER , NUMBER , NUMBER ] NEWLINE NAME = [ NUMBER , NUMBER , 
 [ [ STRING , NUMBER ] , [ STRING , NUMBER ] , [ STRING , NUMBER ] , [ STRING , NUMBER NUMBER ] , [ STRING , NUMBER ] ]
 from NAME import NAME NEWLINE NAME = NAME ( STRING , NAME = True , NAME = NUMBER ) NEWLINE NAME NAME
 NAME = { STRING = [ { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } ] } 
-  """.trimIndent()
+""".trimIndent()
 
-  val validLexedPythonStatements = """
-     NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
+val validLexedPythonStatements = """
+NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 { STRING : NAME , STRING : NAME } . NAME ( NAME ) ( ) . NAME ( NAME )
 { STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : STRING } , STRING : NAME }
@@ -2005,249 +2005,233 @@ NAME = [ NUMBER , NUMBER , NUMBER , NUMBER ] NEWLINE NAME = [ NUMBER , NUMBER , 
 [ [ STRING , NUMBER ] , [ STRING , NUMBER ] , [ STRING , NUMBER ] , [ STRING , NUMBER ] , [ STRING , NUMBER ] ]
 from NAME import NAME NEWLINE NAME = NAME ( STRING , NAME = True , NAME = NUMBER ) NEWLINE NAME
 NAME = { STRING : [ { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } ] } 
-  """.trimIndent()
+""".trimIndent()
 
-          val symbolCounts by lazy { """
-  Test.Colon.Suite.Elif_Stmt.Else_Stmt ::: 1
-  Colon.Suite.Elif_Stmt.Else_Stmt ::: 1
-  Suite.Elif_Stmt.Else_Stmt ::: 1
-  Elif_Stmt.Else_Stmt ::: 1
-  Shift_Op.Arith_Expr ::: 1
-  Shift_Op ::: 1
-  >> ::: 1
-  Test.Colon.Suite.Elif_Stmt ::: 1
-  Colon.Suite.Elif_Stmt ::: 1
-  Suite.Elif_Stmt ::: 1
+val symbolCounts by lazy { """
+  Dotted_As_Name ::: 1
+  Comma.Dotted_As_Names ::: 1
+  Open_Paren.Import_As_Names_Endcomma.Close_Paren ::: 1
+  Import_As_Names_Endcomma.Close_Paren ::: 1
+  Typedargslist.Close_Paren ::: 1
+  Typedargslist ::: 1
+  Tfpdef_Default ::: 1
+  Comma.Many_Tfpdef ::: 1
+  Many_Tfpdef ::: 1
+  ~ ::: 1
+  Test.Assign_Op.Test ::: 1
+  Yield_Keyword ::: 1
+  yield ::: 1
+  Yield_Arg ::: 1
+  Raise_Keyword ::: 1
+  raise ::: 1
+  Nonlocal_Keyword ::: 1
+  nonlocal ::: 1
   Class_Keyword ::: 1
   class ::: 1
   Simple_Name.Open_Paren.Arglist.Close_Paren.Colon.Suite ::: 1
   Open_Paren.Arglist.Close_Paren.Colon.Suite ::: 1
   Arglist.Close_Paren.Colon.Suite ::: 1
   Close_Paren.Colon.Suite ::: 1
-  Dots_Plus ::: 1
-  With_Keyword ::: 1
-  with ::: 1
-  With_Items.Colon.Suite ::: 1
-  With_Items ::: 1
-  As_Keyword.Expr ::: 1
+  Assert_Keyword ::: 1
+  assert ::: 1
+  <= ::: 1
+  Shift_Op.Arith_Expr ::: 1
+  Shift_Op ::: 1
+  << ::: 1
+  Exprlist.In_Keyword.Testlist_Endcomma.Colon.Suite ::: 1
+  In_Keyword.Testlist_Endcomma.Colon.Suite ::: 1
+  Testlist_Endcomma.Colon.Suite ::: 1
+  Del_Keyword ::: 1
+  del ::: 1
+  Comma.Star_Double_Star ::: 1
+  Star_Double_Star ::: 1
   Vfpdef ::: 1
-  Try_Keyword ::: 1
-  try ::: 1
-  Colon.Suite.Except_Stmt.Else_Stmt ::: 1
-  Suite.Except_Stmt.Else_Stmt ::: 1
-  Except_Stmt.Else_Stmt ::: 1
-  Except_Stmt ::: 1
-  Except_Clause ::: 1
-  Except_Keyword ::: 1
-  except ::: 1
-  pass ::: 1
-  Yield_Expr ::: 1
-  Yield_Keyword ::: 1
-  yield ::: 1
-  Yield_Arg ::: 1
-  Colon.Sliceop ::: 1
-  Colon.Test.Sliceop ::: 2
-  Test.Sliceop ::: 2
-  <= ::: 2
-  Elif_Stmt ::: 2
-  Elif_Keyword ::: 2
-  elif ::: 2
-  Else_Stmt ::: 2
-  != ::: 2
-  Aug_Assign.Testlist_Endcomma ::: 2
-  Aug_Assign ::: 2
-  += ::: 2
-  Dotted_As_Name ::: 2
-  Comma.Dotted_As_Names ::: 2
-  While_Keyword ::: 2
-  while ::: 2
-  Assert_Keyword ::: 2
-  assert ::: 2
-  >= ::: 3
-  Not_Bool_Op ::: 3
-  not ::: 3
-  Sliceop ::: 4
-  Small_Stmt ::: 4
-  Semicolon.Small_Stmts ::: 4
-  Testlist_Star_Expr.Yield_Testlist_Star_Assign_Exprs ::: 4
-  Test.Assign_Op.Test ::: 4
-  Tfpdef_Default ::: 4
-  Comma.Many_Tfpdef ::: 4
-  Many_Tfpdef ::: 4
-  Or_Bool_Op.And_Test ::: 5
-  Or_Bool_Op ::: 5
-  or ::: 5
-  Typedargslist.Close_Paren ::: 5
-  Typedargslist ::: 5
-  Atom_Expr ::: 5
-  Double_Star_Op.Factor ::: 5
-  And_Expr ::: 5
-  And_Op.Shift_Expr ::: 5
-  And_Op ::: 5
-  & ::: 5
-  Exprlist.In_Keyword.Testlist_Endcomma.Colon.Suite ::: 6
-  In_Keyword.Testlist_Endcomma.Colon.Suite ::: 6
-  Testlist_Endcomma.Colon.Suite ::: 6
-  Vfpdef_Default ::: 6
-  Comma.Many_Vfpdef ::: 6
+  -= ::: 1
+  >= ::: 1
+  Def_Keyword ::: 2
+  def ::: 2
+  Simple_Name.Parameters.Colon.Suite ::: 2
+  Parameters.Colon.Suite ::: 2
+  Parameters ::: 2
+  pass ::: 2
+  Small_Stmt ::: 2
+  Semicolon.Small_Stmts ::: 2
+  Global_Keyword ::: 2
+  global ::: 2
+  Not_Bool_Op ::: 2
+  not ::: 2
+  // ::: 2
+  Test.Colon.Suite ::: 2
+  Many_Names ::: 3
+  And_Bool_Op.Not_Test ::: 4
+  And_Bool_Op ::: 4
+  and ::: 4
+  += ::: 4
+  And_Expr ::: 4
+  And_Op.Shift_Expr ::: 4
+  And_Op ::: 4
+  & ::: 4
+  is ::: 4
+  Vfpdef_Default ::: 5
+  Comma.Many_Vfpdef ::: 5
+  Aug_Assign.Testlist_Endcomma ::: 5
+  Aug_Assign ::: 5
+  Shift_Expr ::: 5
   Many_Vfpdef ::: 6
-  Shift_Expr ::: 6
-  // ::: 6
-  Import_As_Name ::: 6
-  Comma.Import_As_Names_Endcomma ::: 6
-  If_Keyword.Or_Test.Else_Keyword.Test ::: 8
-  Or_Test.Else_Keyword.Test ::: 8
-  Else_Keyword.Test ::: 8
-  Def_Keyword ::: 8
-  def ::: 8
-  Simple_Name.Parameters.Colon.Suite ::: 8
-  Parameters.Colon.Suite ::: 8
-  Parameters ::: 8
-  Return_Keyword ::: 8
-  return ::: 8
-  is ::: 9
-  Else_Keyword ::: 10
-  else ::: 10
-  False ::: 10
-  Semicolon.Newline ::: 10
-  None ::: 10
-  Semicolon ::: 11
-  ; ::: 11
-  And_Bool_Op.Not_Test ::: 11
-  And_Bool_Op ::: 11
-  and ::: 11
-  Double_Star_Op ::: 11
-  ** ::: 11
-  Test.Colon.Suite ::: 12
-  Generic_Expr ::: 12
-  Comma.Generic_Exprs ::: 12
-  Generic_Exprs ::: 12
-  % ::: 13
-  Test_Nocond ::: 13
-  Not_Test ::: 14
-  Star_Op ::: 16
-  And_Test ::: 16
-  Testlist_Endcomma ::: 16
-  < ::: 18
-  As_Keyword.Simple_Name ::: 19
-  Exprlist.In_Keyword.Or_Test.Comp_Iter ::: 19
-  In_Keyword.Or_Test.Comp_Iter ::: 19
-  Or_Test.Comp_Iter ::: 19
-  Comp_Iter ::: 19
+  Colon.Suite ::: 6
+  Suite ::: 6
+  Sliceop ::: 6
+  Dot_Or_Dots ::: 6
+  Not_Test ::: 6
+  Atom_Expr ::: 6
+  Double_Star_Op.Factor ::: 6
+  Semicolon.Newline ::: 7
+  Or_Bool_Op.And_Test ::: 7
+  Or_Bool_Op ::: 7
+  or ::: 7
+  Import_As_Name ::: 7
+  Comma.Import_As_Names_Endcomma ::: 7
+  Double_Star_Op ::: 7
+  ** ::: 7
+  Semicolon ::: 9
+  ; ::: 9
+  Annotated_Assign ::: 9
+  < ::: 10
+  And_Test ::: 11
+  If_Keyword.Or_Test.Else_Keyword.Test ::: 13
+  Or_Test.Else_Keyword.Test ::: 13
+  Else_Keyword.Test ::: 13
+  Else_Keyword ::: 13
+  else ::: 13
+  Generic_Expr ::: 13
+  Comma.Generic_Exprs ::: 13
+  Generic_Exprs ::: 13
+  > ::: 13
+  False ::: 14
+  Dots_Plus ::: 14
+  != ::: 15
+  / ::: 18
+  Return_Keyword ::: 18
+  return ::: 18
+  As_Keyword.Simple_Name ::: 20
   As_Keyword ::: 20
   as ::: 20
-  > ::: 21
-  Unary_Op ::: 22
-  Annotated_Assign ::: 23
-  / ::: 26
-  Colon.Suite ::: 29
-  Suite ::: 29
-  If_Keyword ::: 30
-  if ::: 30
-  Dot.Dotted_Name ::: 30
-  ... ::: 31
-  * ::: 32
-  Varargslist.Colon.Test ::: 34
-  Varargslist ::: 34
-  Subscript ::: 35
-  Comma.Subscripts ::: 35
-  Subscripts ::: 35
-  True ::: 35
-  Lambda_Keyword ::: 35
-  lambda ::: 35
-  - ::: 42
-  + ::: 43
-  == ::: 45
-  Dotted_Name ::: 45
-  Import_As_Names_Endcomma ::: 46
-  Exprlist.In_Keyword.Or_Test ::: 46
-  In_Keyword.Or_Test ::: 46
-  Import_From_Froms ::: 54
-  From_Keyword ::: 54
-  from ::: 54
-  Start_Dotted_Name ::: 54
-  Import_From_Imports ::: 54
-  MulDiv_Op.Factor ::: 55
-  MulDiv_Op ::: 55
-  Comp_For ::: 59
-  Arith_Op.Term ::: 61
-  Arith_Op ::: 61
-  Arith_Expr ::: 62
-  For_Keyword ::: 65
-  for ::: 65
-  Exprlist ::: 65
-  In_Keyword ::: 65
-  Or_Test ::: 69
-  in ::: 71
-  Factor ::: 79
-  Dotted_As_Names ::: 81
-  Comparison ::: 95
-  Comp_Op.Expr ::: 95
-  Comp_Op ::: 95
-  Expr ::: 98
-  Term ::: 107
-  Import_Keyword ::: 123
-  import ::: 123
-  Assign_Op.Test ::: 144
-  Testlist_Comp.Close_Paren ::: 145
-  Subscriptlist.Close_Sq_Bracket ::: 155
-  Subscriptlist ::: 155
-  Comma.Many_KeyVals_Or_Unpacks ::: 273
-  Many_KeyVals_Or_Unpacks ::: 273
-  KeyVal_Or_Unpack ::: 281
-  Argument ::: 284
-  Comma.Arguments ::: 284
-  Arguments ::: 287
-  Dict_Or_Set_Maker.Close_Curl_Bracket ::: 322
-  Dict_Or_Set_Maker ::: 322
-  Open_Curl_Bracket ::: 327
-  { ::: 327
-  Close_Curl_Bracket ::: 327
-  } ::: 327
-  Colon.Test ::: 357
-  Colon ::: 412
-  : ::: 417
-  Trailer ::: 437
-  Dot ::: 451
-  . ::: 451
-  Simple_Name ::: 453
-  Stmt_Or_Newline ::: 463
-  Stmts_Or_Newlines ::: 463
-  Testlist_Comp.Close_Sq_Bracket ::: 466
-  Comma.Test_Or_Star_Exprs ::: 470
-  Test_Or_Star_Exprs ::: 484
-  NUMBER ::: 499
-  Test_Or_Star_Expr ::: 506
-  Test ::: 536
-  Arglist.Close_Paren ::: 540
-  Arglist ::: 540
-  Testlist_Comp ::: 550
-  Open_Sq_Bracket ::: 567
-  [ ::: 567
-  Close_Sq_Bracket ::: 567
-  ] ::: 567
-  Atom ::: 601
-  Many_Trailers ::: 601
-  Open_Paren ::: 617
-  ( ::: 617
-  Close_Paren ::: 617
-  ) ::: 617
-  Yield_Testlist_Star_Assign_Exprs ::: 672
-  Testlist_Star_Expr ::: 693
-  STRING ::: 696
-  Assign_Op ::: 712
-  = ::: 712
-  Comma ::: 836
-  , ::: 836
-  NAME ::: 866
-  START ::: 1000
-  Small_Stmts ::: 1000
-  Newline ::: 1000
-  NEWLINE ::: 1000
+  None ::: 20
+  Subscript ::: 22
+  Comma.Subscripts ::: 22
+  Subscripts ::: 22
+  Testlist_Endcomma ::: 24
+  Unary_Op ::: 24
+  Star_Op ::: 24
+  Varargslist.Colon.Test ::: 24
+  Varargslist ::: 24
+  True ::: 25
+  ... ::: 29
+  Lambda_Keyword ::: 29
+  lambda ::: 29
+  Test_Nocond ::: 32
+  % ::: 34
+  Exprlist.In_Keyword.Or_Test.Comp_Iter ::: 37
+  In_Keyword.Or_Test.Comp_Iter ::: 37
+  Or_Test.Comp_Iter ::: 37
+  Comp_Iter ::: 37
+  == ::: 41
+  Dot.Dotted_Name ::: 41
+  - ::: 46
+  + ::: 47
+  If_Keyword ::: 47
+  if ::: 47
+  * ::: 47
+  Dotted_Name ::: 61
+  Comma.Many_KeyVals_Or_Unpacks ::: 65
+  Arith_Expr ::: 70
+  Arith_Op.Term ::: 70
+  Arith_Op ::: 70
+  Many_KeyVals_Or_Unpacks ::: 73
+  KeyVal_Or_Unpack ::: 74
+  MulDiv_Op.Factor ::: 75
+  MulDiv_Op ::: 75
+  Exprlist.In_Keyword.Or_Test ::: 85
+  In_Keyword.Or_Test ::: 85
+  Dotted_As_Names ::: 90
+  Import_As_Names_Endcomma ::: 91
+  Comparison ::: 94
+  Comp_Op.Expr ::: 94
+  Comp_Op ::: 94
+  Assign_Op.Test ::: 95
+  Expr ::: 97
+  Start_Dotted_Name ::: 98
+  Factor ::: 101
+  Import_From_Froms ::: 102
+  Import_From_Imports ::: 102
+  From_Keyword ::: 103
+  from ::: 103
+  Testlist_Comp.Close_Paren ::: 109
+  Comp_For ::: 117
+  For_Keyword ::: 118
+  for ::: 118
+  In_Keyword ::: 118
+  Exprlist ::: 119
+  in ::: 128
+  Dict_Or_Set_Maker.Close_Curl_Bracket ::: 130
+  Dict_Or_Set_Maker ::: 130
+  Term ::: 133
+  Open_Curl_Bracket ::: 133
+  { ::: 133
+  Close_Curl_Bracket ::: 133
+  } ::: 133
+  Or_Test ::: 137
+  Colon.Test ::: 154
+  Subscriptlist.Close_Sq_Bracket ::: 166
+  Subscriptlist ::: 166
+  Colon ::: 187
+  Import_Keyword ::: 190
+  import ::: 190
+  : ::: 198
+  Comma.Test_Or_Star_Exprs ::: 227
+  Test_Or_Star_Exprs ::: 250
+  Stmt_Or_Newline ::: 260
+  Stmts_Or_Newlines ::: 260
+  Testlist_Comp.Close_Sq_Bracket ::: 272
+  NUMBER ::: 286
+  Argument ::: 291
+  Comma.Arguments ::: 291
+  Arguments ::: 291
+  Test_Or_Star_Expr ::: 304
+  Test ::: 312
+  Testlist_Comp ::: 363
+  Open_Sq_Bracket ::: 411
+  [ ::: 411
+  Close_Sq_Bracket ::: 411
+  ] ::: 411
+  Trailer ::: 501
+  Yield_Testlist_Star_Assign_Exprs ::: 548
+  Testlist_Star_Expr ::: 561
+  Dot ::: 589
+  . ::: 601
+  Comma ::: 602
+  , ::: 602
+  Simple_Name ::: 602
+  Assign_Op ::: 607
+  = ::: 607
+  STRING ::: 705
+  Arglist.Close_Paren ::: 726
+  Arglist ::: 727
+  Open_Paren ::: 844
+  ( ::: 844
+  Close_Paren ::: 844
+  ) ::: 844
+  Atom ::: 894
+  Many_Trailers ::: 894
+  NAME ::: 1248
+  Small_Stmts ::: 1365
+  Newline ::: 1365
+  START ::: 1373
+  NEWLINE ::: 1373
 """.lines().filter { it.isNotEmpty() }.map { it.split(" ::: ") }.associate { (nt, count) -> nt.trim() to count.trim().toInt() } }
-  
-  val errorMessages = """
-     no viable alternative at input 'np'
+
+val errorMessages = """
+no viable alternative at input 'np'
 no viable alternative at input 'np'
 mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 no viable alternative at input '<EOF>'
@@ -3247,12 +3231,12 @@ missing NAME at '\n'
 extraneous input '91' expecting ']'
 no viable alternative at input 'math_output'
 no viable alternative at input '='
-  """.trimIndent()
+""".trimIndent()
 
 
-          // The following are length 20..40 Python statements with a human fix exactly 3 Levenshtein edits away
-          val invalidLexedPythonStatements3 = """
-     from NAME import NAME . NEWLINE NAME = NAME ( ) . NEWLINE NAME = NAME . NAME ( NAME , NAME ) .
+// The following are length 20..40 Python statements with a human fix exactly 3 Levenshtein edits away
+val invalidLexedPythonStatements3 = """
+from NAME import NAME . NEWLINE NAME = NAME ( ) . NEWLINE NAME = NAME . NAME ( NAME , NAME ) .
 NAME = [ { STRING : [ ( NAME , NAME ) , ( NAME , NAME ) ] , { STRING : [ ( NAME , NAME ) ] ,
 NAME = / NAME / NEWLINE NAME = NAME NEWLINE NAME = ( NAME + STRING + NAME + ( STRING or STRING ) )
 NAME = [ ] NEWLINE [ NAME . NAME ( NAME ) for NAME , NAME in NAME . NAME ( ) if
@@ -3457,10 +3441,10 @@ import NAME as NAME NEWLINE NAME = NAME . NAME ( [ STRING , STRING ) NAME = NAME
 NAME = NAME [ ( NAME [ STRING ] . NAME . NAME ( STRING ) & ( NAME [ STRING ) . NAME . NAME ( ) == NUMBER ]
 NAME = [ NAME [ NUMBER ] . NAME for NAME in NAME [ STRING ] NAME ( NAME ( NAME ) ) NAME ( NAME ( NAME ) )
 NAME = [ NAME if NAME . NAME ( STRING ) or NAME . NAME ( STRING ) for NAME in NAME . NAME . NAME . NAME ( ) ] 
-  """.trimIndent()
+""".trimIndent()
 
-          val validLexedPythonStatements3 = """
-     from NAME import NAME NEWLINE NAME = NAME ( ) NEWLINE NAME = NAME . NAME ( NAME , NAME )
+val validLexedPythonStatements3 = """
+from NAME import NAME NEWLINE NAME = NAME ( ) NEWLINE NAME = NAME . NAME ( NAME , NAME )
 NAME = { STRING : [ ( NAME , NAME ) , ( NAME , NAME ) ] , STRING : [ ( NAME , NAME ) ] }
 NAME = STRING NEWLINE NAME = NAME NEWLINE NAME = ( NAME + STRING + NAME + ( STRING or STRING ) )
 NAME = [ ] NEWLINE [ NAME . NAME ( NAME ) for NAME , NAME in NAME . NAME ( ) ( ) ]
@@ -3665,10 +3649,10 @@ import NAME as NAME NEWLINE NAME = NAME . NAME ( [ STRING , STRING ] ) NEWLINE N
 NAME = NAME [ ( NAME [ STRING ] . NAME . NAME ( STRING ) ) & ( NAME [ STRING ] . NAME . NAME ( ) == NUMBER ) ]
 NAME = [ NAME [ NUMBER ] . NAME for NAME in NAME [ STRING ] ] NEWLINE NAME ( NAME ( NAME ) ) NEWLINE NAME ( NAME ( NAME ) )
 NAME = [ NAME for NAME in NAME . NAME ( STRING ) or NAME . NAME ( STRING ) for NAME in NAME . NAME . NAME . NAME ( ) ] 
-  """.trimIndent()
+""".trimIndent()
 
-          val errorMessages3 = """
-     extraneous input '.' expecting {NEWLINE, ';'}
+val errorMessages3 = """
+extraneous input '.' expecting {NEWLINE, ';'}
 mismatched input '<EOF>' expecting '}'
 extraneous input '/' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'yield', 'await', NAME, '...', '*', '(', '[', '+', '-', '~', '{'}
 mismatched input '<EOF>' expecting {STRING, NUMBER, 'lambda', 'not', 'None', 'True', 'False', 'await', NAME, '...', '(', '[', '+', '-', '~', '{'}
@@ -3873,11 +3857,11 @@ no viable alternative at input '["http://hostname0:9200","http://hostname1:9200"
 no viable alternative at input '(df['Phone'].str.startswith('+1')&(df['Phone')'
 mismatched input 'print' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ',', '**', '[', ']', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 mismatched input 'for' expecting {STRING, 'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
-  """.trimIndent()
+""".trimIndent()
 
-          // The following are length 20..40 Python statements with a human fix exactly 2 Levenshtein edits away
-          val invalidLexedPythonStatements2 = """
-     NAME = NAME . NAME [ STRING ] NEWLINE NAME = NAME ( NAME ) NEWLINE NAME NAME . NAME == STRING : NEWLINE NAME = NAME . NAME ( STRING % NAME )
+// The following are length 20..40 Python statements with a human fix exactly 2 Levenshtein edits away
+val invalidLexedPythonStatements2 = """
+NAME = NAME . NAME [ STRING ] NEWLINE NAME = NAME ( NAME ) NEWLINE NAME NAME . NAME == STRING : NEWLINE NAME = NAME . NAME ( STRING % NAME )
 [ { STRING : STRING , STRING : NUMBER } , { STRING : STRING , STRING , NUMBER } , { STRING : STRING , STRING , NUMBER } ]
 from NAME . NAME import NAME ( ) NEWLINE NAME = NAME . NAME ( ) NEWLINE NAME . NAME ( [ STRING , STRING , STRING ] ) NEWLINE NAME ( NAME . NAME ( ) )
 NAME = NAME . NAME ( [ [ NUMBER , STRING ] , [ NUMBER , STRING ] ] ) NEWLINE NAME = NAME . NAME [ NUMBER ] . NAME ( ) NEWLINE NAME NAME == NAME
@@ -4651,10 +4635,10 @@ NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME STRING . NAME
 >> > NAME = lambda NAME : NAME [ NUMBER ] + NAME ( NAME [ NUMBER : ] ) if NAME else NUMBER
 NAME = [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] NEWLINE NAME NAME ( NAME ( NAME ) , NAME = NAME . NAME )
 from NAME import NAME NEWLINE NAME = NAME ( STRING < NAME > NAME < / NAME > STRING , STRING ) 
-  """.trimIndent()
+""".trimIndent()
 
-          val validLexedPythonStatements2 = """
-     NAME = NAME . NAME [ STRING ] NEWLINE NAME = NAME ( NAME ) NEWLINE if NAME . NAME == STRING : NAME = NAME . NAME ( STRING % NAME )
+val validLexedPythonStatements2 = """
+NAME = NAME . NAME [ STRING ] NEWLINE NAME = NAME ( NAME ) NEWLINE if NAME . NAME == STRING : NAME = NAME . NAME ( STRING % NAME )
 [ { STRING : STRING , STRING : NUMBER } , { STRING : STRING , STRING : NUMBER } , { STRING : STRING , STRING : NUMBER } ]
 from NAME . NAME import NAME NEWLINE NAME = NAME . NAME ( ) NEWLINE NAME . NAME ( [ STRING , STRING , STRING ] ) NEWLINE NAME ( NAME . NAME ( ) )
 NAME = NAME . NAME ( [ [ NUMBER , STRING ] , [ NUMBER , STRING ] ] ) NEWLINE NAME = NAME . NAME [ NUMBER ] . NAME ( ) NEWLINE NAME ( NAME == NAME )
@@ -5428,12 +5412,12 @@ NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME ( STRING . NA
 NAME = lambda NAME : NAME [ NUMBER ] + NAME ( NAME [ NUMBER : ] ) if NAME else NUMBER
 NAME = [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] NEWLINE NAME ( NAME ( NAME ( NAME ) , NAME = NAME . NAME ) )
 from NAME import NAME NEWLINE NAME = NAME ( STRING < NAME > NAME <= NAME > STRING , STRING ) 
-  """.trimIndent()
+""".trimIndent()
 
 
 
-          val errorMessages2 = """
-     no viable alternative at input 'url'
+val errorMessages2 = """
+no viable alternative at input 'url'
 mismatched input ',' expecting {STRING, 'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 mismatched input '(' expecting {NEWLINE, ';'}
 no viable alternative at input 's'
@@ -6207,11 +6191,11 @@ no viable alternative at input '"Greetings {}"'
 mismatched input '>>' expecting {<EOF>, STRING, NUMBER, 'def', 'return', 'raise', 'from', 'import', 'global', 'nonlocal', 'assert', 'if', 'while', 'for', 'try', 'with', 'lambda', 'not', 'None', 'True', 'False', 'class', 'yield', 'del', 'pass', 'continue', 'break', 'async', 'await', NEWLINE, NAME, '...', '*', '(', '[', '+', '-', '~', '{', '@'}
 no viable alternative at input 'max'
 no viable alternative at input '""<html>data</'
-  """.trimIndent()
+""".trimIndent()
 
-          // The following are length 20..40 Python statements with a human fix exactly 1 Levenshtein edits away
-          val invalidLexedPythonStatements1 = """
-     NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
+// The following are length 20..40 Python statements with a human fix exactly 1 Levenshtein edits away
+val invalidLexedPythonStatements1 = """
+NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 NAME NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 { STRING : NAME , STRING . NAME } . NAME ( NAME ) ( ) . NAME ( NAME )
 { STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : STRING , STRING : NAME }
@@ -7211,10 +7195,10 @@ NAME = [ NAME ( NAME ( NAME , NAME ) , NAME ( NAME , NAME ) ) , NAME ( NAME ( NA
 NAME ( NAME = NUMBER ) ( NAME ( NAME ) ( NAME ) for NAME in NAME ( NAME , NAME )
 [ NAME + NAME for NAME , NAME in NAME ( * [ NAME ( NAME ) ] * NUMBER )
 import NAME NEWLINE NAME = NAME . NAME ( NAME STRING ) NEWLINE NAME = STRING NEWLINE NAME . NAME ( NAME , NAME ) 
-  """.trimIndent()
+""".trimIndent()
 
-          val validLexedPythonStatements1 = """
-     NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
+val validLexedPythonStatements1 = """
+NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) [ NUMBER : NUMBER : NUMBER ]
 { STRING : NAME , STRING : NAME } . NAME ( NAME ) ( ) . NAME ( NAME )
 { STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : NUMBER , STRING : NUMBER , STRING : STRING , STRING : STRING } , STRING : NAME }
@@ -8214,12 +8198,10 @@ NAME = [ NAME ( NAME ( NAME , NAME ) , NAME ( NAME , NAME ) ) , NAME ( NAME ( NA
 NAME ( NAME = NUMBER ) ( NAME ( NAME ) ( NAME ) for NAME in NAME ( NAME , NAME ) )
 [ NAME + NAME for NAME , NAME in NAME ( * [ NAME ( NAME ) ] * NUMBER ) ]
 import NAME NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = STRING NEWLINE NAME . NAME ( NAME , NAME ) 
-  """.trimIndent()
+""".trimIndent()
 
-
-
-          val errorMessages1 = """
-     no viable alternative at input 'np'
+val errorMessages1 = """
+no viable alternative at input 'np'
 no viable alternative at input 'np'
 mismatched input '}' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ':', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 no viable alternative at input '<EOF>'
@@ -9219,10 +9201,10 @@ extraneous input ']' expecting ')'
 mismatched input '<EOF>' expecting {'if', 'for', 'in', 'or', 'and', 'not', 'is', 'async', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 mismatched input '<EOF>' expecting {'if', 'in', 'or', 'and', 'not', 'is', '.', '*', '(', ')', ',', '**', '[', '|', '^', '&', '<<', '>>', '+', '-', '/', '%', '//', '<', '>', '==', '>=', '<=', '<>', '!=', '@'}
 extraneous input ''([\d_]+)n\.jpg'' expecting ')'
-  """.trimIndent()
+""".trimIndent()
 
 val pairwiseUniformAll by lazy {
   (invalidLexedPythonStatements1.lines().zip(validLexedPythonStatements1.lines()) +
-    invalidLexedPythonStatements2.lines().zip(validLexedPythonStatements2.lines()) +
-    invalidLexedPythonStatements3.lines().zip(validLexedPythonStatements3.lines()))
+  invalidLexedPythonStatements2.lines().zip(validLexedPythonStatements2.lines()) +
+  invalidLexedPythonStatements3.lines().zip(validLexedPythonStatements3.lines()))
 }

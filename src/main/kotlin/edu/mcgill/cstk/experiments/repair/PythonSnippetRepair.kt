@@ -8,6 +8,7 @@ import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
 import com.beust.klaxon.*
+import edu.mcgill.cstk.experiments.repair.data.symbolCounts
 import edu.mcgill.cstk.math.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
@@ -52,7 +53,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
     val filenameCC = "/scratch/b/bengioy/breandan/bifi/data/orig_good_code/orig.good.cc.json"
     var numToks = 100_000
     // If running on Compute Canada, use the larger dataset
-    val file: File = File(filename).let { if (it.exists()) { numToks *= 100; it } else File(filenameCC) }
+    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 100; it } else File(filename) }
     readBIFIContents(file = file).take(numToks).asStream().parallel()
       .map { "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().filter { it != "98" && it != "99" }
@@ -399,12 +400,12 @@ fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
-  brokeSnippets.zip(fixedSnippets)//.asStream().parallel()
+  brokeSnippets.zip(fixedSnippets).asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
         broke.mapToUnquotedPythonTokens().tokenizeByWhitespace().let {
-          levenshtein(it, fixed.mapToUnquotedPythonTokens().tokenizeByWhitespace()) < maxPatchSize &&
+          levenshtein(it, fixed.mapToUnquotedPythonTokens().tokenizeByWhitespace()) <= maxPatchSize &&
           it.size in lengthBounds && it.all { it in seq2parsePythonCFG.terminals }
         } && (!broke.isValidPython() && fixed.isValidPython())
     }
@@ -424,7 +425,7 @@ fun preprocessStackOverflow(
       val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minpatch.changedIndices().size <= maxPatchSize &&
-      brokeVis != fixedVis && brokeVis != minfixVis// && fixedVis != minfixVis
+      brokeVis != fixedVis && minfixVis != brokeVis // && fixedVis != minfixVis
 //      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
     }.distinct().asSequence()
 //    .map { (broke, fixed, minfix) ->
