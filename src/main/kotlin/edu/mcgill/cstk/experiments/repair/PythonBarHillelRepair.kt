@@ -4,7 +4,6 @@ import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.Π2A
-import astminer.parse.fuzzy.runCommand
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.random.Random
@@ -45,20 +44,24 @@ fun main() {
       val levAlign = levenshteinAlign(toRepair, humanRepair)
       val levDist = levAlign.patchSize()
 
-      val levBall = makeLevFSA(toRepair, levDist)
+      var levBallSize = 1
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
       val intGram =
-        try {
-          s2pg.jvmIntersectLevFSA(levBall).also { intGram ->
-            if (humanRepair in s2pg.language && levBall.recognizes(humanRepair) && humanRepair in intGram.language)
-              println("Human repair is recognized by the intersection grammar")
-            else throw Exception("Human repair is unrecognizable!")
+          (1..3).firstNotNullOfOrNull { radius ->
+            s2pg.jvmIntersectLevFSA(
+              makeLevFSA(toRepair, radius).also { levBallSize = it.Q.size }
+            ).also { intGram -> intGram.ifEmpty { null } }
           }
-        } catch (e: Exception) {
-          println("Encountered error (${e.message}): $humanRepairANSI")
-          println("Recall: $recall / $total, errors: ${++errorRate}\n")
-          return@forEach
-        }
+
+      try {
+        if (intGram == null || humanRepair !in intGram.language)
+            throw Exception("Human repair is unrecognizable!")
+        else println("Human repair is recognized by LEV ∩ CFG grammar")
+      } catch (e: Exception) {
+        println("Encountered error (${e.message}): $humanRepairANSI")
+        println("Recall: $recall / $total, errors: ${++errorRate}\n")
+        return@forEach
+      }
 
       total++
       println("Ground truth repair: $humanRepairANSI")
@@ -80,10 +83,14 @@ fun main() {
       if (!matchFound) {
         println("Drew $samplesBeforeMatch samples in $timeout, ${intGram.size} prods, length-$levDist human repair not found")
         negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
-          "${levBall.Q.size}, ${intGram.size}, ${levAlign.summarize()}\n")
+          "${levBallSize}, ${intGram.size}, ${levAlign.summarize()}\n")
       } else {
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-        val rankedResults = results.map { it to P_BIFI.score(it.mapToBIFIFmt()) }.sortedBy { it.second }.map { it.first }
+        val rankedResults = results
+          // Sort by Markov chain perplexity
+          .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
+          .sortedBy { it.second }.map { it.first }
+
         val indexOfTarget = rankedResults.indexOf(target)
         println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
         println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
@@ -95,7 +102,7 @@ fun main() {
         samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
         println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
         positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-          "$samplesBeforeMatch, ${levBall.Q.size}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
+          "$samplesBeforeMatch, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
       }
 
       println()
@@ -108,7 +115,7 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
-      a.length < 60 && levenshtein(broke, b.tokenizeByWhitespace()) < 5
+      a.length < 60 && levenshtein(broke, b.tokenizeByWhitespace()) < 4
     }
 }
 
