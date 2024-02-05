@@ -44,6 +44,7 @@ fun main() {
       val levAlign = levenshteinAlign(toRepair, humanRepair)
       val levDist = levAlign.patchSize()
 
+      var levRadius = 1
       var levBallSize = 1
       val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
       val intGram =
@@ -51,10 +52,12 @@ fun main() {
             try {
               s2pg.jvmIntersectLevFSA(
                 makeLevFSA(toRepair, radius).also { levBallSize = it.Q.size }
-              ).also { intGram -> intGram.ifEmpty { null } }
+              ).also { intGram -> levRadius = radius; intGram.ifEmpty { null } }
             } catch (e: Exception) { null }
           }
 
+      println("Constructed LEV($levRadius, ${toRepair.size}, $levBallSize) " +
+        "∩ CFG grammar with $intGram productions in ${allTime.elapsedNow()}")
       try {
         if (intGram == null || humanRepair !in intGram.language)
             throw Exception("Human repair is unrecognizable!")
