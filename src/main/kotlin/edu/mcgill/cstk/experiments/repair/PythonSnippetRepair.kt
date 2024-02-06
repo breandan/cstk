@@ -405,16 +405,17 @@ fun preprocessStackOverflow(
 //      '"' !in broke && '\'' !in broke &&
       (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
         broke.mapToUnquotedPythonTokens().tokenizeByWhitespace().let {
-          levenshtein(it, fixed.mapToUnquotedPythonTokens().tokenizeByWhitespace()) <= maxPatchSize &&
           it.size in lengthBounds && it.all { it in seq2parsePythonCFG.terminals }
         } && (!broke.isValidPython() && fixed.isValidPython())
     }
     .distinct()
-//    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
-    .map { (a, b) -> a to b to b }
+    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
     .filter { (broke, fixed, minfix) ->
       val mftks = minfix.mapToUnquotedPythonTokens()
-      minfix.isValidPython() && "$mftks NEWLINE" in seq2parsePythonCFG.language
+      val bktks = broke.mapToUnquotedPythonTokens()
+
+      levenshtein(bktks, mftks) <= maxPatchSize && minfix.isValidPython() &&
+        "$mftks NEWLINE" in seq2parsePythonCFG.language
     }
     .filter { (broke, fixed, minfix) ->
 //      val (brokeTokens, minFixedTokens) =

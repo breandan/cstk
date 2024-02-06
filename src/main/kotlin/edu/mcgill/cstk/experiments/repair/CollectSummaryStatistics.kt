@@ -24,7 +24,7 @@ fun main() {
 //  computePatchStats()
   collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
-//    println(naturalSmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
+//    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
 //  computePatchTrigramStats()
 //  readBIFI().toList()
@@ -79,7 +79,7 @@ fun collectNaturallySmallRepairs() {
   MAX_PATCH_SIZE = 6
   val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
     .also { File(it).also { if (it.exists()) it.delete(); it.createNewFile() } }
-  preprocessStackOverflow(MAX_PATCH_SIZE, 1..200).map { (a, _, c) -> a to c }
+  preprocessStackOverflow(MAX_PATCH_SIZE, 1..300).map { (a, _, c) -> a to c }
     .map { (a, c) -> "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
     .distinct().forEach { File(filename).appendText(it) }
 }

@@ -4,6 +4,7 @@ import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.Π2A
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.random.Random
@@ -15,9 +16,8 @@ import kotlin.time.TimeSource
  */
 fun main() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
-  var errorRate = 0
-  var topOneRate = 0
-  var (recall, total) = 0 to 0
+  val allRate = LBHMetrics()
+  val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
@@ -25,7 +25,8 @@ fun main() {
   val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
-  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
+  val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
+    "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv") }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv") }
@@ -44,22 +45,19 @@ fun main() {
     val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
     val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
+    val source = toRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
 
-    var levRadius = 1
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
-    val intGram =
-      (1..3).firstNotNullOfOrNull { radius ->
-        try {
-          s2pg.jvmIntersectLevFSA(
-            makeLevFSA(toRepair, radius).also { levBallSize = it.Q.size }
-          ).also { intGram -> levRadius = radius; intGram.ifEmpty { null } }
-        } catch (e: Exception) { null }
-      }
+    val intGram = try {
+      s2pg.jvmIntersectLevFSA(
+        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
+      ).also { intGram -> intGram.ifEmpty { null } }
+    } catch (e: Exception) { null }
 
-    println("Constructed LEV($levRadius, ${toRepair.size}, $levBallSize) " +
+    println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
 
     try {
@@ -68,18 +66,19 @@ fun main() {
       else println("Human repair is recognized by LEV ∩ CFG grammar")
     } catch (e: Exception) {
       println("Encountered error (${e.message}): $humanRepairANSI")
-      println("Recall: $recall / $total, errors: ${++errorRate}\n")
+      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
+      println(allRate.toString())
       negative.appendText("${toRepair.size}, $levDist, 0, " +
         "${levBallSize}, ${intGram?.size ?: 0}, ${levAlign.summarize()}\n")
       return@forEach
     }
 
-    total++
+    allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     println("Ground truth repair: $humanRepairANSI")
     val clock = TimeSource.Monotonic.markNow()
     var samplesBeforeMatch = 0
     var matchFound = false
-    val timeout = 30.seconds
+    val timeout = 60.seconds
     val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
@@ -98,26 +97,40 @@ fun main() {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
       val rankedResults = results
         // Sort by Markov chain perplexity
-        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
-        .sortedBy { it.second }.map { it.first }
+//        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
+//        .sortedBy { it.second }.map { it.first }
+      // First sort by levenshtein distance, then by perplexity
+          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
+          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
 
-      val indexOfTarget = rankedResults.indexOf(target).also { if (it == 0) topOneRate++}
+      allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
+      val indexOfTarget = rankedResults.indexOf(target)
+        .also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
       println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
         " $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
-      println("Top-1/rec/pos/total: $topOneRate / ${++recall} / $total / ${total + errorRate}, errors: $errorRate")
+      allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
       sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
-      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
+      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
       allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
-      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
+      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
       samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
-      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
+      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
         "$samplesBeforeMatch, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()
   }
+}
+
+fun Map<Int, LBHMetrics>.summarize() =
+  entries.sortedBy { it.key }.joinToString("\n") { (k, v) -> "Lev($k): $v" }
+
+data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0, var error: Int = 0) {
+  override fun toString() =
+    "Top-1/rec/pos/total: $top1 / $recall / $total / ${total + error}, " +
+      "errors: $error, P@1: ${top1.toDouble() / (total + error)}"
 }
 
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
