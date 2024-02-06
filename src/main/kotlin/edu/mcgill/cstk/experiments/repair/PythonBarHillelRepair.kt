@@ -4,17 +4,21 @@ import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.Π2A
-import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.random.Random
+import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 /*
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+//  evaluateBarHillelRepair()
+  evaluateSeq2ParseRepair()
+}
+
+fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
@@ -28,12 +32,10 @@ fun main() {
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
     "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
-  val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv") }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv") }
-    .also { it.delete(); it.appendText(positiveHeader) }
-  val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv") }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv") }
-    .also { it.delete(); it.appendText(negativeHeader) }
+  val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
   val dataset = naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
@@ -124,6 +126,7 @@ fun main() {
   }
 }
 
+@JvmName("summarizeLBHMetrics")
 fun Map<Int, LBHMetrics>.summarize() =
   entries.sortedBy { it.key }.joinToString("\n") { (k, v) -> "Lev($k): $v" }
 
@@ -145,3 +148,31 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
 
 fun Σᐩ.mapToBIFIFmt() =
   "BOS NEWLINE $this EOS".tokenizeByWhitespace()
+
+fun evaluateSeq2ParseRepair() {
+  val P_1ByLevDist = mutableMapOf<Int, S2PMetrics>()
+  preprocessStackOverflow(lengthBounds = 0..300).forEach { (invalid, _, valid) ->
+    val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
+    val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
+    val levDist = levenshtein(toRepair, humanRepair)
+    val seq2parseFix = seq2parseFix(invalid)
+    val s2pfTokens = seq2parseFix.mapToUnquotedPythonTokens().tokenizeByWhitespace()
+    P_1ByLevDist.getOrPut(levDist) { S2PMetrics() }.total++
+    if (s2pfTokens == humanRepair) { P_1ByLevDist.getOrPut(levDist) { S2PMetrics() }.top1++ }
+
+    println("Ground truth : ${levenshteinAlign(toRepair, humanRepair).paintANSIColors()}")
+    println("Seq2Parse fix: ${levenshteinAlign(toRepair, s2pfTokens).paintANSIColors()}")
+    println(P_1ByLevDist.summarize())
+    println()
+  }
+}
+
+@JvmName("summarizeS2PMetrics")
+fun Map<Int, S2PMetrics>.summarize() =
+  "Lev(*): ${values.sumOf { it.top1 }.toDouble() / values.sumOf { it.total }}\n" +
+  entries.sortedBy { it.key }.joinToString("\n") { (k, v) -> "Lev($k): $v" }
+
+data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
+  override fun toString() =
+    "Top-1/total: $top1 / $total = ${top1.toDouble() / total}"
+}

@@ -400,7 +400,7 @@ fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
-  brokeSnippets.zip(fixedSnippets).asStream().parallel()
+  brokeSnippets.zip(fixedSnippets)//.asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
