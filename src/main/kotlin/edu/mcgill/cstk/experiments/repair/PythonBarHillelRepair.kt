@@ -37,81 +37,83 @@ fun main() {
   println()
 
   dataset.shuffled(Random(1)).forEach { (invalid, valid) ->
-      val allTime = TimeSource.Monotonic.markNow()
-      val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
-      val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
-      val target = humanRepair.joinToString(" ")
-      val levAlign = levenshteinAlign(toRepair, humanRepair)
-      val levDist = levAlign.patchSize()
+    val allTime = TimeSource.Monotonic.markNow()
+    val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
+    val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
+    val target = humanRepair.joinToString(" ")
+    val levAlign = levenshteinAlign(toRepair, humanRepair)
+    val levDist = levAlign.patchSize()
 
-      var levRadius = 1
-      var levBallSize = 1
-      val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
-      val intGram =
-          (1..3).firstNotNullOfOrNull { radius ->
-            try {
-              s2pg.jvmIntersectLevFSA(
-                makeLevFSA(toRepair, radius).also { levBallSize = it.Q.size }
-              ).also { intGram -> levRadius = radius; intGram.ifEmpty { null } }
-            } catch (e: Exception) { null }
-          }
-
-      println("Constructed LEV($levRadius, ${toRepair.size}, $levBallSize) " +
-        "∩ CFG grammar with $intGram productions in ${allTime.elapsedNow()}")
-      try {
-        if (intGram == null || humanRepair !in intGram.language)
-            throw Exception("Human repair is unrecognizable!")
-        else println("Human repair is recognized by LEV ∩ CFG grammar")
-      } catch (e: Exception) {
-        println("Encountered error (${e.message}): $humanRepairANSI")
-        println("Recall: $recall / $total, errors: ${++errorRate}\n")
-        return@forEach
+    var levRadius = 1
+    var levBallSize = 1
+    val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
+    val intGram =
+      (1..3).firstNotNullOfOrNull { radius ->
+        try {
+          s2pg.jvmIntersectLevFSA(
+            makeLevFSA(toRepair, radius).also { levBallSize = it.Q.size }
+          ).also { intGram -> levRadius = radius; intGram.ifEmpty { null } }
+        } catch (e: Exception) { null }
       }
 
-      total++
-      println("Ground truth repair: $humanRepairANSI")
-      val clock = TimeSource.Monotonic.markNow()
-      var samplesBeforeMatch = 0
-      var matchFound = false
-      val timeout = 30.seconds
-      val results = mutableListOf<Σᐩ>()
-      var elapsed = clock.elapsedNow().inWholeMilliseconds
-      run untilDone@{
-        intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
-          .distinct().forEach {
-            results.add(it)
-            samplesBeforeMatch++
-            if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-          }
-      }
-
-      if (!matchFound) {
-        println("Drew $samplesBeforeMatch samples in $timeout, ${intGram.size} prods, length-$levDist human repair not found")
-        negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
-          "${levBallSize}, ${intGram.size}, ${levAlign.summarize()}\n")
-      } else {
-        val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-        val rankedResults = results
-          // Sort by Markov chain perplexity
-          .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
-          .sortedBy { it.second }.map { it.first }
-
-        val indexOfTarget = rankedResults.indexOf(target)
-        println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
-        println("Recall / samples : ${++recall} / $total, errors: $errorRate")
-        sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
-        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
-        allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
-        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
-        samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
-        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
-        positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-          "$samplesBeforeMatch, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
-      }
-
-      println()
+    println("Constructed LEV($levRadius, ${toRepair.size}, $levBallSize) " +
+      "∩ CFG grammar with $intGram productions in ${allTime.elapsedNow()}")
+    try {
+      if (intGram == null || humanRepair !in intGram.language)
+          throw Exception("Human repair is unrecognizable!")
+      else println("Human repair is recognized by LEV ∩ CFG grammar")
+    } catch (e: Exception) {
+      println("Encountered error (${e.message}): $humanRepairANSI")
+      println("Recall: $recall / $total, errors: ${++errorRate}\n")
+      return@forEach
     }
+
+    total++
+    println("Ground truth repair: $humanRepairANSI")
+    val clock = TimeSource.Monotonic.markNow()
+    var samplesBeforeMatch = 0
+    var matchFound = false
+    val timeout = 30.seconds
+    val results = mutableListOf<Σᐩ>()
+    var elapsed = clock.elapsedNow().inWholeMilliseconds
+    run untilDone@{
+      intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
+        .distinct().forEach {
+          results.add(it)
+          samplesBeforeMatch++
+          if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+        }
+    }
+
+    if (!matchFound) {
+      println("Drew $samplesBeforeMatch samples in $timeout," +
+        " ${intGram.size} prods, length-$levDist human repair not found")
+      negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
+        "${levBallSize}, ${intGram.size}, ${levAlign.summarize()}\n")
+    } else {
+      val allElapsed = allTime.elapsedNow().inWholeMilliseconds
+      val rankedResults = results
+        // Sort by Markov chain perplexity
+        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
+        .sortedBy { it.second }.map { it.first }
+
+      val indexOfTarget = rankedResults.indexOf(target)
+      println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
+        " $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+      println("Recall / samples : ${++recall} / $total, errors: $errorRate")
+      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
+      allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
+      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / recall }}")
+      samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
+      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / recall }}")
+      positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
+        "$samplesBeforeMatch, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
+    }
+
+    println()
+  }
 }
 
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
