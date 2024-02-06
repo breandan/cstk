@@ -97,11 +97,11 @@ fun main() {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
       val rankedResults = results
         // Sort by Markov chain perplexity
-//        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
-//        .sortedBy { it.second }.map { it.first }
+        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
+        .sortedBy { it.second }.map { it.first }
       // First sort by levenshtein distance, then by perplexity
-          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
-          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
+//          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
+//          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
 
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       val indexOfTarget = rankedResults.indexOf(target)
