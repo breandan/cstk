@@ -16,6 +16,7 @@ import kotlin.time.TimeSource
 fun main() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
   var errorRate = 0
+  var topOneRate = 0
   var (recall, total) = 0 to 0
   val sampleTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
@@ -26,10 +27,12 @@ fun main() {
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
-  val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
-  val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv") }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv") }
+    .also { it.delete(); it.appendText(positiveHeader) }
+  val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv") }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv") }
+    .also { it.delete(); it.appendText(negativeHeader) }
 
   val dataset = naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
@@ -57,7 +60,8 @@ fun main() {
       }
 
     println("Constructed LEV($levRadius, ${toRepair.size}, $levBallSize) " +
-      "∩ CFG grammar with $intGram productions in ${allTime.elapsedNow()}")
+      "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
+
     try {
       if (intGram == null || humanRepair !in intGram.language)
           throw Exception("Human repair is unrecognizable!")
@@ -65,6 +69,8 @@ fun main() {
     } catch (e: Exception) {
       println("Encountered error (${e.message}): $humanRepairANSI")
       println("Recall: $recall / $total, errors: ${++errorRate}\n")
+      negative.appendText("${toRepair.size}, $levDist, 0, " +
+        "${levBallSize}, ${intGram?.size ?: 0}, ${levAlign.summarize()}\n")
       return@forEach
     }
 
@@ -76,14 +82,12 @@ fun main() {
     val timeout = 30.seconds
     val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    run untilDone@{
-      intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
-        .distinct().forEach {
-          results.add(it)
-          samplesBeforeMatch++
-          if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-        }
-    }
+    intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      .distinct().forEach {
+        results.add(it)
+        samplesBeforeMatch++
+        if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+      }
 
     if (!matchFound) {
       println("Drew $samplesBeforeMatch samples in $timeout," +
@@ -97,11 +101,11 @@ fun main() {
         .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
         .sortedBy { it.second }.map { it.first }
 
-      val indexOfTarget = rankedResults.indexOf(target)
+      val indexOfTarget = rankedResults.indexOf(target).also { if (it == 0) topOneRate++}
       println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
         " $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
-      println("Recall / samples : ${++recall} / $total, errors: $errorRate")
+      println("Top-1/rec/pos/total: $topOneRate / ${++recall} / $total / ${total + errorRate}, errors: $errorRate")
       sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / recall }}")
       allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
