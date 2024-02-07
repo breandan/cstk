@@ -167,9 +167,9 @@ fun evaluateSeq2ParseRepair() {
   }
 }
 
-// Lev(1): Top-1/total: 298 / 715 = 0.4167832167832168
-//Lev(2): Top-1/total: 63 / 381 = 0.16535433070866143
-//Lev(3): Top-1/total: 7 / 124 = 0.056451612903225805
+// Lev(1): Top-1/total: 1623 / 4079 = 0.3978916401078696
+// Lev(2): Top-1/total: 344 / 2238 = 0.15370866845397677
+// Lev(3): Top-1/total: 49 / 620 = 0.07903225806451612
 
 @JvmName("summarizeS2PMetrics")
 fun Map<Int, S2PMetrics>.summarize() =

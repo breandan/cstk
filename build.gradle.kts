@@ -215,6 +215,7 @@ tasks {
     "pythonSnippetRepair" to "edu.mcgill.cstk.experiments.repair.PythonSnippetRepairKt",
     "contextualRepair" to "edu.mcgill.cstk.experiments.repair.PythonContextualRepairKt",
     "pythonBarHillelRepair" to "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt",
+    "aggregateAndPlot" to "edu.mcgill.cstk.experiments.repair.AggregateAndPlotKt",
     "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
     "cloneRepos" to "edu.mcgill.cstk.crawler.CloneReposKt",
