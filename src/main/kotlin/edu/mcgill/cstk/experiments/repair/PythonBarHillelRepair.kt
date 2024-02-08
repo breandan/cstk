@@ -14,8 +14,8 @@ import kotlin.time.Duration.Companion.seconds
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  evaluateBarHillelRepair()
-  evaluateSeq2ParseRepair()
+  evaluateBarHillelRepair()
+//  evaluateSeq2ParseRepair()
 }
 
 fun evaluateBarHillelRepair() {
@@ -136,22 +136,30 @@ data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0
       "errors: $error, P@1: ${top1.toDouble() / (total + error)}"
 }
 
+val MAX_TKS = 60
+
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
   val file = File(File("").absolutePath + path).readText()
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
-      a.length < 60 && levenshtein(broke, b.tokenizeByWhitespace()) < 4
+      a.length < MAX_TKS && levenshtein(broke, b.tokenizeByWhitespace()) == 3
     }
 }
 
 fun Σᐩ.mapToBIFIFmt() =
   "BOS NEWLINE $this EOS".tokenizeByWhitespace()
 
+// Seq2Parse results:
+// Lev(*): 0.29235695391897537
+// Lev(1): Top-1/total: 1687 / 4219 = 0.3998577862052619
+// Lev(2): Top-1/total: 362 / 2322 = 0.15590008613264428
+// Lev(3): Top-1/total: 51 / 642 = 0.0794392523364486
+
 fun evaluateSeq2ParseRepair() {
   val P_1ByLevDist = mutableMapOf<Int, S2PMetrics>()
-  preprocessStackOverflow(lengthBounds = 0..300).forEach { (invalid, _, valid) ->
+  preprocessStackOverflow(lengthBounds = 0..MAX_TKS).forEach { (invalid, _, valid) ->
     val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val levDist = levenshtein(toRepair, humanRepair)
@@ -166,10 +174,6 @@ fun evaluateSeq2ParseRepair() {
     println()
   }
 }
-
-// Lev(1): Top-1/total: 1623 / 4079 = 0.3978916401078696
-// Lev(2): Top-1/total: 344 / 2238 = 0.15370866845397677
-// Lev(3): Top-1/total: 49 / 620 = 0.07903225806451612
 
 @JvmName("summarizeS2PMetrics")
 fun Map<Int, S2PMetrics>.summarize() =
