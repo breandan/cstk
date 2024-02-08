@@ -2,13 +2,18 @@ package edu.mcgill.cstk.experiments.repair
 
 import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
-import ai.hypergraph.kaliningraph.types.Π2A
+import ai.hypergraph.kaliningraph.types.*
+import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import kotlin.math.absoluteValue
 import kotlin.random.Random
+import kotlin.streams.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
+import kotlin.to
 
 /*
 ./gradlew pythonBarHillelRepair
@@ -57,17 +62,17 @@ fun evaluateBarHillelRepair() {
       s2pg.jvmIntersectLevFSA(
         makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
       ).also { intGram -> intGram.ifEmpty { null } }
-    } catch (e: Exception) { null }
+    } catch (e: Exception) { println("Intersection error:" + e.message); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
 
     try {
-      if (intGram == null || humanRepair !in intGram.language)
-          throw Exception("Human repair is unrecognizable!")
+      if (intGram == null) throw Exception("Exception while building grammar!")
+      else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable!")
       else println("Human repair is recognized by LEV ∩ CFG grammar")
     } catch (e: Exception) {
-      println("Encountered error (${e.message}): $humanRepairANSI")
+      println("Encountered error (${e.message}): $humanRepairANSI\n")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
       println(allRate.toString())
       negative.appendText("${toRepair.size}, $levDist, 0, " +
@@ -144,7 +149,7 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
-      a.length < MAX_TKS && levenshtein(broke, b.tokenizeByWhitespace()) == 3
+      MAX_TKS <= a.length && broke.size <= MAX_TKS && levenshtein(broke, b.tokenizeByWhitespace()) <= 3
     }
 }
 
@@ -159,7 +164,7 @@ fun Σᐩ.mapToBIFIFmt() =
 
 fun evaluateSeq2ParseRepair() {
   val P_1ByLevDist = mutableMapOf<Int, S2PMetrics>()
-  preprocessStackOverflow(lengthBounds = 0..MAX_TKS).forEach { (invalid, _, valid) ->
+  preprocessStackOverflowQuickly(lengthBounds = 0..MAX_TKS).forEach { (invalid, _, valid) ->
     val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val levDist = levenshtein(toRepair, humanRepair)
@@ -174,6 +179,52 @@ fun evaluateSeq2ParseRepair() {
     println()
   }
 }
+
+fun preprocessStackOverflowQuickly(
+  maxPatchSize: Int = MAX_PATCH_SIZE,
+  lengthBounds: IntRange = 0..Int.MAX_VALUE,
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
+) =
+  brokeSnippets.zip(fixedSnippets).asStream().parallel()
+    .filter { (broke, fixed) ->
+//      '"' !in broke && '\'' !in broke &&
+      (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
+        broke.mapToUnquotedPythonTokens().tokenizeByWhitespace().let {
+          it.size in lengthBounds && it.all { it in seq2parsePythonCFG.terminals }
+        } && (!broke.isValidPython() && fixed.isValidPython())
+    }
+    .distinct()
+    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
+    .filter { (broke, fixed, minfix) ->
+      val mftks = minfix.mapToUnquotedPythonTokens()
+      val bktks = broke.mapToUnquotedPythonTokens()
+
+      levenshtein(bktks, mftks) <= maxPatchSize && minfix.isValidPython() &&
+        "$mftks NEWLINE" in seq2parsePythonCFG.language
+    }
+    .filter { (broke, fixed, minfix) ->
+//      val (brokeTokens, minFixedTokens) =
+//        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
+//      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
+
+      val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
+      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+
+      minpatch.changedIndices().size <= maxPatchSize &&
+        brokeVis != fixedVis && minfixVis != brokeVis // && fixedVis != minfixVis
+//      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
+    }.distinct()
+//    .map { (broke, fixed, minfix) ->
+//      prettyDiffs(listOf(broke, fixed), listOf("original snippet", "human patch")).let { origDiff ->
+//        prettyDiffs(listOf(broke, minfix), listOf("original snippet", "minimized patch")).let { minDiff ->
+//          // Compare ASCII characters for a visible difference, if same do not print two
+////          if (corrected.visibleChars() == minfix.visibleChars()) origDiff to "" else
+//          origDiff to minDiff to broke to minfix
+//        }
+//      }
+//    }
+//    .shuffleOnline()
 
 @JvmName("summarizeS2PMetrics")
 fun Map<Int, S2PMetrics>.summarize() =
