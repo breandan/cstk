@@ -247,6 +247,8 @@ tasks {
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.crawler.CloneReposKt"
     isZip64 = true
     archiveFileName = "${project.name}-fat-${project.version}.jar"
+    exclude("**/datasets/**")
+    minimize()
   }
 
   register<Download>("downloadKotlinGrammarTools") {
