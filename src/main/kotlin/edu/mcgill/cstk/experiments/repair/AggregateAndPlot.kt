@@ -3,11 +3,14 @@ package edu.mcgill.cstk.experiments.repair
 /*
 ./gradlew aggregateAndPlot
  */
+val samplerTimeout = 60_000
+val criterion = { it: String -> it.split(", ")[1] == "3" }
+
 fun main() {
   // Parsing the CSV data
-  val lines = csvData.lines().drop(1).filter { it.split(", ")[1] == "3" } // Dropping the header line
+  val lines = csvData.lines().drop(1).filter(criterion)
   val parsedData = lines.map { it.split(", ").map(String::trim) }
-    .map { (it[3].toInt() - 60_000 + it[2].toInt()) to it[7].toInt() } // Pair(rank, samples)
+    .map { (it[3].toInt() - samplerTimeout + it[2].toInt()) to it[7].toInt() }
 
   println(parsedData.size)
 
