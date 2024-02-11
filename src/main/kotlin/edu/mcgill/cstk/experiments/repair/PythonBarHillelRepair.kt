@@ -86,14 +86,14 @@ fun evaluateBarHillelRepair() {
     var samplesBeforeMatch = 0
     var matchFound = false
     val timeout = 30.seconds
-    val results = mutableListOf<Σᐩ>()
+//    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      .distinct().forEach {
-        results.add(it)
+    val results = intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      .distinct().map {
         samplesBeforeMatch++
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-      }
+        it
+      }.toList()
 
     if (!matchFound) {
       println("Drew $samplesBeforeMatch samples in $timeout," +
