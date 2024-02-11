@@ -42,7 +42,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  val multikVersion = "0.2.2"
+  val multikVersion = "0.2.3"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -85,7 +85,7 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.318")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.3")
+  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.4")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.2.0")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.6.0")
