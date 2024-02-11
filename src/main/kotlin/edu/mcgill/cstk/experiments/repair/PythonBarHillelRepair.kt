@@ -42,7 +42,7 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
-  val dataset = naturallySmallRepairs // balancedSmallRepairs //pairwiseUniformAll
+  val dataset = balancedSmallRepairs // naturallySmallRepairs  //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
   println()
@@ -60,7 +60,7 @@ fun evaluateBarHillelRepair() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     val intGram = try {
       s2pg.jvmIntersectLevFSA(
-        makeLevFSA(toRepair, 3).also { levBallSize = it.Q.size }
+        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
       ).also { intGram -> intGram.ifEmpty { null } }
     } catch (e: Exception) { println("Intersection error:" + e.message); null }
 
@@ -88,7 +88,8 @@ fun evaluateBarHillelRepair() {
     val timeout = 30.seconds
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+    val results = intGram
+      .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
       .distinct().map {
         samplesBeforeMatch++
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
