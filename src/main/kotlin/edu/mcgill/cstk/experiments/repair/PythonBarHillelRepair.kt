@@ -31,7 +31,7 @@ fun evaluateBarHillelRepair() {
   val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
 //   val s2pg = vanillaS2PCFG // Original grammar, including all productions
-  val s2pg = vanillaS2PCFGMinimized // Minimized grammar, with rare productions removed
+  val s2pg = vanillaS2PCFG // Minimized grammar, with rare productions removed
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
@@ -61,7 +61,7 @@ fun evaluateBarHillelRepair() {
     val intGram = try {
       s2pg.jvmIntersectLevFSA(
         makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
-      ).also { intGram -> intGram.ifEmpty { null } }
+      ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("Intersection error:" + e.message); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
