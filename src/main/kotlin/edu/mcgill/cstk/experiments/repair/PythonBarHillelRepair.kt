@@ -42,7 +42,7 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
-  val dataset = naturallySmallRepairs //pairwiseUniformAll
+  val dataset = balancedSmallRepairs // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
   println()
@@ -88,7 +88,7 @@ fun evaluateBarHillelRepair() {
     val timeout = 30.seconds
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
+    val results = intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
       .distinct().map {
         samplesBeforeMatch++
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
@@ -149,8 +149,29 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
-      MAX_TKS <= a.length && broke.size <= MAX_TKS && levenshtein(broke, b.tokenizeByWhitespace()) <= 3
+      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
+      broke.size <= MAX_TKS && levDist <= 3
     }
+}
+
+// Balanced number of repairs for each levenshtein distance
+val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
+  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
+  val file = File(File("").absolutePath + path).readText()
+  file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
+    .map { (a, b) ->
+      val broke = a.tokenizeByWhitespace()
+      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
+      a to b to levDist
+    }.filter { (_, _, levDist) -> levDist <= 3 }
+   .groupBy { it.third }.let { map ->
+      val minSize = map.values.minOf { it.size }
+      println("Size of smallest group: $minSize")
+      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
+    }
+    .values.asSequence().flatten()
+    .map { it.first to it.second }
+    .shuffled()
 }
 
 fun Σᐩ.mapToBIFIFmt() =
