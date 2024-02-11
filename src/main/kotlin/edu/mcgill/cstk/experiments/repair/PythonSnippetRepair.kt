@@ -53,12 +53,12 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
     val filenameCC = "/scratch/b/bengioy/breandan/bifi/data/orig_good_code/orig.good.cc.json"
     var numToks = 100_000
     // If running on Compute Canada, use the larger dataset
-    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 100; it } else File(filename) }
-    readBIFIContents(file = file).take(numToks).asStream().parallel()
-      .map { "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
-        .tokenizeByWhitespace().filter { it != "98" && it != "99" }
-        .asSequence().toMarkovChain(4) }
-      .reduce { t, u -> t + u }.get()
+    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 1000; it } else File(filename) }
+    readBIFIContents(file = file).take(numToks).asStream().parallel().map {
+      "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
+      .tokenizeByWhitespace().filter { it != "98" && it != "99" }
+      .asSequence().toMarkovChain(4)
+    }.reduce { t, u -> t + u }.get()
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 

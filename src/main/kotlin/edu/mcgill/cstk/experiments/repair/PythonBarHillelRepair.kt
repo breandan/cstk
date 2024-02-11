@@ -42,7 +42,7 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
-  val dataset = balancedSmallRepairs // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = naturallySmallRepairs // balancedSmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
   println()
@@ -60,7 +60,7 @@ fun evaluateBarHillelRepair() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     val intGram = try {
       s2pg.jvmIntersectLevFSA(
-        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
+        makeLevFSA(toRepair, 3).also { levBallSize = it.Q.size }
       ).also { intGram -> intGram.ifEmpty { null } }
     } catch (e: Exception) { println("Intersection error:" + e.message); null }
 
@@ -104,7 +104,11 @@ fun evaluateBarHillelRepair() {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
       val rankedResults = results
         // Sort by Markov chain perplexity
-        .map { it to P_BIFI.score(it.mapToBIFIFmt()) }
+        .map {
+          val levDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
+          val levModifier = when (levDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
+          it to P_BIFI.score(it.mapToBIFIFmt()) * levModifier
+        }
         .sortedBy { it.second }.map { it.first }
       // First sort by levenshtein distance, then by perplexity
 //          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
@@ -163,7 +167,7 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to levDist
-    }.filter { (_, _, levDist) -> levDist <= 3 }
+    }.filter { (broke, _, levDist) -> broke.tokenizeByWhitespace().size < MAX_TKS && levDist <= 3 }
    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
       println("Size of smallest group: $minSize")
