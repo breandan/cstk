@@ -85,7 +85,7 @@ fun evaluateBarHillelRepair() {
     val clock = TimeSource.Monotonic.markNow()
     var samplesBeforeMatch = 0
     var matchFound = false
-    val timeout = 60.seconds
+    val timeout = 30.seconds
     val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     intGram.sampleDirectlyWR(stoppingCriterion = { clock.elapsedNow() < timeout })
