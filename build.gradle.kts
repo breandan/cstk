@@ -56,7 +56,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.15.1"
+  val openrwVersion = "8.15.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -157,7 +157,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-16")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.6.3")
+  implementation("com.aallam.openai:openai-client:3.7.0")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.0")
