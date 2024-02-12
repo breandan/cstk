@@ -40,6 +40,7 @@ fun evaluateBarHillelRepair() {
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+    .also { println("Writing CSV to: ${it.absolutePath}") }
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
