@@ -1083,9 +1083,7 @@ If, for some reason Gradle does not work on Compute Canada, you can build a fat 
 To run the CPU experiments:
 
 ```bash
-./gradlew shadowJar &&
-scp build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@niagara.computecanada.ca:/home/b/bengioy/breandan/cstk &&
-ssh breandan@niagara.computecanada.ca 'cd /home/b/bengioy/breandan/cstk && git pull && sbatch submit_job.sh'
+./niagara_deploy.exp && ./niagara_submit.exp 
 ```
 
 To run the GPU experiments:
