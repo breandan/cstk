@@ -38,7 +38,7 @@ fun main() {
     .map { it.first.lineSequence() }.flatten()
     .map { it.trim() }
     .filter(Σᐩ::isANontrivialStatementWithBalancedBrackets)
-    .filter { it.coarsen().let { it.length in 23..69 && cfg.parse(it) != null } }
+    .filter { it.coarsen().let { it.length in 23..69 && dyck3CFG.parse(it) != null } }
     .map {
       val prompt = it.constructPromptByDeletingRandomSyntax()
       val coarsened = prompt.coarsen().also { println("Coarsened: $it") }
@@ -73,7 +73,7 @@ fun main() {
 
           val t = TimeSource.Monotonic.markNow()
           var totalValidSamples = 0
-          val repair = repair(code, cfg,
+          val repair = repair(code, dyck3CFG,
             String::coarsen, String::uncoarsen,
   //      synthesizer = { a -> synthesize(a) },
             synthesizer = { a -> a.solve(this) }

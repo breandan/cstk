@@ -3,7 +3,6 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.parsing.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.utils.*
-import org.apache.commons.lang3.StringUtils
 
 /**
  * In this experiment, we sample nontrivial single-line statements with balanced
@@ -57,7 +56,7 @@ fun main() {
     .map { it to it.constructPromptByMaskingRandomSyntax() }
     .runningFold(modelScores) { scores, (groundTruth, prompt) ->
       models.associateWith { model ->
-        val repairs = prompt.dispatchTo(model, cfg)
+        val repairs = prompt.dispatchTo(model, dyck3CFG)
         updateScore(scores, model) { groundTruth in repairs }
       }
     }

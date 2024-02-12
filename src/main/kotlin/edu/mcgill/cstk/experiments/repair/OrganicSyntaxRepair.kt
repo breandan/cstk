@@ -53,7 +53,7 @@ fun main() {
 
         val t = TimeSource.Monotonic.markNow()
         var totalValidSamples = 0
-        val repair = repair(code, cfg,
+        val repair = repair(code, dyck3CFG,
           Σᐩ::coarsen, Σᐩ::uncoarsen,
           //      synthesizer = { a -> synthesize(a) },
           synthesizer = { a -> a.solve(this) },
@@ -83,7 +83,7 @@ const val NO_REPAIR = "NO_REPAIR_PROPOSAL!"
 // "Premature optimization is the root of all evil." -Dijkstra
 
 val tidyparse = Model("tidyparse")
-val cfg: CFG =
+val dyck3CFG: CFG =
   """S -> w | ( ) | [ ] | { } | ( S ) | [ S ] | { S } | S S"""
     .parseCFG().apply { blocked.addAll(setOf("w")) }
 

@@ -19,6 +19,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+  MAX_TOKENS = 20
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
@@ -146,8 +147,6 @@ data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0
       "errors: $error, P@1: ${top1.toDouble() / (total + error)}"
 }
 
-val MAX_TKS = 60
-
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
   val file = File(File("").absolutePath + path).readText()
@@ -155,7 +154,7 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
-      broke.size <= MAX_TKS && levDist <= 3
+      broke.size <= MAX_TOKENS && levDist <= 3
     }
 }
 
@@ -168,7 +167,7 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to levDist
-    }.filter { (broke, _, levDist) -> broke.tokenizeByWhitespace().size < MAX_TKS && levDist <= 3 }
+    }.filter { (broke, _, levDist) -> broke.tokenizeByWhitespace().size < MAX_TOKENS && levDist <= 3 }
    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
       println("Size of smallest group: $minSize")
@@ -190,7 +189,7 @@ fun Σᐩ.mapToBIFIFmt() =
 
 fun evaluateSeq2ParseRepair() {
   val P_1ByLevDist = mutableMapOf<Int, S2PMetrics>()
-  preprocessStackOverflowQuickly(lengthBounds = 0..MAX_TKS).forEach { (invalid, _, valid) ->
+  preprocessStackOverflowQuickly(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
     val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val levDist = levenshtein(toRepair, humanRepair)
