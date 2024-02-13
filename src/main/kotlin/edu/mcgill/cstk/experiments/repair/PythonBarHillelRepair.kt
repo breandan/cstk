@@ -19,7 +19,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-  MAX_TOKENS = 20
+//  MAX_TOKENS = 20
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
@@ -64,7 +64,7 @@ fun evaluateBarHillelRepair() {
       s2pg.jvmIntersectLevFSA(
         makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-    } catch (e: Exception) { println("Intersection error:" + e.message); null }
+    } catch (e: Exception) { println("Intersection error: ${e.message}"); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
@@ -154,8 +154,11 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .filter { (a, b) ->
       val broke = a.tokenizeByWhitespace()
+      val fixed = b.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
-      broke.size <= MAX_TOKENS && levDist <= 3
+      broke.size in 3..MAX_TOKENS &&
+        fixed.size in 3..MAX_TOKENS &&
+        levDist <= 3
     }
 }
 
@@ -168,7 +171,11 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to levDist
-    }.filter { (broke, _, levDist) -> broke.tokenizeByWhitespace().size < MAX_TOKENS && levDist <= 3 }
+    }.filter { (broke, fixed, levDist) ->
+      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+        fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+        levDist <= 3
+    }
    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
       println("Size of smallest group: $minSize")
