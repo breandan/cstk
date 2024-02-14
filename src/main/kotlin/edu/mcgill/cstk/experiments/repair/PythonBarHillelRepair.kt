@@ -19,7 +19,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  MAX_TOKENS = 20
+  MAX_TOKENS = 20
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
@@ -33,6 +33,7 @@ fun evaluateBarHillelRepair() {
   val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
 //   val s2pg = vanillaS2PCFG // Original grammar, including all productions
   val s2pg = vanillaS2PCFG // Minimized grammar, with rare productions removed
+  val parikhMap = s2pg.parikhMap
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
@@ -62,7 +63,8 @@ fun evaluateBarHillelRepair() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     val intGram = try {
       s2pg.jvmIntersectLevFSA(
-        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size }
+        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
+        parikhMap = parikhMap
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("Intersection error: ${e.message}"); null }
 

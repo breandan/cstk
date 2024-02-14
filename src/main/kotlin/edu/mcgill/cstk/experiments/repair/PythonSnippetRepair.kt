@@ -51,9 +51,9 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
     val filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
     val filenameCC = "/scratch/b/bengioy/breandan/bifi/data/orig_good_code/orig.good.cc.json"
-    var numToks = 100_000
+    var numToks = 10_000
     // If running on Compute Canada, use the larger dataset
-    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 1000; it } else File(filename) }
+    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 10_000; it } else File(filename) }
     readBIFIContents(file = file).take(numToks).asStream().parallel().map {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
       .tokenizeByWhitespace().filter { it != "98" && it != "99" }
