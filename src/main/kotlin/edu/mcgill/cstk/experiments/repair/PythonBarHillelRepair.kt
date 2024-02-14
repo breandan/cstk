@@ -66,7 +66,7 @@ fun evaluateBarHillelRepair() {
         makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
         parikhMap = parikhMap
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-    } catch (e: Exception) { println("Intersection error: ${e.message}"); null }
+    } catch (e: Exception) { println("Intersection error: ${e.stackTraceToString()}"); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
