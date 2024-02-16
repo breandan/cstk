@@ -20,9 +20,9 @@ import kotlin.to
  */
 fun main() {
 //  MAX_TOKENS = 20
-//  evaluateBarHillelRepair()
+  evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
-  println(balancedSmallRepairs.toList().size)
+//  println(balancedSmallRepairs.toList().size)
 }
 
 fun evaluateBarHillelRepair() {
@@ -42,9 +42,10 @@ fun evaluateBarHillelRepair() {
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
-    .also { println("Writing CSV to: ${it.absolutePath}") }
+    .also { println("Writing positive CSV to: ${it.absolutePath}") }
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+    .also { println("Writing negative CSV to: ${it.absolutePath}") }
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
     .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
@@ -91,7 +92,7 @@ fun evaluateBarHillelRepair() {
     val clock = TimeSource.Monotonic.markNow()
     var samplesBeforeMatch = 0
     var matchFound = false
-    val timeout = 30.seconds
+    val timeout = (SAMPLER_MS / 1000).seconds
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = intGram
@@ -187,7 +188,7 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     }
     .values.asSequence().flatten()
     .map { it.first to it.second }
-    .shuffled()
+    .distinct().shuffled()
 }
 
 fun Σᐩ.mapToBIFIFmt() =
@@ -218,7 +219,7 @@ fun evaluateSeq2ParseRepair() {
 }
 
 fun preprocessStackOverflowQuickly(
-  maxPatchSize: Int = MAX_PATCH_SIZE,
+  maxPatchSize: Int = MAX_RADIUS,
   lengthBounds: IntRange = 0..Int.MAX_VALUE,
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
