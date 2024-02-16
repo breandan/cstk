@@ -20,8 +20,9 @@ import kotlin.to
  */
 fun main() {
 //  MAX_TOKENS = 20
-  evaluateBarHillelRepair()
+//  evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
+  println(balancedSmallRepairs.toList().size)
 }
 
 fun evaluateBarHillelRepair() {
