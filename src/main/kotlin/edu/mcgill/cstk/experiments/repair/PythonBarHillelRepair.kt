@@ -28,9 +28,9 @@ fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
-  val sampleTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
-  val allTimeByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
-  val samplesBeforeMatchByLevDist = mutableMapOf(1 to 0.0, 2 to 0.0, 3 to 0.0)
+  val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+  val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+  val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
 //   val s2pg = vanillaS2PCFG // Original grammar, including all productions
   val s2pg = vanillaS2PCFG // Minimized grammar, with rare productions removed
   val parikhMap = s2pg.parikhMap
