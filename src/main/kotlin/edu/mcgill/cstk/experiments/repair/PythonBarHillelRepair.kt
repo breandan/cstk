@@ -45,7 +45,8 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
 
-  val dataset = balancedSmallRepairs // naturallySmallRepairs  //pairwiseUniformAll
+  val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
+    .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
   println()
@@ -160,7 +161,7 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       broke.size in 3..MAX_TOKENS &&
         fixed.size in 3..MAX_TOKENS &&
-        levDist <= 3
+        levDist <= MAX_RADIUS
     }
 }
 
@@ -176,7 +177,7 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     }.filter { (broke, fixed, levDist) ->
       broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
         fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-        levDist <= 3
+        levDist <= MAX_RADIUS
     }
    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
