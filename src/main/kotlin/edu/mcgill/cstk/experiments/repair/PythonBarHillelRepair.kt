@@ -50,7 +50,7 @@ fun evaluateBarHillelRepair() {
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
     .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
+  dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
   println()
 
   dataset.shuffled(Random(1)).forEach { (invalid, valid) ->
@@ -246,8 +246,10 @@ fun preprocessStackOverflowQuickly(
 //        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
 //      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
 
-      val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
-      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+      val minpatch =
+        extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
+      val (brokeVis, fixedVis, minfixVis) =
+        broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minpatch.changedIndices().size <= maxPatchSize &&
         brokeVis != fixedVis && minfixVis != brokeVis // && fixedVis != minfixVis

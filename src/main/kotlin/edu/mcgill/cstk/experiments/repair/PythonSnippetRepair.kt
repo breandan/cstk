@@ -47,20 +47,33 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} Seq2Parse tokens in ${it.duration.inWholeMilliseconds}ms"); it.value }
 }
 
+// Python3 snippets
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
     val filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
     val filenameCC = "/scratch/b/bengioy/breandan/bifi/data/orig_good_code/orig.good.cc.json"
-    var numToks = 10_000
+    val numToks = 1_000.let { if (NUM_CORES < 20) it else it * 100_000 }
     // If running on Compute Canada, use the larger dataset
-    val file: File = File(filenameCC).let { if (it.exists()) { numToks *= 10_000; it } else File(filename) }
+    val file: File = File(filenameCC).let { if (it.exists()) it else File(filename) }
     readBIFIContents(file = file).take(numToks).asStream().parallel().map {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
-      .tokenizeByWhitespace().filter { it != "98" && it != "99" }
-      .asSequence().toMarkovChain(4)
+      .tokenizeByWhitespace().asSequence().toMarkovChain(5)
     }.reduce { t, u -> t + u }.get()
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()} BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
+
+// Python2 snippets, about 20x longer than BIFI
+val P_PY150: MarkovChain<Σᐩ> by lazy {
+  measureTimedValue {
+    val numToks = 1_000.let { if (NUM_CORES < 20) it else it * 5_000 }
+    readPY150Contents().take(numToks).asStream().parallel().map {
+      "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
+        .tokenizeByWhitespace().asSequence().toMarkovChain(5)
+    }.reduce { t, u -> t + u }.get()
+  }.let { println("Trained Markov chain on ${it.value.counter.total.get()} PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
+}
+
+val P_BIFI_PY150 by lazy { P_BIFI + P_PY150 }
 
 val topTokens by lazy { P_BIFI.topK(200).map { it.first } + "ε" - "BOS" - "EOS" }// + errDeck
 
@@ -390,6 +403,8 @@ fun Σᐩ.mapToUnquotedPythonTokens() =
   lexToStrTypesAsPython().joinToString(" ") {
     if (1 < it.length && it.startsWith("'") &&
       it.endsWith("'")) it.drop(1).dropLast(1)
+    else if (it == "98") "INDENT"
+    else if (it == "99") "DEDENT"
     else it
   }
 
@@ -400,7 +415,7 @@ fun preprocessStackOverflow(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
 ): Sequence<Π3A<Σᐩ>> =
-  brokeSnippets.zip(fixedSnippets).asStream().parallel()
+  brokeSnippets.zip(fixedSnippets)//.asStream().parallel()
     .filter { (broke, fixed) ->
 //      '"' !in broke && '\'' !in broke &&
       (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
@@ -422,8 +437,10 @@ fun preprocessStackOverflow(
 //        broke.lexToIntTypesAsPython() to minfix.lexToIntTypesAsPython()
 //      (brokeTokens.size - fixedTokens.size).absoluteValue < 10 &&
 
-      val minpatch = extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
-      val (brokeVis, fixedVis, minfixVis) = broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
+      val minpatch =
+        extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
+      val (brokeVis, fixedVis, minfixVis) =
+        broke.visibleChars() to fixed.visibleChars() to minfix.visibleChars()
 
       minpatch.changedIndices().size <= maxPatchSize &&
       brokeVis != fixedVis && minfixVis != brokeVis // && fixedVis != minfixVis

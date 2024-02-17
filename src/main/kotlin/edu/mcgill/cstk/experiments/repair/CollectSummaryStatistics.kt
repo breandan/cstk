@@ -10,7 +10,7 @@ import edu.mcgill.cstk.utils.*
 import java.io.File
 import kotlin.math.*
 import kotlin.random.Random
-import kotlin.streams.asStream
+import kotlin.streams.*
 import kotlin.time.*
 
 /*
@@ -22,6 +22,7 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
+//  readPy150()
   collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -33,6 +34,15 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+fun readPy150() {
+  println("Starting")
+//  println(P_PY150.size)
+  readPY150Contents().forEach {
+//    println(P_PY150.score(it.mapToUnquotedPythonTokens().tokenizeByWhitespace()))
+    println(it.mapToUnquotedPythonTokens())
+  }
 }
 
 /** See: [symbolCounts] */
@@ -75,11 +85,12 @@ fun estimateLevenshteinDistanceDistribution() {
     }
 }
 
+// Takes ~1.5 hrs to run on M1
 fun collectNaturallySmallRepairs() {
   MAX_PATCH_SIZE = 6
   val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
     .also { File(it).also { if (it.exists()) it.delete(); it.createNewFile() } }
-  preprocessStackOverflow(MAX_PATCH_SIZE, 1..300).map { (a, _, c) -> a to c }
+  preprocessStackOverflow(MAX_PATCH_SIZE, 10..100).map { (a, _, c) -> a to c }
     .map { (a, c) -> "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
     .distinct().forEach { File(filename).appendText(it) }
 }

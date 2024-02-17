@@ -50,3 +50,17 @@ fun readBIFIContents(
       val parsedObject = Klaxon().parseJsonObject(json.reader())
       parsedObject.string("code_string")
     }
+
+/* Download and decompress the py150 dataset:
+   mkdir -p src/main/resources/datasets/python/py150 &&
+   cd src/main/resources/datasets/python/py150 &&
+   wget http://files.srl.inf.ethz.ch/data/py150_files.tar.gz &&
+   tar -xvf py150_files.tar.gz &&
+   tar -xvf data.tar.gz &&
+   rm *.tar.gz
+*/
+fun readPY150Contents(
+  prefix: String = "src/main/resources/datasets/python/py150",
+  paths: List<String> = File("$prefix/python100k_train.txt").readLines()
+) =
+  paths.asSequence().map { File("$prefix/$it").readText() }
