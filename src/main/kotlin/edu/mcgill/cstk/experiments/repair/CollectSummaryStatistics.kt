@@ -22,8 +22,8 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-//  readPy150()
-  collectNaturallySmallRepairs()
+  readPy150()
+//  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
@@ -37,12 +37,7 @@ fun main() {
 }
 
 fun readPy150() {
-  println("Starting")
-//  println(P_PY150.size)
-  readPY150Contents().forEach {
-//    println(P_PY150.score(it.mapToUnquotedPythonTokens().tokenizeByWhitespace()))
-    println(it.mapToUnquotedPythonTokens())
-  }
+  println(P_BIFI_PY150.size)
 }
 
 /** See: [symbolCounts] */

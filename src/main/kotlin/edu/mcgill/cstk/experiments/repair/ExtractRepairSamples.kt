@@ -61,6 +61,6 @@ fun readBIFIContents(
 */
 fun readPY150Contents(
   prefix: String = "src/main/resources/datasets/python/py150",
-  paths: List<String> = File("$prefix/python100k_train.txt").readLines()
+  paths: List<String> = File("$prefix/python100k_train.txt").readLines().shuffled()
 ) =
   paths.asSequence().map { File("$prefix/$it").readText() }
