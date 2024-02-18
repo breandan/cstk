@@ -12,6 +12,7 @@ import kotlin.math.*
 import kotlin.random.Random
 import kotlin.streams.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
 
 /*
 ./gradlew collectSummaryStats
@@ -22,7 +23,8 @@ fun main() {
 //  seq2ParseSnips().computeBigramFrequencies()
 //  computeErrorSizeFreq()
 //  computePatchStats()
-  readPy150()
+//  readPy150()
+  paperExample()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -34,6 +36,27 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+
+fun paperExample() {
+  val broken = "f = f.f(1:, 1:)"
+  val brokeLexed = broken.mapToUnquotedPythonTokens() + " NEWLINE"
+  val fixed = "f = f.f[1:, 1:]"
+  val fixedLexed = fixed.mapToUnquotedPythonTokens() + " NEWLINE"
+  println("Valid pair: " + (brokeLexed !in vanillaS2PCFG.language && fixedLexed in vanillaS2PCFG.language))
+
+  MAX_TOKENS = brokeLexed.tokenizeByWhitespace().size + 5
+
+  val pm = vanillaS2PCFG.parikhMap
+  val intGram = vanillaS2PCFG.jvmIntersectLevFSA(makeLevFSA(brokeLexed, 2), pm)
+  println(intGram.size)
+
+  val pt = intGram.toPTree()
+  val clock = TimeSource.Monotonic.markNow()
+  intGram
+    .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < 20.seconds })
+    .distinct().forEach { println(levenshteinAlign(brokeLexed, it).printLaTeX()) }
 }
 
 fun readPy150() {
