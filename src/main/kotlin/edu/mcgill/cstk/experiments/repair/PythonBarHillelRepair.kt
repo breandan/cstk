@@ -36,9 +36,16 @@ fun evaluateBarHillelRepair() {
   val s2pg = vanillaS2PCFG // Minimized grammar, with rare productions removed
   val parikhMap = s2pg.parikhMap
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
+
+  val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
+    .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
+  println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
+  dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
+  println()
+
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
-    "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
+      "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
@@ -46,12 +53,6 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
     .also { println("Writing negative CSV to: ${it.absolutePath}") }
-
-  val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
-    .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
-  println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
-  println()
 
   dataset.shuffled(Random(1)).forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()

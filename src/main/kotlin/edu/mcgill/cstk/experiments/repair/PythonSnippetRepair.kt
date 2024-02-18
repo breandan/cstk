@@ -50,7 +50,6 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 const val bifi_filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
 const val home_prefix = "/scratch/b/bengioy/breandan"
 const val bifi_filenameCC = "$home_prefix/bifi/data/orig_good_code/orig.good.cc.json"
-val onComputeCanada = File(bifi_filenameCC).exists()
 const val MARKOV_MEMORY = 6
 
 // Python3 snippets
@@ -64,7 +63,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
       .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { File("ngrams_BIFI_$MARKOV_MEMORY.csv".let { if (onComputeCanada) "$home_prefix/$it" else it }).writeText(it.toCSV()) }
+    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv".also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()}" +
       "BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
@@ -78,7 +77,7 @@ val P_PY150: MarkovChain<Σᐩ> by lazy {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { File("ngrams_PY150_$MARKOV_MEMORY.csv".let { if (onComputeCanada) "$home_prefix/$it" else it }).writeText(it.toCSV()) }
+    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv".also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
   }.let { println("Trained Markov chain on ${it.value.counter.total.get()}" +
       "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
