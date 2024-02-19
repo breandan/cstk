@@ -50,7 +50,7 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 const val bifi_filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
 const val home_prefix = "/scratch/b/bengioy/breandan"
 const val bifi_filenameCC = "$home_prefix/bifi/data/orig_good_code/orig.good.cc.json"
-const val MARKOV_MEMORY = 5
+const val MARKOV_MEMORY = 6
 
 // Python3 snippets
 // https://github.com/michiyasunaga/BIFI?tab=readme-ov-file#about-the-github-python-dataset
