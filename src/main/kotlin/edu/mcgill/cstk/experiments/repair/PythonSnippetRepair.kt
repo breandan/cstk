@@ -50,7 +50,7 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 const val bifi_filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
 const val home_prefix = "/scratch/b/bengioy/breandan"
 const val bifi_filenameCC = "$home_prefix/bifi/data/orig_good_code/orig.good.cc.json"
-const val MARKOV_MEMORY = 6
+const val MARKOV_MEMORY = 4
 
 // Python3 snippets
 // https://github.com/michiyasunaga/BIFI?tab=readme-ov-file#about-the-github-python-dataset
@@ -63,8 +63,9 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
       .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv".also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
-  }.let { println("Trained Markov chain on ${it.value.counter.total.get()}" +
+    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv"
+      .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
+  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()}" +
       "BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 
@@ -77,8 +78,9 @@ val P_PY150: MarkovChain<Σᐩ> by lazy {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv".also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
-  }.let { println("Trained Markov chain on ${it.value.counter.total.get()}" +
+    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv"
+      .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
+  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()}" +
       "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 
