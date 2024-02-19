@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ConcurrentRankedProbabilisticSet
 import NUM_CORES
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
@@ -8,6 +9,7 @@ import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.streams.*
@@ -91,34 +93,33 @@ fun evaluateBarHillelRepair() {
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     println("Ground truth repair: $humanRepairANSI")
     val clock = TimeSource.Monotonic.markNow()
-    var samplesBeforeMatch = 0
+    val totalSamples = AtomicInteger(0)
     var matchFound = false
-    val timeout = (SAMPLER_MS / 1000).seconds
+    val timeout = (TIMEOUT_MS / 1000).seconds
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = intGram
+    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(100_000)
+    intGram
       .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      .distinct().map {
-        samplesBeforeMatch++
+      .distinct().forEach {
+        totalSamples.incrementAndGet()
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-        it
-      }.toList()
+        results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()))
+      }
 
     if (!matchFound) {
-      println("Drew $samplesBeforeMatch samples in $timeout," +
+      println("Drew $totalSamples samples in $timeout," +
         " ${intGram.size} prods, length-$levDist human repair not found")
-      negative.appendText("${toRepair.size}, $levDist, $samplesBeforeMatch, " +
+      negative.appendText("${toRepair.size}, $levDist, $totalSamples, " +
         "${levBallSize}, ${intGram.size}, ${levAlign.summarize()}\n")
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-      val rankedResults = results
-        // Sort by Markov chain perplexity
-        .map {
-          val levDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-          val levModifier = when (levDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-          it to P_BIFI.score(it.mapToBIFIFmt()) * levModifier
-        }
-        .sortedBy { it.second }.map { it.first }
+      val rankedResults = results.mostLikely.entries.map { it.value }
+//        results.parallelStream().map {
+//          val levDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
+//          val levModifier = when (levDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
+//          it to P_BIFI.score(it.mapToBIFIFmt()) * levModifier
+//        }.sorted(Comparator.comparingDouble { it.second }).map { it.first }.toList()
       // First sort by levenshtein distance, then by perplexity
 //          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
 //          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
@@ -128,16 +129,16 @@ fun evaluateBarHillelRepair() {
         .also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
       println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
-        " $samplesBeforeMatch samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        " $totalSamples samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
       sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
       allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + samplesBeforeMatch
+      samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + totalSamples.get()
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-        "$samplesBeforeMatch, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
+        "$totalSamples, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()
