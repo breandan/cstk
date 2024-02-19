@@ -43,7 +43,6 @@ fun evaluateBarHillelRepair() {
     .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
-  println()
 
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
@@ -55,6 +54,7 @@ fun evaluateBarHillelRepair() {
   val negative = try { File("bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
     .also { println("Writing negative CSV to: ${it.absolutePath}") }
+  println()
 
   dataset.shuffled(Random(1)).forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
@@ -104,7 +104,9 @@ fun evaluateBarHillelRepair() {
       .distinct().forEach {
         totalSamples.incrementAndGet()
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-        results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()))
+        val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
+        val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
+        results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()) * levModifier)
       }
 
     if (!matchFound) {

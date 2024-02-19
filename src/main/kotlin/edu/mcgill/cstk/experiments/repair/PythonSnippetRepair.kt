@@ -48,14 +48,18 @@ val P_seq2parse: MarkovChain<Σᐩ> by lazy {
 }
 
 const val bifi_filename = "src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"
-const val home_prefix = "/scratch/b/bengioy/breandan"
-const val bifi_filenameCC = "$home_prefix/bifi/data/orig_good_code/orig.good.cc.json"
-const val MARKOV_MEMORY = 6
+val home_prefix = if (NUM_CORES < 20) "/Users/breandan/IdeaProjects/gym-fs" else "/scratch/b/bengioy/breandan"
+val bifi_filenameCC = "$home_prefix/bifi/data/orig_good_code/orig.good.cc.json"
+const val MARKOV_MEMORY = 4
 
 // Python3 snippets
 // https://github.com/michiyasunaga/BIFI?tab=readme-ov-file#about-the-github-python-dataset
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
-  measureTimedValue {
+  val csv = File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv")
+  if (csv.exists()) MarkovChain.deserialize(csv.readText())
+    .also { println("Loaded ${it.counter.total} BIFI $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
+  else measureTimedValue {
+    println("Training BIFI-$MARKOV_MEMORY Markov chain...")
     val numToks = 100_000.let { if (NUM_CORES < 20) it else Int.MAX_VALUE }
     // If running on Compute Canada, use the larger dataset
     val file: File = File(bifi_filenameCC).let { if (it.exists()) it else File(bifi_filename) }
@@ -63,8 +67,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
       .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv"
-      .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
+    .also { if (20 < NUM_CORES) { csv.also { println("Writing CSV to ${it.absolutePath}") }.writeText(it.toCSV()) } }
   }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
       "BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
@@ -72,14 +75,17 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
 // Python2 snippets, about ~20x longer on average than BIFI
 // https://www.sri.inf.ethz.ch/py150
 val P_PY150: MarkovChain<Σᐩ> by lazy {
-  measureTimedValue {
+  val csv = File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv")
+  if (csv.exists()) MarkovChain.deserialize(csv.readText())
+    .also { println("Loaded ${it.counter.total} PY150 $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
+  else measureTimedValue {
+    println("Training PY150-$MARKOV_MEMORY Markov chain...")
     val numToks = 5_000.let { if (NUM_CORES < 20) it else Int.MAX_VALUE }
     readPY150Contents().take(numToks).asStream().parallel().map {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
-    .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv"
-      .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
+    .also { if (20 < NUM_CORES) { csv.also { println("Writing CSV to ${it.absolutePath}") }.writeText(it.toCSV()) } }
   }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
       "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
