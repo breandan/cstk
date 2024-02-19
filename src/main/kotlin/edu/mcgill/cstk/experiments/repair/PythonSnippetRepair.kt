@@ -65,7 +65,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
     }.reduce { t, u -> t + u }.get()
     .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_BIFI_$MARKOV_MEMORY.csv"
       .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
-  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()}" +
+  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
       "BIFI tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 
@@ -73,14 +73,14 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
 // https://www.sri.inf.ethz.ch/py150
 val P_PY150: MarkovChain<Σᐩ> by lazy {
   measureTimedValue {
-    val numToks = 10_000.let { if (NUM_CORES < 20) it else Int.MAX_VALUE }
+    val numToks = 5_000.let { if (NUM_CORES < 20) it else Int.MAX_VALUE }
     readPY150Contents().take(numToks).asStream().parallel().map {
       "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
         .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
     }.reduce { t, u -> t + u }.get()
     .also { if (20 < NUM_CORES) { File("$home_prefix/ngrams_PY150_$MARKOV_MEMORY.csv"
       .also { println("Writing CSV to $it")}).writeText(it.toCSV()) } }
-  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()}" +
+  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
       "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
 
