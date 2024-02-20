@@ -25,7 +25,6 @@ fun main() {
 //  MAX_RADIUS = 2
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
-//  println(balancedSmallRepairs.toList().size)
 }
 
 fun evaluateBarHillelRepair() {

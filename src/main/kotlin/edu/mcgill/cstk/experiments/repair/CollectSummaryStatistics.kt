@@ -25,7 +25,8 @@ fun main() {
 //  computeErrorSizeFreq()
 //  computePatchStats()
 //  readPy150()
-  paperExample()
+//  paperExample()
+  collectPCFGTriples()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -37,6 +38,12 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+fun collectPCFGTriples() {
+  readBIFIContents().take(10).map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
+    .flatMap { vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten() }
+    .forEach { println(it) }
 }
 
 fun paperExample() {
