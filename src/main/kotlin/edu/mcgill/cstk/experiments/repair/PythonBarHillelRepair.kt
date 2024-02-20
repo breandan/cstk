@@ -27,6 +27,10 @@ fun main() {
 //  evaluateSeq2ParseRepair()
 }
 
+fun readPCFGMap() =
+  File(File("").absolutePath + "/src/main/resources/models/pcfg_BIFI.csv").readText()
+  .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
+
 fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
   val allRate = LBHMetrics()
@@ -36,6 +40,7 @@ fun evaluateBarHillelRepair() {
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
   val parikhMap = s2pg.parikhMap
+  val pcfgMap = readPCFGMap()
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
@@ -77,6 +82,7 @@ fun evaluateBarHillelRepair() {
 
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
+      else if (100_000 < intGram.size) throw Exception("Int grammar was still too large!")
       else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable!")
       else println("Human repair is recognized by LEV ∩ CFG grammar")
     } catch (e: Exception) {
@@ -97,14 +103,22 @@ fun evaluateBarHillelRepair() {
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(10_000)
-    intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      .distinct().forEach {
-        totalSamples.incrementAndGet()
-        if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-        val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-        val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-        results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()) * levModifier)
-      }
+    val sampler = if (intGram.size < 10_000) {
+      println("Small grammar, sampling without replacement from grammar...")
+      intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+    } else {
+      println("Large grammar, sampling with replacement using PCFG...")
+      intGram.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+//        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+    }
+
+    sampler.distinct().forEach {
+      totalSamples.incrementAndGet()
+      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+      val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
+      val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
+      results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()) * levModifier)
+    }
 
     if (!matchFound) {
       println("Drew $totalSamples samples in $timeout," +

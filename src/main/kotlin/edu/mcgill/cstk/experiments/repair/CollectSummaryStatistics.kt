@@ -4,11 +4,15 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.repair.Edit
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.function.Function
+import java.util.stream.Collectors
+import kotlin.collections.filter
 import kotlin.math.*
 import kotlin.random.Random
 import kotlin.streams.*
@@ -41,9 +45,19 @@ fun main() {
 }
 
 fun collectPCFGTriples() {
-  readBIFIContents().take(10).map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
-    .flatMap { vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten() }
-    .forEach { println(it) }
+  readBIFIContents().asStream().parallel()
+    .limit(10_000).map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
+    .flatMap { vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten().stream() }
+    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+    .toList().sortedByDescending { it.second }
+    .also {
+//      File("/scratch/b/bengioy/breandan/pcfg_bifi.csv")
+      File(File("").absolutePath + "/pcfg_bifi.csv").writeText(it.joinToString("\n") {
+        (t, count) ->
+        "${t.π1} ${t.π2} ${t.π3} ::: $count" })
+    }.forEach { (a, b) ->
+      println("${a.π1} ${a.π2} ${a.π3} ::: $b")
+    }
 }
 
 fun paperExample() {
