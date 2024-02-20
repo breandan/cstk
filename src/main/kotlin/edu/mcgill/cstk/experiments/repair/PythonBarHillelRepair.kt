@@ -22,13 +22,13 @@ import kotlin.to
  */
 fun main() {
 //  MAX_TOKENS = 20
-//  MAX_RADIUS = 2
+//  MAX_RADIUS = 4
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
 
-fun readPCFGMap() =
-  File(File("").absolutePath + "/src/main/resources/models/pcfg_BIFI.csv").readText()
+fun readPCFG3() =
+  File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
   .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
 
 fun evaluateBarHillelRepair() {
@@ -40,7 +40,7 @@ fun evaluateBarHillelRepair() {
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
   val parikhMap = s2pg.parikhMap
-  val pcfgMap = readPCFGMap()
+  val pcfgMap = readPCFG3()
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
@@ -117,7 +117,11 @@ fun evaluateBarHillelRepair() {
       if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
       val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
       val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-      results.add(it, P_BIFI_PY150.score(it.mapToBIFIFmt()) * levModifier)
+      results.add(it,
+        levModifier
+            * P_BIFI_PY150.score(it.mapToBIFIFmt())
+//            * s2pg.parse(it)!!.logProb(pcfgMap)
+      )
     }
 
     if (!matchFound) {

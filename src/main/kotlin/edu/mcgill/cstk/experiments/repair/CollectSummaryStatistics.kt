@@ -10,6 +10,7 @@ import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
 import java.util.stream.Collectors
 import kotlin.collections.filter
@@ -30,7 +31,7 @@ fun main() {
 //  computePatchStats()
 //  readPy150()
 //  paperExample()
-  collectPCFGTriples()
+//  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -45,18 +46,36 @@ fun main() {
 }
 
 fun collectPCFGTriples() {
-  readBIFIContents().asStream().parallel()
-    .limit(10_000).map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
-    .flatMap { vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten().stream() }
+  val i = AtomicInteger(0)
+  readBIFIContents().asStream().parallel().limit(1_000_000)
+    .map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
+    .flatMap { if (i.incrementAndGet() % 100 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten().stream() }
     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
     .toList().sortedByDescending { it.second }
     .also {
 //      File("/scratch/b/bengioy/breandan/pcfg_bifi.csv")
-      File(File("").absolutePath + "/pcfg_bifi.csv").writeText(it.joinToString("\n") {
+      File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").writeText(it.joinToString("\n") {
         (t, count) ->
         "${t.π1} ${t.π2} ${t.π3} ::: $count" })
     }.forEach { (a, b) ->
       println("${a.π1} ${a.π2} ${a.π3} ::: $b")
+    }
+}
+
+fun collectPCFGQuintuples() {
+  val i = AtomicInteger(0)
+  readBIFIContents().asStream().parallel().limit(1_000)
+    .map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
+    .flatMap { if (i.incrementAndGet() % 100 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.quintuples() }.flatten().stream() }
+    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+    .toList().sortedByDescending { it.second }
+    .also {
+//      File("/scratch/b/bengioy/breandan/pcfg_bifi.csv")
+      File(File("").absolutePath + "/src/main/resources/models/pcfg5_BIFI.csv").writeText(it.joinToString("\n") {
+          (t, count) ->
+        "${t.π1} ${t.π2} ${t.π3} ${t.π4} ${t.π5} ::: $count" })
+    }.forEach { (a, b) ->
+      println("${a.π1} ${a.π2} ${a.π3} ${a.π4} ${a.π5} ::: $b")
     }
 }
 
