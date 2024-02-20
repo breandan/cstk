@@ -21,7 +21,8 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  MAX_TOKENS = 20
+  MAX_TOKENS = 20
+  MAX_RADIUS = 2
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 //  println(balancedSmallRepairs.toList().size)
@@ -34,15 +35,13 @@ fun evaluateBarHillelRepair() {
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
-//   val s2pg = vanillaS2PCFG // Original grammar, including all productions
-  val s2pg = vanillaS2PCFG // Minimized grammar, with rare productions removed
+  val s2pg = vanillaS2PCFG
   val parikhMap = s2pg.parikhMap
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
-    .also { println("Evaluating Bar-Hillel repair on ${it.size} repairs...") }
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
+  dataset.first().second.let { P_BIFI.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(" ", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
@@ -99,8 +98,7 @@ fun evaluateBarHillelRepair() {
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(100_000)
-    intGram
-      .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+    intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
       .distinct().forEach {
         totalSamples.incrementAndGet()
         if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }

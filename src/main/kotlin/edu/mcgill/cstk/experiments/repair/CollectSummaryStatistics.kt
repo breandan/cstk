@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.repair.Edit
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
+import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -37,7 +38,6 @@ fun main() {
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
 }
-
 
 fun paperExample() {
   val broken = "f = f.f(1:, 1:)"
@@ -588,4 +588,16 @@ fun String.reformatCSVIntoPrettyColumns(): String {
 
   // Reassemble the lines and then the entire string
   return linesByColumns.joinToString("\n") { it.joinToString(" , ") }
+}
+
+fun Sequence<Σᐩ>.train(csv: File) {
+  measureTimedValue {
+    println("Training $MARKOV_MEMORY Markov chain")
+    asStream().parallel().map {
+      "\n$it\n".mapToUnquotedPythonTokens().let { "BOS $it EOS" }
+        .tokenizeByWhitespace().asSequence().toMarkovChain(MARKOV_MEMORY)
+    }.reduce { t, u -> t + u }.get()
+      .also { csv.also { println("Writing CSV to ${it.absolutePath}") }.writeText(it.toCSV()) }
+  }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
+      "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
 }
