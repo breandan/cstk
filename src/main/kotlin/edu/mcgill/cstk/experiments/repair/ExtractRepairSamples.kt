@@ -1,10 +1,8 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.hasBalancedBrackets
 import com.beust.klaxon.Klaxon
 import edu.mcgill.cstk.utils.*
 import java.io.File
-import java.util.regex.Pattern
 
 /*
 ./gradlew extractRepairSamples

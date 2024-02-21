@@ -7,12 +7,14 @@ import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.mcmc.toMarkovChain
+import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
-import java.util.stream.Collectors
+import java.util.stream.*
 import kotlin.collections.filter
 import kotlin.math.*
 import kotlin.random.Random
@@ -45,9 +47,24 @@ fun main() {
 //  testContextEditIssue()
 }
 
+
+fun streamBIFIContents(
+  good: Boolean = true,
+  kind: String = if (good) "good" else "bad",
+  filename: String = "src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
+  file: File = File(filename)
+): Stream<String> =
+  file.readLines().stream().parallel()
+    .filter { it.trimStart().startsWith("\"code_string\": \"") }
+    .map {
+      val json = "{$it}"
+      val parsedObject = Klaxon().parseJsonObject(json.reader())
+      parsedObject.string("code_string")
+    }
+
 fun collectPCFGTriples() {
   val i = AtomicInteger(0)
-  readBIFIContents().asStream().parallel().limit(1_000_000)
+  streamBIFIContents()
     .map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
     .flatMap { if (i.incrementAndGet() % 100 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.triples() }.flatten().stream() }
     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
@@ -64,7 +81,7 @@ fun collectPCFGTriples() {
 
 fun collectPCFGQuintuples() {
   val i = AtomicInteger(0)
-  readBIFIContents().asStream().parallel()
+  streamBIFIContents()
     .map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
     .flatMap { if (i.incrementAndGet() % 1000 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.quintuples() }.flatten().stream() }
     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
