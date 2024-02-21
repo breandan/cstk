@@ -31,7 +31,7 @@ fun main() {
 //  computePatchStats()
 //  readPy150()
 //  paperExample()
-//  collectPCFGQuintuples()
+  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -64,9 +64,9 @@ fun collectPCFGTriples() {
 
 fun collectPCFGQuintuples() {
   val i = AtomicInteger(0)
-  readBIFIContents().asStream().parallel().limit(1_000)
+  readBIFIContents().asStream().parallel()
     .map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
-    .flatMap { if (i.incrementAndGet() % 100 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.quintuples() }.flatten().stream() }
+    .flatMap { if (i.incrementAndGet() % 1000 == 0) println(i); vanillaS2PCFG.parseForest(it).map { it.quintuples() }.flatten().stream() }
     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
     .toList().sortedByDescending { it.second }
     .also {
