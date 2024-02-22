@@ -21,7 +21,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  MAX_TOKENS = 20
+  MAX_TOKENS = 20
 //  MAX_RADIUS = 4
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
@@ -30,6 +30,10 @@ fun main() {
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
   .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
+
+fun readPCFG5() =
+  File(File("").absolutePath + "/src/main/resources/models/pcfg5_BIFI.csv").readText()
+    .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] to it[3] to it[4] }, it[1].toInt()) }
 
 fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
@@ -40,7 +44,7 @@ fun evaluateBarHillelRepair() {
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
   val parikhMap = s2pg.parikhMap
-  val pcfgMap = readPCFG3()
+  val pcfgMap = readPCFG5()
 //  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
