@@ -31,9 +31,10 @@ fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
   .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
 
+
 fun readPCFG5() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg5_BIFI.csv").readText()
-    .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] to it[3] to it[4] }, it[1].toInt()) }
+    .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { StrQuintuple(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
@@ -51,7 +52,8 @@ fun evaluateBarHillelRepair() {
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
-  val latestCommitMessage = lastGitMessage().replace(" ", "_")
+  val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
+//    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
       "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
@@ -107,7 +109,7 @@ fun evaluateBarHillelRepair() {
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(10_000)
-    val sampler = if (intGram.size < 10_000) {
+    val sampler = if (intGram.size < 4_000) {
       println("Small grammar, sampling without replacement from grammar...")
       intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
     } else {
