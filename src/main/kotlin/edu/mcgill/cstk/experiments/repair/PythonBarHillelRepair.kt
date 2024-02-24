@@ -21,7 +21,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-  MAX_TOKENS = 20
+//  MAX_TOKENS = 20
 //  MAX_RADIUS = 4
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
