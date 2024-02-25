@@ -21,8 +21,8 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-  TIMEOUT_MS = 20_000
-  MAX_TOKENS = 20
+  TIMEOUT_MS = 30_000
+  MAX_TOKENS = 40
 //  MAX_RADIUS = 4
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
@@ -51,6 +51,7 @@ fun evaluateBarHillelRepair() {
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
+  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS")
   dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
@@ -111,7 +112,7 @@ fun evaluateBarHillelRepair() {
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(20_000)
     val sampler = if (intGram.size < 10_000) {
-      println("Small grammar, sampling without replacement from grammar...")
+      println("Small grammar, sampling without replacement...")
       intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
     } else {
       println("Large grammar, sampling with replacement using PCFG...")
@@ -126,7 +127,7 @@ fun evaluateBarHillelRepair() {
       val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
       results.add(it,
         levModifier
-            * P_BIFI.score(it.mapToBIFIFmt())
+            * P_BIFI_PY150.score(it.mapToBIFIFmt())
 //            * s2pg.parse(it)!!.logProb(pcfgMap)
       )
     }
