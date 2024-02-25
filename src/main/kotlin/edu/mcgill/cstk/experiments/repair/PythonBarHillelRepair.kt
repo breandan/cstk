@@ -21,7 +21,8 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  MAX_TOKENS = 20
+  TIMEOUT_MS = 20_000
+  MAX_TOKENS = 20
 //  MAX_RADIUS = 4
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
@@ -81,7 +82,7 @@ fun evaluateBarHillelRepair() {
         makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
         parikhMap = parikhMap
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-    } catch (e: Exception) { println("Intersection error: ${e.stackTraceToString()}"); null }
+    } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
@@ -108,8 +109,8 @@ fun evaluateBarHillelRepair() {
     val timeout = (TIMEOUT_MS / 1000).seconds
 //    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(10_000)
-    val sampler = if (intGram.size < 4_000) {
+    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(20_000)
+    val sampler = if (intGram.size < 10_000) {
       println("Small grammar, sampling without replacement from grammar...")
       intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
     } else {
@@ -125,7 +126,7 @@ fun evaluateBarHillelRepair() {
       val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
       results.add(it,
         levModifier
-            * P_BIFI_PY150.score(it.mapToBIFIFmt())
+            * P_BIFI.score(it.mapToBIFIFmt())
 //            * s2pg.parse(it)!!.logProb(pcfgMap)
       )
     }
