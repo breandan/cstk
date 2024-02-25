@@ -22,8 +22,8 @@ import kotlin.to
  */
 fun main() {
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 40
-//  MAX_RADIUS = 4
+  MAX_TOKENS = 20
+  MAX_RADIUS = 3
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }

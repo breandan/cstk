@@ -759,8 +759,13 @@ Comp_If -> If_Keyword Test_Nocond | If_Keyword Test_Nocond Comp_Iter
 Yield_Expr -> Yield_Keyword | Yield_Keyword Yield_Arg
 Yield_Arg -> From_Keyword Test | Testlist_Endcomma 
 """
-val seq2ParseCFGNNTs = s2pCFGStr.parseCFG().subgrammar(PYMAP.keys.map { if (1 < it.length && it.startsWith("'") &&
-  it.endsWith("'")) it.drop(1).dropLast(1) else it }.toSet()).noNonterminalStubs.freeze()
+val seq2ParseCFGNNTs by lazy {
+  s2pCFGStr.parseCFG().subgrammar(PYMAP.keys.map {
+    if (1 < it.length && it.startsWith("'") &&
+      it.endsWith("'")
+    ) it.drop(1).dropLast(1) else it
+  }.toSet()).noNonterminalStubs.freeze()
+}
 
 val vanillaS2PCFG = s2pCFGStr.parseCFG().noEpsilonOrNonterminalStubs.freeze()
 val vanillaS2PCFGMinimized by lazy {
