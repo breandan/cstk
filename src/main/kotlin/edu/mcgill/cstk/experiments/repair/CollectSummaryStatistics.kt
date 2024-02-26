@@ -109,9 +109,8 @@ fun paperExample() {
   val intGram = vanillaS2PCFG.jvmIntersectLevFSA(makeLevFSA(brokeLexed, 2), pm)
   println(intGram.size)
 
-  val pt = intGram.toPTree()
   val clock = TimeSource.Monotonic.markNow()
-  intGram
+  intGram.toPTree()
     .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < 20.seconds })
     .distinct().forEach { println(levenshteinAlign(brokeLexed, it).printLaTeX()) }
 }
