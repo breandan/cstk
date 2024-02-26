@@ -2,9 +2,9 @@ package edu.mcgill.cstk.experiments.repair
 
 import ConcurrentRankedProbabilisticSet
 import NUM_CORES
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
-import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
@@ -21,9 +21,11 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+//  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 20
-  MAX_RADIUS = 3
+  MAX_TOKENS = 50
+//  MAX_RADIUS = 3
+//  CFG_THRESH = 100
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
@@ -32,10 +34,12 @@ fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
   .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
 
-
-fun readPCFG5() =
+fun readPCFG5(s2pg: CFG) =
   File(File("").absolutePath + "/src/main/resources/models/pcfg5_BIFI.csv").readText()
-    .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { StrQuintuple(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
+    .lines().map { it.split(" ::: ") }
+    .associate { Pair(it[0].split(" ")
+      .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.ntMap[it.dropLast(1)]!!) else s2pg.ntMap[it] ?: Int.MAX_VALUE }
+      .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepair() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
@@ -46,12 +50,12 @@ fun evaluateBarHillelRepair() {
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
   val parikhMap = s2pg.parikhMap
-  val pcfgMap = readPCFG5()
-//  assert(validLexedPythonStatements.lines().all { it in s2pg.language })
+  val pcfgMap = readPCFG5(s2pg)
 
   val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS")
+  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
+      "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
   dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
@@ -108,15 +112,15 @@ fun evaluateBarHillelRepair() {
     val totalSamples = AtomicInteger(0)
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
-//    val results = mutableListOf<Σᐩ>()
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(20_000)
-    val sampler = if (intGram.size < 10_000) {
+    val pTree = intGram.toPTree(origCFG = s2pg)
+    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
+    val sampler = if (intGram.size < CFG_THRESH) {
       println("Small grammar, sampling without replacement...")
-      intGram.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
     } else {
       println("Large grammar, sampling with replacement using PCFG...")
-      intGram.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+      pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
 //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
     }
 
