@@ -23,7 +23,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 50
+  MAX_TOKENS = 20
 //  MAX_RADIUS = 3
 //  CFG_THRESH = 100
   evaluateBarHillelRepair()
@@ -76,7 +76,7 @@ fun evaluateBarHillelRepair() {
     val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
     val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
-    val source = toRepair.joinToString(" ")
+    val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
 
