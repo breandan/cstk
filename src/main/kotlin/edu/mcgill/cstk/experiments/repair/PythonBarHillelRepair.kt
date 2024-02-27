@@ -23,7 +23,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 20
+//  MAX_TOKENS = 20
 //  MAX_RADIUS = 3
 //  CFG_THRESH = 100
   evaluateBarHillelRepair()
