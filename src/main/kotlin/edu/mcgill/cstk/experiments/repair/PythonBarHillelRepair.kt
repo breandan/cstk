@@ -52,7 +52,7 @@ fun evaluateBarHillelRepair() {
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
-  val dataset = balancedSmallRepairs.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -213,6 +213,29 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
         levDist <= MAX_RADIUS
     }
    .groupBy { it.third }.let { map ->
+      val minSize = map.values.minOf { it.size }
+      println("Size of smallest group: $minSize")
+      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
+    }
+    .values.asSequence().flatten()
+    .map { it.first to it.second }
+    .distinct().shuffled()
+}
+
+val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
+  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
+  val file = File(File("").absolutePath + path).readText()
+  file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
+    .map { (a, b) ->
+      val broke = a.tokenizeByWhitespace()
+      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
+      a to b to levDist
+    }.filter { (broke, fixed, levDist) ->
+      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+          levDist <= MAX_RADIUS
+    }
+    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
       println("Size of smallest group: $minSize")
       map.mapValues { (_, v) -> v.shuffled().take(minSize) }
