@@ -23,9 +23,9 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-//  MAX_TOKENS = 20
+//  MAX_TOKENS = 15
 //  MAX_RADIUS = 3
-//  CFG_THRESH = 100
+  CFG_THRESH = 10_000
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
 }
@@ -94,7 +94,7 @@ fun evaluateBarHillelRepair() {
 
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
-      else if (100_000 < intGram.size) throw Exception("Int grammar was still too large!")
+      else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
       else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable!")
       else println("Human repair is recognized by LEV ∩ CFG grammar")
     } catch (e: Exception) {
