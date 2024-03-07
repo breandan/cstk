@@ -107,6 +107,8 @@ fun Σᐩ.toPythonIntType(trimmed: Σᐩ = trim()) =
   when (trimmed) {
     "BOS" -> Int.MIN_VALUE
     "EOS" -> Int.MAX_VALUE
+    "INDENT" -> 98
+    "DEDENT" -> 99
     "" -> -1
     else -> PYMAP[trimmed] ?: PYMAP["'$trimmed'"] ?: trimmed.toInt()
   }
@@ -145,6 +147,8 @@ fun Int.toPyRuleNameUnquoted(): String =
   Python3Lexer.VOCABULARY.getDisplayName(this).let {
     if (it.startsWith("'") && it.endsWith("'") && 1 < it.length)
       it.substring(1, it.length - 1)
+    else if (it == "98") "INDENT"
+    else if (it == "99") "DEDENT"
     else it
   }
 
