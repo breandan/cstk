@@ -141,14 +141,18 @@ fun Σᐩ.lexAsJava(): Java8Lexer =
 fun Int.toPyRuleName(): String =
   if (this == Int.MIN_VALUE) "BOS"
   else if (this == Int.MAX_VALUE) "EOS"
-  else Python3Lexer.VOCABULARY.getDisplayName(this)
+  else Python3Lexer.VOCABULARY.getDisplayName(this).let {
+    when (it) {
+      "98" -> "INDENT"
+      "99" -> "DEDENT"
+      else -> it
+    }
+  }
 
 fun Int.toPyRuleNameUnquoted(): String =
-  Python3Lexer.VOCABULARY.getDisplayName(this).let {
+  toPyRuleName().let {
     if (it.startsWith("'") && it.endsWith("'") && 1 < it.length)
       it.substring(1, it.length - 1)
-    else if (it == "98") "INDENT"
-    else if (it == "99") "DEDENT"
     else it
   }
 

@@ -56,6 +56,18 @@ fun readStackOverflowAndGetSeq2ParseRepair() =
     )
   }
 
+fun Σᐩ.corruptPythonSnippet(): Sequence<Σᐩ> {
+  val brokeTksInt = "BOS $this EOS".tokenizeByWhitespace().map { it.toPythonIntType() }
+  val initREAs: List<CEAProb> = typoContext.relevantEditActions(brokeTksInt)
+    .let { val last = it.last(); it + CEAProb(last.cea, last.idx, it.sumOf { it.frequency }) }
+  return generateSequence { brokeTksInt }.map {
+    try { it.sampleEditTrajectory(typoContext, initREAs) }
+    catch (e: Exception) { println(brokeTksInt); e.printStackTrace(); listOf<Int>() to listOf() }
+  }.map { (crp, _) -> crp.dropBOSEOS().joinToString(" ") { it.toPyRuleNameUnquoted() } }
+}
+
+fun <T> List<T>.dropBOSEOS() = drop(1).dropLast(1)
+
 fun contextualRepair() {
   var avgHumFixMs = 0
   var succTrials = 0
@@ -70,8 +82,6 @@ fun contextualRepair() {
     .also { it.writeText("Snippet length, Patch size, Time to find human repair (ms), First valid repair, Total hypotheses checked, Distinct valid repairs, Rank of human repair, Throughput, Saturation, Seq2Parse matched, Seq2Parse time\n") }
   val timeoutFile = File("repair_timeouts_$startTimeMs.csv")
     .also { it.writeText("Snippet length, Patch size, Bonus Actions, Bonus Total, Possible, Distinct valid repairs, Total hypotheses checked, Relevant edit actions, Cumultative Rank, Saturation, Seq2Parse matched, Seq2Parse time\n") }
-
-  fun <T> List<T>.dropBOSEOS() = drop(1).dropLast(1)
 
 //  readGoodBIFIAndCorrupt().forEach { (broke, minFix) ->
   readStackOverflowAndGetSeq2ParseRepair()
@@ -124,13 +134,13 @@ fun contextualRepair() {
     generateSequence { brokeTksInt }
       .asStream().parallel() // Measure latency (and precision!) with and without parallelism
       .map {
-//        if (blanketSeq != null && Random.nextBoolean() && brokeTks.size > 20 && levenshteinBlanket.count { it == -1 } in 1.. 5)
-//          try { blanketSeq!!.sample().removeEpsilon()
-//            .also { println(it) }
-//            .let { "BOS $it EOS".tokenizeByWhitespace().map { it.toPythonIntType() } } to null
-//          } catch (e: Exception) { e.printStackTrace(); listOf<Int>() to listOf() }
-//        else
-          try { it.sampleEditTrajectory(contextCSV, initREAs, goodECs, if (firstValidFoundAfter != 0L) bonusProbs else null) }
+//      if (blanketSeq != null && Random.nextBoolean() && brokeTks.size > 20 && levenshteinBlanket.count { it == -1 } in 1.. 5)
+//        try { blanketSeq!!.sample().removeEpsilon()
+//          .also { println(it) }
+//          .let { "BOS $it EOS".tokenizeByWhitespace().map { it.toPythonIntType() } } to null
+//        } catch (e: Exception) { e.printStackTrace(); listOf<Int>() to listOf() }
+//      else
+        try { it.sampleEditTrajectory(contextCSV, initREAs, goodECs, if (firstValidFoundAfter != 0L) bonusProbs else null) }
         catch (e: Exception) { println(brokeTks); e.printStackTrace(); listOf<Int>() to listOf() }
       }
       .filter { (_, edits) -> !allEdits.containsKey(edits.hashCode()) }
@@ -253,7 +263,8 @@ ${prettyDiffNoFrillsTrimAndAlignWithOriginal(brokeTksInt.joinToString(" "), minF
   }
 }
 
-val contextCSV by lazy { File("context_edits.csv").readTrigramStats() }
+val typoContext: CEADist by lazy { File("context_typos.csv").readTrigramStats() }
+val contextCSV: CEADist by lazy { File("context_edits.csv").readTrigramStats() }
 
 enum class EditType { INS, DEL, SUB }
 data class ContextEdit(val type: EditType, val context: Context, val newMid: Int) {
@@ -315,12 +326,13 @@ fun File.readTrigramStats(diversity: Double = 1.0): CEADist =
 
 fun List<Int>.sampleEditTrajectory(
   ceaDist: CEADist,
+  // Relevant edit actions
   initREAs: List<CEAProb>, // Last element is the normalization constant
   goodECs: ConcurrentRankedProbabilisticSet<Context>? = null,
   // Bonuses for previously sampled edits that produced a valid repair
   bonusProbs: AtomicLongMap<ContextEdit>? = null,
   lengthCDF: List<Double> = listOf(0.5, 0.8, 1.0)
-): Pair<List<Int>, List<CEAProb>> {
+): Pair<List<Int>, List<CEAProb>> { // Returns the transformed snippet and the used edit actions
   // First sample the length of the edit trajectory from the length distribution
   val rand = Math.random()
   val length = lengthCDF.indexOfFirst { rand < it } + 1

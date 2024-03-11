@@ -39,6 +39,7 @@ fun main() {
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
 //  computePatchTrigramStats()
+//  corruptedTrigramStats()
 //  readBIFI().toList()
 //  computeEditLocationFrequency()
 //  computeRelativeIntraEditDistance()
@@ -621,6 +622,33 @@ fun computePatchTrigramStats(toTake: Int = 100000) =
         writeText(it.reformatCSVIntoPrettyColumns())
         println(readLines().take(100).joinToString("\n"))
         println("Edit trigrams written to: $absolutePath")
+      }
+    }
+
+// Same as above, but with the reverse patch order (minfix -> broke) instead
+fun corruptedTrigramStats(toTake: Int = 100000) =
+  preprocessStackOverflowInParallel(take=toTake).map { (broke, _, minfix) ->
+    val brokeLexed = listOf("BOS") + broke.lexToStrTypesAsPython() + listOf("EOS")
+    val minfixLexed = listOf("BOS") + minfix.lexToStrTypesAsPython() + listOf("EOS")
+    val patch: Patch = extractPatch(minfixLexed, brokeLexed)
+    progress++.also { if (it % 100 == 0) println("Processed $it/$toTake patches") }
+    patch.run {
+      changedIndices().map { i ->
+        val (old, new) = get(i).old to get(i).new
+
+        if (old == "") "INS, ${sln(i)}, , ${sro(i)}, $new"
+        else if (new == "") "DEL, ${sln(i)}, $old, ${sro(i)}, "
+        else "SUB, ${sln(i)}, $old, ${sro(i)}, $new"
+      }
+    }
+  }.toList().flatten().groupingBy { it }.eachCount()
+    .toList().sortedByDescending { it.second }
+    .joinToString("\n", "Type, Left, Old Mid, Right, New Mid, Frequency\n") { "${it.first}, ${it.second}" }
+    .also {
+      File("context_typos.csv").apply {
+        writeText(it.reformatCSVIntoPrettyColumns())
+        println(readLines().take(100).joinToString("\n"))
+        println("Typo trigrams written to: $absolutePath")
       }
     }
 

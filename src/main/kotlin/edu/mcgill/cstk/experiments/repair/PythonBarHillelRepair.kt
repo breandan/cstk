@@ -21,29 +21,38 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
-//  corruptGoodSnippets()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
 //  MAX_TOKENS = 15
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateBarHillelRepair()
+//  evaluateBarHillelRepairOnCorruptedBIFI()
+  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 }
 
-fun corruptGoodSnippets() {
+fun evaluateBarHillelRepairOnCorruptedBIFI() {
   corruptedGoodSnippets
-    .filter { it.tokenizeByWhitespace().size in 10..100 }
+    .filter { it.tokenizeByWhitespace().size in 10..40 }
     .take(100)
     .forEach {
       val goodCode = it.mapToUnquotedPythonTokens()
-      println("Good code: $goodCode")
-      val alphabet = vanillaS2PCFG.terminals
-      val levFSA = makeLevFSA(goodCode, 3)
-        .samplePaths(alphabet).take(10)
-        .map { it.tokenizeByWhitespace().joinToString(" ") }
+      goodCode.corruptPythonSnippet()
+        .filter {
+          it.tokenizeByWhitespace().all { it in vanillaS2PCFG.terminals } &&
+            it !in vanillaS2PCFG.language
+        }
+        .take(10)
         .forEach { println(levenshteinAlign(goodCode, it).paintANSIColors()) }
+
       println()
+//      println("Good code: $goodCode")
+//      val alphabet = vanillaS2PCFG.terminals
+//      val levFSA = makeLevFSA(goodCode, 3)
+//        .samplePaths(alphabet).take(10)
+//        .map { it.tokenizeByWhitespace().joinToString(" ") }
+//        .forEach { println(levenshteinAlign(goodCode, it).paintANSIColors()) }
+//      println()
     }
 }
 
@@ -58,7 +67,7 @@ fun readPCFG5(s2pg: CFG) =
       .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.ntMap[it.dropLast(1)]!!) else s2pg.ntMap[it] ?: Int.MAX_VALUE }
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
-fun evaluateBarHillelRepair() {
+fun evaluateBarHillelRepairOnStackOverflow() {
   // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
