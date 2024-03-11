@@ -21,6 +21,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+//  corruptGoodSnippets()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
 //  MAX_TOKENS = 15
@@ -28,6 +29,22 @@ fun main() {
   CFG_THRESH = 10_000
   evaluateBarHillelRepair()
 //  evaluateSeq2ParseRepair()
+}
+
+fun corruptGoodSnippets() {
+  corruptedGoodSnippets
+    .filter { it.tokenizeByWhitespace().size in 10..100 }
+    .take(100)
+    .forEach {
+      val goodCode = it.mapToUnquotedPythonTokens()
+      println("Good code: $goodCode")
+      val alphabet = vanillaS2PCFG.terminals
+      val levFSA = makeLevFSA(goodCode, 3)
+        .samplePaths(alphabet).take(10)
+        .map { it.tokenizeByWhitespace().joinToString(" ") }
+        .forEach { println(levenshteinAlign(goodCode, it).paintANSIColors()) }
+      println()
+    }
 }
 
 fun readPCFG3() =
@@ -221,6 +238,8 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     .map { it.first to it.second }
     .distinct().shuffled()
 }
+
+val corruptedGoodSnippets: Sequence<Σᐩ> by lazy { readBIFIContents().map { it.mapToUnquotedPythonTokens() } }
 
 val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
