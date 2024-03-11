@@ -26,34 +26,8 @@ fun main() {
 //  MAX_TOKENS = 15
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-//  evaluateBarHillelRepairOnCorruptedBIFI()
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
-}
-
-fun evaluateBarHillelRepairOnCorruptedBIFI() {
-  corruptedGoodSnippets
-    .filter { it.tokenizeByWhitespace().size in 10..40 }
-    .take(100)
-    .forEach {
-      val goodCode = it.mapToUnquotedPythonTokens()
-      goodCode.corruptPythonSnippet()
-        .filter {
-          it.tokenizeByWhitespace().all { it in vanillaS2PCFG.terminals } &&
-            it !in vanillaS2PCFG.language
-        }
-        .take(10)
-        .forEach { println(levenshteinAlign(goodCode, it).paintANSIColors()) }
-
-      println()
-//      println("Good code: $goodCode")
-//      val alphabet = vanillaS2PCFG.terminals
-//      val levFSA = makeLevFSA(goodCode, 3)
-//        .samplePaths(alphabet).take(10)
-//        .map { it.tokenizeByWhitespace().joinToString(" ") }
-//        .forEach { println(levenshteinAlign(goodCode, it).paintANSIColors()) }
-//      println()
-    }
 }
 
 fun readPCFG3() =
@@ -78,7 +52,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
-  val dataset = balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -97,7 +71,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     .also { println("Writing negative CSV to: ${it.absolutePath}") }
   println()
 
-  dataset.shuffled(Random(1)).forEach { (invalid, valid) ->
+  dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
     val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
     val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
@@ -248,7 +222,20 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     .distinct().shuffled()
 }
 
-val corruptedGoodSnippets: Sequence<Σᐩ> by lazy { readBIFIContents().map { it.mapToUnquotedPythonTokens() } }
+val corruptedBIFIGoodCode by lazy {
+  readBIFIContents()
+    .map { it.mapToUnquotedPythonTokens() }
+    .filter { it.tokenizeByWhitespace().size in 3..MAX_TOKENS }
+    .flatMap { goodCodeTks ->
+      val goodCode = "$goodCodeTks NEWLINE"
+      goodCode.corruptPythonSnippet()
+        .filter {
+          it.tokenizeByWhitespace().all { it in vanillaS2PCFG.terminals } &&
+            it !in vanillaS2PCFG.language
+        }
+        .take(10).map { it to goodCode }
+    }
+}
 
 val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
