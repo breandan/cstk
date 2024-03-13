@@ -52,6 +52,7 @@ const val MARKOV_MEMORY = 4
 // Python3 snippets
 // https://github.com/michiyasunaga/BIFI?tab=readme-ov-file#about-the-github-python-dataset
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
+//  readBIFIContents()
   val csv = File(File("").absolutePath + "/src/main/resources/models/ngrams_BIFI_$MARKOV_MEMORY.csv")
   MarkovChain.deserialize(csv.readText())
     .also { println("Loaded ${it.counter.total} BIFI $MARKOV_MEMORY-grams from ${csv.absolutePath}") }

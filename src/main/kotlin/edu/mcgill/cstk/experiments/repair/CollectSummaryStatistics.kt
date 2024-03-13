@@ -33,7 +33,9 @@ fun main() {
 //  computePatchStats()
 //  readPy150()
 //  paperExample()
-  collectPCFGQuintuples()
+//  computeSnippetLengthDistribution()
+  computeLevDistDistribution()
+//  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -369,6 +371,68 @@ fun computeEditLocationFrequency() =
       }; println()
     }
   }
+
+// Returns a distribution of snippet lengths in buckets of 10, up to maximum 100+
+// 10, 5.00%
+// 20, 10.00%
+// 30, 15.00%
+//    ...
+// 100+, 100.00%
+fun computeSnippetLengthDistribution() {
+  val buckets: MutableMap<IntRange, Int> =
+    0.rangeTo(10).associate { (it * 10)..(it * 10 + 9) to 0 }.toMutableMap()
+  buckets[100..Int.MAX_VALUE] = 0
+
+  var total = 0
+  preprocessStackOverflowQuickly().limit(10_000).toList().map { it.first }
+    .map { it.lexToStrTypesAsPython().size }
+    .forEach { len ->
+      val bucket = buckets.keys.first { len in it }
+      buckets[bucket] = buckets.getValue(bucket) + 1
+      total++
+    }
+
+//  buckets.toList().sortedBy { it.first.first }.joinToString("\n") { (range, count) ->
+//    "${range.first}, ${"%.2f".format(100.0 * count / total.toDouble())}%"
+//  }.also { println(it) }
+  // Cumulative distribution
+
+  buckets.toList().sortedBy { it.first.first }.runningFold(0 to 0) { (prev, prevCount), (range, count) ->
+    range.first to (prevCount + count)
+  }.map { (n, count) -> n to count.toDouble() / total.toDouble() }
+    .joinToString("\n") { "${it.first}, ${"%.2f".format(100.0 * it.second)}%" }
+    .also { println(it) }
+}
+
+fun computeLevDistDistribution( ){
+  val buckets = 0.rangeTo(10).associate { it..it+1 to 0 }.toMutableMap()
+  buckets[10..Int.MAX_VALUE] = 0
+
+  var total = 0
+  preprocessStackOverflowQuickly().limit(10_000).toList()
+    .map { it.first.lexToStrTypesAsPython() to it.second.lexToStrTypesAsPython() }
+    .map { (broke, minfix) ->
+      if (broke.size - minfix.size > 10) Int.MAX_VALUE
+      else levenshtein(broke, minfix)
+    }
+    .forEach { len ->
+      val bucket = buckets.keys.first { len in it }
+      buckets[bucket] = buckets.getValue(bucket) + 1
+      total++
+    }
+
+  buckets.toList().sortedBy { it.first.first }.runningFold(0 to 0) { (prev, prevCount), (range, count) ->
+    range.first to (prevCount + count)
+  }.map { (n, count) -> n to count.toDouble() / total.toDouble() }
+    .joinToString("\n") { "${it.first}, ${"%.2f".format(100.0 * it.second)}%" }
+    .also { println(it) }
+}
+
+fun preprocessStackOverflowQuickly(
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
+): Stream<Π2A<Σᐩ>> =
+  brokeSnippets.zip(fixedSnippets).asStream().parallel()
 
 //1, 40.66%
 //2, 15.00%
