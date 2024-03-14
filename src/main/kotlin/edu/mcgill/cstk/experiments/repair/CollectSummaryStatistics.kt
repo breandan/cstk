@@ -1,9 +1,9 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.repair.Edit
-import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.mcmc.toMarkovChain
@@ -35,6 +35,7 @@ fun main() {
 //  paperExample()
 //  computeSnippetLengthDistribution()
   computeLevDistDistribution()
+//  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
@@ -50,6 +51,15 @@ fun main() {
 //  testContextEditIssue()
 }
 
+fun fetchLevenshteinAlignment() {
+  preprocessStackOverflowQuickly()
+    .map { (a, b) -> a.mapToUnquotedPythonTokens() to b.mapToUnquotedPythonTokens() }
+    .filter { (a, b) -> b.length < 120 }
+    .filter { (a, b) -> levenshtein(a, b) == 4 }
+    .map { (a, b) -> levenshteinAlign(b, a).let { it.paintANSIColors() + "\n" + it.printLaTeX() } }
+    .filter { ANSI_GREEN_BACKGROUND in it && ANSI_RED_BACKGROUND in it && ANSI_ORANGE_BACKGROUND in it }
+    .forEach { println("$it\n") }
+}
 
 fun streamBIFIContents(
   good: Boolean = true,
