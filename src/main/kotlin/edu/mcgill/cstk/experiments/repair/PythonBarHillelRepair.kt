@@ -115,14 +115,15 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val pTree = intGram.toPTree(origCFG = s2pg)
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
-    val sampler = if (intGram.size < CFG_THRESH) {
-      println("Small grammar, sampling without replacement...")
-      pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-    } else {
-      println("Large grammar, sampling with replacement using PCFG...")
+    val sampler =
+//      if (intGram.size < CFG_THRESH) {
+//      println("Small grammar, sampling without replacement...")
+//      pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+//    } else {
+//      println("Large grammar, sampling with replacement using PCFG...")
       pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-//        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-    }
+////        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+//    }
 
     sampler.distinct().forEach {
       totalSamples.incrementAndGet()
