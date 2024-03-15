@@ -52,7 +52,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
-  val dataset = corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = balancedSmallRepairsUnminimized.toList() // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -61,8 +61,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
 //    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
-      "total_samples, lev_ball_arcs, productions, rank, edit1, edit2, edit3\n"
-  val negativeHeader = "length, lev_dist, samples, productions, edit1, edit2, edit3\n"
+      "total_samples, lev_ball_arcs, productions, lang_size, rank, edit1, edit2, edit3\n"
+  val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
     .also { println("Writing positive CSV to: ${it.absolutePath}") }
@@ -114,16 +114,17 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val pTree = intGram.toPTree(origCFG = s2pg)
+    val langSize = pTree.totalTreesStr
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
     val sampler =
-//      if (intGram.size < CFG_THRESH) {
-//      println("Small grammar, sampling without replacement...")
-//      pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-//    } else {
-//      println("Large grammar, sampling with replacement using PCFG...")
-      pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-////        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-//    }
+      if (intGram.size < CFG_THRESH) {
+        println("Small grammar, sampling without replacement...")
+        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      } else {
+        println("Large grammar, sampling with replacement using PCFG...")
+        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+      }
 
     sampler.distinct().forEach {
       totalSamples.incrementAndGet()
@@ -141,7 +142,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Drew $totalSamples samples in $timeout," +
         " ${intGram.size} prods, length-$levDist human repair not found")
       negative.appendText("${toRepair.size}, $levDist, $totalSamples, " +
-        "${levBallSize}, ${intGram.size}, ${levAlign.summarize()}\n")
+        "${levBallSize}, ${intGram.size}, $langSize, ${levAlign.summarize()}\n")
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
       val rankedResults = results.mostLikely.entries.map { it.value }
@@ -159,7 +160,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         .also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
       println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
-        " $totalSamples samples, ${intGram.size} prods, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
       sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
@@ -168,7 +169,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + totalSamples.get()
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-        "$totalSamples, ${levBallSize}, ${intGram.size}, $indexOfTarget, ${levAlign.summarize()}\n")
+        "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()
