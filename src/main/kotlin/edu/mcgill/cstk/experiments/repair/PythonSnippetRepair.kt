@@ -498,6 +498,14 @@ fun seq2parseFix(
     URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
   } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
 
+fun bifiFix(
+  brokenCode: String,
+  prefix: String = "http://127.0.0.1:5000/api/text?bifi="
+) =
+  try {
+    URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
+  } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
+
 private fun updateRankingStats(
   repairs: List<Repair>,
   coarseFixedStr: String,
