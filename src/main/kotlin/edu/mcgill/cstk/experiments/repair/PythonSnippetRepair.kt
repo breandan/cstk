@@ -500,11 +500,18 @@ fun seq2parseFix(
 
 fun bifiFix(
   brokenCode: String,
-  prefix: String = "http://127.0.0.1:5000/api/text?bifi="
+  prefix: String = "http://127.0.0.1:5000/api/text?bifi_translate="
 ) =
   try {
     URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
   } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
+
+fun bifiTokenize(
+  code: String,
+  prefix: String = "http://127.0.0.1:5000/api/text?bifi_tokenize="
+) =  try {
+  URL("$prefix${URLEncoder.encode(code,"UTF-8")}").readText()
+} catch (e: Exception) { "ERROR (${e.message}):\n$code" }
 
 private fun updateRankingStats(
   repairs: List<Repair>,

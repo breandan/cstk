@@ -26,8 +26,9 @@ fun main() {
 //  MAX_TOKENS = 15
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateBarHillelRepairOnStackOverflow()
+//  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
+  evaluateBIFIRepair()
 }
 
 fun readPCFG3() =
@@ -284,6 +285,52 @@ fun evaluateSeq2ParseRepair() {
 
     println("Ground truth : ${levenshteinAlign(toRepair, humanRepair).paintANSIColors()}")
     println("Seq2Parse fix: ${levenshteinAlign(toRepair, s2pfTokens).paintANSIColors()}")
+    println(P_1ByLevDist.summarize())
+    println()
+  }
+}
+
+fun String.mapToBIFITokens(
+  origToks: List<String> = tokenizeAsPython(),
+  nameless: List<String> = mapToUnquotedPythonTokens().tokenizeByWhitespace()
+) =
+  nameless.mapIndexed { i, it ->
+    when (it) {
+      "STRING" -> "<STRING>"
+      "NEWLINE" -> "<NEWLINE>"
+      "INDENT" -> "<INDENT>"
+      "DEDENT" -> "<DEDENT>"
+      else -> origToks[i]
+    }
+  }.joinToString(" ") + " <NEWLINE>"
+
+fun evaluateBIFIRepair() {
+  val P_1ByLevDist = mutableMapOf<Int, S2PMetrics>()
+  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
+    val toRepair = bifiTokenize(invalid.mapToBIFITokens())
+    val trueToks = valid.mapToBIFITokens()
+    val humanRepair = bifiTokenize(trueToks)
+    val levDist = levenshtein(toRepair, humanRepair)
+
+    // Adjust for class imbalance between Levenshtein distances
+    val rand = Random.nextDouble()
+    when(levDist) {
+      1 -> if (rand > 0.02) return@forEach
+      2 -> if (rand > 0.04) return@forEach
+      3 -> if (rand > 0.1) return@forEach
+    }
+
+    val bifiFix = bifiFix(toRepair)
+
+    println("BRKE: $toRepair")
+    println("BIFI: ${levenshteinAlign(toRepair, bifiFix).paintANSIColors()}")
+    println("TRUE: ${levenshteinAlign(toRepair, humanRepair).paintANSIColors()}")
+//    println()
+
+    P_1ByLevDist.getOrPut(levDist) { S2PMetrics() }.total++
+
+    if (bifiFix == humanRepair) { P_1ByLevDist.getOrPut(levDist) { S2PMetrics() }.top1++ }
+//
     println(P_1ByLevDist.summarize())
     println()
   }
