@@ -23,11 +23,11 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-//  MAX_TOKENS = 15
+  MAX_TOKENS = 80
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-//  evaluateBarHillelRepairOnStackOverflow()
-  evaluateSeq2ParseRepair()
+  evaluateBarHillelRepairOnStackOverflow()
+//  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
 }
 
@@ -53,7 +53,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
-  val dataset = balancedSmallRepairsUnminimized.toList() // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()
+  // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -71,6 +72,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
     .also { println("Writing negative CSV to: ${it.absolutePath}") }
   println()
+
+  val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
   dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
@@ -139,14 +142,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       )
     }
 
-    if (!matchFound) {
+    val rankedResults = results.mostLikely.entries.map { it.value }
+    val lenBucket = (toRepair.size / 10) * 10
+    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    val indexOfTarget = rankedResults.indexOf(target)
+      .also { if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++ }
+    println("Top1 scoring repair: ${levenshteinAlign(toRepair, rankedResults.first().tokenizeByWhitespace()).paintANSIColors()}")
+
+    if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in $timeout," +
         " ${intGram.size} prods, length-$levDist human repair not found")
       negative.appendText("${toRepair.size}, $levDist, $totalSamples, " +
         "${levBallSize}, ${intGram.size}, $langSize, ${levAlign.summarize()}\n")
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-      val rankedResults = results.mostLikely.entries.map { it.value }
 //        results.parallelStream().map {
 //          val levDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
 //          val levModifier = when (levDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
@@ -157,8 +166,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
 
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
-      val indexOfTarget = rankedResults.indexOf(target)
-        .also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
+      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
       println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
         " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
@@ -173,6 +181,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
+    println(P_1ByLevDist.summarizeLenAndDist())
     println()
   }
 }
@@ -202,7 +211,7 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
 }
 
 // Balanced number of repairs for each levenshtein distance
-val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
+val levBalancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
   val file = File(File("").absolutePath + path).readText()
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
@@ -222,6 +231,29 @@ val balancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     }
     .values.asSequence().flatten()
     .map { it.first to it.second }
+    .distinct().shuffled()
+}
+
+val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
+  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
+  val file = File(File("").absolutePath + path).readText()
+  file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
+    .map { (a, b) ->
+      val broke = a.tokenizeByWhitespace()
+      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
+      a to b to (broke.size / 10) * 10 to levDist
+    }.filter { (broke, fixed, size, levDist) ->
+      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+        levDist <= MAX_RADIUS
+    }
+    .groupBy { it.π3 to it.π4 }.let { map ->
+//      val minSize = map.values.minOf { it.size } * 2
+//      println("Size of smallest group: $minSize")
+      map.mapValues { (_, v) -> v.shuffled().take(100) }
+    }
+    .values.asSequence().flatten()
+    .map { it.π1 to it.π2 }
     .distinct().shuffled()
 }
 
@@ -397,7 +429,7 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
   entries.groupBy({ it.key.first }, { it.value })
     .mapValues { (_, v) -> v.reduce { a, b -> a + b } }
     .toList().sortedBy { it.first }
-    .joinToString("\n", "", "\n") { (k, v) -> "|σ|∈[$k, ${k+10}]: $v" } +
+    .joinToString("\n", "", "\n") { (k, v) -> "|σ|∈[$k, ${k+10}): $v" } +
   // By distribution of Levenshtein distances
   entries.groupBy({ it.key.second }, { it.value })
     .mapValues { (_, v) ->  v.reduce { a, b -> a + b } }
@@ -405,7 +437,7 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
     .joinToString("\n", "", "\n") { (k, v) -> "Δ($k)= $v" } +
   // Joint distribution
       entries.sortedWith(compareBy({ it.key.first }, { it.key.second }))
-        .joinToString("\n", "", "\n") { (k, v) -> "(|σ|=${k.first}, Δ=${k.second}): $v" }
+        .joinToString("\n", "", "\n") { (k, v) -> "(|σ|∈[${k.first}, ${k.first+10}), Δ=${k.second}): $v" }
 
 data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
   operator fun plus(other: S2PMetrics) =
