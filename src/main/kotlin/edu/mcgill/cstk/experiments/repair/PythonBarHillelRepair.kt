@@ -27,8 +27,8 @@ fun main() {
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
 //  evaluateBarHillelRepairOnStackOverflow()
-//  evaluateSeq2ParseRepair()
-  evaluateBIFIRepair()
+  evaluateSeq2ParseRepair()
+//  evaluateBIFIRepair()
 }
 
 fun readPCFG3() =
@@ -273,15 +273,15 @@ fun Σᐩ.mapToBIFIFmt() =
 // Lev(3): Top-1/total: 51 / 642 = 0.0794392523364486
 
 fun evaluateSeq2ParseRepair() {
+  MAX_TOKENS = 80
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
-  preprocessStackOverflowQuickly(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
+  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
     val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val levDist = levenshtein(toRepair, humanRepair)
     val seq2parseFix = seq2parseFix(invalid)
     val s2pfTokens = seq2parseFix.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val length = (toRepair.size / 10) * 10
-
 
     P_1ByLevDist.getOrPut(length to levDist) { S2PMetrics() }.total++
     if (s2pfTokens == humanRepair) { P_1ByLevDist.getOrPut(length to levDist) { S2PMetrics() }.top1++ }
@@ -397,7 +397,7 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
   entries.groupBy({ it.key.first }, { it.value })
     .mapValues { (_, v) -> v.reduce { a, b -> a + b } }
     .toList().sortedBy { it.first }
-    .joinToString("\n", "", "\n") { (k, v) -> "|σ|=$k: $v" } +
+    .joinToString("\n", "", "\n") { (k, v) -> "|σ|∈[$k, ${k+10}]: $v" } +
   // By distribution of Levenshtein distances
   entries.groupBy({ it.key.second }, { it.value })
     .mapValues { (_, v) ->  v.reduce { a, b -> a + b } }
