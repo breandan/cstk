@@ -512,6 +512,7 @@ fun bifiTokenize(
 ) =  try {
   URL("$prefix${URLEncoder.encode(code,"UTF-8")}").readText()
 } catch (e: Exception) { "ERROR (${e.message}):\n$code" }
+  .let { if (it.endsWith(" <NEWLINE>")) it else "$it <NEWLINE>" }
 
 private fun updateRankingStats(
   repairs: List<Repair>,
