@@ -1,9 +1,9 @@
 import de.undercouch.gradle.tasks.download.Download
 
 plugins {
-  kotlin("jvm") version "2.0.0-Beta2"
+  kotlin("jvm") version "2.0.0-Beta5"
   id("com.github.ben-manes.versions") version "0.51.0"
-  id("de.undercouch.download") version "5.5.0"
+  id("de.undercouch.download") version "5.6.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -56,11 +56,11 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.15.2"
+  val openrwVersion = "8.21.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "3.0.2"
+  val smileVersion = "3.0.3"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -83,19 +83,19 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.318")
+  implementation("org.kohsuke:github-api:1.320")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.4")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.2.0")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.6.0")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.0")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.25.0")
+  implementation("org.apache.commons:commons-compress:1.26.1")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.8.3296"
+  val ortoolsVersion = "9.9.3963"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -154,7 +154,7 @@ dependencies {
   implementation("de.kherud:llama:2.3.5")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-16")
+  implementation("fr.inria.gforge.spoon:spoon-core:10.4.3-beta-21")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.7.0")
@@ -165,9 +165,9 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.1")
 
-  implementation("com.diffplug.spotless:spotless-lib:2.45.0")
+  implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-Beta2")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-Beta5")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
