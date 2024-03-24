@@ -34,10 +34,10 @@ fun main() {
 //  readPy150()
 //  paperExample()
 //  computeSnippetLengthDistribution()
-  computeLevDistDistribution()
+//  computeLevDistDistribution()
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
-//  collectNaturallySmallRepairs()
+  collectNaturallySmallRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
@@ -172,14 +172,17 @@ fun estimateLevenshteinDistanceDistribution() {
     }
 }
 
-// Takes ~1.5 hrs to run on M1
+// Takes ~1.5 hrs to run on M1 serially, ~17 mins w/ parallel streaming
 fun collectNaturallySmallRepairs() {
   MAX_PATCH_SIZE = 6
-  val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs.txt"
+  val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
     .also { File(it).also { if (it.exists()) it.delete(); it.createNewFile() } }
-  preprocessStackOverflow(MAX_PATCH_SIZE, 10..100).map { (a, _, c) -> a to c }
-    .map { (a, c) -> "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
-    .distinct().forEach { File(filename).appendText(it) }
+
+  var processed = 0
+  preprocessStackOverflowStreaming(MAX_PATCH_SIZE, 3..100).map { (a, c) ->
+      if (processed++ % 100 == 0) println(processed)
+      "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
+    .distinct().toList().forEach { File(filename).appendText(it) }
 }
 
 fun collectPairwisePythonRepairs() {

@@ -450,6 +450,40 @@ fun preprocessStackOverflow(
 //    }
 //    .shuffleOnline()
 
+// Returns a triple of: (1) the broken source, (2) the human fix, and (3) the minimized fix
+fun preprocessStackOverflowStreaming(
+  maxPatchSize: Int = MAX_PATCH_SIZE,
+  lengthBounds: IntRange = 0..Int.MAX_VALUE,
+  brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
+  fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
+): Stream<Π2A<Σᐩ>> =
+  brokeSnippets.zip(fixedSnippets).asStream().parallel()
+    .filter { (broke, fixed) ->
+//      '"' !in broke && '\'' !in broke &&
+      (broke.lines().size - fixed.lines().size).absoluteValue <= maxPatchSize &&
+          broke.mapToUnquotedPythonTokens().tokenizeByWhitespace().let {
+            it.size in lengthBounds && it.all { it in seq2parsePythonCFG.terminals }
+          } && (!broke.isValidPython() && fixed.isValidPython())
+    }
+    .distinct()
+//    .minimizeFix({ tokenizeAsPython(true) }, { isValidPython() })
+    .filter { (broke,  minfix) ->
+      val mftks = minfix.mapToUnquotedPythonTokens()
+      val bktks = broke.mapToUnquotedPythonTokens()
+
+      levenshtein(bktks, mftks) <= maxPatchSize && minfix.isValidPython() &&
+          "$mftks NEWLINE" in seq2parsePythonCFG.language
+    }
+    .filter { (broke,  minfix) ->
+
+      val minpatch =
+        extractPatch(broke.lexToStrTypesAsPython(), minfix.lexToStrTypesAsPython())
+      val (brokeVis, minfixVis) = broke.visibleChars() to minfix.visibleChars()
+
+      minpatch.changedIndices().size <= maxPatchSize && brokeVis != minfixVis
+//      multisetManhattanDistance(brokeTokens, minFixedTokens).let { it in 1..5 }
+    }.distinct()
+
 fun preprocessStackOverflowInParallel(
   brokeSnippets: Sequence<String> = readContents("parse_errors.json"),
   fixedSnippets: Sequence<String> = readContents("parse_fixes.json"),
@@ -784,7 +818,7 @@ val seq2ParseCFGNNTs by lazy {
   }.toSet()).noNonterminalStubs.freeze()
 }
 
-val vanillaS2PCFG = s2pCFGStr.parseCFG().noEpsilonOrNonterminalStubs.freeze()
+val vanillaS2PCFG by lazy { s2pCFGStr.parseCFG().noEpsilonOrNonterminalStubs.freeze() }
 val vanillaS2PCFGMinimized by lazy {
   vanillaS2PCFG.directSubgrammar(vanillaS2PCFG.symbols.filter { (symbolCounts[it] ?: 0) < 3 })
 }

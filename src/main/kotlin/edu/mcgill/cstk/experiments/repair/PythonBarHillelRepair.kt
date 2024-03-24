@@ -23,7 +23,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 80
+  MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -43,7 +43,8 @@ fun readPCFG5(s2pg: CFG) =
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
-  // Perfect recall on first 20 repairs takes ~7 minutes on a 2019 MacBook Pro
+  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()
+  // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -53,8 +54,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
-  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()
-  // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -83,6 +82,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
+    val lenBucket = (toRepair.size / 10) * 10
+    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
@@ -143,8 +144,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     }
 
     val rankedResults = results.mostLikely.entries.map { it.value }
-    val lenBucket = (toRepair.size / 10) * 10
-    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     val indexOfTarget = rankedResults.indexOf(target)
       .also { if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++ }
     println("Top1 scoring repair: ${levenshteinAlign(toRepair, rankedResults.first().tokenizeByWhitespace()).paintANSIColors()}")
@@ -238,6 +237,7 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
   val file = File(File("").absolutePath + path).readText()
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
+    .asStream().parallel()
     .map { (a, b) ->
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
@@ -246,10 +246,10 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
       broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
           fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
         levDist <= MAX_RADIUS
-    }
+    }.toList()
     .groupBy { it.π3 to it.π4 }.let { map ->
-//      val minSize = map.values.minOf { it.size } * 2
-//      println("Size of smallest group: $minSize")
+      val minSize = map.values.minOf { it.size }
+      println("Size of smallest group: $minSize")
       map.mapValues { (_, v) -> v.shuffled().take(100) }
     }
     .values.asSequence().flatten()
