@@ -26,9 +26,9 @@ fun main() {
   MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateBarHillelRepairOnStackOverflow()
+//  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
-//  evaluateBIFIRepair()
+  evaluateBIFIRepair()
 }
 
 fun readPCFG3() =
@@ -350,22 +350,25 @@ fun evaluateBIFIRepair() {
     val levDist = levenshtein(toRepair, humanRepair)
 
     // Adjust for class imbalance between Levenshtein distances
-//    val rand = Random.nextDouble()
-//    when(levDist) {
-//      1 -> if (rand > 0.02) return@forEach
-//      2 -> if (rand > 0.04) return@forEach
-//      3 -> if (rand > 0.1) return@forEach
-//    }
+    val rand = Random.nextDouble()
+    when (levDist) {
+      1 -> if (rand > 0.02) return@forEach
+      2 -> if (rand > 0.04) return@forEach
+      3 -> if (rand > 0.1) return@forEach
+    }
 
-    val bifiFix = bifiFix(toRepair)[0]
+    println("BROKEN: $toRepair")
+    val bifiFixes = bifiFix(toRepair, 100)
 
-    println("BRKE: $toRepair")
-    println("BIFI: ${levenshteinAlign(toRepair, bifiFix).paintANSIColors()}")
-    println("TRUE: ${levenshteinAlign(toRepair, humanRepair).paintANSIColors()}")
+    bifiFixes.take(10).forEachIndexed { i, it ->
+      println("BIFI-$i: ${levenshteinAlign(toRepair, it).paintANSIColors()}")
+    }
+
+    println("GROUND: ${levenshteinAlign(toRepair, humanRepair).paintANSIColors()}")
 
     P_1ByLevDist.getOrPut(length to levDist) { S2PMetrics() }.total++
 
-    if (bifiFix == humanRepair) { P_1ByLevDist.getOrPut(length to levDist) { S2PMetrics() }.top1++ }
+    if (humanRepair in bifiFixes) { P_1ByLevDist.getOrPut(length to levDist) { S2PMetrics() }.top1++ }
     println(P_1ByLevDist.summarizeLenAndDist())
     println()
   }
