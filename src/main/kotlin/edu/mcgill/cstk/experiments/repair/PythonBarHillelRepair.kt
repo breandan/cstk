@@ -11,7 +11,6 @@ import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
-import kotlin.random.Random
 import kotlin.streams.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
@@ -342,7 +341,7 @@ fun String.mapToBIFITokens(
   }.joinToString(" ")
 
 fun Sequence<Π3A<Σᐩ>>.rebalanceOnlineByLenAndDist() =
-  chunked(100).map {
+  chunked(1000).map {
     it.map {
       it.π1 to it.π2 to it.π3 to
         it.π1.mapToUnquotedPythonTokens().tokenizeByWhitespace().size to
@@ -367,7 +366,8 @@ fun evaluateBIFIRepair() {
     val levDist = levenshtein(toRepair, humanRepair)
 
     println("BROKEN: $toRepair")
-    val bifiFixes = bifiFix(toRepair, 100)
+    val bifiFixes = measureTimedValue { bifiFix(toRepair, MAX_UNIQUE) }
+      .also { println("BIFI-$MAX_UNIQUE took: ${it.duration}") }.value
 
     bifiFixes.take(10).forEachIndexed { i, it ->
       println("BIFI-$i: ${levenshteinAlign(toRepair, it).paintANSIColors()}")
