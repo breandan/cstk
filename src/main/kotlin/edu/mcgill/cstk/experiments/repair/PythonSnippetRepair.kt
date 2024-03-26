@@ -534,11 +534,13 @@ fun seq2parseFix(
 
 fun bifiFix(
   brokenCode: String,
-  prefix: String = "http://127.0.0.1:5000/api/text?bifi_translate="
-) =
+  k: Int = 1,
+  prefix: String = "http://127.0.0.1:5000/api/topk?k=$k&bifi_translate="
+): List<String> =
   try {
     URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
   } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
+    .let { if (k == 1) listOf(it) else it.split("\n") }
 
 fun bifiTokenize(
   code: String,

@@ -357,7 +357,7 @@ fun evaluateBIFIRepair() {
 //      3 -> if (rand > 0.1) return@forEach
 //    }
 
-    val bifiFix = bifiFix(toRepair)
+    val bifiFix = bifiFix(toRepair)[0]
 
     println("BRKE: $toRepair")
     println("BIFI: ${levenshteinAlign(toRepair, bifiFix).paintANSIColors()}")
