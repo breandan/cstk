@@ -307,7 +307,9 @@ fun Σᐩ.mapToBIFIFmt() =
 fun evaluateSeq2ParseRepair() {
   MAX_TOKENS = 80
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
-  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
+  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS)
+    .rebalanceOnlineByLenAndDist()
+    .forEach { (invalid, _, valid) ->
     val toRepair = invalid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val humanRepair = valid.mapToUnquotedPythonTokens().tokenizeByWhitespace()
     val levDist = levenshtein(toRepair, humanRepair)
@@ -339,23 +341,30 @@ fun String.mapToBIFITokens(
     }
   }.joinToString(" ")
 
+fun Sequence<Π3A<Σᐩ>>.rebalanceOnlineByLenAndDist() =
+  chunked(100).map {
+    it.map {
+      it.π1 to it.π2 to it.π3 to
+        it.π1.mapToUnquotedPythonTokens().tokenizeByWhitespace().size to
+        levenshtein(it.π1.mapToUnquotedPythonTokens(), it.π2.mapToUnquotedPythonTokens())
+    }.groupBy { it.π4 to it.π5 }.let { map ->
+      val minSize = map.values.minOf { it.size }
+      println("Size of smallest group: $minSize")
+      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
+    }.values.asSequence().flatten().map { it.π1 to it.π2 to it.π3 }
+  }.flatten()
+
 fun evaluateBIFIRepair() {
   MAX_TOKENS = 80
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
-  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS).forEach { (invalid, _, valid) ->
+  preprocessStackOverflow(lengthBounds = 0..MAX_TOKENS)
+    .rebalanceOnlineByLenAndDist()
+    .forEach { (invalid, _, valid) ->
     val toRepair = bifiTokenize(invalid.mapToBIFITokens())
     // Incremental buckets of length 10
     val length = (toRepair.tokenizeByWhitespace().size / 10) * 10
     val humanRepair = bifiTokenize(valid.mapToBIFITokens())
     val levDist = levenshtein(toRepair, humanRepair)
-
-    // Adjust for class imbalance between Levenshtein distances
-    val rand = Random.nextDouble()
-    when (levDist) {
-      1 -> if (rand > 0.02) return@forEach
-      2 -> if (rand > 0.04) return@forEach
-      3 -> if (rand > 0.1) return@forEach
-    }
 
     println("BROKEN: $toRepair")
     val bifiFixes = bifiFix(toRepair, 100)
