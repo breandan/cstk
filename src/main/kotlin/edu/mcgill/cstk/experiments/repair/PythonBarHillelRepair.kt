@@ -22,7 +22,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 79
+//  MAX_TOKENS = 40
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -30,7 +30,7 @@ fun main() {
 //  evaluateBIFIRepair()
 }
 
-val LEN_BUCKET_INTERVAL = 10
+val LEN_BUCKET_INTERVAL = 5
 
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
@@ -269,13 +269,12 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
 
 val corruptedBIFIGoodCode by lazy {
   readBIFIContents()
-    .map { it.mapToUnquotedPythonTokens() }
+    .map { it.mapToUnquotedPythonTokens().addNewLineIfMissing() }
     .filter {
       it.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-        it !in vanillaS2PCFG.language
+        it in vanillaS2PCFG.language
     }
-    .flatMap { goodCodeTks ->
-      val goodCode = "$goodCodeTks NEWLINE"
+    .flatMap { goodCode ->
       goodCode.nautralPythonCorruptions().distinct().filter {
         levenshtein(goodCode, it) <= MAX_RADIUS &&
             it !in vanillaS2PCFG.language
