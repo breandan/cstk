@@ -22,7 +22,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 79
+//  MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -273,15 +273,31 @@ val corruptedBIFIGoodCode by lazy {
     .filter { it.tokenizeByWhitespace().size in 3..MAX_TOKENS }
     .flatMap { goodCodeTks ->
       val goodCode = "$goodCodeTks NEWLINE"
-      goodCode.corruptPythonSnippet().distinct()
-        .filter {
-          val tks = it.tokenizeByWhitespace()
-          levenshtein(goodCode, it) <= MAX_RADIUS &&
-          tks.all { it in vanillaS2PCFG.terminals } &&
-            it !in vanillaS2PCFG.language
-        }
-        .take(10).map { it to goodCode }
+      goodCode.corruptPythonSnippet().distinct().filter {
+        val tks = it.tokenizeByWhitespace()
+        levenshtein(goodCode, it) <= MAX_RADIUS &&
+        tks.all { it in vanillaS2PCFG.terminals } &&
+          it !in vanillaS2PCFG.language
+      }.take(10).map { it to goodCode }
     }
+    .take(50_000)
+    .map { (a, b) ->
+      val broke = a.tokenizeByWhitespace()
+      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
+      a to b to levDist
+    }.filter { (broke, fixed, levDist) ->
+      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+          levDist <= MAX_RADIUS
+    }
+    .groupBy { it.third }.let { map ->
+      val minSize = map.values.minOf { it.size }
+      println("Size of smallest group: $minSize")
+      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
+    }
+    .values.asSequence().flatten()
+    .map { it.first to it.second }
+    .distinct()
 }
 
 val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
