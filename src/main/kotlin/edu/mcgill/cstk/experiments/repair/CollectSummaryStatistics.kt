@@ -3,7 +3,6 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
-import ai.hypergraph.kaliningraph.repair.Edit
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.mcmc.toMarkovChain
@@ -17,7 +16,6 @@ import java.util.function.Function
 import java.util.stream.*
 import kotlin.collections.filter
 import kotlin.math.*
-import kotlin.random.Random
 import kotlin.streams.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
@@ -176,22 +174,18 @@ fun estimateLevenshteinDistanceDistribution() {
 fun String.addNewLineIfMissing() = if (endsWith("NEWLINE")) this else "$this NEWLINE"
 
 fun collectSyntheticRepairs() {
-  preprocessStackOverflowStreaming(MAX_PATCH_SIZE, 3..MAX_TOKENS)
-    .map { it.first }
-//    .map { println("CODE: $it"); it }
-    .map { it to it.mapToUnquotedPythonTokens() }
-    .filter { it.second.tokenizeByWhitespace().size in 3..MAX_TOKENS }
-    .flatMap { (goodCode, goodCodeTks) ->
-//      println("GOOD CODE: $goodCode")
-      val goodCodeNewline = goodCodeTks.addNewLineIfMissing()
-      (0..100).map { goodCodeTks.syntheticallyCorrupt() }.filter { !it.isValidPython() }
-//        .onEach { println("BAD CODE: ${levenshteinAlign(goodCodeTks, it.mapToUnquotedPythonTokens()).paintANSIColors()}") }
-        .map { it.mapToUnquotedPythonTokens().addNewLineIfMissing() }
-        .filter { levenshtein(goodCodeTks, it) in 1..MAX_PATCH_SIZE }
-        .distinct().shuffled().take(10).map { it.addNewLineIfMissing() to goodCodeNewline }.toList()
-//        .also { println("Size: ${it.size}") }
-        .stream()
-    }.forEach { (a, c) -> println("$a\n$c\n") }
+  readBIFIContents()
+    .map { it.mapToUnquotedPythonTokens() }
+    .filter { it.tokenizeByWhitespace().size in 3..MAX_TOKENS }
+    .asStream().parallel()
+    .flatMap { goodCodeTks ->
+      val goodCode = "$goodCodeTks NEWLINE"
+      goodCode.nautralPythonCorruptions().distinct().filter {
+        levenshtein(goodCode, it) <= MAX_RADIUS &&
+            it !in vanillaS2PCFG.language
+      }.take(10).map { it to goodCode }.asStream()
+    }
+    .forEach { (a, c) -> println("$a\n$c\n") }
 }
 
 // Takes ~1.5 hrs to run on M1 serially, ~17 mins w/ parallel streaming

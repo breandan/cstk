@@ -22,7 +22,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-//  MAX_TOKENS = 79
+  MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -30,7 +30,7 @@ fun main() {
 //  evaluateBIFIRepair()
 }
 
-val LEN_BUCKET_INTERVAL = 5
+val LEN_BUCKET_INTERVAL = 10
 
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
@@ -270,34 +270,17 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
 val corruptedBIFIGoodCode by lazy {
   readBIFIContents()
     .map { it.mapToUnquotedPythonTokens() }
-    .filter { it.tokenizeByWhitespace().size in 3..MAX_TOKENS }
+    .filter {
+      it.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+        it !in vanillaS2PCFG.language
+    }
     .flatMap { goodCodeTks ->
       val goodCode = "$goodCodeTks NEWLINE"
-      goodCode.corruptPythonSnippet().distinct().filter {
-        val tks = it.tokenizeByWhitespace()
+      goodCode.nautralPythonCorruptions().distinct().filter {
         levenshtein(goodCode, it) <= MAX_RADIUS &&
-        tks.all { it in vanillaS2PCFG.terminals } &&
-          it !in vanillaS2PCFG.language
+            it !in vanillaS2PCFG.language
       }.take(10).map { it to goodCode }
-    }
-    .take(50_000)
-    .map { (a, b) ->
-      val broke = a.tokenizeByWhitespace()
-      val levDist = levenshtein(broke, b.tokenizeByWhitespace())
-      a to b to levDist
-    }.filter { (broke, fixed, levDist) ->
-      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-          levDist <= MAX_RADIUS
-    }
-    .groupBy { it.third }.let { map ->
-      val minSize = map.values.minOf { it.size }
-      println("Size of smallest group: $minSize")
-      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
-    }
-    .values.asSequence().flatten()
-    .map { it.first to it.second }
-    .distinct()
+    }.rebalancePrelexedOnlineByLenAndDist()
 }
 
 val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
@@ -368,6 +351,18 @@ fun String.mapToBIFITokens(
       else -> origToks[i]
     }
   }.joinToString(" ")
+
+fun Sequence<Π2A<Σᐩ>>.rebalancePrelexedOnlineByLenAndDist() =
+  chunked(1000).map {
+    it.map {
+      it.π1 to it.π2 to
+          it.π1.tokenizeByWhitespace().size to
+            levenshtein(it.π1, it.π2)
+    }.groupBy { it.π3 to it.π4 }.let { map ->
+      val minSize = map.values.minOf { it.size }
+      map.mapValues { (_, v) -> v.shuffled().take(minSize) }
+    }.values.asSequence().flatten().map { it.π1 to it.π2 }
+  }.flatten()
 
 fun Sequence<Π3A<Σᐩ>>.rebalanceOnlineByLenAndDist() =
   chunked(1000).map {
