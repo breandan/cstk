@@ -25,10 +25,12 @@ fun main() {
   MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
-//  evaluateBarHillelRepairOnStackOverflow()
+  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
-  evaluateBIFIRepair()
+//  evaluateBIFIRepair()
 }
+
+val LEN_BUCKET_INTERVAL = 5
 
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
@@ -42,8 +44,8 @@ fun readPCFG5(s2pg: CFG) =
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
-  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()
-  // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
+//  corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -72,6 +74,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   println()
 
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
   dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
@@ -81,8 +84,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
-    val lenBucket = (toRepair.size / 10) * 10
+    val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
@@ -143,8 +147,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     }
 
     val rankedResults = results.mostLikely.entries.map { it.value }
-    val indexOfTarget = rankedResults.indexOf(target)
-      .also { if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++ }
+    val indexOfTarget = rankedResults.indexOf(target).also {
+      if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+    }
     println("Top1 scoring repair: ${levenshteinAlign(toRepair, rankedResults.first().tokenizeByWhitespace()).paintANSIColors()}")
 
     if (indexOfTarget < 0) {
@@ -169,9 +175,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
         " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
-      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+//      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+      sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      allTimeByLevDist[levDist] = allTimeByLevDist[levDist]!! + allElapsed
+      allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
       samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + totalSamples.get()
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
@@ -179,7 +186,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
+    println()
+    println("Precision@1\n===========")
     println(P_1ByLevDist.summarizeLenAndDist())
+    println("Precision@All\n=============")
+    println(P_AllByLevDist.summarizeLenAndDist())
     println()
   }
 }
@@ -262,9 +273,11 @@ val corruptedBIFIGoodCode by lazy {
     .filter { it.tokenizeByWhitespace().size in 3..MAX_TOKENS }
     .flatMap { goodCodeTks ->
       val goodCode = "$goodCodeTks NEWLINE"
-      goodCode.corruptPythonSnippet()
+      goodCode.corruptPythonSnippet().distinct()
         .filter {
-          it.tokenizeByWhitespace().all { it in vanillaS2PCFG.terminals } &&
+          val tks = it.tokenizeByWhitespace()
+          levenshtein(goodCode, it) <= MAX_RADIUS &&
+          tks.all { it in vanillaS2PCFG.terminals } &&
             it !in vanillaS2PCFG.language
         }
         .take(10).map { it to goodCode }

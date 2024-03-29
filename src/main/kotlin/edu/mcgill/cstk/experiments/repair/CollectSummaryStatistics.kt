@@ -37,7 +37,8 @@ fun main() {
 //  computeLevDistDistribution()
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
-  collectNaturallySmallRepairs()
+//  collectNaturallySmallRepairs()
+  collectSyntheticRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
@@ -170,6 +171,27 @@ fun estimateLevenshteinDistanceDistribution() {
       println(", 4+: ${"%.2f".format(100.0 * totalByLevDist.asMap().entries.filter { it.key > 3 }.sumOf { it.value } / sampleSize)}%")
 //      println("Current distribution:\n${lenDist.asMap().entries.sortedBy { it.key }.joinToString(", ") { (dist, count) -> "$dist: ${"%.2f".format(100.0 * count / sampleSize)}%" }}")
     }
+}
+
+fun String.addNewLineIfMissing() = if (endsWith("NEWLINE")) this else "$this NEWLINE"
+
+fun collectSyntheticRepairs() {
+  preprocessStackOverflowStreaming(MAX_PATCH_SIZE, 3..MAX_TOKENS)
+    .map { it.first }
+//    .map { println("CODE: $it"); it }
+    .map { it to it.mapToUnquotedPythonTokens() }
+    .filter { it.second.tokenizeByWhitespace().size in 3..MAX_TOKENS }
+    .flatMap { (goodCode, goodCodeTks) ->
+//      println("GOOD CODE: $goodCode")
+      val goodCodeNewline = goodCodeTks.addNewLineIfMissing()
+      (0..100).map { goodCodeTks.syntheticallyCorrupt() }.filter { !it.isValidPython() }
+//        .onEach { println("BAD CODE: ${levenshteinAlign(goodCodeTks, it.mapToUnquotedPythonTokens()).paintANSIColors()}") }
+        .map { it.mapToUnquotedPythonTokens().addNewLineIfMissing() }
+        .filter { levenshtein(goodCodeTks, it) in 1..MAX_PATCH_SIZE }
+        .distinct().shuffled().take(10).map { it.addNewLineIfMissing() to goodCodeNewline }.toList()
+//        .also { println("Size: ${it.size}") }
+        .stream()
+    }.forEach { (a, c) -> println("$a\n$c\n") }
 }
 
 // Takes ~1.5 hrs to run on M1 serially, ~17 mins w/ parallel streaming

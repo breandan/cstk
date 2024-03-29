@@ -471,8 +471,8 @@ fun preprocessStackOverflowStreaming(
       val mftks = minfix.mapToUnquotedPythonTokens()
       val bktks = broke.mapToUnquotedPythonTokens()
 
-      levenshtein(bktks, mftks) <= maxPatchSize && minfix.isValidPython() &&
-          "$mftks NEWLINE" in seq2parsePythonCFG.language
+      levenshtein(bktks, mftks) <= maxPatchSize && minfix.isValidPython()
+//          "$mftks NEWLINE" in seq2parsePythonCFG.language
     }
     .filter { (broke,  minfix) ->
 
@@ -536,6 +536,16 @@ fun bifiFix(
   brokenCode: String,
   k: Int = 1,
   prefix: String = "http://127.0.0.1:5000/api/text?k=$k&bifi_topk="
+): List<String> =
+  try {
+    URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
+  } catch (e: Exception) { "ERROR (${e.message}):\n$brokenCode" }
+    .let { if (k == 1) listOf(it) else it.split("\n") }
+
+fun bifiBreak(
+  brokenCode: String,
+  k: Int = 1,
+  prefix: String = "http://127.0.0.1:5000/api/text?k=$k&bifi_break="
 ): List<String> =
   try {
     URL("$prefix${URLEncoder.encode(brokenCode,"UTF-8")}").readText()
