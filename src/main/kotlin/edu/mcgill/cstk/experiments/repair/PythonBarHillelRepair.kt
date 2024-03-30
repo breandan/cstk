@@ -152,7 +152,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
       if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
     }
-    println("Top1 scoring repair: ${levenshteinAlign(toRepair, rankedResults.first().tokenizeByWhitespace()).paintANSIColors()}")
+
+    rankedResults.firstOrNull()?.tokenizeByWhitespace()
+      ?.let { println("Top1 scoring repair: ${levenshteinAlign(toRepair, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in $timeout," +
