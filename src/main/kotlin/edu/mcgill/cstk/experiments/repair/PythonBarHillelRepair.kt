@@ -22,7 +22,8 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MAX_TOKENS = 40
+  MIN_TOKENS = 40
+  MAX_TOKENS = 79
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -30,7 +31,7 @@ fun main() {
 //  evaluateBIFIRepair()
 }
 
-val LEN_BUCKET_INTERVAL = 5
+val LEN_BUCKET_INTERVAL = 10
 
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
