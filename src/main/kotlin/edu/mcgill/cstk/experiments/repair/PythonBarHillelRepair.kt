@@ -22,7 +22,7 @@ import kotlin.to
 fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-//  MAX_TOKENS = 40
+  MAX_TOKENS = 40
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -213,8 +213,8 @@ val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val broke = a.tokenizeByWhitespace()
       val fixed = b.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
-      broke.size in 3..MAX_TOKENS &&
-        fixed.size in 3..MAX_TOKENS &&
+      broke.size in MIN_TOKENS..MAX_TOKENS &&
+        fixed.size in MIN_TOKENS..MAX_TOKENS &&
         levDist <= MAX_RADIUS
     }
 }
@@ -229,8 +229,8 @@ val levBalancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to levDist
     }.filter { (broke, fixed, levDist) ->
-      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-        fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+      broke.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
+        fixed.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
         levDist <= MAX_RADIUS
     }
    .groupBy { it.third }.let { map ->
@@ -253,8 +253,8 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to (broke.size / 10) * 10 to levDist
     }.filter { (broke, fixed, size, levDist) ->
-      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+      broke.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
         levDist <= MAX_RADIUS
     }.toList()
     .groupBy { it.π3 to it.π4 }.let { map ->
@@ -271,7 +271,7 @@ val corruptedBIFIGoodCode by lazy {
   readBIFIContents()
     .map { it.mapToUnquotedPythonTokens().addNewLineIfMissing() }
     .filter {
-      it.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+      it.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
         it in vanillaS2PCFG.language
     }
     .flatMap { goodCode ->
@@ -291,8 +291,8 @@ val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to levDist
     }.filter { (broke, fixed, levDist) ->
-      broke.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
-          fixed.tokenizeByWhitespace().size in 3..MAX_TOKENS &&
+      broke.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
           levDist <= MAX_RADIUS
     }
     .groupBy { it.third }.let { map ->

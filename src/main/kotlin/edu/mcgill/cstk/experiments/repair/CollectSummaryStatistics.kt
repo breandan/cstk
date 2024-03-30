@@ -36,7 +36,8 @@ fun main() {
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
-  collectSyntheticRepairs()
+  collectShortRepairSpecimens()
+//  collectSyntheticRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
 //  estimateLevenshteinDistanceDistribution()
@@ -48,6 +49,21 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+// ./gradlew collectSummaryStats 2>&1 | tee shortRepairSpecimens.log
+fun collectShortRepairSpecimens() {
+  preprocessStackOverflowQuickly()
+    .filter { (a, b) ->
+      a.lines().size < 10 &&
+      (a.lines().maxOf { it.length } + b.lines().maxOf { it.length }) < 92 &&
+      levenshtein(a.mapToUnquotedPythonTokens(), b.mapToUnquotedPythonTokens()) in 2..5 &&
+      "\u001B" in prettyDiffHorizontal(a, b, "broken", "fixed")
+    }.forEach { (a, b) ->
+      println(a.mapToUnquotedPythonTokens())
+      println(prettyDiffHorizontal(a, b, "broken", "fixed"))
+      latexDiffMultilineStrings(a, b).let { (a, b) -> println("$a\n\n$b\n\n") }
+    }
 }
 
 fun fetchLevenshteinAlignment() {

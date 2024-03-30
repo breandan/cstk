@@ -296,7 +296,7 @@ $discrepancy
 %--------
 """.trimIndent().also { println(it) }
 
-fun latexDiffMultilineStrings(old: Σᐩ, new: Σᐩ) =
+fun latexDiffMultilineStrings(old: Σᐩ, new: Σᐩ): Pair<String, String> =
   DiffRowGenerator.create()
     .showInlineDiffs(true)
     .ignoreWhiteSpaces(true)
