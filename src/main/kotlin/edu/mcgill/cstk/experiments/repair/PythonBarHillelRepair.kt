@@ -23,7 +23,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 39
+  MAX_TOKENS = 80
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -77,6 +77,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
   dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
@@ -89,6 +90,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
@@ -196,6 +198,16 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println("Precision@All\n=============")
     println(P_AllByLevDist.summarizeLenAndDist())
     println()
+
+    var levBlanket = rankedResults.first().tokenizeByWhitespace()
+    rankedResults.shuffled().take(1000).forEach {
+      levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
+    }
+
+    val totalHoles = levBlanket.count { it == "_" }
+    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
+    println("Average Total Unique Edit locations\n=============")
+    println(editLocationsByLenAndDist.summarizeLenAndDist())
   }
 }
 
@@ -463,6 +475,7 @@ fun measureLevenshteinBlanketSize() {
   val gram = vanillaS2PCFG
   val parikhMap = gram.parikhMap
   val timeout = 10.seconds
+  val pcfgMap = readPCFG5(gram)
   val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
   sizeAndDistBalancedRepairsUnminimized.toList()
@@ -494,18 +507,27 @@ fun measureLevenshteinBlanketSize() {
       println("Constructed LEV($levDist, ${brokeTokens.size}, ${levBall.Q.size}) " +
           "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
 
-    val pTree = intGram.toPTree()
-    val clock = TimeSource.Monotonic.markNow()
-    val sampler = pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      val pTree = intGram.toPTree()
+      val clock = TimeSource.Monotonic.markNow()
 
-    val samples = sampler.distinct().toList()
-    var levBlanket = samples.first().tokenizeByWhitespace()
-    samples.shuffled().take(1000)
-      .forEach { levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace()) }
+      val sampler =
+        if (intGram.size < CFG_THRESH) {
+          println("Small grammar, sampling without replacement...")
+          pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+        } else {
+          println("Large grammar, sampling with replacement using PCFG...")
+          pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+          //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+        }
 
-    val totalHoles = levBlanket.count { it == "_" }
-    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
-    println(editLocationsByLenAndDist.summarizeLenAndDist())
+      var levBlanket = brokeTokens
+      sampler.distinct().limit(20000).forEach {
+        levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
+      }
+
+      val totalHoles = levBlanket.count { it == "_" }
+      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
+      println(editLocationsByLenAndDist.summarizeLenAndDist())
   }
 }
 
