@@ -10,7 +10,7 @@ import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.absoluteValue
+import kotlin.math.*
 import kotlin.streams.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
@@ -23,8 +23,8 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
-//  MAX_RADIUS = 3
+  MAX_TOKENS = 30
+  MAX_RADIUS = 2
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -32,7 +32,7 @@ fun main() {
 //  measureLevenshteinBlanketSize()
 }
 
-val LEN_BUCKET_INTERVAL = 10
+val LEN_BUCKET_INTERVAL = 5
 
 fun readPCFG3() =
   File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
@@ -207,9 +207,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
       }
 
-      val totalHoles = levBlanket.count { it == "_" }
+      val totalHoles = ((levBlanket.count { it == "_" }.toDouble() / toRepair.size) * 100).roundToInt()
       editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
-      println("Average Total Unique Edit locations\n=============")
+      println("Total unique edit locations as percentage of string length\n=============")
       println(editLocationsByLenAndDist.summarizeLenAndDist())
     }
   }
