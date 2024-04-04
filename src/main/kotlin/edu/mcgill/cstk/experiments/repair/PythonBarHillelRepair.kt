@@ -29,6 +29,7 @@ fun main() {
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
+//  measureLevenshteinBlanketSize()
 }
 
 val LEN_BUCKET_INTERVAL = 10
@@ -45,7 +46,7 @@ fun readPCFG5(s2pg: CFG) =
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
-  val dataset = corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
+  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
 //  corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
@@ -457,6 +458,57 @@ fun preprocessStackOverflowQuickly(
 //    }
 //    .shuffleOnline()
 
+// How many unique edit locations are there for each length and Levenshtein distance?
+fun measureLevenshteinBlanketSize() {
+  val gram = vanillaS2PCFG
+  val parikhMap = gram.parikhMap
+  val timeout = 10.seconds
+  val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+
+  sizeAndDistBalancedRepairsUnminimized.toList()
+    .map { it.first.addNewLineIfMissing() to it.second.addNewLineIfMissing() }
+    .forEach {  (broke, fixed) ->
+      val allTime = TimeSource.Monotonic.markNow()
+      val brokeTokens = broke.tokenizeByWhitespace()
+      val fixedTokens = fixed.tokenizeByWhitespace()
+      val levDist = levenshtein(brokeTokens, fixedTokens)
+      val lenBucket = (brokeTokens.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
+
+      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+
+      val levBall = makeLevFSA(brokeTokens, levDist)
+      val intGram = try {
+        gram.jvmIntersectLevFSA(
+          levBall,
+          parikhMap = parikhMap
+        ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
+      } catch (e: Exception) { null }
+
+      try {
+        if (intGram == null) throw Exception("Exception while building grammar!")
+        else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
+        else if (fixedTokens !in intGram.language) throw Exception("Human repair is unrecognizable!")
+        else println("Human repair is recognized by LEV ∩ CFG grammar")
+      } catch (e: Exception) { return@forEach }
+
+      println("Constructed LEV($levDist, ${brokeTokens.size}, ${levBall.Q.size}) " +
+          "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
+
+    val pTree = intGram.toPTree()
+    val clock = TimeSource.Monotonic.markNow()
+    val sampler = pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+
+    val samples = sampler.distinct().toList()
+    var levBlanket = samples.first().tokenizeByWhitespace()
+    samples.shuffled().take(1000)
+      .forEach { levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace()) }
+
+    val totalHoles = levBlanket.count { it == "_" }
+    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
+    println(editLocationsByLenAndDist.summarizeLenAndDist())
+  }
+}
+
 @JvmName("summarizeS2PMetrics")
 fun Map<Int, S2PMetrics>.summarize() =
   "Lev(*): ${values.sumOf { it.top1 }.toDouble() / values.sumOf { it.total }}\n" +
@@ -475,7 +527,7 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
     .joinToString("\n", "", "\n") { (k, v) -> "Δ($k)= $v" } +
   // Joint distribution
       entries.sortedWith(compareBy({ it.key.first }, { it.key.second }))
-        .joinToString("\n", "", "\n") { (k, v) -> "(|σ|∈[${k.first}, ${k.first+10}), Δ=${k.second}): $v" }
+        .joinToString("\n", "", "\n") { (k, v) -> "(|σ|∈[${k.first}, ${k.first+LEN_BUCKET_INTERVAL}), Δ=${k.second}): $v" }
 
 data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
   operator fun plus(other: S2PMetrics) =
