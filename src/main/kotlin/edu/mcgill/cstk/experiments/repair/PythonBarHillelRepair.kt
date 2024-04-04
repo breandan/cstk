@@ -23,7 +23,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
+  MAX_TOKENS = 40
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -90,7 +90,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
@@ -126,6 +125,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val pTree = intGram.toPTree(origCFG = s2pg)
+    println("Constructed PTree in ${clock.elapsedNow().inWholeMilliseconds - elapsed}ms")
     val langSize = pTree.totalTreesStr
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
     val sampler =
@@ -199,15 +199,18 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println(P_AllByLevDist.summarizeLenAndDist())
     println()
 
-    var levBlanket = rankedResults.first().tokenizeByWhitespace()
-    rankedResults.shuffled().parallelStream().forEach {
-      levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
-    }
+    if (rankedResults.isNotEmpty()) {
+      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+      var levBlanket = rankedResults.first().tokenizeByWhitespace()
+      rankedResults.shuffled().parallelStream().forEach {
+        levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
+      }
 
-    val totalHoles = levBlanket.count { it == "_" }
-    editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
-    println("Average Total Unique Edit locations\n=============")
-    println(editLocationsByLenAndDist.summarizeLenAndDist())
+      val totalHoles = levBlanket.count { it == "_" }
+      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += totalHoles
+      println("Average Total Unique Edit locations\n=============")
+      println(editLocationsByLenAndDist.summarizeLenAndDist())
+    }
   }
 }
 
