@@ -23,7 +23,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 40
+  MAX_TOKENS = 80
 //  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -99,6 +99,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         parikhMap = parikhMap
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
+      ?.freeze()
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
@@ -498,7 +499,7 @@ fun measureLevenshteinBlanketSize() {
           levBall,
           parikhMap = parikhMap
         ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-      } catch (e: Exception) { null }
+      } catch (e: Exception) { null }?.freeze()
 
       try {
         if (intGram == null) throw Exception("Exception while building grammar!")
