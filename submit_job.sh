@@ -11,7 +11,7 @@
 # export TRANSFORMERS_OFFLINE=1
 # module load python/3.8
 # Load Java through CCEnv when running on Niagara:
-module load CCEnv StdEnv java/17.0.2
+module load CCEnv StdEnv/2020 java/17.0.2
 # module load java/17.0.2
 # source bin/activate
 # ./gradlew --offline completeCode | tee logfile.txt
