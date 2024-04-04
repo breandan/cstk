@@ -200,7 +200,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println()
 
     var levBlanket = rankedResults.first().tokenizeByWhitespace()
-    rankedResults.shuffled().take(1000).forEach {
+    rankedResults.shuffled().parallelStream().forEach {
       levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
     }
 
