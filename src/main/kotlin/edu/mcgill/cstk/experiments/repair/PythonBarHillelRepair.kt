@@ -24,8 +24,8 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 50
-  MAX_RADIUS = 2
+  MAX_TOKENS = 80
+//  MAX_RADIUS = 2
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -208,10 +208,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
       }
 
-      val totalHoles = levBlanket.count { it == "_" }.toDouble() / toRepair.size
-      val normalizer = levDist.toDouble() / toRepair.size
-      val mutabilityStatistic = (100 * totalHoles / normalizer).roundToInt()
-      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += mutabilityStatistic
+      val stability = ((levBlanket.count { it != "_" }.toDouble() / toRepair.size) * 100).roundToInt()
+      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += stability
       println("Mutability profile\n=============")
       println(editLocationsByLenAndDist.summarizeLenAndDist())
     }
