@@ -24,7 +24,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 50
+  MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -279,8 +279,8 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
         levDist <= MAX_RADIUS
     }.toList()
     .groupBy { it.π3 to it.π4 }.let { map ->
-      val minSize = map.values.minOf { it.size }
-      println("Size of smallest group: $minSize")
+      val minSize = map.entries.minBy { it.value.size }
+      println("Size of smallest group: ${minSize.key}, ${minSize.value.size}")
       map.mapValues { (_, v) -> v.shuffled().take(100) }
     }
     .values.asSequence().flatten()

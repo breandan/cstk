@@ -12,19 +12,13 @@ import java.nio.charset.StandardCharsets
 ./gradlew probeLLaMA
  */
 fun main() {
-  LlamaModel.setLogger { level: LogLevel?, message: String? -> print(message) }
+//  LlamaModel.setLogger { level: LogLevel?, message: String? -> print(message) }
 
+  val modelPath = File("").absolutePath + "/models/ggml-model-Q6_K.gguf"
   val modelParams = ModelParameters().setNGpuLayers(43)
-  val inferParams = InferenceParameters()
-    .setTemperature(0.7f)
-    .setPenalizeNl(true) //                .setNProbs(10)
-    .setMirostat(InferenceParameters.MiroStat.V2)
-    .setAntiPrompt("User:")
+    .setModelFilePath(modelPath)
 
-  val modelPath = File("").absolutePath +
-    "/models/ggml-model-Q6_K.gguf"
-
-  LlamaModel(modelPath, modelParams).use { model ->
+  LlamaModel(modelParams).use { model ->
     invalidPythonStatements.lines().forEach { invalidCodeSnippet ->
       val prompt = """
         The following line of Python code contains a syntax error:
@@ -40,7 +34,13 @@ fun main() {
 
       BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
       val sb = StringBuilder()
-      for (output in model.generate(prompt, inferParams)) {
+      val inferParams = InferenceParameters(prompt)
+        .setTemperature(0.7f)
+        .setPenalizeNl(true) //                .setNProbs(10)
+//    .setMirostat(InferenceParameters.MiroStat.V2)
+//    .setAntiPrompt("User:")
+
+      for (output in model.generate(inferParams)) {
         sb.append(output)
       }
 

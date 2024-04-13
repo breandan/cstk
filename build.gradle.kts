@@ -1,4 +1,5 @@
 import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   kotlin("jvm") version "2.0.0-RC1"
@@ -236,7 +237,7 @@ tasks {
   }
 
   compileKotlin {
-    kotlinOptions.jvmTarget = "17"
+    compilerOptions.jvmTarget = JvmTarget.JVM_17
     dependsOn("downloadKotlinGrammarTools")
   }
 
