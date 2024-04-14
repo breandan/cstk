@@ -24,7 +24,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
+  MAX_TOKENS = 60
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -121,14 +121,14 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     println("Ground truth repair: $humanRepairANSI")
+    val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
+      .also { println("Constructed PTree in ${it.duration.inWholeMilliseconds}ms") }.value
+    val langSize = pTree.totalTreesStr
     val clock = TimeSource.Monotonic.markNow()
     val totalSamples = AtomicInteger(0)
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val pTree = intGram.toPTree(origCFG = s2pg)
-    println("Constructed PTree in ${clock.elapsedNow().inWholeMilliseconds - elapsed}ms")
-    val langSize = pTree.totalTreesStr
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
     val sampler =
       if (intGram.size < CFG_THRESH) {
@@ -223,7 +223,7 @@ fun Map<Int, LBHMetrics>.summarize() =
 data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0, var error: Int = 0) {
   override fun toString() =
     "Top-1/rec/pos/total: $top1 / $recall / $total / ${total + error}, " +
-      "errors: $error, P@1: ${top1.toDouble() / (total + error)}"
+      "errors: $error, P@1: ${top1.toDouble() / (total + error)}, P@All: ${recall.toDouble() / (total + error)}"
 }
 
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
