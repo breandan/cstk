@@ -8,7 +8,6 @@ import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
-import org.kosat.round
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.*
@@ -24,8 +23,8 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 50
-  MAX_RADIUS = 2
+  MAX_TOKENS = 80
+  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -48,7 +47,7 @@ fun readPCFG5(s2pg: CFG) =
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
-//  corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  // timeoutCases //  corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -82,8 +81,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
   dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
-    val toRepair = "$invalid NEWLINE".tokenizeByWhitespace()
-    val humanRepair = "$valid NEWLINE".tokenizeByWhitespace()
+    val toRepair = invalid.addNewLineIfMissing().tokenizeByWhitespace()
+    val humanRepair = valid.addNewLineIfMissing().tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
@@ -122,7 +121,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     println("Ground truth repair: $humanRepairANSI")
     val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
-      .also { println("Constructed PTree in ${it.duration.inWholeMilliseconds}ms") }.value
+      .also { println("Constructed PTree in ${it.duration}") }.value
     val langSize = pTree.totalTreesStr
     val clock = TimeSource.Monotonic.markNow()
     val totalSamples = AtomicInteger(0)
@@ -263,6 +262,15 @@ val levBalancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     .map { it.first to it.second }
     .distinct().shuffled()
 }
+
+val timeoutCases = listOf(
+  "NAME = [ ( STRING , STRING ) , ( STRING , STRING ) , ( STRING , STRING ) , ( STRING , NAME ) , , ( NAME , NAME ) , , ( NAME , STRING ) , , ( NAME , NAME ) ]" to
+      "NAME = [ ( STRING , STRING ) , ( STRING , STRING ) , ( STRING , STRING ) , ( STRING , NAME ) , ( NAME , NAME ) , ( NAME , STRING ) , ( NAME , NAME ) ]",
+  "from NAME import NAME NEWLINE NAME = NAME ( NAME ) NEWLINE NAME = NAME . NAME . NAME . NAME . NAME . NAME ( ) NEWLINE NAME ( NAME ) NEWLINE >> STRING NEWLINE" to
+    "from NAME import NAME NEWLINE NAME = NAME ( NAME ) NEWLINE NAME = NAME . NAME . NAME . NAME . NAME . NAME ( ) NEWLINE NAME ( NAME ) NEWLINE",
+  "NAME : NEWLINE NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE" to
+  "NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE"
+)
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
