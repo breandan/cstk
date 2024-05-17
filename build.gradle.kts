@@ -2,7 +2,7 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.0.0-RC1"
+  kotlin("jvm") version "2.0.0-RC3"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.27.0"
+  val djlVersion = "0.28.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -51,13 +51,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:4.3.0")
+  implementation("com.github.ajalt.clikt:clikt:4.4.0")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.23.2"
+  val openrwVersion = "8.25.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -88,15 +88,15 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.4")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.0")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.0")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.2")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.2")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.26.1")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.9.3963"
+  val ortoolsVersion = "9.10.4067"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -148,17 +148,17 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "java-smt")
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
-  implementation("org.apache.datasketches:datasketches-java:5.0.2")
+  implementation("org.apache.datasketches:datasketches-java:6.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.0.0")
+  implementation("de.kherud:llama:3.1.0")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-1")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-6")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.7.1")
+  implementation("com.aallam.openai:openai-client:3.7.2")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.1")
@@ -168,7 +168,7 @@ dependencies {
 
   implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-RC1")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-RC3")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
