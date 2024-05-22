@@ -2,7 +2,7 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.0.0-RC3"
+  kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
   id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -57,11 +57,11 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.25.0"
+  val openrwVersion = "8.27.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "3.1.0"
+  val smileVersion = "3.1.1"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -168,7 +168,7 @@ dependencies {
 
   implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0-RC3")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
