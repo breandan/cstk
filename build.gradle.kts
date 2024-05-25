@@ -237,7 +237,7 @@ tasks {
   }
 
   compileKotlin {
-    compilerOptions.jvmTarget = JvmTarget.JVM_17
+    compilerOptions.jvmTarget = JvmTarget.JVM_21
     dependsOn("downloadKotlinGrammarTools")
   }
 
