@@ -57,11 +57,11 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.27.0"
+  val openrwVersion = "8.27.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "3.1.1"
+  val smileVersion = "3.1.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -92,7 +92,7 @@ dependencies {
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.2")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.26.1")
+  implementation("org.apache.commons:commons-compress:1.26.2")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
@@ -152,10 +152,10 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.1.0")
+  implementation("de.kherud:llama:3.1.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-6")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.7.2")
