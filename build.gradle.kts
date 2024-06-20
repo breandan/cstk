@@ -57,11 +57,11 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.27.1"
+  val openrwVersion = "8.28.1"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "3.1.0"
+  val smileVersion = "3.1.1"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -84,12 +84,12 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.321")
+  implementation("org.kohsuke:github-api:1.322")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.4")
+  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.2")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.2")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.3")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.3")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.26.2")
@@ -152,13 +152,13 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.1.1")
+  implementation("de.kherud:llama:3.2.1")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.7.2")
+  implementation("com.aallam.openai:openai-client:3.8.1")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.1")
