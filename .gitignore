@@ -17,3 +17,6 @@ grex*
 .DS_Store
 *.jar
 *.hprof
+*.auxlock
+*.dpth
+*.md5
