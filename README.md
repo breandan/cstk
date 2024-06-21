@@ -108,7 +108,7 @@ sbatch submit_job.sh
 
 ## Experiments
 
-Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 17.
+Experiments are mostly self-contained. Each Gradle task corresponds to a single experiment. They have been tested on JDK 21.
 
 ### Syntax repair
 
