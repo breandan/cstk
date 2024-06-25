@@ -205,7 +205,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
       allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      samplesBeforeMatchByLevDist[levDist] = samplesBeforeMatchByLevDist[levDist]!! + totalSamples.get()
+      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples.get()
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, $indexOfTarget, ${levAlign.summarize()}\n")
