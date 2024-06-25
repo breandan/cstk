@@ -162,9 +162,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       dec = pTree.termDict,
       parallelize = false,
       callback = {
+        totalSamples.incrementAndGet()
         if (it == target) {
           matchFound = true
-          totalSamples.incrementAndGet()
           println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
           elapsed = clock.elapsedNow().inWholeMilliseconds
         }
