@@ -41,10 +41,10 @@ fun Sequence<Π2A<Σᐩ>>.minimizeFix(
 
 fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair> =
   solve(List(refStr.size + 3) { "_" }) {
-    levenshtein(it.tokens, refStr) * mc.score(listOf("BOS") + it.tokens + "EOS").toFloat()
+    levenshtein(it.tokens, refStr) * mc.score(it.tokens).toFloat()
   }.map {
     val tokens = it.tokenizeByWhitespace()
-    Repair(refStr, listOf(), tokens, mc.score(listOf("BOS") + it + "EOS"))
+    Repair(refStr, listOf(), tokens, mc.score(tokens))
   }
 
 fun CFG.ptreeRepair(

@@ -3,6 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import ConcurrentRankedProbabilisticSet
 import NUM_CORES
 import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
@@ -60,7 +61,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
-  dataset.first().second.let { P_BIFI_PY150.score("BOS NEWLINE $it EOS".tokenizeByWhitespace()) }
+  dataset.first().second.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
 //    .replace(" ", "_").replace("/", "_")
@@ -129,29 +130,47 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
-    val sampler =
-      if (intGram.size < CFG_THRESH) {
-        println("Small grammar, sampling without replacement...")
-        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      } else {
-        println("Large grammar, sampling with replacement using PCFG...")
-        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+//    val sampler =
+//      if (intGram.size < CFG_THRESH) {
+//        println("Small grammar, sampling without replacement...")
+//        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+//      } else {
+//        println("Large grammar, sampling with replacement using PCFG...")
+//        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+//  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+//      }
+//
+//    sampler.distinct().forEach {
+//      totalSamples.incrementAndGet()
+//      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+//      val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
+//      val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
+//      results.add(it,
+//        levModifier
+//            * P_BIFI_PY150.score(it.mapToBIFIFmt())
+////            * s2pg.parse(it)!!.logProb(pcfgMap)
+//      )
+//    }
+
+    val dfa = pTree.toDFA()!!
+
+    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+
+    val rankedResults = dfa.decodeDFA(P_BIFI_PY150,
+      timeout = timeout,
+      dec = pTree.termDict,
+      parallelize = false,
+      callback = {
+        if (it == target) {
+          matchFound = true
+          totalSamples.incrementAndGet()
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
       }
+    )
 
-    sampler.distinct().forEach {
-      totalSamples.incrementAndGet()
-      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-      val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-      val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-      results.add(it,
-        levModifier
-            * P_BIFI_PY150.score(it.mapToBIFIFmt())
-//            * s2pg.parse(it)!!.logProb(pcfgMap)
-      )
-    }
-
-    val rankedResults = results.mostLikely.entries.map { it.value }
     val indexOfTarget = rankedResults.indexOf(target).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
       if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
@@ -178,7 +197,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-      println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
         " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
@@ -255,7 +273,7 @@ val levBalancedSmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
     }
    .groupBy { it.third }.let { map ->
       val minSize = map.values.minOf { it.size }
-      println("Size of smallest group: $minSize")
+      println("Rebalancing dataset, size of smallest bucket: $minSize")
       map.mapValues { (_, v) -> v.shuffled().take(minSize) }
     }
     .values.asSequence().flatten()
@@ -333,9 +351,6 @@ val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
     .map { it.first to it.second }
     .distinct().shuffled()
 }
-
-fun Σᐩ.mapToBIFIFmt() =
-  "BOS NEWLINE $this EOS".tokenizeByWhitespace()
 
 // Seq2Parse results:
 // Lev(*): 0.29235695391897537

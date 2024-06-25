@@ -30,7 +30,8 @@ val P_kotlin: MarkovChain<Σᐩ> by lazy {
 // TODO: prepare the prompt in the same way as the training data
   fetchKotlinExamples().map { "BOS $it EOS" }.map {
     it.tokenizeByWhitespace().asSequence().toMarkovChain(memory)
-  }.fold(MarkovChain(memory = memory)) { a, b -> a + b }
+  }.fold<MarkovChain<Σᐩ>, MarkovChain<Σᐩ>>(MarkovChain(memory = memory)) { a, b -> a + b }
+    .apply { scorePrefix = listOf("BOS"); scoreSuffix = listOf("EOS") }
 }
 
 /*
@@ -113,8 +114,7 @@ fun collectMostCommonKeywords() {
     .let { File(keywordFile).writeText(it) }
 }
 
-private fun constructScoringFunction(): (List<Σᐩ>) -> Double =
-  { P_kotlin.score(listOf("BOS") + it + listOf("EOS")) }
+private fun constructScoringFunction(): (List<Σᐩ>) -> Double = { P_kotlin.score(it) }
 
 // Get top level directory and all Kotlin files in all subdirectories
 fun fetchKotlinExamples() =

@@ -55,6 +55,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
 //  readBIFIContents()
   val csv = File(File("").absolutePath + "/src/main/resources/models/ngrams_BIFI_$MARKOV_MEMORY.csv")
   MarkovChain.deserialize(csv.readText())
+    .apply { scorePrefix = listOf("BOS", "NEWLINE"); scoreSuffix = listOf("EOS") }
     .also { println("Loaded ${it.counter.total} BIFI $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
 }
 
@@ -63,6 +64,7 @@ val P_BIFI: MarkovChain<Σᐩ> by lazy {
 val P_PY150: MarkovChain<Σᐩ> by lazy {
   val csv = File(File("").absolutePath + "/src/main/resources/models/ngrams_PY150_$MARKOV_MEMORY.csv")
   MarkovChain.deserialize(csv.readText())
+    .apply { scorePrefix = listOf("BOS", "NEWLINE"); scoreSuffix = listOf("EOS") }
     .also { println("Loaded ${it.counter.total} PY150 $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
 }
 
@@ -117,7 +119,7 @@ fun runSingleExample() {
     admissibilityFilter = { map { pythonVocabBindex.getUnsafe(it) ?: it.toInt() }.isValidPython() },
     // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
     // TODO: only score the locations that are actually being modified to avoid redundant work
-    scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
+    scoreEdit = { P_BIFI.score(it) }
   ).onEach { println(prettyDiffNoFrills(example, it.resToStr().replace("'", ""))) }
     .also { println("Found ${it.size} total repairs in ${clock.elapsedNow().inWholeSeconds}s") }
 }
@@ -353,7 +355,7 @@ fun evaluateTidyparseOnStackoverflow() {
         admissibilityFilter = { isValidPython() },
         // TODO: incorporate parseable segmentations into scoring mechanism to prioritize chokepoint repairs
         // TODO: only score the locations that are actually being modified to avoid redundant work
-        scoreEdit = { P_BIFI.score(listOf("BOS") + it + "EOS") }
+        scoreEdit = { P_BIFI.score(it) }
       )
 //      seq2parsePythonCFG.metrizedRepair(coarseBrokeTks, P_BIFI)
 //      seq2parsePythonCFG.ptreeRepair(coarseBrokeTks, { P_BIFI.score(listOf("BOS") + it + "EOS") })
