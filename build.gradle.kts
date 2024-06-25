@@ -5,7 +5,10 @@ plugins {
   kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.github.johnrengelman.shadow") version "8.1.1"
+//  id("com.github.johnrengelman.shadow") version "8.1.1"
+  // Kinda sketchy fork because shadowJar doesn't work with JDK 21
+  // https://github.com/johnrengelman/shadow/pull/876#issuecomment-1783983216
+  id("io.github.goooler.shadow") version "8.1.7"
 }
 
 group = "com.github.breandan"
