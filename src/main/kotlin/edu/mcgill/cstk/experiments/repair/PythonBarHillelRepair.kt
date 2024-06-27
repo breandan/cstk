@@ -143,21 +143,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //    sampler.distinct().forEach {
 //      totalSamples.incrementAndGet()
 //      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-//      val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-//      val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-//      results.add(it,
-//        levModifier
-//            * P_BIFI_PY150.score(it.mapToBIFIFmt())
+//      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
+//      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
 ////            * s2pg.parse(it)!!.logProb(pcfgMap)
 //      )
 //    }
+//    val rankedResults = results.mostLikely.entries.map { it.value }
 
     val dfa = pTree.toDFA()!!
 
     val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
 
-    val rankedResults = dfa.decodeDFA(P_BIFI_PY150,
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
       timeout = timeout,
       dec = pTree.termDict,
       parallelize = false,
@@ -289,6 +288,8 @@ val timeoutCases = listOf(
   "NAME : NEWLINE NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE" to
   "NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE"
 )
+
+val paperExamples = listOf("NAME = NAME . NAME ( NUMBER : , NUMBER : )" to "NAME = NAME . NAME [ NUMBER : , NUMBER : ]")
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
@@ -533,7 +534,7 @@ fun measureLevenshteinBlanketSize() {
       } catch (e: Exception) { return@forEach }
 
       println("Constructed LEV($levDist, ${brokeTokens.size}, ${levBall.Q.size}) " +
-          "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
+          "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
       val pTree = intGram.toPTree()
       val clock = TimeSource.Monotonic.markNow()
