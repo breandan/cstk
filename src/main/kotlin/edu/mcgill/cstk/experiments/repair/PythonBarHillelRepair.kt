@@ -48,7 +48,7 @@ fun readPCFG5(s2pg: CFG) =
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
-  // timeoutCases //  corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  // timeoutCases // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -66,8 +66,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
 //    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
-      "total_samples, lev_ball_arcs, productions, lang_size, rank, edit1, edit2, edit3\n"
-  val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, edit1, edit2, edit3\n"
+      "total_samples, lev_ball_arcs, productions, lang_size, dfa_states, dfa_transitions, rank, edit1, edit2, edit3\n"
+  val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, dfa_states, dfa_transitions, edit1, edit2, edit3\n"
   val positive = try { File("bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
     .also { println("Writing positive CSV to: ${it.absolutePath}") }
@@ -96,7 +96,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     val intGram = try {
       s2pg.jvmIntersectLevFSA(
-        makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
+        fsa = makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
         parikhMap = parikhMap
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
@@ -129,7 +129,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
+//    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
 //    val sampler =
 //      if (intGram.size < CFG_THRESH) {
 //        println("Small grammar, sampling without replacement...")
@@ -143,21 +143,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //    sampler.distinct().forEach {
 //      totalSamples.incrementAndGet()
 //      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-//      val repairDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-//      val levModifier = when (repairDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-//      results.add(it,
-//        levModifier
-//            * P_BIFI_PY150.score(it.mapToBIFIFmt())
+//      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
+//      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
 ////            * s2pg.parse(it)!!.logProb(pcfgMap)
 //      )
 //    }
+//    val rankedResults = results.mostLikely.entries.map { it.value }
 
-    val dfa = pTree.toDFA()!!
+    val dfa = pTree.toDFA(true)!!
 
     val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
 
-    val rankedResults = dfa.decodeDFA(P_BIFI_PY150,
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
       timeout = timeout,
       dec = pTree.termDict,
       parallelize = false,
@@ -180,10 +179,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       ?.let { println("Top1 scoring repair: ${levenshteinAlign(toRepair, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
-      println("Drew $totalSamples samples in $timeout," +
-        " ${intGram.size} prods, length-$levDist human repair not found")
-      negative.appendText("${toRepair.size}, $levDist, $totalSamples, " +
-        "${levBallSize}, ${intGram.size}, $langSize, ${levAlign.summarize()}\n")
+      println("Drew $totalSamples samples in $timeout with ${intGram.size} prods, " +
+        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
+          "length-$levDist human repair not found")
+      negative.appendText("${toRepair.size}, $levDist, $totalSamples, ${levBallSize}, " +
+        "${intGram.size}, $langSize, ${dfa.states.size}, ${dfa.numberOfTransitions}, ${levAlign.summarize()}\n")
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
 //        results.parallelStream().map {
@@ -208,7 +208,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples.get()
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
-        "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, $indexOfTarget, ${levAlign.summarize()}\n")
+        "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, " +
+          "${dfa.states.size}, ${dfa.numberOfTransitions}, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()
@@ -218,18 +219,19 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println(P_AllByLevDist.summarizeLenAndDist())
     println()
 
-    if (rankedResults.isNotEmpty()) {
-      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-      var levBlanket = rankedResults.first().tokenizeByWhitespace()
-      rankedResults.shuffled().parallelStream().forEach {
-        levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
-      }
-
-      val stability = ((levBlanket.count { it != "_" }.toDouble() / toRepair.size) * 100).roundToInt()
-      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += stability
-      println("Stability profile\n=============")
-      println(editLocationsByLenAndDist.summarizeLenAndDist())
-    }
+// Stability statistics collection (but it costs time to compute)
+//    if (rankedResults.isNotEmpty()) {
+//      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+//      var levBlanket = rankedResults.first().tokenizeByWhitespace()
+//      rankedResults.shuffled().parallelStream().forEach {
+//        levBlanket = updateLevenshteinBlanket(levBlanket, it.tokenizeByWhitespace())
+//      }
+//
+//      val stability = ((levBlanket.count { it != "_" }.toDouble() / toRepair.size) * 100).roundToInt()
+//      editLocationsByLenAndDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1 += stability
+//      println("Stability profile\n=============")
+//      println(editLocationsByLenAndDist.summarizeLenAndDist())
+//    }
   }
 }
 
@@ -289,6 +291,8 @@ val timeoutCases = listOf(
   "NAME : NEWLINE NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE" to
   "NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE"
 )
+
+val paperExamples = listOf("NAME = NAME . NAME ( NUMBER : , NUMBER : )" to "NAME = NAME . NAME [ NUMBER : , NUMBER : ]")
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
@@ -533,7 +537,7 @@ fun measureLevenshteinBlanketSize() {
       } catch (e: Exception) { return@forEach }
 
       println("Constructed LEV($levDist, ${brokeTokens.size}, ${levBall.Q.size}) " +
-          "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
+          "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
       val pTree = intGram.toPTree()
       val clock = TimeSource.Monotonic.markNow()
