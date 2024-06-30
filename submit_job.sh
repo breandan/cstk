@@ -17,4 +17,5 @@ module load CCEnv StdEnv/2023 java/21.0.1
 # ./gradlew --offline completeCode | tee logfile.txt
 
 commit_message=$(git log -1 --pretty=format:"%s" | sed 's/ /_/g')
+export JAVA_TOOL_OPTIONS="-Xmx150G"
 java -Xmx150G -jar gym-fs-fat-1.0-SNAPSHOT.jar 2>&1 | tee /scratch/b/bengioy/breandan/log_${commit_message}.txt
