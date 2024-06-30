@@ -24,7 +24,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 40
+  MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -83,8 +83,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
   dataset.forEach { (invalid, valid) ->
     val allTime = TimeSource.Monotonic.markNow()
-    val toRepair = invalid.addNewLineIfMissing().tokenizeByWhitespace()
-    val humanRepair = valid.addNewLineIfMissing().tokenizeByWhitespace()
+    val toRepair = invalid.tokenizeByWhitespace()
+    val humanRepair = valid.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
@@ -301,6 +301,7 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val file = File(File("").absolutePath + path).readText()
   file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
     .asStream().parallel()
+    .map { (a, b) -> a.addNewLineIfMissing() to b.addNewLineIfMissing() }
     .map { (a, b) ->
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
