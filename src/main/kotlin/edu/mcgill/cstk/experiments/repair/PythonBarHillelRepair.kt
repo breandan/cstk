@@ -24,7 +24,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
+  MAX_TOKENS = 40
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -55,6 +55,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
+  println("LB cache size: " + s2pg.lengthBoundsCache.size)
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
@@ -589,3 +590,57 @@ data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
   override fun toString() =
     "Top-1/total: $top1 / $total = ${top1.toDouble() / total}"
 }
+
+/*
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 30 / 76 = 0.39473684210526316
+|σ|∈[10, 20): Top-1/total: 48 / 142 = 0.3380281690140845
+|σ|∈[20, 30): Top-1/total: 44 / 126 = 0.3492063492063492
+|σ|∈[30, 40): Top-1/total: 31 / 131 = 0.2366412213740458
+|σ|∈[40, 50): Top-1/total: 12 / 30 = 0.4
+Δ(1)= Top-1/total: 91 / 180 = 0.5055555555555555
+Δ(2)= Top-1/total: 44 / 178 = 0.24719101123595505
+Δ(3)= Top-1/total: 30 / 147 = 0.20408163265306123
+(|σ|∈[0, 10), Δ=1): Top-1/total: 17 / 30 = 0.5666666666666667
+(|σ|∈[0, 10), Δ=2): Top-1/total: 9 / 27 = 0.3333333333333333
+(|σ|∈[0, 10), Δ=3): Top-1/total: 4 / 19 = 0.21052631578947367
+(|σ|∈[10, 20), Δ=1): Top-1/total: 27 / 51 = 0.5294117647058824
+(|σ|∈[10, 20), Δ=2): Top-1/total: 13 / 50 = 0.26
+(|σ|∈[10, 20), Δ=3): Top-1/total: 8 / 41 = 0.1951219512195122
+(|σ|∈[20, 30), Δ=1): Top-1/total: 26 / 51 = 0.5098039215686274
+(|σ|∈[20, 30), Δ=2): Top-1/total: 7 / 41 = 0.17073170731707318
+(|σ|∈[20, 30), Δ=3): Top-1/total: 11 / 34 = 0.3235294117647059
+(|σ|∈[30, 40), Δ=1): Top-1/total: 12 / 30 = 0.4
+(|σ|∈[30, 40), Δ=2): Top-1/total: 13 / 52 = 0.25
+(|σ|∈[30, 40), Δ=3): Top-1/total: 6 / 49 = 0.12244897959183673
+(|σ|∈[40, 50), Δ=1): Top-1/total: 9 / 18 = 0.5
+(|σ|∈[40, 50), Δ=2): Top-1/total: 2 / 8 = 0.25
+(|σ|∈[40, 50), Δ=3): Top-1/total: 1 / 4 = 0.25
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 75 / 76 = 0.9868421052631579
+|σ|∈[10, 20): Top-1/total: 142 / 142 = 1.0
+|σ|∈[20, 30): Top-1/total: 125 / 126 = 0.9920634920634921
+|σ|∈[30, 40): Top-1/total: 117 / 131 = 0.8931297709923665
+|σ|∈[40, 50): Top-1/total: 16 / 30 = 0.5333333333333333
+Δ(1)= Top-1/total: 172 / 180 = 0.9555555555555556
+Δ(2)= Top-1/total: 174 / 178 = 0.9775280898876404
+Δ(3)= Top-1/total: 129 / 147 = 0.8775510204081632
+(|σ|∈[0, 10), Δ=1): Top-1/total: 30 / 30 = 1.0
+(|σ|∈[0, 10), Δ=2): Top-1/total: 27 / 27 = 1.0
+(|σ|∈[0, 10), Δ=3): Top-1/total: 18 / 19 = 0.9473684210526315
+(|σ|∈[10, 20), Δ=1): Top-1/total: 51 / 51 = 1.0
+(|σ|∈[10, 20), Δ=2): Top-1/total: 50 / 50 = 1.0
+(|σ|∈[10, 20), Δ=3): Top-1/total: 41 / 41 = 1.0
+(|σ|∈[20, 30), Δ=1): Top-1/total: 51 / 51 = 1.0
+(|σ|∈[20, 30), Δ=2): Top-1/total: 41 / 41 = 1.0
+(|σ|∈[20, 30), Δ=3): Top-1/total: 33 / 34 = 0.9705882352941176
+(|σ|∈[30, 40), Δ=1): Top-1/total: 30 / 30 = 1.0
+(|σ|∈[30, 40), Δ=2): Top-1/total: 52 / 52 = 1.0
+(|σ|∈[30, 40), Δ=3): Top-1/total: 35 / 49 = 0.7142857142857143
+(|σ|∈[40, 50), Δ=1): Top-1/total: 10 / 18 = 0.5555555555555556
+(|σ|∈[40, 50), Δ=2): Top-1/total: 4 / 8 = 0.5
+(|σ|∈[40, 50), Δ=3): Top-1/total: 2 / 4 = 0.5
+ */
