@@ -55,7 +55,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
-  println("LB cache size: " + s2pg.lengthBoundsCache.size)
+  val lbc = s2pg.lengthBoundsCache
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG5(s2pg)
 
@@ -96,9 +96,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     val intGram = try {
-      s2pg.jvmIntersectLevFSA(
+      s2pg.jvmIntersectLevFSAP(
         fsa = makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
-        parikhMap = parikhMap
+        parikhMap = parikhMap,
+        lbc = lbc
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
       ?.freeze()
@@ -506,6 +507,7 @@ fun preprocessStackOverflowQuickly(
 // How many unique edit locations are there for each length and Levenshtein distance?
 fun measureLevenshteinBlanketSize() {
   val gram = vanillaS2PCFG
+  val lbc = gram.lengthBoundsCache
   val parikhMap = gram.parikhMap
   val timeout = 10.seconds
   val pcfgMap = readPCFG5(gram)
@@ -524,9 +526,10 @@ fun measureLevenshteinBlanketSize() {
 
       val levBall = makeLevFSA(brokeTokens, levDist)
       val intGram = try {
-        gram.jvmIntersectLevFSA(
+        gram.jvmIntersectLevFSAP(
           levBall,
-          parikhMap = parikhMap
+          parikhMap = parikhMap,
+          lbc = lbc
         ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
       } catch (e: Exception) { null }?.freeze()
 

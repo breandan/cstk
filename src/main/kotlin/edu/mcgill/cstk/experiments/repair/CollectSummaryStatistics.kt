@@ -133,8 +133,7 @@ fun paperExample() {
 
   MAX_TOKENS = brokeLexed.tokenizeByWhitespace().size + 5
 
-  val pm = vanillaS2PCFG.parikhMap
-  val intGram = vanillaS2PCFG.jvmIntersectLevFSA(makeLevFSA(brokeLexed, 2), pm)
+  val intGram = vanillaS2PCFG.jvmIntersectLevFSA(makeLevFSA(brokeLexed, 2))
   println(intGram.size)
 
   val clock = TimeSource.Monotonic.markNow()
