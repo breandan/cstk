@@ -131,46 +131,46 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-//    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
-//    val sampler =
-//      if (intGram.size < CFG_THRESH) {
-//        println("Small grammar, sampling without replacement...")
-//        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-//      } else {
-//        println("Large grammar, sampling with replacement using PCFG...")
-//        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-//  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-//      }
-//
-//    sampler.distinct().forEach {
-//      totalSamples.incrementAndGet()
-//      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-//      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
-//      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
-////            * s2pg.parse(it)!!.logProb(pcfgMap)
-//      )
-//    }
-//    val rankedResults = results.mostLikely.entries.map { it.value }
-
-    val dfa = pTree.toDFA(true)!!
-
-    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
-
-    val rankedResults = dfa.decodeDFA(
-      mc = P_BIFI_PY150,
-      timeout = timeout,
-      dec = pTree.termDict,
-      parallelize = false,
-      callback = {
-        totalSamples.incrementAndGet()
-        if (it == target) {
-          matchFound = true
-          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-          elapsed = clock.elapsedNow().inWholeMilliseconds
-        }
+    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
+    val sampler =
+      if (intGram.size < CFG_THRESH) {
+        println("Small grammar, sampling without replacement...")
+        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+      } else {
+        println("Large grammar, sampling with replacement using PCFG...")
+        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
       }
-    )
+
+    sampler.distinct().forEach {
+      totalSamples.incrementAndGet()
+      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
+      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
+//            * s2pg.parse(it)!!.logProb(pcfgMap)
+      )
+    }
+    val rankedResults = results.mostLikely.entries.map { it.value }
+
+//    val dfa = pTree.toDFA(true)!!
+//
+//    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
+//    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+//
+//    val rankedResults = dfa.decodeDFA(
+//      mc = P_BIFI_PY150,
+//      timeout = timeout,
+//      dec = pTree.termDict,
+//      parallelize = false,
+//      callback = {
+//        totalSamples.incrementAndGet()
+//        if (it == target) {
+//          matchFound = true
+//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+//          elapsed = clock.elapsedNow().inWholeMilliseconds
+//        }
+//      }
+//    )
 
     val indexOfTarget = rankedResults.indexOf(target).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
@@ -182,10 +182,14 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in $timeout with ${intGram.size} prods, " +
-        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
+//        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
           "length-$levDist human repair not found")
-      negative.appendText("${toRepair.size}, $levDist, $totalSamples, ${levBallSize}, " +
-        "${intGram.size}, $langSize, ${dfa.states.size}, ${dfa.numberOfTransitions}, ${levAlign.summarize()}\n")
+      negative.appendText(
+        "${toRepair.size}, $levDist, $totalSamples, ${levBallSize}, " +
+          "${intGram.size}, $langSize, " +
+//          "${dfa.states.size}, ${dfa.numberOfTransitions}, " +
+          "${levAlign.summarize()}\n"
+      )
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
 //        results.parallelStream().map {
@@ -211,7 +215,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, " +
-          "${dfa.states.size}, ${dfa.numberOfTransitions}, $indexOfTarget, ${levAlign.summarize()}\n")
+//          "${dfa.states.size}, ${dfa.numberOfTransitions}, " +
+          "$indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()
