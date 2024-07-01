@@ -47,8 +47,8 @@ fun readPCFG5(s2pg: CFG) =
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
-  val dataset = //sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
-   timeoutCases // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
+  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
+   // timeoutCases // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -86,7 +86,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val toRepair = invalid.tokenizeByWhitespace()
     val humanRepair = valid.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
-    val source = toRepair.joinToString(" ").also { println("Source: $it") }
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
@@ -95,6 +94,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     var levBallSize = 1
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
+    println("Source: ${toRepair.joinToString(" ")}")
+    println("Repair: $humanRepairANSI")
     val intGram = try {
       s2pg.jvmIntersectLevFSAP(
         fsa = makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
@@ -122,7 +123,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     }
 
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
-    println("Ground truth repair: $humanRepairANSI")
     val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
       .also { println("Constructed PTree in ${it.duration}") }.value
     val langSize = pTree.totalTreesStr
