@@ -57,7 +57,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val s2pg = vanillaS2PCFG
   val lbc = s2pg.lengthBoundsCache
   val parikhMap = s2pg.parikhMap
-  val pcfgMap = readPCFG5(s2pg)
+//  val pcfgMap = readPCFG5(s2pg)
 
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
@@ -131,16 +131,17 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
+
     val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
     val sampler =
-      if (intGram.size < CFG_THRESH) {
-        println("Small grammar, sampling without replacement...")
+//      if (intGram.size < CFG_THRESH) {
+//        println("Small grammar, sampling without replacement...")
         pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      } else {
-        println("Large grammar, sampling with replacement using PCFG...")
-        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-      }
+//      } else {
+//        println("Large grammar, sampling with replacement using PCFG...")
+//        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+//  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+//      }
 
     sampler.distinct().forEach {
       totalSamples.incrementAndGet()
