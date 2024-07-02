@@ -57,7 +57,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val s2pg = vanillaS2PCFG
   val lbc = s2pg.lengthBoundsCache
   val parikhMap = s2pg.parikhMap
-  val pcfgMap = readPCFG5(s2pg)
+//  val pcfgMap = readPCFG5(s2pg)
 
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
@@ -131,46 +131,47 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
-    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
-    val sampler =
-      if (intGram.size < CFG_THRESH) {
-        println("Small grammar, sampling without replacement...")
-        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-      } else {
-        println("Large grammar, sampling with replacement using PCFG...")
-        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-      }
 
-    sampler.distinct().forEach {
-      totalSamples.incrementAndGet()
-      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
-      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
-//            * s2pg.parse(it)!!.logProb(pcfgMap)
-      )
-    }
-    val rankedResults = results.mostLikely.entries.map { it.value }
-
-//    val dfa = pTree.toDFA(true)!!
-//
-//    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
-//    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
-//
-//    val rankedResults = dfa.decodeDFA(
-//      mc = P_BIFI_PY150,
-//      timeout = timeout,
-//      dec = pTree.termDict,
-//      parallelize = false,
-//      callback = {
-//        totalSamples.incrementAndGet()
-//        if (it == target) {
-//          matchFound = true
-//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-//          elapsed = clock.elapsedNow().inWholeMilliseconds
-//        }
+//    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
+//    val sampler =
+//      if (intGram.size < CFG_THRESH) {
+//        println("Small grammar, sampling without replacement...")
+//        pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+//      } else {
+//        println("Large grammar, sampling with replacement using PCFG...")
+//        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+//  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
 //      }
-//    )
+//
+//    sampler.distinct().forEach {
+//      totalSamples.incrementAndGet()
+//      if (it == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+//      val repairDist = levenshtein(it.tokenizeByWhitespace(), toRepair)
+//      results.add(it, P_BIFI_PY150.score(it.tokenizeByWhitespace())
+////            * s2pg.parse(it)!!.logProb(pcfgMap)
+//      )
+//    }
+//    val rankedResults = results.mostLikely.entries.map { it.value }
+
+    val dfa = pTree.toDFA(true)!!
+
+    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
+      timeout = timeout,
+      dec = pTree.termDict,
+      parallelize = false,
+      callback = {
+        totalSamples.incrementAndGet()
+        if (it == target) {
+          matchFound = true
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
+      }
+    )
 
     val indexOfTarget = rankedResults.indexOf(target).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
