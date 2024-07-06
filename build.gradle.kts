@@ -8,7 +8,7 @@ plugins {
 //  id("com.github.johnrengelman.shadow") version "8.1.1"
   // Kinda sketchy fork because shadowJar doesn't work with JDK 21
   // https://github.com/johnrengelman/shadow/pull/876#issuecomment-1783983216
-  id("io.github.goooler.shadow") version "8.1.7"
+  id("io.github.goooler.shadow") version "8.1.8"
 }
 
 group = "com.github.breandan"
@@ -60,7 +60,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.28.1"
+  val openrwVersion = "8.29.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -87,7 +87,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.322")
+  implementation("org.kohsuke:github-api:1.323")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
