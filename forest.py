@@ -79,24 +79,28 @@ class Forest(object):
     @staticmethod
     def from_json(s):
         o = json.loads(s)
-        nodes = [Node(node['label']) for node in o['nodes']]
+        all_nt_idxs = set([edge['head'] for edge in o['edges']])
+        nodes = [Nonterminal(node['label']) if i in all_nt_idxs else node['label'] for i,node in enumerate(o['nodes'])]
         f = Forest(start=nodes[o['root']])
         for edge in o['edges']:
-            f.add(Edge(nodes[edge['head']], tuple(nodes[tail] for tail in edge['tails'])))
+            f.add(Edge(nodes[edge['head']], tuple(nodes[tail] for tail in edge['tails']), edge['weight']))
         return f
 
     def to_json(self):
         o = {}
         nodes = []
         nodeindex = {}
-        for ni,node in enumerate(self.nodes):
+        snodes = sorted([node.x if node is Node else str(node) for node in self.nodes])
+        for ni,node in enumerate(snodes):
             nodes.append({"label" : str(node)})
             nodeindex[node] = ni
         edges = []
-        for edge in self.edges:
-            edges.append({"head" : nodeindex[edge.head],
-                          "tails" : [nodeindex[tail] for tail in edge.tails]})
-        return json.dumps({"root" : nodeindex[self.start],
+        sedges = sorted(self.edges)
+        for edge in sedges:
+            edges.append({"head" : nodeindex[str(edge.head)],
+                          "tails" : [nodeindex[str(tail)] for tail in edge.tails],
+                          "weight" : edge.weight})
+        return json.dumps({"root" : nodeindex[str(self.start)],
                            "nodes" : nodes,
                            "edges" : edges})
 
@@ -467,7 +471,7 @@ if __name__ == "__main__":
     f.add(Edge(npx, (np,), 1.))
     f.add(Edge(n, ("John",), 0.5))
     f.add(Edge(n, ("Mary",), 0.5))
-    f.add(Edge(v, ("saw",), 1.))
+    f.add(Edge(v, ("saw",), 0.99))
 
     print("*** grammar:")
     print(f.to_json())
@@ -476,7 +480,7 @@ if __name__ == "__main__":
     print("*** grammar (again):")
     print(f1.to_json())
 
-    result = earley(f, "John saw Mary".split())
+    result = earley(f1, "John saw Mary".split())
     if result:
         print("*** forest:")
         print(result.to_json())
