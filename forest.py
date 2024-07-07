@@ -459,6 +459,7 @@ def earley(g, w):
     else:
         return None
 
+# Tested to run with Python 2.8.17
 if __name__ == "__main__":
     s, np, npx, vp, n, v, vv = (Nonterminal(x) for x in "S NP NPX VP N V VV".split())
 
