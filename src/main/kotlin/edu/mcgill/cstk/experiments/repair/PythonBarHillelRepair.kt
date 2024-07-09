@@ -44,6 +44,7 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
     .lines().map { it.split(" ::: ") }
     .associate { Pair(it[0].split(" ")
       .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.ntMap[it.dropLast(1)]!!) else s2pg.ntMap[it] ?: Int.MAX_VALUE }
+      /** See [Tree.quintuples] */
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
@@ -149,7 +150,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
             if (it.first == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
 //            results.add(it.first, P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
             // PCFG likelihood reranker
-            results.add(it.first, -it.second)
+            results.add(it.first, -it.second + P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
           }
           .toList()
 
