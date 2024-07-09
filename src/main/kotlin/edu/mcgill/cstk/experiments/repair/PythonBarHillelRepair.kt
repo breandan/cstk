@@ -25,7 +25,7 @@ fun main() {
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
   MAX_TOKENS = 80
-  MAX_RADIUS = 3
+  MAX_RADIUS = 4
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -134,51 +134,51 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
-//      if (intGram.size < CFG_THRESH) {
-//        println("Small grammar, sampling without replacement...")
-        pTree
-//          .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
-          .sampleDirectlyWORAndScore(stoppingCriterion = { clock.elapsedNow() < timeout }, pcfgMap = pcfgMap, pcfgNorm = pcfgNorm)
-//      } else {
-//        println("Large grammar, sampling with replacement using PCFG...")
-//        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
-  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
-//      }
-          .map {
-            totalSamples.incrementAndGet()
-            if (it.first == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
-//            results.add(it.first, P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
-            // PCFG likelihood reranker
-            results.add(it.first, -it.second + P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
-          }
-          .toList()
-
-    println("Found $totalSamples samples in ${clock.elapsedNow()}")
-
-    val rankedResults = results.mostLikely.entries.map { it.value }
-
-    println("Ranked ${results.size} samples in ${clock.elapsedNow()}")
-
-//    val dfa = pTree.toDFA(true)!!
+//    val results = ConcurrentRankedProbabilisticSet<Σᐩ>(MAX_UNIQUE)
+////      if (intGram.size < CFG_THRESH) {
+////        println("Small grammar, sampling without replacement...")
+//        pTree
+////          .sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })
+//          .sampleDirectlyWORAndScore(stoppingCriterion = { clock.elapsedNow() < timeout }, pcfgMap = pcfgMap, pcfgNorm = pcfgNorm)
+////      } else {
+////        println("Large grammar, sampling with replacement using PCFG...")
+////        pTree.sampleWithPCFG(pcfgMap, stoppingCriterion = { clock.elapsedNow() < timeout })
+//  //        .map { println(levenshteinAlign(source, it).paintANSIColors()); it }
+////      }
+//          .map {
+//            totalSamples.incrementAndGet()
+//            if (it.first == target) { matchFound = true; elapsed = clock.elapsedNow().inWholeMilliseconds }
+////            results.add(it.first, P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
+//            // PCFG likelihood reranker
+//            results.add(it.first, -it.second + P_BIFI_PY150.score(it.first.tokenizeByWhitespace()))
+//          }
+//          .toList()
 //
-//    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
-//    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+//    println("Found $totalSamples samples in ${clock.elapsedNow()}")
 //
-//    val rankedResults = dfa.decodeDFA(
-//      mc = P_BIFI_PY150,
-//      timeout = timeout,
-//      dec = pTree.termDict,
-//      parallelize = false,
-//      callback = {
-//        totalSamples.incrementAndGet()
-//        if (it == target) {
-//          matchFound = true
-//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-//          elapsed = clock.elapsedNow().inWholeMilliseconds
-//        }
-//      }
-//    )
+//    val rankedResults = results.mostLikely.entries.map { it.value }
+//
+//    println("Ranked ${results.size} samples in ${clock.elapsedNow()}")
+
+    val dfa = pTree.toDFA(true)!!
+
+    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
+      timeout = timeout,
+      dec = pTree.termDict,
+      parallelize = false,
+      callback = {
+        totalSamples.incrementAndGet()
+        if (it == target) {
+          matchFound = true
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
+      }
+    )
 
     val indexOfTarget = rankedResults.indexOf(target).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
