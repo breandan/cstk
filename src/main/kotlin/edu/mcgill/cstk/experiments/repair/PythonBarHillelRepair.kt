@@ -105,7 +105,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         lbc = lbc
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
-      ?.freeze()
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
@@ -113,8 +112,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
       else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
-      else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable!")
-      else println("Human repair is recognized by LEV ∩ CFG grammar")
+      else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
+      else println("Human repair is recognized by LEV ∩ CFG grammar (Total time=${allTime.elapsedNow()})")
     } catch (e: Exception) {
       println("Encountered error (${e.message}): $humanRepairANSI\n")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
@@ -162,8 +161,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     val dfa = pTree.toDFA(true)!!
 
+//    println(dfa.toDot().replaceAll(vanillaS2PCFG.unicodeMap))
+
     val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
     val rankedResults = dfa.decodeDFA(
       mc = P_BIFI_PY150,
@@ -179,6 +180,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         }
       }
     )
+
+//    rankedResults.take(100).forEach {
+//      println("Sample: ${levenshteinAlign(humanRepair, it.tokenizeByWhitespace()).paintANSIColors()}")
+//      println(it in vanillaS2PCFG.language)
+//    }
 
     val indexOfTarget = rankedResults.indexOf(target).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
@@ -309,7 +315,16 @@ val timeoutCases = listOf(
     "NAME = STRING NEWLINE NAME = NAME . NAME ( STRING ) NEWLINE NAME = NAME . NAME ( STRING , NAME ) NEWLINE"
 )
 
-val paperExamples = listOf("NAME = NAME . NAME ( NUMBER : , NUMBER : )" to "NAME = NAME . NAME [ NUMBER : , NUMBER : ]")
+val paperExamples = listOf(
+//  "NAME = NAME . NAME ( NUMBER : , NUMBER : )" to "NAME = NAME . NAME [ NUMBER : , NUMBER : ]",
+//  "{ STRING : [ STRING , STRING , STRING ] STRING : [ STRING , STRING , STRING ] STRING : [ STRING , STRING , STRING ] STRING : [ STRING , STRING , STRING ] } NEWLINE" to
+//      "{ STRING : [ STRING , STRING , STRING ] , STRING : [ STRING , STRING , STRING ] , STRING : [ STRING , STRING , STRING ] , STRING : [ STRING , STRING , STRING ] } NEWLINE"
+//  "NAME = NAME ( STRING ) NEWLINE while NAME . NAME ( ) != NAME ( STRING ) or NAME . NAME ( ) != NAME ( STRING ) NEWLINE INDENT NAME . NAME ( ) == NAME ( NAME ( STRING ) ) NEWLINE DEDENT NEWLINE" to
+//  "NAME = NAME ( STRING ) NEWLINE while NAME . NAME ( ) != NAME ( STRING ) and NAME . NAME ( ) != NAME ( STRING ) : NEWLINE INDENT NAME . NAME ( ) == NAME ( NAME ( STRING ) ) NEWLINE DEDENT NEWLINE",
+  "NAME = [ NUMBER NUMBER ] NEWLINE" to "NAME = [ NUMBER , NUMBER ] NEWLINE",
+  "[ ( STRING : NUMBER ) , ( STRING : NUMBER ) , ( STRING : NUMBER ) , ( STRING : NUMBER ) ] NEWLINE" to
+    "[ ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) ] NEWLINE",
+)
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
   val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
