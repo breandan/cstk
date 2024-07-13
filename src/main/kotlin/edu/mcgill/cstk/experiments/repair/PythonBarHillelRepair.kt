@@ -115,7 +115,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
       else println("Human repair is recognized by LEV ∩ CFG grammar (Total time=${allTime.elapsedNow()})")
     } catch (e: Exception) {
-      println("Encountered error (${e.message}): $humanRepairANSI\n")
+      println("Encountered error (${e.message}): $humanRepairANSI\n${e.stackTraceToString()}")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
       println(allRate.toString())
       negative.appendText("${toRepair.size}, $levDist, 0, " +
