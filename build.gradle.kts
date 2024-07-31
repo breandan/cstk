@@ -31,7 +31,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.28.0"
+  val djlVersion = "0.29.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -60,7 +60,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.29.0"
+  val openrwVersion = "8.32.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -161,7 +161,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:3.8.1")
+  implementation("com.aallam.openai:openai-client:3.8.2")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:3.1")
