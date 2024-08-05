@@ -35,8 +35,9 @@ fun main() {
 //  computeLevDistDistribution()
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
-//  collectNaturallySmallRepairs()
-  collectShortRepairSpecimens()
+  collectNaturallySmallRepairs()
+//  checkSemanticAdmissibility()
+//  collectShortRepairSpecimens()
 //  collectSyntheticRepairs()
 //  collectPairwisePythonRepairs()
 //    println(naturallySmallRepairs.map { it.second }.joinToString("\n").parseAndCountActiveSymbols().alsoCopy())
@@ -49,6 +50,13 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+fun checkSemanticAdmissibility() {
+  sizeAndDistBalancedRepairsUnminimized.toList().forEach {
+    println(prettyDiffHorizontal(it.π3, it.π4))
+    println("" + it.π3.isInterpretablePython() + " :: " + it.π4.isInterpretablePython())
+  }
 }
 
 // ./gradlew collectSummaryStats 2>&1 | tee shortRepairSpecimens.log
@@ -206,13 +214,17 @@ fun collectSyntheticRepairs() {
 // Takes ~1.5 hrs to run on M1 serially, ~17 mins w/ parallel streaming
 fun collectNaturallySmallRepairs() {
   MAX_PATCH_SIZE = 6
-  val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
+  val encoder = Base64.getEncoder()
+  val filename = "src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
     .also { File(it).also { if (it.exists()) it.delete(); it.createNewFile() } }
 
   var processed = 0
-  preprocessStackOverflowStreaming(MAX_PATCH_SIZE, 3..100).map { (a, c) ->
+  preprocessStackOverflowStreaming(MAX_PATCH_SIZE, 3..100)
+    .map { (a, c) ->
       if (processed++ % 100 == 0) println(processed)
-      "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" }
+      "${a.mapToUnquotedPythonTokens()}\n${c.mapToUnquotedPythonTokens()}\n" +
+      "${encoder.encodeToString(a.toByteArray())}\n${encoder.encodeToString(c.toByteArray())}\n"
+  }
     .distinct().toList().forEach { File(filename).appendText(it) }
 }
 

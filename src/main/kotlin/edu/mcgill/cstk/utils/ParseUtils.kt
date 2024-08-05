@@ -204,6 +204,12 @@ fun Σᐩ.isValidPython(onErrorAction: (Σᐩ?) -> Unit = {}): Boolean =
     false
   }
 
+fun Σᐩ.isInterpretablePython(): Boolean =
+// Checks whether IO contains the string "SyntaxError"
+  !ProcessBuilder("pylyzer", "-c", this).start()
+    .apply { waitFor() }
+    .errorStream.bufferedReader().readText().contains("SyntaxError")
+
 fun Σᐩ.getPythonErrorMessage(): Σᐩ =
   try {
     Python3Parser(

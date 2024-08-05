@@ -10,6 +10,7 @@ import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.*
 import kotlin.streams.*
@@ -64,7 +65,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
       "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
-  dataset.first().second.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+  dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
 //    .replace(" ", "_").replace("/", "_")
@@ -83,10 +84,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
-  dataset.forEach { (invalid, valid) ->
+  dataset.forEach { (invalidTokens, validTokens) ->
     val allTime = TimeSource.Monotonic.markNow()
-    val toRepair = invalid.tokenizeByWhitespace()
-    val humanRepair = valid.tokenizeByWhitespace()
+    val toRepair = invalidTokens.tokenizeByWhitespace()
+    val humanRepair = validTokens.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
     val levDist = levAlign.patchSize()
@@ -326,28 +327,30 @@ val paperExamples = listOf(
     "[ ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) ] NEWLINE",
 )
 
-val sizeAndDistBalancedRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
-  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized.txt"
+val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
+  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
   val file = File(File("").absolutePath + path).readText()
-  file.lines().asSequence().windowed(2, 2).map { it[0] to it[1] }
+  val decoder = Base64.getDecoder()
+  file.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
     .asStream().parallel()
-    .map { (a, b) -> a.addNewLineIfMissing() to b.addNewLineIfMissing() }
-    .map { (a, b) ->
+    .map { (a, b, c, d) -> a.addNewLineIfMissing() to b.addNewLineIfMissing() to
+        String(decoder.decode(c)) to String(decoder.decode(d)) }
+    .map { (a, b, c, d) ->
       val broke = a.tokenizeByWhitespace()
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
-      a to b to (broke.size / 10) * 10 to levDist
-    }.filter { (broke, fixed, size, levDist) ->
+      a to b to c to d to ((broke.size / 10) * 10 to levDist)
+    }.filter { (broke, fixed, bc, oc, size) ->
       broke.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
           fixed.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
-        levDist <= MAX_RADIUS
+        size.second <= MAX_RADIUS
     }.toList()
-    .groupBy { it.π3 to it.π4 }.let { map ->
+    .groupBy { it.π5 }.let { map ->
       val minSize = map.entries.minBy { it.value.size }
       println("Size of smallest group: ${minSize.key}, ${minSize.value.size}")
       map.mapValues { (_, v) -> v.shuffled().take(100) }
     }
     .values.asSequence().flatten()
-    .map { it.π1 to it.π2 }
+    .map { it.π1 to it.π2 to it.π3 to it.π4 }
     .distinct().shuffled()
 }
 
@@ -545,7 +548,7 @@ fun measureLevenshteinBlanketSize() {
   val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
   sizeAndDistBalancedRepairsUnminimized.toList()
-    .map { it.first.addNewLineIfMissing() to it.second.addNewLineIfMissing() }
+    .map { it.π1.addNewLineIfMissing() to it.π2.addNewLineIfMissing() }
     .forEach {  (broke, fixed) ->
       val allTime = TimeSource.Monotonic.markNow()
       val brokeTokens = broke.tokenizeByWhitespace()
