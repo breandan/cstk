@@ -5,10 +5,7 @@ plugins {
   kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
-//  id("com.github.johnrengelman.shadow") version "8.1.1"
-  // Kinda sketchy fork because shadowJar doesn't work with JDK 21
-  // https://github.com/johnrengelman/shadow/pull/876#issuecomment-1783983216
-  id("io.github.goooler.shadow") version "8.1.8"
+  id("com.gradleup.shadow") version "8.3.0-SNAPSHOT"
 }
 
 group = "com.github.breandan"
@@ -91,7 +88,7 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.3.3")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.0")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.3")
 
   // Read compressed repositories downloaded from GitHub
@@ -158,7 +155,7 @@ dependencies {
   implementation("de.kherud:llama:3.2.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-7")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-17")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.8.2")
@@ -167,7 +164,7 @@ dependencies {
   implementation("org.hipparchus:hipparchus-stat:3.1")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
-  implementation("org.antlr:antlr4:4.13.1")
+  implementation("org.antlr:antlr4:4.13.2")
 
   implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
 
