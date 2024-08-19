@@ -33,10 +33,15 @@ fun main() {
         """.trimIndent()
 
       BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
+      val grammar = """root  ::= (expr "=" term "\\n")+
+		expr  ::= term ([-+*/] term)*
+		term  ::= [0-9]"""
+
       val sb = StringBuilder()
       val inferParams = InferenceParameters(prompt)
         .setTemperature(0.7f)
         .setPenalizeNl(true) //                .setNProbs(10)
+//        .setGrammar(grammar)
 //    .setMirostat(InferenceParameters.MiroStat.V2)
 //    .setAntiPrompt("User:")
 
