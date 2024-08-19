@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "8.3.0-SNAPSHOT"
+  id("com.gradleup.shadow") version "8.3.0"
 }
 
 group = "com.github.breandan"
@@ -57,7 +57,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.32.0"
+  val openrwVersion = "8.33.5"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -84,7 +84,7 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.323")
+  implementation("org.kohsuke:github-api:1.324")
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
@@ -92,7 +92,7 @@ dependencies {
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.3")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.26.2")
+  implementation("org.apache.commons:commons-compress:1.27.0")
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
@@ -152,7 +152,7 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.2.1")
+  implementation("de.kherud:llama:3.3.0")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-17")
