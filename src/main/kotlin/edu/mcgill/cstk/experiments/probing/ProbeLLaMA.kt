@@ -2,6 +2,7 @@ package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.kaliningraph.repair.extractPatch
 import de.kherud.llama.*
+import de.kherud.llama.args.Sampler.TYPICAL_P
 import edu.mcgill.cstk.experiments.repair.invalidPythonStatements
 import edu.mcgill.cstk.utils.*
 import java.io.*
@@ -40,6 +41,7 @@ fun main() {
       val sb = StringBuilder()
       val inferParams = InferenceParameters(prompt)
         .setTemperature(0.7f)
+        .setSamplers(TYPICAL_P)
         .setPenalizeNl(true) //                .setNProbs(10)
 //        .setGrammar(grammar)
 //    .setMirostat(InferenceParameters.MiroStat.V2)
