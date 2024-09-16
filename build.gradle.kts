@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "8.3.0"
+  id("com.gradleup.shadow") version "8.3.1"
 }
 
 group = "com.github.breandan"
@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.29.0"
+  val djlVersion = "0.30.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -51,13 +51,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:4.4.0")
+  implementation("com.github.ajalt.clikt:clikt:5.0.0")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.33.5"
+  val openrwVersion = "8.35.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -88,8 +88,8 @@ dependencies {
   // Querying and filtering data from GitLab
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
-  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.0")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.7.3")
+  implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.8.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.27.0")
@@ -148,11 +148,11 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "java-smt")
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
-  implementation("org.apache.datasketches:datasketches-java:6.0.0")
+  implementation("org.apache.datasketches:datasketches-java:6.1.0")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.3.0")
+  implementation("de.kherud:llama:3.4.1")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-17")
