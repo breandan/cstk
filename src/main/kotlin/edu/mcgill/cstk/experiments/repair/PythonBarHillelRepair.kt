@@ -1,7 +1,5 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ConcurrentRankedProbabilisticSet
-import NUM_CORES
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
@@ -25,7 +23,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
+  MAX_TOKENS = 30
   MAX_RADIUS = 4
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()

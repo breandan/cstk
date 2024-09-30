@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.0.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "8.3.1"
+  id("com.gradleup.shadow") version "8.3.2"
 }
 
 group = "com.github.breandan"
@@ -57,7 +57,7 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.35.2"
+  val openrwVersion = "8.36.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -96,7 +96,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.9.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.10.4067"
+  val ortoolsVersion = "9.11.4210"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -148,14 +148,16 @@ dependencies {
     exclude(group = "org.sosy-lab", module = "java-smt")
     exclude(group = "org.sosy-lab", module = "javasmt-solver-mathsat5")
   }
-  implementation("org.apache.datasketches:datasketches-java:6.1.0")
+  //implementation("org.apache.datasketches:datasketches-memory:3.0.1")
+  //implementation("org.apache.datasketches:datasketches-java:6.1.0")
+  implementation("org.apache.datasketches:datasketches-java:6.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
   implementation("de.kherud:llama:3.4.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.0.1-beta-17")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.1.1-beta-7")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.8.2")

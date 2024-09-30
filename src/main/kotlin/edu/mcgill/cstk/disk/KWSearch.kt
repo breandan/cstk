@@ -1,6 +1,7 @@
 package edu.mcgill.cstk.disk
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.main
 import com.github.ajalt.clikt.parameters.options.*
 import edu.mcgill.cstk.disk.indices.*
 import edu.mcgill.cstk.utils.previewResult
