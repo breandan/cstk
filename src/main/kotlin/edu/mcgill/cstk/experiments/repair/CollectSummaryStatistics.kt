@@ -203,7 +203,7 @@ fun collectSyntheticRepairs() {
     .asStream().parallel()
     .flatMap { goodCodeTks ->
       val goodCode = "$goodCodeTks NEWLINE"
-      goodCode.nautralPythonCorruptions().distinct().filter {
+      goodCode.naturalPythonCorruptions().distinct().filter {
         levenshtein(goodCode, it) <= MAX_RADIUS &&
             it !in vanillaS2PCFG.language
       }.take(10).map { it to goodCode }.asStream()

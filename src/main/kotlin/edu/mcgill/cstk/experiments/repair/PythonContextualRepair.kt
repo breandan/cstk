@@ -55,7 +55,7 @@ fun readStackOverflowAndGetSeq2ParseRepair() =
     )
   }
 
-fun Σᐩ.nautralPythonCorruptions(): Sequence<Σᐩ> {
+fun Σᐩ.naturalPythonCorruptions(): Sequence<Σᐩ> {
   val brokeTksInt = "BOS $this EOS".tokenizeByWhitespace().map { it.toPythonIntType() }
   val initREAs: List<CEAProb> = typoContext.relevantEditActions(brokeTksInt)
     .let { val last = it.last(); it + CEAProb(last.cea, last.idx, it.sumOf { it.frequency }) }
