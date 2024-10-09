@@ -20,6 +20,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+  LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
