@@ -51,13 +51,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:5.0.0")
+  implementation("com.github.ajalt.clikt:clikt:5.0.1")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.36.0"
+  val openrwVersion = "8.37.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -150,14 +150,14 @@ dependencies {
   }
   //implementation("org.apache.datasketches:datasketches-memory:3.0.1")
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
-  implementation("org.apache.datasketches:datasketches-java:6.0.0")
+  implementation("org.apache.datasketches:datasketches-java:6.1.1")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
   implementation("de.kherud:llama:3.4.1")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.1.1-beta-7")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.1.1-beta-8")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:3.8.2")
@@ -178,6 +178,15 @@ configurations.all {
   resolutionStrategy {
     force("org.antlr:antlr4-runtime:4.7.1")
     force("org.antlr:antlr4-tool:4.7.1")
+  }
+}
+
+// Excludes all *.java files from compilation:
+sourceSets {
+  main {
+    java {
+      exclude("**/*.java")
+    }
   }
 }
 
