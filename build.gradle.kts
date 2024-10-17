@@ -154,8 +154,6 @@ dependencies {
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
-  implementation("de.kherud:llama:3.4.1")
-
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.1.1-beta-8")
 
@@ -181,14 +179,7 @@ configurations.all {
   }
 }
 
-// Excludes all *.java files from compilation:
-sourceSets {
-  main {
-    java {
-      exclude("**/*.java")
-    }
-  }
-}
+val jvmPreviewFlags = listOf("--enable-preview", "--add-modules=jdk.incubator.vector")
 
 tasks {
   mapOf(
@@ -241,10 +232,18 @@ tasks {
       mainClass = main
       minHeapSize = "4g"
       maxHeapSize = "60g"
-      if (cmd == "probeLLaMA") standardInput = System.`in`
+
+      if (cmd == "probeLLaMA")  {
+        standardInput = System.`in`
+        jvmArgs = jvmPreviewFlags
+      }
       classpath = sourceSets["main"].runtimeClasspath
       outputs.upToDateWhen { false }
     }
+  }
+
+  compileJava {
+    options.compilerArgs.addAll(jvmPreviewFlags)
   }
 
   compileKotlin {
@@ -253,7 +252,9 @@ tasks {
   }
 
   shadowJar {
-    manifest.attributes["Main-Class"] = "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt"
+    manifest.attributes["Main-Class"] =
+      "edu.mcgill.cstk.experiments.probing.ProbeLLaMAKt"
+//      "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt"
 //      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
