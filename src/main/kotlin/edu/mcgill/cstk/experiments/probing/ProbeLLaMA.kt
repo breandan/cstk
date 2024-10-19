@@ -41,7 +41,7 @@ class StateCounter(val g: CFG, val vocab: Array<String>) {
     val n = 1
     return logits.withIndex()
       .sortedByDescending { it.value }
-      .filter { 'e' !in vocab[it.index] }
+//      .filter { 'e' !in vocab[it.index] }
       .take(n).last().index
   }
 }
