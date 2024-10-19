@@ -1181,7 +1181,7 @@ into the Development Environment](https://hci.stanford.edu/publications/2009/blu
 * [Grex](https://github.com/pemistahl/grex)
 * [RegexGenerator](https://github.com/MaLeLabTs/RegexGenerator)
 
-# Natural Langauge Processing
+# Natural Language Processing
 
 * [extJWNL](https://github.com/extjwnl/extjwnl)
 

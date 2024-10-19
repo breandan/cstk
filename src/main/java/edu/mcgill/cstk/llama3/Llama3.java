@@ -88,6 +88,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.random.RandomGenerator;
@@ -301,6 +302,35 @@ public class Llama3 {
             }
             return new Options(modelPath, prompt, systemPrompt, interactive, temperature, topp, seed, maxTokens, stream, echo);
         }
+    }
+
+    static Llama loadedModel = null;
+
+    public static void loadModel(String modelName) throws IOException {
+        String[] args = new String[] {"-i", "--model", "models/" + modelName};
+        Options options = Options.parseOptions(args);
+        if (loadedModel == null) {
+            // No compatible preloaded model found, fallback to fully parse and load the specified file.
+            loadedModel = ModelLoader.loadModel(options.modelPath(), options.maxTokens(), true);
+        }
+    }
+    public static String[] getVocab(String modelName) throws IOException {
+        loadModel(modelName);
+        return loadedModel.tokenizer().vocabulary.tokens();
+    }
+
+    public static void prompt(String modelName, String prompt, Function<float[], Integer> f) throws IOException {
+        String[] args = new String[] {"-i", "--model", "models/" + modelName, "--instruct", "--prompt", prompt};
+        Options options = Options.parseOptions(args);
+        loadModel(modelName);
+
+        Sampler sampler = (FloatTensor logits) -> {
+            float[] logitsList = new float[logits.size()];
+            for (int i = 0; i < logits.size(); i++) logitsList[i] = logits.getFloat(i);
+            return f.apply(logitsList);
+        };
+
+        runInstructOnce(loadedModel, sampler, options);
     }
 
     public static void main(String[] args) throws IOException {
@@ -1174,7 +1204,7 @@ record Llama(Configuration configuration, Tokenizer tokenizer, Weights weights) 
  */
 class Tokenizer {
     private final Pattern compiledPattern;
-    private final Vocabulary vocabulary;
+    public final Vocabulary vocabulary;
     private final Map<Pair<Integer, Integer>, Integer> merges;
     private final Map<String, Integer> specialTokens;
 
