@@ -177,6 +177,36 @@ public class Llama3 {
         }
     }
 
+    static String runInstructOnceAndReturnWholeResponse(Llama model, Sampler sampler, Options options) {
+        StringBuilder responseText = new StringBuilder();
+        Llama.State state = model.createNewState();
+        ChatFormat chatFormat = new ChatFormat(model.tokenizer());
+
+        List<Integer> promptTokens = new ArrayList<>();
+        promptTokens.add(chatFormat.beginOfText);
+        if (options.systemPrompt() != null) {
+            promptTokens.addAll(chatFormat.encodeMessage(new ChatFormat.Message(ChatFormat.Role.SYSTEM, options.systemPrompt())));
+        }
+        promptTokens.addAll(chatFormat.encodeMessage(new ChatFormat.Message(ChatFormat.Role.USER, options.prompt())));
+        promptTokens.addAll(chatFormat.encodeHeader(new ChatFormat.Message(ChatFormat.Role.ASSISTANT, "")));
+
+        Set<Integer> stopTokens = chatFormat.getStopTokens();
+        List<Integer> responseTokens = Llama.generateTokens(model, state, 0, promptTokens, stopTokens, options.maxTokens(), sampler, options.echo(), token -> {
+            if (options.stream()) {
+                if (!model.tokenizer().isSpecialToken(token)) {
+                    String dec = model.tokenizer().decode(List.of(token));
+                    responseText.append(dec);
+                    System.out.print(dec);
+                }
+            }
+        });
+        if (!responseTokens.isEmpty() && stopTokens.contains(responseTokens.getLast())) {
+            responseTokens.removeLast();
+        }
+
+       return responseText.toString();
+    }
+
     static void runInstructOnce(Llama model, Sampler sampler, Options options) {
         Llama.State state = model.createNewState();
         ChatFormat chatFormat = new ChatFormat(model.tokenizer());
@@ -319,7 +349,7 @@ public class Llama3 {
         return loadedModel.tokenizer().vocabulary.tokens();
     }
 
-    public static void prompt(String modelName, String prompt, Function<float[], Integer> f) throws IOException {
+    public static String prompt(String modelName, String prompt, Function<float[], Integer> f) throws IOException {
         String[] args = new String[] {"-i", "--model", "models/" + modelName, "--instruct", "--prompt", prompt};
         Options options = Options.parseOptions(args);
         loadModel(modelName);
@@ -330,7 +360,7 @@ public class Llama3 {
             return f.apply(logitsList);
         };
 
-        runInstructOnce(loadedModel, sampler, options);
+        return runInstructOnceAndReturnWholeResponse(loadedModel, sampler, options);
     }
 
     public static void main(String[] args) throws IOException {
