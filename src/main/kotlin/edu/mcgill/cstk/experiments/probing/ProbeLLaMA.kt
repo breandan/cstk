@@ -3,13 +3,19 @@ package edu.mcgill.cstk.experiments.probing
 import ai.hypergraph.kaliningraph.parsing.CFG
 import ai.hypergraph.kaliningraph.parsing.levenshteinAlign
 import ai.hypergraph.kaliningraph.parsing.paintANSIColors
+import ai.hypergraph.kaliningraph.parsing.patchSize
+import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import edu.mcgill.cstk.experiments.repair.LEN_BUCKET_INTERVAL
+import edu.mcgill.cstk.experiments.repair.S2PMetrics
 import edu.mcgill.cstk.experiments.repair.mapToBIFITokens
 import edu.mcgill.cstk.experiments.repair.mapToUnquotedPythonTokens
 import edu.mcgill.cstk.experiments.repair.naturallySmallRepairs
 import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
+import edu.mcgill.cstk.experiments.repair.summarizeLenAndDist
 import edu.mcgill.cstk.experiments.repair.vanillaS2PCFG
 import edu.mcgill.cstk.llama3.Llama3
 import edu.mcgill.cstk.utils.tokenizeAsPython
+import kotlin.time.TimeSource
 
 /*
 ./gradlew probeLLaMA --console=plain
@@ -37,24 +43,49 @@ fun main() {
   var total = 0
   var correct = 0
 
+
+  val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+
   sizeAndDistBalancedRepairsUnminimized.filter {
     it.π1.split(" ").size < 30 &&
+        it.π3.length < 180 &&
         // count the number of NEWLINE tokens
         it.π1.split(" ").count { it == "NEWLINE" } == 1
-  }.forEach {
-    println("Original: ${it.π3.trim()}")
-    println("Abstract: ${it.π1.trim()}\n")
-    val repairs = Llama3.prompt(model, makePrompt(it.π3), sampler)
+  }.forEach { (invalidTokens, validTokens, invalidCode, validCode) ->
+    val toRepair = invalidTokens.tokenizeByWhitespace()
+    val humanRepair = validTokens.tokenizeByWhitespace()
+    val levAlign = levenshteinAlign(toRepair, humanRepair)
+    val levDist = levAlign.patchSize()
+    val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
+    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+
+    println("Original: ${invalidCode.trim()}")
+    println("Abstract: ${invalidTokens.trim()}\n")
+    val repairs = Llama3.prompt(model, makePrompt(invalidCode), sampler)
     val abstracted = extractRepairs(repairs).map { it.mapToUnquotedPythonTokens() + " NEWLINE" }
-    val pretty = abstracted.mapIndexed { i , s -> "$i.) " + levenshteinAlign(it.π1, s).paintANSIColors() }
+    val pretty = abstracted.mapIndexed { i , s -> "$i.) " + levenshteinAlign(invalidTokens, s).paintANSIColors() }
     println("\nPredicted repairs:\n${pretty.joinToString("\n")}\n")
-    println("True repair: ${it.π4.trim()}")
-    println("True repair: ${levenshteinAlign(it.π1, it.π2).paintANSIColors()}\n")
-    val index = abstracted.indexOf(it.π2)
+    println("True repair: ${validCode.trim()}")
+    println("True repair: ${levenshteinAlign(invalidTokens, validTokens).paintANSIColors()}\n")
+    val index = abstracted.indexOf(validTokens)
     total++
-    if (-1 == index) println("True repair missed.")
-    else { correct++; println("True repair found! ($index)") }
+    if (-1 == index) {
+      println("True repair missed.")
+    }
+    else { correct++; println("True repair found! ($index)")
+      if (index == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+    }
     println("Accuracy: $correct / $total = ${correct.toDouble() / total}\n")
+
+    println()
+    println("Precision@1\n===========")
+    println(P_1ByLevDist.summarizeLenAndDist())
+    println("Precision@All\n=============")
+    println(P_AllByLevDist.summarizeLenAndDist())
+    println()
   }
 }
 
