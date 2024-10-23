@@ -17,6 +17,26 @@ import edu.mcgill.cstk.llama3.Llama3
 import edu.mcgill.cstk.utils.tokenizeAsPython
 import kotlin.time.TimeSource
 
+/**
+ * Precision@1
+ * ===========
+ * |σ|∈[0, 10): Top-1/total: 81 / 198 = 0.4090909090909091
+ * |σ|∈[10, 20): Top-1/total: 66 / 171 = 0.38596491228070173
+ * |σ|∈[20, 30): Top-1/total: 39 / 112 = 0.3482142857142857
+ * Δ(1)= Top-1/total: 101 / 201 = 0.5024875621890548
+ * Δ(2)= Top-1/total: 53 / 175 = 0.3028571428571429
+ * Δ(3)= Top-1/total: 32 / 105 = 0.3047619047619048
+ * (|σ|∈[0, 10), Δ=1): Top-1/total: 40 / 87 = 0.45977011494252873
+ * (|σ|∈[0, 10), Δ=2): Top-1/total: 27 / 80 = 0.3375
+ * (|σ|∈[0, 10), Δ=3): Top-1/total: 14 / 31 = 0.45161290322580644
+ * (|σ|∈[10, 20), Δ=1): Top-1/total: 33 / 64 = 0.515625
+ * (|σ|∈[10, 20), Δ=2): Top-1/total: 19 / 59 = 0.3220338983050847
+ * (|σ|∈[10, 20), Δ=3): Top-1/total: 14 / 48 = 0.2916666666666667
+ * (|σ|∈[20, 30), Δ=1): Top-1/total: 28 / 50 = 0.56
+ * (|σ|∈[20, 30), Δ=2): Top-1/total: 7 / 36 = 0.19444444444444445
+ * (|σ|∈[20, 30), Δ=3): Top-1/total: 4 / 26 = 0.15384615384615385
+ */
+
 /*
 ./gradlew probeLLaMA --console=plain
  */
@@ -25,20 +45,20 @@ fun main() {
   val vocab = Llama3.getVocab(model)
   val iterator = StateCounter(vanillaS2PCFG, vocab)
   val sampler: (FloatArray) -> Int = { logits -> iterator.countStates(logits) }
-  fun makePrompt(code: String) = """
-    In the following task, you will be presented with a broken code snippet. Your job is to 
-    output a list of the nearest most likely intended repairs by edit distance, enclosed in 
-    tags <repair> and </repair>. Make as few changes as possible to the original code snippet 
-    so it parses. Each repair must be distinct from every other. Do not explain your thinking, 
-    do not stop before outputting three repairs, do not output the same repair more than once,
-    and do not use any English or non-Python tokens in the output except for the tags.
-    
-    Here is the broken code snippet that was rejected by the Python parser:
-    
-    <broken_code>$code</broken_code>
-    
-    And here is are the three distinct nearest most likely intended repairs:
-    """.trimIndent()
+fun makePrompt(code: String) = """
+In the following task, you will be presented with a broken code snippet. Your job is to 
+output a list of the nearest most likely intended repairs by edit distance, enclosed in 
+tags <repair> and </repair>. Make as few changes as possible to the original code snippet 
+so it parses. Each repair must be distinct from every other. Do not explain your thinking, 
+do not stop before outputting three repairs, do not output the same repair more than once,
+and do not use any English or non-Python tokens in the output except for the tags.
+
+Here is the broken code snippet that was rejected by the Python parser:
+
+<broken_code>$code</broken_code>
+
+And here is are the three distinct nearest most likely intended repairs:
+  """.trimIndent()
 
   var total = 0
   var correct = 0
