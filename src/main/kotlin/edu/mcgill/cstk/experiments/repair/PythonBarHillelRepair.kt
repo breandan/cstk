@@ -25,7 +25,7 @@ fun main() {
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
   MAX_TOKENS = 30
-  MAX_RADIUS = 4
+  MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
