@@ -96,7 +96,7 @@ And here is are the three distinct nearest most likely intended repairs:
       P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
     }
 
-    println("Accuracy: $correct / $total = ${correct.toDouble() / total}\n")
+    println("Accuracy: $correct / $total ≈ ${correct.toDouble() / total}\n")
 
     println()
     println("Precision@1\n===========")

@@ -159,7 +159,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //
 //    println("Ranked ${results.size} samples in ${clock.elapsedNow()}")
 
-    val dfa = pTree.toDFA(true)!!
+    val dfa = pTree.toDFA(minimize = false)!!
 
 //    println(dfa.toDot().replaceAll(vanillaS2PCFG.unicodeMap))
 
@@ -351,6 +351,7 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
     .values.asSequence().flatten()
     .map { it.π1 to it.π2 to it.π3 to it.π4 }
     .distinct().shuffled()
+    .filter { (broke, fixed, _, _) -> fixed in vanillaS2PCFG.language }
 }
 
 val corruptedBIFIGoodCode by lazy {
@@ -389,6 +390,7 @@ val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
     .values.asSequence().flatten()
     .map { it.first to it.second }
     .distinct().shuffled()
+    .filter { (broke, fixed) -> fixed in vanillaS2PCFG.language }
 }
 
 // Seq2Parse results:
@@ -624,7 +626,7 @@ data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
   operator fun plus(other: S2PMetrics) =
     S2PMetrics(top1 + other.top1, total + other.total)
   override fun toString() =
-    "Top-1/total: $top1 / $total = ${top1.toDouble() / total}"
+    "Top-1/total: $top1 / $total ≈ ${top1.toDouble() / total}"
 }
 
 /*
