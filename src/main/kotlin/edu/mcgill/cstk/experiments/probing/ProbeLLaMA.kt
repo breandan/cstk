@@ -63,7 +63,6 @@ And here is are the three distinct nearest most likely intended repairs:
   var total = 0
   var correct = 0
 
-
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
@@ -75,11 +74,11 @@ And here is are the three distinct nearest most likely intended repairs:
   }.forEach { (invalidTokens, validTokens, invalidCode, validCode) ->
     val toRepair = invalidTokens.tokenizeByWhitespace()
     val humanRepair = validTokens.tokenizeByWhitespace()
-    val levAlign = levenshteinAlign(toRepair, humanRepair)
-    val levDist = levAlign.patchSize()
+    val levDist = levenshteinAlign(toRepair, humanRepair).patchSize()
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    total++
 
     println("Original: ${invalidCode.trim()}")
     println("Abstract: ${invalidTokens.trim()}\n")
@@ -89,15 +88,14 @@ And here is are the three distinct nearest most likely intended repairs:
     println("\nPredicted repairs:\n${pretty.joinToString("\n")}\n")
     println("True repair: ${validCode.trim()}")
     println("True repair: ${levenshteinAlign(invalidTokens, validTokens).paintANSIColors()}\n")
+
     val index = abstracted.indexOf(validTokens)
-    total++
-    if (-1 == index) {
-      println("True repair missed.")
-    }
+    if (-1 == index) println("True repair missed.")
     else { correct++; println("True repair found! ($index)")
       if (index == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
       P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
     }
+
     println("Accuracy: $correct / $total = ${correct.toDouble() / total}\n")
 
     println()
