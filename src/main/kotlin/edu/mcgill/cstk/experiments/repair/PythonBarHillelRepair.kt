@@ -24,7 +24,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 30
+  MAX_TOKENS = 40
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -163,7 +163,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
 //    println(dfa.toDot().replaceAll(vanillaS2PCFG.unicodeMap))
 
-    val dfaRecognized = dfa.run(pTree.termDict.encode(humanRepair))
+    val dfaRecognized = try { dfa.run(pTree.termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
     val rankedResults = dfa.decodeDFA(
@@ -324,6 +324,11 @@ val paperExamples = listOf(
   "NAME = [ NUMBER NUMBER ] NEWLINE" to "NAME = [ NUMBER , NUMBER ] NEWLINE",
   "[ ( STRING : NUMBER ) , ( STRING : NUMBER ) , ( STRING : NUMBER ) , ( STRING : NUMBER ) ] NEWLINE" to
     "[ ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) , ( STRING , NUMBER ) ] NEWLINE",
+)
+
+val largeIntersectionInstances = listOf(
+  "NAME ( STRING . NAME ( ( NAME & NAME ) ) or STRING NEWLINE" to
+  "NAME ( STRING . NAME ( NAME & NAME ) or STRING ) NEWLINE"
 )
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
@@ -681,4 +686,50 @@ Precision@All
 (|σ|∈[40, 50), Δ=1): Top-1/total: 10 / 18 = 0.5555555555555556
 (|σ|∈[40, 50), Δ=2): Top-1/total: 4 / 8 = 0.5
 (|σ|∈[40, 50), Δ=3): Top-1/total: 2 / 4 = 0.5
+
+// w/ Language edit distance radius
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 61 / 257 ≈ 0.23735408560311283
+|σ|∈[10, 20): Top-1/total: 60 / 293 ≈ 0.20477815699658702
+|σ|∈[20, 30): Top-1/total: 57 / 294 ≈ 0.19387755102040816
+|σ|∈[30, 40): Top-1/total: 37 / 78 ≈ 0.47435897435897434
+Δ(1)= Top-1/total: 168 / 763 ≈ 0.22018348623853212
+Δ(2)= Top-1/total: 37 / 136 ≈ 0.27205882352941174
+Δ(3)= Top-1/total: 10 / 23 ≈ 0.43478260869565216
+(|σ|∈[0, 10), Δ=1): Top-1/total: 52 / 221 ≈ 0.23529411764705882
+(|σ|∈[0, 10), Δ=2): Top-1/total: 9 / 35 ≈ 0.2571428571428571
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 1 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 46 / 245 ≈ 0.18775510204081633
+(|σ|∈[10, 20), Δ=2): Top-1/total: 9 / 38 ≈ 0.23684210526315788
+(|σ|∈[10, 20), Δ=3): Top-1/total: 5 / 10 ≈ 0.5
+(|σ|∈[20, 30), Δ=1): Top-1/total: 41 / 239 ≈ 0.17154811715481172
+(|σ|∈[20, 30), Δ=2): Top-1/total: 12 / 46 ≈ 0.2608695652173913
+(|σ|∈[20, 30), Δ=3): Top-1/total: 4 / 9 ≈ 0.4444444444444444
+(|σ|∈[30, 40), Δ=1): Top-1/total: 29 / 58 ≈ 0.5
+(|σ|∈[30, 40), Δ=2): Top-1/total: 7 / 17 ≈ 0.4117647058823529
+(|σ|∈[30, 40), Δ=3): Top-1/total: 1 / 3 ≈ 0.3333333333333333
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 112 / 257 ≈ 0.4357976653696498
+|σ|∈[10, 20): Top-1/total: 129 / 293 ≈ 0.4402730375426621
+|σ|∈[20, 30): Top-1/total: 128 / 294 ≈ 0.43537414965986393
+|σ|∈[30, 40): Top-1/total: 55 / 78 ≈ 0.7051282051282052
+Δ(1)= Top-1/total: 335 / 763 ≈ 0.43905635648754915
+Δ(2)= Top-1/total: 66 / 136 ≈ 0.4852941176470588
+Δ(3)= Top-1/total: 23 / 23 ≈ 1.0
+(|σ|∈[0, 10), Δ=1): Top-1/total: 98 / 221 ≈ 0.4434389140271493
+(|σ|∈[0, 10), Δ=2): Top-1/total: 13 / 35 ≈ 0.37142857142857144
+(|σ|∈[0, 10), Δ=3): Top-1/total: 1 / 1 ≈ 1.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 99 / 245 ≈ 0.40408163265306124
+(|σ|∈[10, 20), Δ=2): Top-1/total: 20 / 38 ≈ 0.5263157894736842
+(|σ|∈[10, 20), Δ=3): Top-1/total: 10 / 10 ≈ 1.0
+(|σ|∈[20, 30), Δ=1): Top-1/total: 98 / 239 ≈ 0.4100418410041841
+(|σ|∈[20, 30), Δ=2): Top-1/total: 21 / 46 ≈ 0.45652173913043476
+(|σ|∈[20, 30), Δ=3): Top-1/total: 9 / 9 ≈ 1.0
+(|σ|∈[30, 40), Δ=1): Top-1/total: 40 / 58 ≈ 0.6896551724137931
+(|σ|∈[30, 40), Δ=2): Top-1/total: 12 / 17 ≈ 0.7058823529411765
+(|σ|∈[30, 40), Δ=3): Top-1/total: 3 / 3 ≈ 1.0
  */
