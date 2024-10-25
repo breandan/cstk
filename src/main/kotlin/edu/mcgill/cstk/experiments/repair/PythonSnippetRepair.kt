@@ -829,6 +829,7 @@ val seq2ParseCFGNNTs by lazy {
   }.toSet()).noNonterminalStubs.freeze()
 }
 
+val vanillaS2PCFGWithEpsilon by lazy { s2pCFGStr.parseCFG() }
 val vanillaS2PCFG by lazy { s2pCFGStr.parseCFG().noEpsilonOrNonterminalStubs.freeze() }
 val vanillaS2PCFGMinimized by lazy {
   vanillaS2PCFG.directSubgrammar(vanillaS2PCFG.symbols.filter { (symbolCounts[it] ?: 0) < 3 })

@@ -6,11 +6,13 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
+import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.*
+import kotlin.sequences.toList
 import kotlin.streams.*
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
@@ -24,7 +26,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 40
+  MAX_TOKENS = 30
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -101,9 +103,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     println("Source: ${toRepair.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
+    val lastGoodIndex = vanillaS2PCFGWithEpsilon.maxParsableFragment(toRepair, padRight = levDist)
+    println("Last good index: $lastGoodIndex/${toRepair.size}")
     val intGram = try {
       s2pg.jvmIntersectLevFSAP(
-        fsa = makeLevFSA(toRepair, levDist).also { levBallSize = it.Q.size },
+        fsa = makeLevFSA(toRepair, levDist, lastGoodIndex = lastGoodIndex).also { levBallSize = it.Q.size },
         parikhMap = parikhMap,
         lbc = lbc
       ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
