@@ -52,19 +52,17 @@ const val MARKOV_MEMORY = 4
 // https://github.com/michiyasunaga/BIFI?tab=readme-ov-file#about-the-github-python-dataset
 val P_BIFI: MarkovChain<Σᐩ> by lazy {
 //  readBIFIContents()
-  val csv = File(File("").absolutePath + "/src/main/resources/models/ngrams_BIFI_$MARKOV_MEMORY.csv")
-  MarkovChain.deserialize(csv.readText())
+  MarkovChain.deserialize(readResourceFile("models/ngrams_BIFI_$MARKOV_MEMORY.csv"))
     .apply { scorePrefix = listOf("BOS", "NEWLINE"); scoreSuffix = listOf("EOS") }
-    .also { println("Loaded ${it.counter.total} BIFI $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
+    .also { println("Loaded ${it.counter.total} BIFI $MARKOV_MEMORY-grams") }
 }
 
 // Python2 snippets, about ~20x longer on average than BIFI
 // https://www.sri.inf.ethz.ch/py150
 val P_PY150: MarkovChain<Σᐩ> by lazy {
-  val csv = File(File("").absolutePath + "/src/main/resources/models/ngrams_PY150_$MARKOV_MEMORY.csv")
-  MarkovChain.deserialize(csv.readText())
+  MarkovChain.deserialize(readResourceFile("models/ngrams_PY150_$MARKOV_MEMORY.csv"))
     .apply { scorePrefix = listOf("BOS", "NEWLINE"); scoreSuffix = listOf("EOS") }
-    .also { println("Loaded ${it.counter.total} PY150 $MARKOV_MEMORY-grams from ${csv.absolutePath}") }
+    .also { println("Loaded ${it.counter.total} PY150 $MARKOV_MEMORY-grams") }
 }
 
 val P_BIFI_PY150: MarkovChain<Σᐩ> by lazy { P_BIFI + P_PY150 }

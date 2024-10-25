@@ -35,12 +35,14 @@ fun main() {
 
 val LEN_BUCKET_INTERVAL = 10
 
+fun readResourceFile(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readText()
+
 fun readPCFG3(): Map<Π3A<Σᐩ>, Int> =
-  File(File("").absolutePath + "/src/main/resources/models/pcfg3_BIFI.csv").readText()
+  readResourceFile("models/pcfg3_BIFI.csv")
   .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
 
 fun readPCFG5(s2pg: CFG): Map<Int, Int> =
-  File(File("").absolutePath + "/src/main/resources/models/pcfg5_BIFI.csv").readText()
+  readResourceFile("models/pcfg5_BIFI.csv")
     .lines().map { it.split(" ::: ") }
     .associate { Pair(it[0].split(" ")
       .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.ntMap[it.dropLast(1)]!!) else s2pg.ntMap[it] ?: Int.MAX_VALUE }
@@ -67,6 +69,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
+    .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
 //    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
       "total_samples, lev_ball_arcs, productions, lang_size, dfa_states, dfa_transitions, rank, edit1, edit2, edit3\n"
@@ -332,10 +335,12 @@ val largeIntersectionInstances = listOf(
 )
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
-  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
-  val file = File(File("").absolutePath + path).readText()
+//  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
+//  val file = File(File("").absolutePath + path).readText()
+  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
+  val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
   val decoder = Base64.getDecoder()
-  file.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
+  contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
     .asStream().parallel()
     .map { (a, b, c, d) -> a.addNewLineIfMissing() to b.addNewLineIfMissing() to
         String(decoder.decode(c)) to String(decoder.decode(d)) }

@@ -253,15 +253,15 @@ tasks {
 
   shadowJar {
     manifest.attributes["Main-Class"] =
-      "edu.mcgill.cstk.experiments.probing.ProbeLLaMAKt"
-//      "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt"
+//      "edu.mcgill.cstk.experiments.probing.ProbeLLaMAKt"
+      "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt"
 //      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
 //  manifest.attributes["Main-Class"] = "edu.mcgill.cstk.crawler.CloneReposKt"
     isZip64 = true
     archiveFileName = "${project.name}-fat-${project.version}.jar"
-    exclude("**/datasets/**")
+    exclude("**/bifi/**", "**/py150/**", "**/seq2parse/**", "**/bifi.zip", "**/stack_overflow.zip")
     minimize()
   }
 

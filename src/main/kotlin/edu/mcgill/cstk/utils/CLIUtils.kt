@@ -23,5 +23,4 @@ fun Σᐩ.execute() =
 fun Σᐩ.execAndCapture() =
   ProcessBuilder(split(' ')).start().inputStream.bufferedReader().readText()
 
-fun lastGitMessage() =
-  "git log -1 --pretty=%s".execAndCapture().lines().first()
+fun lastGitMessage() = "git log -1 --pretty=%s".execAndCapture().lines().first()

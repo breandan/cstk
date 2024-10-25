@@ -112,6 +112,10 @@ Experiments are mostly self-contained. Each Gradle task corresponds to a single 
 
 ### Syntax repair
 
+*The primary artifact and setup instructions for the syntax repair experiments are available on [Zenodo](https://zenodo.org/records/13989124).*
+
+Other instructions for fetching the raw datasets and running other experiments can be found below.
+
 First, fetch the [Break-It-Fix-It](https://arxiv.org/pdf/2106.06600.pdf) and [StackOverflow](https://arxiv.org/pdf/1907.07803.pdf) datasets as follows:
 
 ```bash
