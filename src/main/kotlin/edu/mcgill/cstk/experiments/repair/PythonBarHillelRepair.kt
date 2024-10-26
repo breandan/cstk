@@ -103,14 +103,12 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     println("Source: ${toRepair.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
-    val lastGoodIndex = vanillaS2PCFGWithEpsilon.maxParsableFragment(toRepair, padRight = levDist)
-    println("Last good index: $lastGoodIndex/${toRepair.size}")
+    val bounds = vanillaS2PCFGWithEpsilon.maxParsableFragment(toRepair, pad = levDist)
+    println("Location bounds (upper, lower): $bounds/${toRepair.size}")
+    val fsa = makeLevFSA(toRepair, levDist, bounds = bounds).also { levBallSize = it.Q.size }
     val intGram = try {
-      s2pg.jvmIntersectLevFSAP(
-        fsa = makeLevFSA(toRepair, levDist, lastGoodIndex = lastGoodIndex).also { levBallSize = it.Q.size },
-        parikhMap = parikhMap,
-        lbc = lbc
-      ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
+      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap, lbc = lbc)
+        .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
     println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
@@ -336,6 +334,11 @@ val paperExamples = listOf(
 val largeIntersectionInstances = listOf(
   "NAME ( STRING . NAME ( ( NAME & NAME ) ) or STRING NEWLINE" to
   "NAME ( STRING . NAME ( NAME & NAME ) or STRING ) NEWLINE"
+)
+
+val shortcutTestcases = listOf(
+  "NAME = NAME . NAME . NAME ( STRING . NAME ( ) NAME = NUMBER NAME = NUMBER NEWLINE" to
+  "NAME = NAME . NAME . NAME ( STRING ) . NAME ( ) NEWLINE NAME = NUMBER NEWLINE NAME = NUMBER NEWLINE"
 )
 
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
