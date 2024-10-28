@@ -26,7 +26,7 @@ fun main() {
   LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MIN_TOKENS = 20
+  MIN_TOKENS = 3
   MAX_TOKENS = 50
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
@@ -115,9 +115,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println("Multi-edit bounds (lower=${multiEditBounds.first}, " +
         "upper=${multiEditBounds.last})/${toRepair.size} in ${meBoundsTimer.elapsedNow()}")
 
-    val fsa = makeLevFSA(toRepair, levDist, singleEditBounds, multiEditBounds).also { levBallSize = it.Q.size }
+    if (multiEditBounds != 0..toRepair.size)
+      println("Shrunken multiedit fragment: " + maskEverythingButRange(toRepair, multiEditBounds).joinToString(" "))
 
-    if (multiEditBounds != 0..toRepair.size) { } else return@forEach
+    val fsa = makeLevFSA(toRepair, levDist, singleEditBounds, multiEditBounds).also { levBallSize = it.Q.size }
 
     val intGram = try {
       s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap, lbc = lbc)
