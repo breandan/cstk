@@ -6,6 +6,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
+import ai.hypergraph.kaliningraph.visualization.show
 import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -25,8 +26,8 @@ fun main() {
   LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MIN_TOKENS = 30
-  MAX_TOKENS = 60
+  MIN_TOKENS = 20
+  MAX_TOKENS = 50
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -106,12 +107,18 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     val boundsTimer = TimeSource.Monotonic.markNow()
     val singleEditBounds = vanillaS2PCFGWithEpsilon.maxParsableFragmentB(toRepair, pad = levDist)
-    println("Computed location bounds (upper=$singleEditBounds, lower=${toRepair.size})/${toRepair.size} in ${boundsTimer.elapsedNow()}")
+    println("Computed location bounds (upper=${singleEditBounds.first}, " +
+        "lower=${singleEditBounds.second})/${toRepair.size} in ${boundsTimer.elapsedNow()}")
 
-//    val multiEditBounds = vanillaS2PCFGWithEpsilon.smallestRangeWithNoSingleEditRepair(toRepair)
-//    println("Multi-edit bounds (upper, lower): $multiEditBounds/${toRepair.size}")
+    val meBoundsTimer = TimeSource.Monotonic.markNow()
+    val multiEditBounds = vanillaS2PCFGWithEpsilon.shrinkLRBounds(toRepair, singleEditBounds)
+    println("Multi-edit bounds (lower=${multiEditBounds.first}, " +
+        "upper=${multiEditBounds.last})/${toRepair.size} in ${meBoundsTimer.elapsedNow()}")
 
-    val fsa = makeLevFSA(toRepair, levDist, singleEditBounds).also { levBallSize = it.Q.size }
+    val fsa = makeLevFSA(toRepair, levDist, singleEditBounds, multiEditBounds).also { levBallSize = it.Q.size }
+
+    if (multiEditBounds != 0..toRepair.size) { } else return@forEach
+
     val intGram = try {
       s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap, lbc = lbc)
         .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
