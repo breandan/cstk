@@ -25,8 +25,8 @@ fun main() {
   LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
-  MIN_TOKENS = 3
-  MAX_TOKENS = 50
+  MIN_TOKENS = 30
+  MAX_TOKENS = 60
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -103,9 +103,15 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
     println("Source: ${toRepair.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
-    val bounds = vanillaS2PCFGWithEpsilon.maxParsableFragment(toRepair, pad = levDist)
-    println("Location bounds (upper, lower): $bounds/${toRepair.size}")
-    val fsa = makeLevFSA(toRepair, levDist, bounds = bounds).also { levBallSize = it.Q.size }
+
+    val boundsTimer = TimeSource.Monotonic.markNow()
+    val singleEditBounds = vanillaS2PCFGWithEpsilon.maxParsableFragmentB(toRepair, pad = levDist)
+    println("Computed location bounds (upper=$singleEditBounds, lower=${toRepair.size})/${toRepair.size} in ${boundsTimer.elapsedNow()}")
+
+//    val multiEditBounds = vanillaS2PCFGWithEpsilon.smallestRangeWithNoSingleEditRepair(toRepair)
+//    println("Multi-edit bounds (upper, lower): $multiEditBounds/${toRepair.size}")
+
+    val fsa = makeLevFSA(toRepair, levDist, singleEditBounds).also { levBallSize = it.Q.size }
     val intGram = try {
       s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap, lbc = lbc)
         .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
