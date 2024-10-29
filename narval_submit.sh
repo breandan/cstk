@@ -5,6 +5,7 @@
 #SBATCH --output=/scratch/breandan/slurm-%j.out
 #SBATCH --error=/scratch/breandan/slurm-%j.err
 #SBATCH --mem=150G
+#SBATCH --cpus-per-task=64
 #SBATCH --mail-user=bre@ndan.co
 #SBATCH --mail-type=ALL
 
