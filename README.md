@@ -100,10 +100,11 @@ source bin/activate
 ./gradlew --offline [completeCode] [completeDoc] [varMisuse]
 ```
 
-Once you have confirmed the experiment runs smoothly and are ready to submit a longer job, edit [`submit_job.sh`](submit_job.sh) and run the following command to submit it to Slurm:
+Once you have confirmed the experiment runs smoothly and are ready to submit a longer job, edit [`niagara_submit.sh`](niagara_submit.sh) and run one of the following commands to submit it to Slurm, depending on the Compute Canada cluster you want to run it on (Narval has 64 cores, Niagara has 40):
 
 ```bash
-sbatch submit_job.sh
+sbatch niagara_submit.sh
+sbatch narval_submit.sh
 ```
 
 ## Experiments

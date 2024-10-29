@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+
+spawn ssh breandan@narval.computecanada.ca
+expect "Passcode or option (1-1): " 
+send "1\r" 
+expect -re {.*@.*:~\$ } 
+ 
+# Continue with commands 
+send "cd /home/breandan/projects/def-jinguo/breandan/cstk && git pull && sbatch submit_job.sh && cd /scratch/breandan\r"
+interact

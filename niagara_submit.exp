@@ -6,5 +6,5 @@ send "1\r"
 expect -re {.*@.*:~\$ } 
  
 # Continue with commands 
-send "cd /home/b/bengioy/breandan/cstk && git pull && sbatch submit_job.sh && cd /scratch/b/bengioy/breandan\r"
+send "cd /home/b/bengioy/breandan/cstk && git pull && sbatch niagara_submit.sh && cd /scratch/b/bengioy/breandan\r"
 interact
