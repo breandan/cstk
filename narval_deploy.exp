@@ -3,7 +3,7 @@
 # 1. Execute gradlew task locally:
 system "./gradlew shadowJar" 
 
-spawn scp -v build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@narval.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk
+spawn scp -v build/libs/gym-fs-fat-1.0-SNAPSHOT.jar breandan@graham.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk
 expect "Passcode or option (1-1): "
 send "1\r"
 interact

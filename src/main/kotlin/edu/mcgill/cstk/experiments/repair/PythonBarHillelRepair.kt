@@ -7,6 +7,8 @@ import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import ai.hypergraph.kaliningraph.visualization.show
+import edu.mcgill.cstk.disk.deserializeFrom
+import edu.mcgill.cstk.disk.serializeTo
 import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import edu.mcgill.cstk.utils.*
 import java.io.File
@@ -27,16 +29,24 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 80
+  MAX_TOKENS = 100
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
+//  writeParikhMap()
 }
 
 val LEN_BUCKET_INTERVAL = 10
+
+//fun writeParikhMap() {
+//  val txt = ParikhMap.serialize(vanillaS2PCFG.parikhMap)
+//  File("" + vanillaS2PCFG.hashCode() + ".cache")
+//    .also { println("Wrote to ${it.absolutePath}") }
+//    .writeText(txt)
+//}
 
 fun readResourceFile(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readText()
 
@@ -53,7 +63,7 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
-  val dataset = sizeAndDistBalancedRepairsUnminimized.toList()//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
+  val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
    // timeoutCases // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
@@ -61,7 +71,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
-  val lbc = s2pg.lengthBoundsCache
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG3()
   val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
@@ -121,7 +130,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val fsa = makeLevFSA(toRepair, levDist, singleEditBounds, multiEditBounds).also { levBallSize = it.Q.size }
 
     val intGram = try {
-      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap, lbc = lbc)
+      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
         .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
@@ -370,14 +379,14 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
       val levDist = levenshtein(broke, b.tokenizeByWhitespace())
       a to b to c to d to ((broke.size / 10) * 10 to levDist)
     }.filter { (broke, fixed, bc, oc, size) ->
-      broke.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
-          fixed.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
+      broke.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
+          fixed.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
         size.second <= MAX_RADIUS
     }.toList()
     .groupBy { it.π5 }.let { map ->
       val minSize = map.entries.minBy { it.value.size }
       println("Size of smallest group: ${minSize.key}, ${minSize.value.size}")
-      map.mapValues { (_, v) -> v.shuffled().take(100) }
+      map.mapValues { (_, v) -> v.shuffled().take(300) }
     }
     .values.asSequence().flatten()
     .map { it.π1 to it.π2 to it.π3 to it.π4 }
@@ -573,7 +582,6 @@ fun preprocessStackOverflowQuickly(
 // How many unique edit locations are there for each length and Levenshtein distance?
 fun measureLevenshteinBlanketSize() {
   val gram = vanillaS2PCFG
-  val lbc = gram.lengthBoundsCache
   val parikhMap = gram.parikhMap
   val timeout = 10.seconds
   val pcfgMap = readPCFG5(gram)
@@ -592,11 +600,8 @@ fun measureLevenshteinBlanketSize() {
 
       val levBall = makeLevFSA(brokeTokens, levDist)
       val intGram = try {
-        gram.jvmIntersectLevFSAP(
-          levBall,
-          parikhMap = parikhMap,
-          lbc = lbc
-        ).also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
+        gram.jvmIntersectLevFSAP(levBall, parikhMap = parikhMap)
+          .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
       } catch (e: Exception) { null }?.freeze()
 
       try {
@@ -665,18 +670,6 @@ w/ Lev-NFA multiedit pruning
 
 Precision@1
 ===========
-|σ|∈[0, 10): Top-1/total: 94 / 256 ≈ 0.3671875
-|σ|∈[10, 20): Top-1/total: 92 / 297 ≈ 0.30976430976430974
-|σ|∈[20, 30): Top-1/total: 83 / 295 ≈ 0.28135593220338984
-|σ|∈[30, 40): Top-1/total: 92 / 294 ≈ 0.3129251700680272
-|σ|∈[40, 50): Top-1/total: 68 / 290 ≈ 0.23448275862068965
-|σ|∈[50, 60): Top-1/total: 80 / 291 ≈ 0.27491408934707906
-|σ|∈[60, 70): Top-1/total: 91 / 281 ≈ 0.3238434163701068
-|σ|∈[70, 80): Top-1/total: 83 / 265 ≈ 0.3132075471698113
-|σ|∈[80, 90): Top-1/total: 14 / 20 ≈ 0.7
-Δ(1)= Top-1/total: 409 / 778 ≈ 0.525706940874036
-Δ(2)= Top-1/total: 180 / 782 ≈ 0.23017902813299232
-Δ(3)= Top-1/total: 108 / 729 ≈ 0.14814814814814814
 (|σ|∈[0, 10), Δ=1): Top-1/total: 54 / 98 ≈ 0.5510204081632653
 (|σ|∈[0, 10), Δ=2): Top-1/total: 31 / 100 ≈ 0.31
 (|σ|∈[0, 10), Δ=3): Top-1/total: 9 / 58 ≈ 0.15517241379310345
