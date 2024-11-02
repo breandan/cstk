@@ -29,7 +29,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 130
+  MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -115,12 +115,12 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println("Repair: $humanRepairANSI")
 
     val boundsTimer = TimeSource.Monotonic.markNow()
-    val singleEditBounds = vanillaS2PCFGWithEpsilon.maxParsableFragmentB(toRepair, pad = levDist)
-    println("Computed location bounds (upper=${singleEditBounds.first}, " +
+    val singleEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levDist)
+    println("Mono-edit bounds (upper=${singleEditBounds.first}, " +
         "lower=${singleEditBounds.second})/${toRepair.size} in ${boundsTimer.elapsedNow()}")
 
     val meBoundsTimer = TimeSource.Monotonic.markNow()
-    val multiEditBounds = vanillaS2PCFGWithEpsilon.shrinkLRBounds(toRepair, singleEditBounds)
+    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, singleEditBounds)
     println("Multi-edit bounds (lower=${multiEditBounds.first}, " +
         "upper=${multiEditBounds.last})/${toRepair.size} in ${meBoundsTimer.elapsedNow()}")
 
@@ -129,19 +129,21 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     val fsa = makeLevFSA(toRepair, levDist, singleEditBounds, multiEditBounds).also { levBallSize = it.Q.size }
 
-    println("Human repair recognized by LEV automaton: " + fsa.recognizes(humanRepair))
-
     val intGram = try {
+      if (!fsa.recognizes(humanRepair))
+        throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
+
       s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
         .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
-    println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
-      "∩ CFG grammar with ${intGram?.size ?: 0} productions in ${allTime.elapsedNow()}")
+    if (intGram != null) println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
+      "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
       else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
+      else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
       else if (humanRepair !in intGram.language) throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
       else println("Human repair is recognized by LEV ∩ CFG grammar (Total time=${allTime.elapsedNow()})")
     } catch (e: Exception) {
@@ -362,9 +364,23 @@ val largeIntersectionInstances = listOf(
 )
 
 val shortcutTestcases = listOf(
-  "NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME = { } NEWLINE NAME = { } NEWLINE for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE DEDENT for NAME in NAME NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE if NAME >= NAME : NEWLINE INDENT NAME ( STRING ) NEWLINE DEDENT DEDENT NEWLINE" to
-      "NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME = { } NEWLINE NAME = { } NEWLINE for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE if NAME >= NAME : NEWLINE INDENT NAME ( STRING ) NEWLINE DEDENT NEWLINE"
-//  "from NAME import * NEWLINE NAME = NAME ( ) NEWLINE NAME = NAME ( NAME , NAME = STRING , NAME = NAME ) NEWLINE"
+  "NAME = [ { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : STRING ] NAME = [ { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER } ] NEWLINE" to
+  "NAME = [ { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : STRING } ] NEWLINE NAME = [ { STRING : NUMBER , STRING : NUMBER } , { STRING : NUMBER , STRING : NUMBER } ] NEWLINE"
+//  "def NAME ( NAME . NAME ) : NEWLINE INDENT NAME = NAME . NAME ( NAME = STRING ) NEWLINE DEDENT def NAME ( NAME . NAME ) : NEWLINE INDENT pass NEWLINE DEDENT def NAME ( NAME . NAME ) : NEWLINE INDENT NAME = NAME . NAME ( NAME ) NEWLINE NAME = NAME . NAME ( NAME ) NEWLINE DEDENT NEWLINE" to
+//  "class NAME ( NAME . NAME ) : NEWLINE INDENT NAME = NAME . NAME ( NAME = STRING ) NEWLINE DEDENT class NAME ( NAME . NAME ) : NEWLINE INDENT pass NEWLINE DEDENT class NAME ( NAME . NAME ) : NEWLINE INDENT NAME = NAME . NAME ( NAME ) NEWLINE NAME = NAME . NAME ( NAME ) NEWLINE DEDENT NEWLINE",
+//  "NAME . NAME ( STRING . NAME ( NAME [ STRING ) . NAME ( ) . NAME ( ) ) . NAME ( ) [ : NUMBER ] NEWLINE" to
+//  "NAME . NAME ( STRING . NAME ( NAME [ STRING ] ) . NAME ( ) . NAME ( ) ) . NAME ( ) [ : NUMBER ] NEWLINE",
+//  "from NAME import NAME NEWLINE from . NAME import NAME , NAME NEWLINE from NAME import * NEWLINE from NAME import NAME NEWLINE from NAME import NAME NEWLINE class NAME ( NAME . NAME ) : NEWLINE NAME = NAME . NAME . NAME ( ) NEWLINE NAME = NAME NEWLINE NAME = ( STRING , ) NEWLINE" to
+//  "from NAME import NAME NEWLINE from . NAME import NAME , NAME NEWLINE from NAME import * NEWLINE from NAME import NAME NEWLINE from NAME import NAME NEWLINE class NAME ( NAME . NAME ) : NEWLINE INDENT NAME = NAME . NAME . NAME ( ) NEWLINE NAME = NAME NEWLINE NAME = ( STRING , ) NEWLINE DEDENT NEWLINE",
+//  "NAME = NEWLINE STRING : { STRING : [ ] , STRING : [ ] , STRING : [ { STRING : [ NUMBER , NUMBER ] , STRING : STRING } , { STRING : [ NUMBER , NUMBER ] , STRING : STRING } ] , STRING : [ { STRING : STRING , STRING : [ NUMBER , NUMBER ] , STRING : STRING , STRING : STRING } ] } , NEWLINE" to
+//  "NAME = { STRING : { STRING : [ ] , STRING : [ ] , STRING : [ { STRING : [ NUMBER , NUMBER ] , STRING : STRING } , { STRING : [ NUMBER , NUMBER ] , STRING : STRING } ] , STRING : [ { STRING : STRING , STRING : [ NUMBER , NUMBER ] , STRING : STRING , STRING : STRING } ] } } , NEWLINE",
+//  "import NAME NEWLINE INDENT NAME = NAME . NAME ( NAME = STRING , NAME = NUMBER ) NEWLINE NAME ( NAME . NAME ) NEWLINE while True : NEWLINE INDENT NAME ( NAME . NAME ( NUMBER ) . NAME ( ) ) NEWLINE DEDENT NAME . NAME ( ) NEWLINE DEDENT NEWLINE" to
+//  "import NAME NEWLINE NAME = NAME . NAME ( NAME = STRING , NAME = NUMBER ) NEWLINE NAME ( NAME . NAME ) NEWLINE while True : NEWLINE INDENT NAME ( NAME . NAME ( NUMBER ) . NAME ( ) ) NEWLINE DEDENT NAME . NAME ( ) NEWLINE",
+//  "import NAME as NAME NEWLINE in = NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) NEWLINE NAME = [ NAME . NAME ( in == NAME ) [ NUMBER ] . NAME ( ) for NAME in NAME . NAME ( in ) ] NEWLINE" to
+//  "import NAME as NAME NEWLINE NAME = NAME . NAME ( [ NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER , NUMBER ] ) NEWLINE NAME = [ NAME . NAME ( NAME == NAME ) [ NUMBER ] . NAME ( ) for NAME in NAME . NAME ( NAME ) ] NEWLINE",
+//  "NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME = { } NEWLINE NAME = { } NEWLINE for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE DEDENT for NAME in NAME NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE if NAME >= NAME : NEWLINE INDENT NAME ( STRING ) NEWLINE DEDENT DEDENT NEWLINE" to
+//  "NAME = NAME ( STRING ) NEWLINE NAME = NAME ( STRING ) NEWLINE NAME = { } NEWLINE NAME = { } NEWLINE for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] = NUMBER NEWLINE DEDENT for NAME in NAME : NEWLINE INDENT NAME [ NAME ] += NUMBER NEWLINE if NAME >= NAME : NEWLINE INDENT NAME ( STRING ) NEWLINE DEDENT NEWLINE",
+//  "from NAME import * NEWLINE NAME = NAME ( ) NEWLINE NAME = NAME ( NAME , NAME = STRING , NAME = NAME ) NEWLINE",
 //  "NAME = NAME . NAME . NAME ( STRING . NAME ( ) NAME = NUMBER NAME = NUMBER NEWLINE" to
 //  "NAME = NAME . NAME . NAME ( STRING ) . NAME ( ) NEWLINE NAME = NUMBER NEWLINE NAME = NUMBER NEWLINE"
 )

@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.parsing.CFG
 import ai.hypergraph.kaliningraph.parsing.levenshteinAlign
 import ai.hypergraph.kaliningraph.parsing.paintANSIColors
 import ai.hypergraph.kaliningraph.parsing.patchSize
+import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import edu.mcgill.cstk.experiments.repair.LEN_BUCKET_INTERVAL
 import edu.mcgill.cstk.experiments.repair.S2PMetrics
@@ -12,7 +13,6 @@ import edu.mcgill.cstk.experiments.repair.mapToUnquotedPythonTokens
 import edu.mcgill.cstk.experiments.repair.naturallySmallRepairs
 import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import edu.mcgill.cstk.experiments.repair.summarizeLenAndDist
-import edu.mcgill.cstk.experiments.repair.vanillaS2PCFG
 import edu.mcgill.cstk.llama3.Llama3
 import edu.mcgill.cstk.utils.tokenizeAsPython
 import kotlin.time.TimeSource
