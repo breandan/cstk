@@ -27,7 +27,7 @@ fun main() {
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
   MIN_TOKENS = 3
-  MAX_TOKENS = 120
+  MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
@@ -127,6 +127,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     if (intGram != null) println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
+
+    println("Implicated nonterminals: " + (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) + " / " + s2pg.nonterminals.size)
 
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
