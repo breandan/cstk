@@ -8,7 +8,7 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 RUN cd cstk && ./gradlew shadowJar
 
-CMD cd cstk && ./gradlew pythonBarHillel
+CMD cd cstk && ./gradlew pythonBarHillel --stacktrace
 
 # To run the image, use the following command:
 # docker run -it --rm breandan/tacas
