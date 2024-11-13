@@ -23,6 +23,7 @@ import kotlin.to
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+  printMemoryUsage()
   LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
   TIMEOUT_MS = 30_000
@@ -45,6 +46,17 @@ val LEN_BUCKET_INTERVAL = 10
 //    .also { println("Wrote to ${it.absolutePath}") }
 //    .writeText(txt)
 //}
+
+fun printMemoryUsage() {
+  val runtime = Runtime.getRuntime()
+  val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+  val maxMemory = runtime.maxMemory() / (1024 * 1024)
+  val allocatedMemory = runtime.totalMemory() / (1024 * 1024)
+
+  println("Used Memory: $usedMemory MB")
+  println("Allocated Memory: $allocatedMemory MB")
+  println("Max Memory: $maxMemory MB")
+}
 
 fun readResourceFile(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readText()
 
@@ -123,7 +135,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
       s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
         .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-    } catch (e: Exception) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
+    } catch (e: Exception) { println("$humanRepairANSI\nIntersection exception: ${e.stackTraceToString()}"); null }
+    catch (e: Error) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
     if (intGram != null) println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
@@ -355,6 +368,8 @@ val largeIntersectionInstances = listOf(
 )
 
 val shortcutTestcases: List<Pair<String, String>> = listOf(
+  "STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } , NEWLINE STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } NEWLINE" to
+  "{ STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } , STRING : { STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER , STRING : NUMBER } } NEWLINE",
     "NAME = { STRING : { STRING : [ { STRING : { STRING : STRING , STRING : STRING , STRING : STRING , STRING : STRING } } NEWLINE" to
     "NAME = { STRING : { STRING : [ { STRING : { STRING : STRING , STRING : STRING , STRING : STRING , STRING : STRING } } ] } } NEWLINE",
     "try : NEWLINE INDENT raise NAME ( STRING ) NEWLINE DEDENT except NAME , NAME : NEWLINE INDENT raise NAME ( STRING ) from NAME NEWLINE DEDENT NEWLINE" to
@@ -692,6 +707,84 @@ data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
 }
 
 /*
+w/ horizontal states + NT compatibility filter
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 152 / 375 ≈ 0.4053333333333333
+|σ|∈[10, 20): Top-1/total: 245 / 769 ≈ 0.31859557867360205
+|σ|∈[20, 30): Top-1/total: 245 / 763 ≈ 0.3211009174311927
+|σ|∈[30, 40): Top-1/total: 228 / 776 ≈ 0.29381443298969073
+|σ|∈[40, 50): Top-1/total: 221 / 720 ≈ 0.30694444444444446
+|σ|∈[50, 60): Top-1/total: 221 / 684 ≈ 0.3230994152046784
+|σ|∈[60, 70): Top-1/total: 217 / 582 ≈ 0.37285223367697595
+|σ|∈[70, 80): Top-1/total: 196 / 467 ≈ 0.4197002141327623
+Δ(1)= Top-1/total: 1103 / 2159 ≈ 0.5108846688281612
+Δ(2)= Top-1/total: 461 / 1913 ≈ 0.24098274960794563
+Δ(3)= Top-1/total: 161 / 1064 ≈ 0.1513157894736842
+(|σ|∈[0, 10), Δ=1): Top-1/total: 99 / 184 ≈ 0.5380434782608695
+(|σ|∈[0, 10), Δ=2): Top-1/total: 44 / 133 ≈ 0.3308270676691729
+(|σ|∈[0, 10), Δ=3): Top-1/total: 9 / 58 ≈ 0.15517241379310345
+(|σ|∈[10, 20), Δ=1): Top-1/total: 123 / 297 ≈ 0.41414141414141414
+(|σ|∈[10, 20), Δ=2): Top-1/total: 91 / 298 ≈ 0.3053691275167785
+(|σ|∈[10, 20), Δ=3): Top-1/total: 31 / 174 ≈ 0.1781609195402299
+(|σ|∈[20, 30), Δ=1): Top-1/total: 135 / 288 ≈ 0.46875
+(|σ|∈[20, 30), Δ=2): Top-1/total: 75 / 293 ≈ 0.25597269624573377
+(|σ|∈[20, 30), Δ=3): Top-1/total: 35 / 182 ≈ 0.19230769230769232
+(|σ|∈[30, 40), Δ=1): Top-1/total: 133 / 293 ≈ 0.4539249146757679
+(|σ|∈[30, 40), Δ=2): Top-1/total: 64 / 291 ≈ 0.21993127147766323
+(|σ|∈[30, 40), Δ=3): Top-1/total: 31 / 192 ≈ 0.16145833333333334
+(|σ|∈[40, 50), Δ=1): Top-1/total: 156 / 291 ≈ 0.5360824742268041
+(|σ|∈[40, 50), Δ=2): Top-1/total: 49 / 291 ≈ 0.16838487972508592
+(|σ|∈[40, 50), Δ=3): Top-1/total: 16 / 138 ≈ 0.11594202898550725
+(|σ|∈[50, 60), Δ=1): Top-1/total: 144 / 287 ≈ 0.5017421602787456
+(|σ|∈[50, 60), Δ=2): Top-1/total: 62 / 265 ≈ 0.2339622641509434
+(|σ|∈[50, 60), Δ=3): Top-1/total: 15 / 132 ≈ 0.11363636363636363
+(|σ|∈[60, 70), Δ=1): Top-1/total: 161 / 275 ≈ 0.5854545454545454
+(|σ|∈[60, 70), Δ=2): Top-1/total: 42 / 197 ≈ 0.2131979695431472
+(|σ|∈[60, 70), Δ=3): Top-1/total: 14 / 110 ≈ 0.12727272727272726
+(|σ|∈[70, 80), Δ=1): Top-1/total: 152 / 244 ≈ 0.6229508196721312
+(|σ|∈[70, 80), Δ=2): Top-1/total: 34 / 145 ≈ 0.23448275862068965
+(|σ|∈[70, 80), Δ=3): Top-1/total: 10 / 78 ≈ 0.1282051282051282
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 374 / 375 ≈ 0.9973333333333333
+|σ|∈[10, 20): Top-1/total: 763 / 769 ≈ 0.9921976592977894
+|σ|∈[20, 30): Top-1/total: 740 / 763 ≈ 0.9698558322411533
+|σ|∈[30, 40): Top-1/total: 731 / 776 ≈ 0.9420103092783505
+|σ|∈[40, 50): Top-1/total: 664 / 720 ≈ 0.9222222222222223
+|σ|∈[50, 60): Top-1/total: 620 / 684 ≈ 0.9064327485380117
+|σ|∈[60, 70): Top-1/total: 525 / 582 ≈ 0.9020618556701031
+|σ|∈[70, 80): Top-1/total: 421 / 467 ≈ 0.9014989293361885
+Δ(1)= Top-1/total: 2138 / 2159 ≈ 0.9902732746641963
+Δ(2)= Top-1/total: 1909 / 1913 ≈ 0.9979090433873498
+Δ(3)= Top-1/total: 791 / 1064 ≈ 0.743421052631579
+(|σ|∈[0, 10), Δ=1): Top-1/total: 183 / 184 ≈ 0.9945652173913043
+(|σ|∈[0, 10), Δ=2): Top-1/total: 133 / 133 ≈ 1.0
+(|σ|∈[0, 10), Δ=3): Top-1/total: 58 / 58 ≈ 1.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 296 / 297 ≈ 0.9966329966329966
+(|σ|∈[10, 20), Δ=2): Top-1/total: 297 / 298 ≈ 0.9966442953020134
+(|σ|∈[10, 20), Δ=3): Top-1/total: 170 / 174 ≈ 0.9770114942528736
+(|σ|∈[20, 30), Δ=1): Top-1/total: 286 / 288 ≈ 0.9930555555555556
+(|σ|∈[20, 30), Δ=2): Top-1/total: 293 / 293 ≈ 1.0
+(|σ|∈[20, 30), Δ=3): Top-1/total: 161 / 182 ≈ 0.8846153846153846
+(|σ|∈[30, 40), Δ=1): Top-1/total: 291 / 293 ≈ 0.9931740614334471
+(|σ|∈[30, 40), Δ=2): Top-1/total: 291 / 291 ≈ 1.0
+(|σ|∈[30, 40), Δ=3): Top-1/total: 149 / 192 ≈ 0.7760416666666666
+(|σ|∈[40, 50), Δ=1): Top-1/total: 287 / 291 ≈ 0.9862542955326461
+(|σ|∈[40, 50), Δ=2): Top-1/total: 291 / 291 ≈ 1.0
+(|σ|∈[40, 50), Δ=3): Top-1/total: 86 / 138 ≈ 0.6231884057971014
+(|σ|∈[50, 60), Δ=1): Top-1/total: 283 / 287 ≈ 0.9860627177700348
+(|σ|∈[50, 60), Δ=2): Top-1/total: 265 / 265 ≈ 1.0
+(|σ|∈[50, 60), Δ=3): Top-1/total: 72 / 132 ≈ 0.5454545454545454
+(|σ|∈[60, 70), Δ=1): Top-1/total: 271 / 275 ≈ 0.9854545454545455
+(|σ|∈[60, 70), Δ=2): Top-1/total: 196 / 197 ≈ 0.9949238578680203
+(|σ|∈[60, 70), Δ=3): Top-1/total: 58 / 110 ≈ 0.5272727272727272
+(|σ|∈[70, 80), Δ=1): Top-1/total: 241 / 244 ≈ 0.9877049180327869
+(|σ|∈[70, 80), Δ=2): Top-1/total: 143 / 145 ≈ 0.9862068965517241
+(|σ|∈[70, 80), Δ=3): Top-1/total: 37 / 78 ≈ 0.47435897435897434
+
 w/ Lev-NFA multiedit pruning
 
 Precision@1
