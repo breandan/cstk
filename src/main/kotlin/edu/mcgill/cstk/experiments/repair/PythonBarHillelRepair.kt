@@ -124,11 +124,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println("Source: ${toRepair.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
 
-    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levDist)
-//    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
-    val fsa = makeLevFSA(toRepair, levDist, monoEditBounds).also { levBallSize = it.Q.size }
-
     val intGram = try {
+      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levDist)
+//    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
+      val fsa = makeLevFSA(toRepair, levDist, monoEditBounds).also { levBallSize = it.Q.size }
+
       if (!fsa.recognizes(humanRepair))
         throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
       else println("LEV-FSA recognizes human repair (Total time=${allTime.elapsedNow()})")
