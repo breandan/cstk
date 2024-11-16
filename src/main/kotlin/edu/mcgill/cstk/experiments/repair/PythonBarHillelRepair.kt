@@ -151,7 +151,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         throw Exception("Human repair is unrecognizable by LEV ∩ CFG! (Total time=${allTime.elapsedNow()})")
       } else println("Human repair is recognized by LEV ∩ CFG! (Total time=${allTime.elapsedNow()})")
     } catch (e: Exception) {
-      println("Encountered error (${e.message}): $humanRepairANSI\n${e.stackTraceToString()}")
+      println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
       println(allRate.toString())
       negative.appendText("${toRepair.size}, $levDist, 0, " +
