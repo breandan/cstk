@@ -265,7 +265,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, " +
-//          "${dfa.states.size}, ${dfa.numberOfTransitions}, " +
+          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
           "$indexOfTarget, ${levAlign.summarize()}\n")
     }
 
