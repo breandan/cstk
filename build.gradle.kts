@@ -231,7 +231,7 @@ tasks {
     register(cmd, JavaExec::class) {
       mainClass = main
       minHeapSize = "4g"
-      maxHeapSize = "60g"
+      maxHeapSize = "16g"
 
       if (cmd == "probeLLaMA")  {
         standardInput = System.`in`
