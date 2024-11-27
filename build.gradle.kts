@@ -2,7 +2,7 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.0.0"
+  kotlin("jvm") version "2.1.0"
   id("com.github.ben-manes.versions") version "0.51.0"
   id("de.undercouch.download") version "5.6.0"
   id("com.gradleup.shadow") version "8.3.3"
@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.30.0"
+  val djlVersion = "0.31.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -57,11 +57,11 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.37.2"
+  val openrwVersion = "8.41.0"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "3.1.1"
+  val smileVersion = "4.0.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -89,7 +89,7 @@ dependencies {
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.5")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.8.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.9.2")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.27.0")
@@ -107,7 +107,7 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
   // Pretty-printing string diffs
-  implementation("io.github.java-diff-utils:java-diff-utils:4.12")
+  implementation("io.github.java-diff-utils:java-diff-utils:4.15")
 
   // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.70.0")
@@ -168,7 +168,7 @@ dependencies {
 
   implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.0.0")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 }
 
