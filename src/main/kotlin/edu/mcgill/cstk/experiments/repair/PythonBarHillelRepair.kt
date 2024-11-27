@@ -202,11 +202,10 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(pTree.termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
-    val rankedResults = dfa.decodeDFA(
+    val rankedResults = dfa.decodeDFAWithBeamSearch(
       mc = P_BIFI_PY150,
       timeout = timeout,
       dec = pTree.termDict,
-      parallelize = false,
       callback = {
         totalSamples.incrementAndGet()
         if (it == target) {
@@ -231,7 +230,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       ?.let { println("Top1 scoring repair: ${levenshteinAlign(toRepair, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
-      println("Drew $totalSamples samples in $timeout with ${intGram.size} prods, " +
+      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ${intGram.size} prods, " +
 //        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
           "length-$levDist human repair not found")
       negative.appendText(
