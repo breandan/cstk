@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PythonBarHillelRepairKt" type="JetRunConfigurationType" nameIsGenerated="true">
+    <option name="MAIN_CLASS_NAME" value="edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt" />
+    <module name="gym-fs.main" />
+    <shortenClasspath name="NONE" />
+    <option name="VM_PARAMETERS" value="-Xmx100G" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

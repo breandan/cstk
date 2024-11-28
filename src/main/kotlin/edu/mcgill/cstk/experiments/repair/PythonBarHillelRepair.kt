@@ -145,7 +145,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
-      else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
+      else if (MAX_DFA_IN < intGram.size) throw Exception("Int grammar was still too large!")
       else if (humanRepair !in intGram.language) {
         println("Human repair recognized by original CFG: " + (humanRepair in vanillaS2PCFG.language))
         throw Exception("Human repair is unrecognizable by LEV ∩ CFG! (Total time=${allTime.elapsedNow()})")
@@ -646,7 +646,7 @@ fun measureLevenshteinBlanketSize() {
 
       try {
         if (intGram == null) throw Exception("Exception while building grammar!")
-        else if (50_000 < intGram.size) throw Exception("Int grammar was still too large!")
+        else if (MAX_DFA_IN < intGram.size) throw Exception("Int grammar was still too large!")
         else if (fixedTokens !in intGram.language) throw Exception("Human repair is unrecognizable!")
         else println("Human repair is recognized by LEV ∩ CFG grammar")
       } catch (e: Exception) { return@forEach }
