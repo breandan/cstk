@@ -164,7 +164,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       .also { println("Constructed PTree in ${it.duration}") }.value
     val langSize = pTree.totalTreesStr
     val clock = TimeSource.Monotonic.markNow()
-    val totalSamples = AtomicInteger(0)
+    var totalSamples = 0
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
@@ -207,7 +207,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       timeout = timeout,
       dec = pTree.termDict,
       callback = {
-        totalSamples.incrementAndGet()
+        totalSamples++
         if (it == target) {
           matchFound = true
           println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
@@ -260,7 +260,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
       allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples.get()
+      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
       positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, " +
@@ -646,7 +646,7 @@ fun measureLevenshteinBlanketSize() {
 
       try {
         if (intGram == null) throw Exception("Exception while building grammar!")
-        else if (30_000 < intGram.size) throw Exception("Int grammar was still too large!")
+        else if (50_000 < intGram.size) throw Exception("Int grammar was still too large!")
         else if (fixedTokens !in intGram.language) throw Exception("Human repair is unrecognizable!")
         else println("Human repair is recognized by LEV ∩ CFG grammar")
       } catch (e: Exception) { return@forEach }

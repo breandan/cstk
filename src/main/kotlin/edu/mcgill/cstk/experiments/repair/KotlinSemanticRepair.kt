@@ -52,7 +52,7 @@ val msgCollector = PrintingMessageCollector(NullPrintStream.INSTANCE, WITHOUT_PA
 fun String.isCompilableKotlin(): Boolean =
   File.createTempFile("tmp", ".kt").apply { delete(); writeText(this@isCompilableKotlin)  }
     .run {
-      kotlinc.execImpl(msgCollector, Services.EMPTY, createCompileArgs(absolutePath))
+      kotlinc.exec(msgCollector, Services.EMPTY, createCompileArgs(absolutePath))
         .apply { File("/tmp/" + nameWithoutExtension + "Kt.class").delete() }
     }.code == 0
 
