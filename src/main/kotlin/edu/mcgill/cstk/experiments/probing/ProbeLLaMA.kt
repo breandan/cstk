@@ -41,7 +41,7 @@ import kotlin.time.TimeSource
 ./gradlew probeLLaMA --console=plain
  */
 fun main() {
-  val model = "Llama-3.1-8B-Instruct-Q4_0.gguf"
+  val model = "Llama-3.2-3B-Instruct-Q4_0.gguf"
   val vocab = Llama3.getVocab(model)
   val iterator = StateCounter(vanillaS2PCFG, vocab)
   val sampler: (FloatArray) -> Int = { logits -> iterator.countStates(logits) }
