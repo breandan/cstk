@@ -6,12 +6,9 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
-import ai.hypergraph.kaliningraph.visualization.show
-import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.*
 import kotlin.sequences.toList
 import kotlin.streams.*
@@ -176,7 +173,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(pTree.termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
-    val rankedResults = dfa.decodeDFAWithBeamSearch(
+    val rankedResults = dfa.decodeDFA(
       mc = P_BIFI_PY150,
       timeout = timeout,
       dec = pTree.termDict,
