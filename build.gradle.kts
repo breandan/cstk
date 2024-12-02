@@ -76,9 +76,6 @@ dependencies {
 //  https://github.com/tech-srl/prime
 //  implementation("com.github.tech-srl:prime:5fae8f309f")
 
-  // Clustering for automata extraction
-  implementation("org.tribuo:tribuo-clustering-kmeans:4.3.1")
-
   // RegEx to DFA conversion
   // https://github.com/cs-au-dk/dk.brics.automaton
   implementation("dk.brics:automaton:1.12-4")
