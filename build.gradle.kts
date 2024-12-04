@@ -111,7 +111,7 @@ dependencies {
 
   // Evaluation metrics for information retrieval
   // https://github.com/qcri/EvaluationMetrics/tree/master/src/main/java/qa/qf/qcri/iyas/evaluation/ir
-  implementation("com.github.qcri:EvaluationMetrics:62ff519478")
+//  implementation("com.github.qcri:EvaluationMetrics:62ff519478")
 
   // DFA to RegEx conversion
   // https://github.com/LearnLib/learnlib/issues/75
