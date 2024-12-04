@@ -111,7 +111,11 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepair = validTokens.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
-    val levDist = levAlign.patchSize()
+    val levDist = (1..MAX_RADIUS).first {
+      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
+      val fsa = makeLevFSA(toRepair, it, monoEditBounds)
+      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+    }
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -140,6 +144,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     println("Implicated nonterminals: " + (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) + " / " + s2pg.nonterminals.size)
 
+    allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
       else if (MAX_DFA_IN < intGram.size) throw Exception("Int grammar was still too large!")
@@ -153,10 +158,16 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println(allRate.toString())
       negative.appendText("${toRepair.size}, $levDist, 0, " +
         "${levBallSize}, ${intGram?.size ?: 0}, ${levAlign.summarize()}\n")
+
+      println()
+      println("Precision@1\n===========")
+      println(P_1ByLevDist.summarizeLenAndDist())
+      println("Precision@All\n=============")
+      println(P_AllByLevDist.summarizeLenAndDist())
+      println()
       return@forEach
     }
 
-    allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
       .also { println("Constructed PTree in ${it.duration}") }.value
     val langSize = pTree.totalTreesStr
@@ -268,8 +279,8 @@ fun Map<Int, LBHMetrics>.summarize() =
 
 data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0, var error: Int = 0) {
   override fun toString() =
-    "Top-1/rec/pos/total: $top1 / $recall / $total / ${total + error}, " +
-      "errors: $error, P@1: ${top1.toDouble() / (total + error)}, P@All: ${recall.toDouble() / (total + error)}"
+    "Top-1/rec/pos/total: $top1 / $recall / ${total-error} / ${total}, " +
+      "errors: $error, P@1: ${top1.toDouble() / total}, P@All: ${recall.toDouble() / total}"
 }
 
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
