@@ -6,7 +6,6 @@ import com.github.benmanes.caffeine.cache.*
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.rewriting.*
 import edu.mcgill.cstk.utils.*
-import qa.qf.qcri.iyas.evaluation.ir.MeanReciprocalRank
 import java.net.URI
 import kotlin.reflect.KFunction1
 
@@ -79,8 +78,9 @@ fun Model.evaluateMultimaskMC(code: String, SAMPLES: Int = 200): Double =
         val gold = results.associateWith { (trueToken.startsWith(it)) }
         if (results.isEmpty()) null else results to gold
       }.let {
-        val (rankings, gold) = it.unzip()
-        MeanReciprocalRank.computeWithRankingList(rankings, gold)
+//        val (rankings, gold) = it.unzip()
+//        MeanReciprocalRank.computeWithRankingList(rankings, gold)
+        TODO()
       }
   }
 
