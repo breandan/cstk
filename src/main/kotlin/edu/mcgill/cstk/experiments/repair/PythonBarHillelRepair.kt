@@ -111,11 +111,13 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepair = validTokens.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
-    val levDist = (1..MAX_RADIUS).first {
-      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
-      val fsa = makeLevFSA(toRepair, it, monoEditBounds)
-      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
-    }
+    val levDist = (1..MAX_RADIUS).firstOrNull {
+      try {
+        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
+        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
+        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+      } catch (e: Exception) { false }
+    } ?: MAX_RADIUS
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
