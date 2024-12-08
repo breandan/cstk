@@ -111,13 +111,15 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepair = validTokens.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
-    val levDist = (1..MAX_RADIUS).firstOrNull {
-      try {
-        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
-        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
-        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
-      } catch (e: Exception) { false }
-    } ?: MAX_RADIUS
+    val levGuess = levAlign.patchSize()
+//    val levGuess = (1..MAX_RADIUS).firstOrNull {
+//      try {
+//        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
+//        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
+//        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+//      } catch (e: Exception) { println("Failed $it, increasing..."); false }
+//    } ?: MAX_RADIUS
+    val levDist = levAlign.patchSize()
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -128,9 +130,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     println("Repair: $humanRepairANSI")
 
     val intGram = try {
-      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levDist)
+      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levGuess)
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
-      val fsa = makeLevFSA(toRepair, levDist, monoEditBounds).also { levBallSize = it.Q.size }
+      val fsa = makeLevFSA(toRepair, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
 
       if (!fsa.recognizes(humanRepair))
         throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
@@ -141,7 +143,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection exception: ${e.stackTraceToString()}"); null }
     catch (e: Error) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
-    if (intGram != null) println("Constructed LEV($levDist, ${toRepair.size}, $levBallSize) " +
+    if (intGram != null) println("Constructed LEV($levGuess, ${toRepair.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
     println("Implicated nonterminals: " + (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) + " / " + s2pg.nonterminals.size)
@@ -225,14 +227,6 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       )
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-//        results.parallelStream().map {
-//          val levDist = levenshtein(it.tokenizeByWhitespace(), humanRepair)
-//          val levModifier = when (levDist) { 1 -> 0.58; 2 -> 0.34; else -> 0.08 }
-//          it to P_BIFI.score(it.mapToBIFIFmt()) * levModifier
-//        }.sorted(Comparator.comparingDouble { it.second }).map { it.first }.toList()
-      // First sort by levenshtein distance, then by perplexity
-//          .map { it to levenshtein(source, it) to P_BIFI.score(it.mapToBIFIFmt()) }
-//          .sortedWith(compareBy({ it.second }, { it.third })).map { it.first }
 
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
