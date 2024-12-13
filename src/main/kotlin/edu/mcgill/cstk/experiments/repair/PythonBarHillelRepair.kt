@@ -78,6 +78,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val s2pg = vanillaS2PCFG
+  val termDict = TermDict(s2pg.terminals)
   val parikhMap = s2pg.parikhMap
   val pcfgMap = readPCFG3()
   val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
@@ -181,17 +182,17 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-    val dfa = pTree.toDFA(minimize = false)!!
+    val dfa = pTree.toDFA(minimize = true)!!
 
 //    println(dfa.toDot().replaceAll(vanillaS2PCFG.unicodeMap))
 
-    val dfaRecognized = try { dfa.run(pTree.termDict.encode(humanRepair)) } catch (_: Exception) { false }
+    val dfaRecognized = try { dfa.run(termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
     val rankedResults = dfa.decodeDFA(
       mc = P_BIFI_PY150,
       timeout = timeout,
-      dec = pTree.termDict,
+      dec = termDict,
       callback = {
         totalSamples++
         if (it == target) {
@@ -684,7 +685,9 @@ data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
 }
 
 fun profileRecognizer() {
-  sizeAndDistBalancedRepairsUnminimized.forEach { (invalid, valid) ->
+  sizeAndDistBalancedRepairsUnminimized.toList().parallelStream().forEach { (invalid, valid) ->
+    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(invalid.tokenizeByWhitespace(), pad = 3)
+    println(monoEditBounds)
     if(invalid.matches(vanillaS2PCFG)) println("!: $invalid")
     if(!valid.matches(vanillaS2PCFG)) println("!!: $valid")
   }
