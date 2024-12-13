@@ -58,8 +58,8 @@ fun printMemoryUsage() {
 fun readResourceFile(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readText()
 
 fun readPCFG3(): Map<Π3A<Σᐩ>, Int> =
-  readResourceFile("models/pcfg3_BIFI.csv")
-  .lines().map { it.split(" ::: ") }.associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
+  readResourceFile("models/pcfg3_BIFI.csv").lines().map { it.split(" ::: ") }
+  .associate { Pair(it[0].split(" ").let { it[0] to it[1] to it[2] }, it[1].toInt()) }
 
 fun readPCFG5(s2pg: CFG): Map<Int, Int> =
   readResourceFile("models/pcfg5_BIFI.csv")
@@ -681,6 +681,13 @@ data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
     S2PMetrics(top1 + other.top1, total + other.total)
   override fun toString() =
     "Top-1/total: $top1 / $total ≈ ${top1.toDouble() / total}"
+}
+
+fun profileRecognizer() {
+  sizeAndDistBalancedRepairsUnminimized.forEach { (invalid, valid) ->
+    if(invalid.matches(vanillaS2PCFG)) println("!: $invalid")
+    if(!valid.matches(vanillaS2PCFG)) println("!!: $valid")
+  }
 }
 
 /*
