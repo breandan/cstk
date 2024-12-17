@@ -63,7 +63,7 @@ pip install transformers
 Prefetch the models you wish to evaluate from the login node -- this will require internet access. Each model must provide a [`fill-mask` pipeline](https://huggingface.co/docs/transformers/v4.16.2/en/main_classes/pipelines#transformers.FillMaskPipeline) (see here for a list of [compatible models](https://huggingface.co/models?pipeline_tag=fill-mask&sort=downloads&search=code)).
 
 ```bash
-python embedding_server.py --model microsoft/codebert-base microsoft/graphcodebert-base dbernsohn/roberta-java huggingface/CodeBERTa-small-v1
+python scripts/embedding_server.py --model microsoft/codebert-base microsoft/graphcodebert-base dbernsohn/roberta-java huggingface/CodeBERTa-small-v1
 ```
 
 Once all models have been downloaded, kill it with <kbd>Ctrl</kbd>+<kbd>C</kbd> (this step should only need to be run once). Confirm that `~/.cache/huggingface/transformers` is not empty.
@@ -1108,7 +1108,7 @@ module load python/3.8 && \
 # module load CCEnv StdEnv java/17.0.2 && \
 module load java/17.0.2 && \
 source venv/bin/activate && \
-python embedding_server.py --model microsoft/graphcodebert-base --offline & && \
+python scripts/embedding_server.py --model microsoft/graphcodebert-base --offline & && \
 java -jar gym-fs-fat-1.0-SNAPSHOT.jar 2>&1 | tee /scratch/b/bengioy/breandan/log.txt
 ```
 

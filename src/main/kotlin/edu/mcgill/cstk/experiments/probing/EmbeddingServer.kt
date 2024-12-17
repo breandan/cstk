@@ -132,4 +132,4 @@ class EmbeddingServer(http.server.SimpleHTTPRequestHandler):
 my_server = HTTPServer(('', 8000), EmbeddingServer)
 # Start the server
 my_server.serve_forever()
-""".let { File("embedding_server.py").apply { writeText(it) } }
+""".let { File("scripts/embedding_server.py").apply { writeText(it) } }
