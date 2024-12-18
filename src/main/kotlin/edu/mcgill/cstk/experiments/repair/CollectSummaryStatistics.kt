@@ -8,6 +8,7 @@ import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
+import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
@@ -35,7 +36,8 @@ fun main() {
 //  computeLevDistDistribution()
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
-  collectNaturallySmallRepairs()
+//  collectNaturallySmallRepairs()
+  prepareMakemoreDataset()
 //  checkSemanticAdmissibility()
 //  collectShortRepairSpecimens()
 //  collectSyntheticRepairs()
@@ -50,6 +52,14 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+}
+
+fun prepareMakemoreDataset() {
+  streamBIFIContents().forEach {
+    val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
+    if (str in vanillaS2PCFG.language)
+      println(str.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString(""))
+  }
 }
 
 fun checkSemanticAdmissibility() {

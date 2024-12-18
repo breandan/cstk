@@ -1,16 +1,18 @@
 package edu.mcgill.cstk.experiments.probing
 
 import ai.hypergraph.kaliningraph.parsing.terminals
+import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.to
 import java.net.URL
 import java.net.URLEncoder
 
+// Character-level LLM, transforms Python lexical tokens to ASCII characters
 object MakeMore {
   object PyTokMap {
-    val tm = vanillaS2PCFG.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
-    val mt = vanillaS2PCFG.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
+    val tm: Map<Σᐩ, Char> = vanillaS2PCFG.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
+    val mt: Map<Char, Σᐩ> = vanillaS2PCFG.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
   }
 
   val MAKEMORE_URL = "http://localhost:8000/makemore/"
