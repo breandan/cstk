@@ -13,14 +13,12 @@ from makemore import ModelConfig, Transformer, create_datasets, generate
 # ------------------------------------------------------------
 class Args:
     input_file = 'names.txt'        # your training input file
-    work_dir = 'out'
     device = 'mps'                  # or 'cuda' if you have a GPU
     n_layer = 4
     n_head = 4
     n_embd = 64
     n_embd2 = 64
-    type = 'transformer'
-    top_k = -1
+    top_k = 20
 args = Args()
 
 # Load datasets
@@ -76,20 +74,34 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
                     # just a zero input.
                     idx = torch.zeros((1,1), dtype=torch.long, device=args.device)
 
-                # Generate the next token
-                top_k = args.top_k if args.top_k != -1 else None
-                new_idx = generate(model, idx, max_new_tokens=1, top_k=top_k, do_sample=False)
+                # Forward the model with the current idx to get the logits for the next token
+                logits, _ = model(idx)
+                logits = logits[:, -1, :]  # Get the last timestep's logits
 
-                # The last appended token is new_idx[0, -1]
-                next_token_id = new_idx[0, -1].item()
-                # Decode the token back to a character
-                next_char = train_dataset.decode([next_token_id])
+                # If you're using top_k filtering:
+                top_k = args.top_k if args.top_k != -1 else None
+                if top_k is not None:
+                    v, _ = torch.topk(logits, top_k, dim=-1)
+                    logits[logits < v[:, [-1]]] = float('-inf')
+
+                # Convert logits to probabilities
+                probs = torch.nn.functional.softmax(logits, dim=-1)
+
+                # Now extract the top n suggestions
+                values, indices = torch.topk(probs, k=args.top_k, dim=-1)
+                top_n_token_ids = indices[0].tolist()
+
+                # Decode these token IDs into characters
+                top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
+
+                # Join them or handle them as needed
+                next_chars = ' '.join(top_n_chars)
 
                 # Send response
                 self.send_response(200)
                 self.send_header("Content-type", "text/plain; charset=utf-8")
                 self.end_headers()
-                self.wfile.write(next_char.encode('utf-8'))
+                self.wfile.write(next_chars.encode('utf-8'))
             else:
                 # No 'next' parameter provided
                 self.send_response(400)
