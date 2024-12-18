@@ -84,6 +84,12 @@ fun fetchLevenshteinAlignment() {
     .forEach { println("$it\n") }
 }
 
+/**
+ * cd src/main/resources/datasets/python &&
+ * wget https://nlp.stanford.edu/projects/myasu/BIFI/data_minimal.zip &&
+ * unzip data_minimal.zip && rm data_minimal.zip
+ */
+
 fun streamBIFIContents(
   good: Boolean = true,
   kind: String = if (good) "good" else "bad",
