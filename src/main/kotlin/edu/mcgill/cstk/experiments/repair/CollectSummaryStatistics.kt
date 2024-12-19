@@ -11,6 +11,8 @@ import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
+import java.net.URL
+import java.net.URLEncoder
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
@@ -37,7 +39,7 @@ fun main() {
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
-  prepareMakemoreDataset()
+//  prepareMakemoreDataset()
 //  checkSemanticAdmissibility()
 //  collectShortRepairSpecimens()
 //  collectSyntheticRepairs()
@@ -52,6 +54,24 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
+  measureThroughput()
+}
+
+fun measureThroughput() {
+  var str = ""
+  val startTime = TimeSource.Monotonic.markNow()
+  var i = 0
+
+  while (startTime.elapsedNow() < 10.seconds) {
+    try {
+      str += URL("http://localhost:8000/makemore?next=${URLEncoder.encode(str, "utf-8")}").readText().tokenizeByWhitespace().random()
+      println(str)
+//      println(str.map { MakeMore.PyTokMap.mt[it] }.joinToString(" "))
+    } catch (e: Exception) { str = str.dropLast(str.length / 2) }
+    i++
+  }
+
+  println("Done: ${i/10f} tok/sec")
 }
 
 fun prepareMakemoreDataset() {

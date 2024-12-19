@@ -55,58 +55,55 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
             if 'next' in query:
                 input_text = query['next'][0]
                 input_text = unquote(input_text)  # URL decode
-
-                # Encode the input text into indices
-                # NOTE: The dataset expects a sequence of single-character tokens.
-                #       Ensure that the input_text is in the format expected by your dataset.
-                #       For example, if your dataset is character-based, just pass the string.
-
-                # Encode the input sequence
-                # The dataset encodes characters to integers.
-                # If input_text is empty or doesn't match expected format, handle gracefully.
-                if len(input_text) > 0:
-                    idx = train_dataset.encode(input_text).unsqueeze(0).to(args.device)
-                else:
-                    # If empty, start from the start token (0)
-                    # However note that in the makemore code, the data loading logic:
-                    # The x/y sequences start with a <START> token as 0. If you want to
-                    # generate the next token for an empty string, you might start from
-                    # just a zero input.
-                    idx = torch.zeros((1,1), dtype=torch.long, device=args.device)
-
-                # Forward the model with the current idx to get the logits for the next token
-                logits, _ = model(idx)
-                logits = logits[:, -1, :]  # Get the last timestep's logits
-
-                # If you're using top_k filtering:
-                top_k = args.top_k if args.top_k != -1 else None
-                if top_k is not None:
-                    v, _ = torch.topk(logits, top_k, dim=-1)
-                    logits[logits < v[:, [-1]]] = float('-inf')
-
-                # Convert logits to probabilities
-                probs = torch.nn.functional.softmax(logits, dim=-1)
-
-                # Now extract the top n suggestions
-                values, indices = torch.topk(probs, k=args.top_k, dim=-1)
-                top_n_token_ids = indices[0].tolist()
-
-                # Decode these token IDs into characters
-                top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
-
-                # Join them or handle them as needed
-                next_chars = ' '.join(top_n_chars)
-
-                # Send response
-                self.send_response(200)
-                self.send_header("Content-type", "text/plain; charset=utf-8")
-                self.end_headers()
-                self.wfile.write(next_chars.encode('utf-8'))
             else:
-                # No 'next' parameter provided
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(b"Missing 'next' query parameter.")
+                input_text = ''
+
+            # Encode the input text into indices
+            # NOTE: The dataset expects a sequence of single-character tokens.
+            #       Ensure that the input_text is in the format expected by your dataset.
+            #       For example, if your dataset is character-based, just pass the string.
+
+            # Encode the input sequence
+            # The dataset encodes characters to integers.
+            # If input_text is empty or doesn't match expected format, handle gracefully.
+            if len(input_text) > 0:
+                idx = train_dataset.encode(input_text).unsqueeze(0).to(args.device)
+            else:
+                # If empty, start from the start token (0)
+                # However note that in the makemore code, the data loading logic:
+                # The x/y sequences start with a <START> token as 0. If you want to
+                # generate the next token for an empty string, you might start from
+                # just a zero input.
+                idx = torch.zeros((1,1), dtype=torch.long, device=args.device)
+
+            # Forward the model with the current idx to get the logits for the next token
+            logits, _ = model(idx)
+            logits = logits[:, -1, :]  # Get the last timestep's logits
+
+            # If you're using top_k filtering:
+            top_k = args.top_k if args.top_k != -1 else None
+            if top_k is not None:
+                v, _ = torch.topk(logits, top_k, dim=-1)
+                logits[logits < v[:, [-1]]] = float('-inf')
+
+            # Convert logits to probabilities
+            probs = torch.nn.functional.softmax(logits, dim=-1)
+
+            # Now extract the top n suggestions
+            values, indices = torch.topk(probs, k=args.top_k, dim=-1)
+            top_n_token_ids = indices[0].tolist()
+
+            # Decode these token IDs into characters
+            top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
+
+            # Join them or handle them as needed
+            next_chars = ' '.join(top_n_chars)
+
+            # Send response
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(next_chars.encode('utf-8'))
         else:
             # Not found
             self.send_response(404)
