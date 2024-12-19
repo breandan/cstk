@@ -34,7 +34,7 @@ class ModelConfig:
     block_size: int = None # length of the input sequences of integers
     vocab_size: int = None # the input integers are in range [0 .. vocab_size -1]
     # parameters below control the sizes of each model slightly differently
-    n_layer: int = 4
+    n_layer: int = 8
     n_embd: int = 64
     n_embd2: int = 64
     n_head: int = 4
@@ -341,10 +341,10 @@ if __name__ == '__main__':
     parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
     # model
     parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
-    parser.add_argument('--n-layer', type=int, default=4, help="number of layers")
-    parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=64, help="number of feature channels in the model")
-    parser.add_argument('--n-embd2', type=int, default=64, help="number of feature channels elsewhere in the model")
+    parser.add_argument('--n-layer', type=int, default=8, help="number of layers")
+    parser.add_argument('--n-head', type=int, default=8, help="number of heads (in a transformer)")
+    parser.add_argument('--n-embd', type=int, default=128, help="number of feature channels in the model")
+    parser.add_argument('--n-embd2', type=int, default=128, help="number of feature channels elsewhere in the model")
     # optimization
     parser.add_argument('--batch-size', '-b', type=int, default=128, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")

@@ -18,7 +18,7 @@ class Args:
     n_head = 4
     n_embd = 64
     n_embd2 = 64
-    top_k = 20
+    top_k = 60
 args = Args()
 
 # Load datasets
@@ -58,6 +58,7 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
             else:
                 input_text = ''
 
+            print(input_text)
             # Encode the input text into indices
             # NOTE: The dataset expects a sequence of single-character tokens.
             #       Ensure that the input_text is in the format expected by your dataset.
