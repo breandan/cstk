@@ -190,6 +190,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
+//    val rankedResults = dfa.decodeDFA(
+//      mc = P_BIFI_PY150,
+//      timeout = timeout,
+//      dec = termDict,
+//      callback = {
+//        totalSamples++
+//        if (it == target) {
+//          matchFound = true
+//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+//          elapsed = clock.elapsedNow().inWholeMilliseconds
+//        }
+//      }
+//    )
+
     val rankedResults = MakeMore.decodeDFA(
       bAutomaton = dfa,
       timeout = timeout,

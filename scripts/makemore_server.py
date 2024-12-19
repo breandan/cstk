@@ -14,11 +14,11 @@ from makemore import ModelConfig, Transformer, create_datasets, generate
 class Args:
     input_file = 'names.txt'        # your training input file
     device = 'mps'                  # or 'cuda' if you have a GPU
-    n_layer = 4
-    n_head = 4
-    n_embd = 64
-    n_embd2 = 64
-    top_k = 60
+    n_layer = 8
+    n_head = 8
+    n_embd = 128
+    n_embd2 = 128
+    top_k = 85
 args = Args()
 
 # Load datasets
@@ -95,7 +95,12 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
             top_n_token_ids = indices[0].tolist()
 
             # Decode these token IDs into characters
-            top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
+            top_n_chars = [
+                train_dataset.decode([token_id])
+                for token_id in top_n_token_ids
+                if 0 < token_id < len(train_dataset.itos)
+            ]
+            # top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
 
             # Join them or handle them as needed
             next_chars = ' '.join(top_n_chars)

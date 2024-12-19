@@ -39,7 +39,7 @@ fun main() {
 //  fetchLevenshteinAlignment()
 //  collectPCFGQuintuples()
 //  collectNaturallySmallRepairs()
-//  prepareMakemoreDataset()
+//  prepareUnsupervisedMakemoreDataset()
 //  checkSemanticAdmissibility()
 //  collectShortRepairSpecimens()
 //  collectSyntheticRepairs()
@@ -54,7 +54,8 @@ fun main() {
 //  totalCharacterEditDistance()
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
-  measureThroughput()
+//  measureThroughput()
+  MakeMore.checkSamples()
 }
 
 fun measureThroughput() {
@@ -73,7 +74,7 @@ fun measureThroughput() {
   println("Done: ${i/10f} tok/sec")
 }
 
-fun prepareMakemoreDataset() {
+fun prepareUnsupervisedMakemoreDataset() {
   streamBIFIContents().forEach {
     val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
     if (str in vanillaS2PCFG.language)

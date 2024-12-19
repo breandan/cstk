@@ -1,7 +1,9 @@
 package edu.mcgill.cstk.experiments.probing
 
+import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.automata.BAutomaton
 import ai.hypergraph.kaliningraph.automata.FSATrajectory
+import ai.hypergraph.kaliningraph.parsing.language
 import ai.hypergraph.kaliningraph.parsing.terminals
 import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
@@ -35,16 +37,17 @@ object MakeMore {
 
   fun checkSamples() {
     """
-  "#"W"VwX!"#"="W"X!"#x!K"L"T!R"WwX!S"#"="W"VwX!
-  "#YZ!K"L"WvXT!Rv!S!
-  "#Y[wTwVwTwVwTw\V[wTwVwTwVwTw\V[wTwVwTwVwTwVwTw\Z!
-  C"W"V${'$'}"XT!R"#"="WX="WwwXo"="W"#wV"#zX!"="WX!"#"="W"V"V"X!8"W"V"X="="W"V"X!S!
-  K"L"T!R"#W"Y"Zo"YvZo"YvZo"X!S!
-  "#pv!"#YZ!"#Y"="W"XZ!"#"="WYXK"L"WXZ!B"b"^"W"K"L"G"L"X!"T!R"="W"VwX!S!
-  K"L"T!RK"L"T!R"#"Y"="WwXr"WYvZX!K"L"W"="WvXXT!R"#w!"="W"X!"="WYwZX!SSS!
-  D"W"XT!RC"W"XT!R"W"V"X="WX!"WwX!SD"T!R"#v!SS"#"WwX!
-  ;"<"V"!"#YwVwZ!"#"WX!K"L"T!R"#"="W"X!"="W"X!"="W"W"="XX!SK"L"="T!R"Y"V"Z'"="X!S!
-    """.lines().map { it.trim().map { PyTokMap.mt[it] }.joinToString(" ") }.forEach { println(it) }
+C"W"XT!R"="#"WX!"="WX!"="#"WX!"="#"="="!"="#"="="!"="#"="="!S!
+C"WXT!R"="WwVwV"#wX!"="WwV"#yX!"="WwVwX!;"="="<"!B"W"="Xbv!BwL"="!S!
+C"W"XT!R"#"W"X!"#Y"Y"T"o"ZK"L"WvVpvVvXZ!S!
+C"W"V"#xXT!Rw!"="#"="YwZ!"="WwVzX!"="WwVyX!G"T!R"="WwV"="WwXX!S"="WwX!"="WYQ"T"YvZV"="V"="V"="V"="V"YvZV"XZ!S!
+D"T!Rw!C"W"XT!R"="#w!"="#w!"="#w!"="#w!"="#w!"="#w!"="#w!"="#w!SC"W"XT!R"="#w!"="#w!"="#w!"="#w!SS!
+C"W"XT!Rw!"#"="WwX!B"W"Xbv!S!
+C"W"#wV"#wV"#xXT!Rw!"#"="="W"="="W"XVwX!"#"W"V"X!"W"V"X="W"V"X!S!
+C"W"V"XT!Rw!"#w="W"="X!"W"X!"="W"X!G_"="="W"XT!R"="W"X!SP"WX?"T!R"#"="WX!"W"X!"#"W"="K"L"X!G"T!R"#"="W"X!SS"="WX!S!
+C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
+    """.trimIndent().lines().map { it.trim().map { PyTokMap.mt[it] }.joinToString(" ") }
+      .forEach { println(it); println(it in vanillaS2PCFG.language) }
   }
 
   fun prepTrainingSet() {
@@ -65,7 +68,7 @@ object MakeMore {
     dec: Map<Char, Σᐩ>, // Maps unicode characters back to strings
     callback: (Σᐩ) -> Unit = {},
     timeout: Duration = Duration.INFINITE,
-    beamWidth: Long = 1_000_000L, // Maximum number of trajectories to keep at each step
+    beamWidth: Long = 100L, // Maximum number of trajectories to keep at each step
   ): List<Σᐩ> {
     val startTime = TimeSource.Monotonic.markNow()
     val fullTrajectories = PriorityBlockingQueue<FSATrajectory>(10000) // Max-heap for full trajectories
@@ -78,25 +81,28 @@ object MakeMore {
       beam.isNotEmpty() &&
       startTime.elapsedNow() < timeout
     ) {
-      val nextBeam = beam.parallelStream().flatMap { partTraj ->
-        val lastToks = partTraj.traj.reversed().filterNotNull()
-        val t = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next } }.toMap()
-        val nextTokens = try { if (t.size == 1) t.keys else nextTokens(lastToks.joinToString(" ")).filter { it in t } }
-        catch (_: Exception) { listOf() }.ifEmpty { t.keys }
+      val nextBeam = try {
+        beam.parallelStream().flatMap { partTraj ->
+          if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
+          val lastToks = partTraj.traj.reversed().filterNotNull()
+          val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next } }.toMap()
+          val nextTokens = try { if (txs.size == 1) txs.keys else nextTokens(lastToks.joinToString(" ")).filter { it in txs } }
+          catch (_: Exception) { listOf() }.ifEmpty { txs.keys }
 
-        var scores = nextTokens.mapIndexed { i, _ -> nextTokens.size.toDouble() - i }
-        val sum = scores.sum()
-        scores = scores.map { it.toDouble() / sum }
+          var scores = nextTokens.mapIndexed { i, _ -> nextTokens.size.toDouble() - i }
+          val sum = scores.sum()
+          scores = scores.map { it.toDouble() / sum }
 
-        nextTokens.mapIndexed { i, n -> partTraj.append(n, t[n]!!.dest, scores[i]) }
-          .flatMap { traj ->
-            if (traj.isComplete) {
-              fullTrajectories.add(traj)
-              callback(traj.toString())
-              if (traj.lastState.transitions.isNotEmpty()) listOf(traj) else emptyList()
-            } else { listOf(traj) }
-          }.stream()
-      }.sorted().limit(beamWidth).toList()
+          nextTokens.mapIndexed { i, n -> partTraj.append(n, txs[n]!!.dest, scores[i]) }
+            .flatMap { traj ->
+              if (traj.isComplete) {
+                fullTrajectories.add(traj)
+                callback(traj.toString())
+                if (traj.lastState.transitions.isNotEmpty()) listOf(traj) else emptyList()
+              } else { listOf(traj) }
+            }.stream()
+        }.sorted().limit(beamWidth).toList()
+      } catch (_: Exception) { emptyList<FSATrajectory>() }
 
       beam.clear()
       beam.addAll(nextBeam)
