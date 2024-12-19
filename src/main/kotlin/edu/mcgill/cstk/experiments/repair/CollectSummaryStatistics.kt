@@ -65,9 +65,8 @@ fun measureThroughput() {
   while (startTime.elapsedNow() < 10.seconds) {
     try {
       str += URL("http://localhost:8000/makemore?next=${URLEncoder.encode(str, "utf-8")}").readText().tokenizeByWhitespace().random()
-      println(str)
-//      println(str.map { MakeMore.PyTokMap.mt[it] }.joinToString(" "))
-    } catch (e: Exception) { str = str.dropLast(str.length / 2) }
+      println(str.map { MakeMore.PyTokMap.mt[it] ?: "ERROR" }.joinToString(" "))
+    } catch (_: Exception) { str = "" }
     i++
   }
 
