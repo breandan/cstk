@@ -137,11 +137,44 @@ class Transformer(nn.Module):
         device = idx.device
         b, t = idx.size()
         assert t <= self.block_size, f"Cannot forward sequence of length {t}, block size is only {self.block_size}"
-        pos = torch.arange(0, t, dtype=torch.long, device=device).unsqueeze(0) # shape (1, t)
 
+        # Original PE
+        # pos = torch.arange(0, t, dtype=torch.long, device=device).unsqueeze(0) # shape (1, t)
+
+        # Space-delimited positional encoding
+        ############################################################################################################
+        space_token_id = 1
+
+        # Create standard positional indices
+        pos = torch.arange(t, dtype=torch.long, device=device)  # shape: (t,)
+
+        # Identify where the space token occurs in each sequence.
+        # idx shape is (b, t), we need to handle each sequence in the batch.
+        # This code assumes we fold after the *first* space in each sequence.
+        # If no space is found, no folding is performed.
+        new_pos = torch.zeros_like(pos).unsqueeze(0).expand(b, -1)  # Initialize
+        for i in range(b):
+            seq = idx[i]  # shape: (t,)
+            # Find positions of the space token
+            space_positions = torch.where(seq == space_token_id)[0]
+            if len(space_positions) > 0:
+                # Suppose we only fold after the first space token
+                fold_pos = space_positions[0].item()
+
+                # Before the space: positions remain unchanged
+                new_pos[i, :fold_pos+1] = pos[:fold_pos+1]
+
+                # After the space: reset positions starting from zero again
+                length_after = t - (fold_pos + 1)
+                # This will map [fold_pos+1 ... t-1] to [0 ... length_after-1]
+                new_pos[i, fold_pos+1:] = torch.arange(length_after, device=device)
+            else:
+                # If no space token is found, just use the original positions
+                new_pos[i] = pos
+        ############################################################################################################
         # forward the GPT model itself
         tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
-        pos_emb = self.transformer.wpe(pos) # position embeddings of shape (1, t, n_embd)
+        pos_emb = self.transformer.wpe(new_pos) # position embeddings of shape (1, t, n_embd)
         x = tok_emb + pos_emb
         for block in self.transformer.h:
             x = block(x)

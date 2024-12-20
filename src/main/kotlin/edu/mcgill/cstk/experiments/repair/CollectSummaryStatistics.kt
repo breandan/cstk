@@ -55,7 +55,9 @@ fun main() {
 //  mostCommonSubstitutions()
 //  testContextEditIssue()
 //  measureThroughput()
-  MakeMore.checkSamples()
+//  MakeMore.checkSamples()
+//  prepareCorruptionModel()
+  MakeMore.checkCorruptedSamples()
 }
 
 fun measureThroughput() {
@@ -78,8 +80,20 @@ fun prepareUnsupervisedMakemoreDataset() {
   streamBIFIContents().forEach {
     val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
     if (str in vanillaS2PCFG.language)
-      println(str.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString(""))
+      println(str.encodeToMakemore())
   }
+}
+
+fun Σᐩ.encodeToMakemore() = tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString("")
+
+fun prepareCorruptionModel() {
+  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
+  val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
+  contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
+    .asStream().parallel()
+    .map { (broke, fixed) -> broke.addNewLineIfMissing() to fixed.addNewLineIfMissing() }
+    .map { (broke, fixed) -> broke to fixed to levenshtein(broke, fixed) }
+    .forEach { (broke, fixed, d) -> try { println(fixed.encodeToMakemore() + " $d " + broke.encodeToMakemore()) } catch (_: Exception) {} }
 }
 
 fun checkSemanticAdmissibility() {

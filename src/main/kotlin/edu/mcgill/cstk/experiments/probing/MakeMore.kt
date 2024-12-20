@@ -22,6 +22,7 @@ object MakeMore {
   object PyTokMap {
     val tm: Map<Σᐩ, Char> = vanillaS2PCFG.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
     val mt: Map<Char, Σᐩ> = vanillaS2PCFG.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
+    val size = tm.size
   }
 
   val MAKEMORE_URL = "http://localhost:8000/makemore/"
@@ -48,6 +49,29 @@ C"W"V"XT!Rw!"#w="W"="X!"W"X!"="W"X!G_"="="W"XT!R"="W"X!SP"WX?"T!R"#"="WX!"W"X!"#
 C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     """.trimIndent().lines().map { it.trim().map { PyTokMap.mt[it] }.joinToString(" ") }
       .forEach { println(it); println(it in vanillaS2PCFG.language) }
+  }
+
+  fun checkCorruptedSamples() {
+    """
+      OT!R"W"="X!SNWvVvX?"T!R"="W"X!SNT!R"#"="W"="X!S! 2 OT!R"W"="X!SNWvVvX?"T!R"="W"X!S"T!R"#"="W"="X!S!
+      YwVwVwVwVwVwVwVwZ! 1 "#Y"VwVwVwVwVwVwVwX=!
+      C"W"XT!R8W"YwZo"="Xov!SP"WwVwX?"T!R"W"="WXX!SK"V"L"="WvXT!RX!S! 1 C"W"XT!R8W"YwZo"="Xov!SP"WwVwX?"T!R"W"="WXX!SK"V"L"=!RKWvXVL"="WvXT!R5!SS!
+      [vT[wT[wTwVwTw\\TY[wTvVy\V[wT[wTw\V[wTw\ZV[wTYwVwZ\Z! 3 "[vT[wT[wTwVwTw\\V[wTY[wTwV\ZwT[wTw\ZVwTYwVwTYwZ\V!\!
+      "#"WvVwVwX!"#4"!"#"WX!"#"WX!"#"W"="="K"L"GwT"="W"V"#yXGwL"^"`v`vZ! 6 "#"WvVwX!"Vw!"#"WX!"#"WX!"#"W"="X!"#"W"="KwL"GwL"avX^"fvTW"="V"Xlv!
+      "#Y"K"L"K"L"Z! 2 "#Y"L"GY""ZK"L"Z!
+      "#YvVvVvVvVvVvZ!"#Y>V>Z!P"W"X?"T!R"Y>Z#"Y"Z!"#"YwZ!"#"="W"V"#yX!!S! 4 "#YvVvVvVvVvVvZ!"#Y>=Y>V>Z!P"W"X?"T!R"Y>Z#"Y>>Z!"#"Y>Z!"#"="W"V"#yX!S!
+      <"!"#"="W"X!"#w!"#"="WY"W"Y"ZV"Y"ZVwV"Y"Y"ZZZK"L"XK"L"W"W"V"XV"XG"="W"VwXL"YvZ! 1 <"!"#"="W"X!"#w!"#"="WY"ZVYW"W"Y"Y"ZVY"ZVwVY"Y"ZZVK"L"W"V"XXG"="W"LwX"YvZK"L"YvZV!
+      C"W"V"XT!R8Y"K"V"L"="W"V"XZ!SC"W"V"XT!R8"W"WvsW"XK"L"XK"L"X!S"W"X! 5 C"W"V"XT!R""!8Y"K"V"L"="W"V"XZ!SC"W"V"XT!R8"!S!""W"W"XK"L"XT!R!S""${'"'}${'"'}WX!
+      "#[wT[wT[wT[wTvVwTv\\VwT[wT[wTvVwTvVwTv\\\! 1 "#[wT[wT[wT[wTvVwTv\\VwT[wT[wTvVwTvVwTv\\\!
+    """.trimIndent().lines().forEach {
+      it.trim().split(" ").let { (a, b, c) ->
+        val fixed = a.map { PyTokMap.mt[it] }.joinToString(" ")
+        val broke = c.map { PyTokMap.mt[it] }.joinToString(" ")
+        val valid = "${fixed in vanillaS2PCFG.language} ${broke !in vanillaS2PCFG.language}"
+        val eq = "$b = ${levenshtein(a.map { it }.joinToString(" "), c.map { it }.joinToString(" "))}"
+        println("$fixed\n$broke\n$valid\n$eq")
+      }
+    }
   }
 
   fun prepTrainingSet() {
