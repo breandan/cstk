@@ -56,8 +56,20 @@ fun main() {
 //  testContextEditIssue()
 //  measureThroughput()
 //  MakeMore.checkSamples()
-//  prepareCorruptionModel()
-  MakeMore.checkCorruptedSamples()
+//  prepareBreakerDataset()
+//  MakeMore.checkCorruptedSamples()
+  prepareFixerDataset()
+//  correctNames()
+}
+
+fun prepareFixerDataset() {
+  File("good_code.txt").readLines().shuffled().filter { it.length < 100 }.forEach {
+    var (fixed, dist, broken) = MakeMore.complete("${(MakeMore.PyTokMap.size + 34).toChar()}$it ${Random().nextInt(1, 4)} ").split(" ")
+    fixed = fixed.drop(1)
+    broken = broken.dropLast(1)
+    val delta = levenshtein(broken, it) - dist.toInt()
+    if (delta == 0) println("|$broken $dist $fixed}")
+  }
 }
 
 fun measureThroughput() {
@@ -86,14 +98,14 @@ fun prepareUnsupervisedMakemoreDataset() {
 
 fun Σᐩ.encodeToMakemore() = tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString("")
 
-fun prepareCorruptionModel() {
+fun prepareBreakerDataset() {
   val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
   val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
   contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
     .asStream().parallel()
     .map { (broke, fixed) -> broke.addNewLineIfMissing() to fixed.addNewLineIfMissing() }
     .map { (broke, fixed) -> broke to fixed to levenshtein(broke, fixed) }
-    .forEach { (broke, fixed, d) -> try { println(fixed.encodeToMakemore() + " $d " + broke.encodeToMakemore()) } catch (_: Exception) {} }
+    .forEach { (broke, fixed, d) -> try { println("${(MakeMore.PyTokMap.size + 34).toChar()}" + fixed.encodeToMakemore() + " $d " + broke.encodeToMakemore() + "${(MakeMore.PyTokMap.size + 35).toChar()}") } catch (_: Exception) {} }
 }
 
 fun checkSemanticAdmissibility() {

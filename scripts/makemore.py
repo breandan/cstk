@@ -227,7 +227,7 @@ def print_samples(num=10):
     X_init = torch.zeros(num, 1, dtype=torch.long).to(args.device)
     top_k = args.top_k if args.top_k != -1 else None
     steps = train_dataset.get_output_length() - 1 # -1 because we already start with <START> token (index 0)
-    X_samp = generate(model, X_init, steps, top_k=top_k, do_sample=True).to('cpu')
+    X_samp = generate(model, X_init, steps, top_k=top_k, do_sample=True).to(args.device)
     train_samples, test_samples, new_samples = [], [], []
     for i in range(X_samp.size(0)):
         # get the i'th row of sampled integers, as python list
@@ -376,8 +376,8 @@ if __name__ == '__main__':
     parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
     parser.add_argument('--n-layer', type=int, default=8, help="number of layers")
     parser.add_argument('--n-head', type=int, default=8, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=128, help="number of feature channels in the model")
-    parser.add_argument('--n-embd2', type=int, default=128, help="number of feature channels elsewhere in the model")
+    parser.add_argument('--n-embd', type=int, default=256, help="number of feature channels in the model")
+    parser.add_argument('--n-embd2', type=int, default=256, help="number of feature channels elsewhere in the model")
     # optimization
     parser.add_argument('--batch-size', '-b', type=int, default=128, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")

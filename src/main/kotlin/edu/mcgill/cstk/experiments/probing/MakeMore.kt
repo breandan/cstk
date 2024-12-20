@@ -30,6 +30,15 @@ object MakeMore {
   fun callExternal(s: String): String =
     PyTokMap.mt[URL(MAKEMORE_URL + URLEncoder.encode(s, "utf-8")).readText().first()]!!
 
+  fun complete(str: String): String {
+    val next = URL("http://localhost:8000/makemore?next=" + URLEncoder.encode(str, "utf-8"))
+      .readText()
+      .tokenizeByWhitespace()
+      .firstOrNull()
+
+    return if (next == "}") str + next else complete(str + next)
+  }
+
   fun encode(str: String) = str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString("")
   fun nextTokens(str: String): List<Σᐩ> =
     URL("http://localhost:8000/makemore?next=" +
@@ -53,16 +62,16 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
   fun checkCorruptedSamples() {
     """
-      OT!R"W"="X!SNWvVvX?"T!R"="W"X!SNT!R"#"="W"="X!S! 2 OT!R"W"="X!SNWvVvX?"T!R"="W"X!S"T!R"#"="W"="X!S!
-      YwVwVwVwVwVwVwVwZ! 1 "#Y"VwVwVwVwVwVwVwX=!
-      C"W"XT!R8W"YwZo"="Xov!SP"WwVwX?"T!R"W"="WXX!SK"V"L"="WvXT!RX!S! 1 C"W"XT!R8W"YwZo"="Xov!SP"WwVwX?"T!R"W"="WXX!SK"V"L"=!RKWvXVL"="WvXT!R5!SS!
-      [vT[wT[wTwVwTw\\TY[wTvVy\V[wT[wTw\V[wTw\ZV[wTYwVwZ\Z! 3 "[vT[wT[wTwVwTw\\V[wTY[wTwV\ZwT[wTw\ZVwTYwVwTYwZ\V!\!
-      "#"WvVwVwX!"#4"!"#"WX!"#"WX!"#"W"="="K"L"GwT"="W"V"#yXGwL"^"`v`vZ! 6 "#"WvVwX!"Vw!"#"WX!"#"WX!"#"W"="X!"#"W"="KwL"GwL"avX^"fvTW"="V"Xlv!
-      "#Y"K"L"K"L"Z! 2 "#Y"L"GY""ZK"L"Z!
-      "#YvVvVvVvVvVvZ!"#Y>V>Z!P"W"X?"T!R"Y>Z#"Y"Z!"#"YwZ!"#"="W"V"#yX!!S! 4 "#YvVvVvVvVvVvZ!"#Y>=Y>V>Z!P"W"X?"T!R"Y>Z#"Y>>Z!"#"Y>Z!"#"="W"V"#yX!S!
-      <"!"#"="W"X!"#w!"#"="WY"W"Y"ZV"Y"ZVwV"Y"Y"ZZZK"L"XK"L"W"W"V"XV"XG"="W"VwXL"YvZ! 1 <"!"#"="W"X!"#w!"#"="WY"ZVYW"W"Y"Y"ZVY"ZVwVY"Y"ZZVK"L"W"V"XXG"="W"LwX"YvZK"L"YvZV!
-      C"W"V"XT!R8Y"K"V"L"="W"V"XZ!SC"W"V"XT!R8"W"WvsW"XK"L"XK"L"X!S"W"X! 5 C"W"V"XT!R""!8Y"K"V"L"="W"V"XZ!SC"W"V"XT!R8"!S!""W"W"XK"L"XT!R!S""${'"'}${'"'}WX!
-      "#[wT[wT[wT[wTvVwTv\\VwT[wT[wTvVwTvVwTv\\\! 1 "#[wT[wT[wT[wTvVwTv\\VwT[wT[wTvVwTvVwTv\\\!
+      "V"V"#z!K"L"W"="W"XXT!R"#"="W"s"Vw="W"XX!"#"="="W"V"X!"="W"X!"="WX!S! 5 "V"V"#zT!K"L"W"="W"="XXT!R"#"="W"s"Vw="W"X"#"="="W"V"X"="W"X!S!
+      C"W"XT!R"V"#"="W"X!G"bwT!R"="W"X!"="W"X!SIT!R"="W"X!SSZ! 6 C"W"XT!"V"#"="W"X!G"bwT!G"bwT!R"="W"X!"="WvX!SI!
+      ;"<"!C"WXT!R"#v!"#"WX!"#"W"X!K"V"L"W"XT!R"'"WvV"X="WX!S8"="WX!S! 5 ;"<"!"WXT!R"#"!"WX!"#"W"X!K"V"L"W"XT!R"'"WvV"X="WX!S8"="WX!S!
+      C"WXT!RK"L"="T!R"#"!"#"W"V"X!S"#"WQ"T"="X!"#"WX!S! 5 C"WXT!RK"L"="T!R"#"!"#""W"V"X!"#"WQ""T"="X!"#"WX!SS!
+      D"W"XT!RC"W"XT!R"W"X!"="#v!SS"#"W"WXX!"#"W"X! 1 D"W"XT!RC"W"XT!R"W"X!"="#v!SS"#"W"WXX!"#"W"X!
+      OT!R"#"="W"="W"#"XV"#"="X!SN"="T!R"#"="="W"#"V"#"="X!S! 1 OT!R"#"="W"="W"#""X"#"="XX!SN"="T!R"#"="="W"#"vV"#"="!S!
+      C"W"V"XT!R"#"WYW"V"XK"L"ZK"L"="X!K"L"W"V"XT!R"#"W"V"#"W"XXW"X!8"!SS! 5 "W"V"XT!R"#"WYW"V"XK"L"ZK"L"="WXXT!RK"L""="W"XT!R"#"W"V"#"W"XXW"X!S8"!SS!
+      "YwZ#w!"#Y"K"L"G"="W"XZ!"#x!K"L"T!RG"="W"XY"Zb"T!R"="W"X!SS! 2 "YwZ#w!"#Y"K"L"G"="W"XZ!"#x!K"L"T!RG"="W"XY"Zb"T!R"="W"X!SS!
+      "#"W"="V"="V"X="W"="V"="VwX! 1 ""#"W"="V"="V"X="W"="V"="VwX!
+      ;="<"!<"!"#"W[WwVwV[wTw\VwT[wTw\VwT[wTwVwTw\VwT[wTwVwTw\\V"#[wT[wTwV\VwT[wTwVwTw\\V[wT[wTy\VwTw\X! 1 <"="<"!<"!"#"W[WwVwV\V[wTw\VwT[wTw\VwT[wTwVwTw\VwT[wTwVwTw\\V"#[wT[wTw\VwT[wTwVwTw\\!V[wT[wTwVwTw\\ZXV!
     """.trimIndent().lines().forEach {
       it.trim().split(" ").let { (a, b, c) ->
         val fixed = a.map { PyTokMap.mt[it] }.joinToString(" ")

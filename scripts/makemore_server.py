@@ -8,23 +8,24 @@ from urllib.parse import urlparse, parse_qs, unquote
 # Alternatively, you might integrate this into the makemore script itself.
 from makemore import ModelConfig, Transformer, create_datasets, generate
 
+
+# Load datasets
+train_dataset, test_dataset = create_datasets('names.txt')
+vocab_size = train_dataset.get_vocab_size()
+print(f"vocab size: {vocab_size}")
+block_size = train_dataset.get_output_length()
+
 # ------------------------------------------------------------
 # Load model and datasets (adjust paths and args as needed)
 # ------------------------------------------------------------
 class Args:
-    input_file = 'names.txt'        # your training input file
     device = 'mps'                  # or 'cuda' if you have a GPU
     n_layer = 8
     n_head = 8
-    n_embd = 128
-    n_embd2 = 128
-    top_k = 85
+    n_embd = 256
+    n_embd2 = 256
+    top_k = vocab_size
 args = Args()
-
-# Load datasets
-train_dataset, test_dataset = create_datasets(args.input_file)
-vocab_size = train_dataset.get_vocab_size()
-block_size = train_dataset.get_output_length()
 
 # Load model
 config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
@@ -33,7 +34,7 @@ config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
 model = Transformer(config)
 model.to(args.device)
 
-model_path = "model.pt"
+model_path = "breaker.pt"
 if not os.path.exists(model_path):
     print(f"Model not found at {model_path}. Please train and place model.pt in the out directory.")
     sys.exit(1)
@@ -98,9 +99,8 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
             top_n_chars = [
                 train_dataset.decode([token_id])
                 for token_id in top_n_token_ids
-                if 0 < token_id < len(train_dataset.itos)
+                if 0 < token_id <= len(train_dataset.itos)
             ]
-            # top_n_chars = [train_dataset.decode([token_id]) for token_id in top_n_token_ids]
 
             # Join them or handle them as needed
             next_chars = ' '.join(top_n_chars)
