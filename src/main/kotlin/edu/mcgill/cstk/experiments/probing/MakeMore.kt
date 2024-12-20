@@ -25,25 +25,29 @@ object MakeMore {
     val size = tm.size
   }
 
-  val MAKEMORE_URL = "http://localhost:8000/makemore/"
-
-  fun callExternal(s: String): String =
-    PyTokMap.mt[URL(MAKEMORE_URL + URLEncoder.encode(s, "utf-8")).readText().first()]!!
+  val MAKEMORE_URL = "http://localhost:8000/makemore?next="
 
   fun complete(str: String): String {
-    val next = URL("http://localhost:8000/makemore?next=" + URLEncoder.encode(str, "utf-8"))
-      .readText()
-      .tokenizeByWhitespace()
-      .firstOrNull()
+    val logprobs = nextTokensAndScores(str)
+//    logprobs.forEach { (a, b) -> println("$a $b") }
+    val next = logprobs.first().first
 
+//    println(str.map { PyTokMap.mt[it] ?: it }.joinToString(" "))
     return if (next == "}") str + next else complete(str + next)
   }
 
   fun encode(str: String) = str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString("")
-  fun nextTokens(str: String): List<Σᐩ> =
-    URL("http://localhost:8000/makemore?next=" +
-      URLEncoder.encode(str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString(""), "utf-8")
-    ).readText().tokenizeByWhitespace().map { PyTokMap.mt[it.first()]!! }
+
+  private fun req(str: String) =
+    URLEncoder.encode(str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString(""), "utf-8")
+      .let { req -> URL(MAKEMORE_URL + req) }.readText()
+
+  fun nextTokens(str: String): List<Σᐩ> = req(str).lines().map { it.tokenizeByWhitespace().first() }
+
+  fun nextTokensAndScores(str: String): List<Pair<Σᐩ, Double>> =
+    req(str).lines().take(10).filter { it.split(" ").size == 2 }.map { it.split(" ").let { (a, b) -> a to b.toDouble() } }
+
+  fun nextTokensReadable(str: String): List<Σᐩ> = nextTokens(str).map { PyTokMap.mt[it.first()]!! }
 
   fun checkSamples() {
     """
@@ -92,7 +96,6 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         .map { PyTokMap.tm[it]!! }.joinToString("")) } catch (e: Exception) {} }
   }
 
-
   // Steers a random walk using the last n-1 transitions from the Markov Chain
   fun decodeDFA(
     bAutomaton: BAutomaton,
@@ -119,14 +122,11 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
           val lastToks = partTraj.traj.reversed().filterNotNull()
           val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next } }.toMap()
-          val nextTokens = try { if (txs.size == 1) txs.keys else nextTokens(lastToks.joinToString(" ")).filter { it in txs } }
-          catch (_: Exception) { listOf() }.ifEmpty { txs.keys }
+          val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
+            else nextTokensAndScores(lastToks.joinToString(" ")).filter { it.first in txs }
+          } catch (_: Exception) { listOf() }.ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size } }
 
-          var scores = nextTokens.mapIndexed { i, _ -> nextTokens.size.toDouble() - i }
-          val sum = scores.sum()
-          scores = scores.map { it.toDouble() / sum }
-
-          nextTokens.mapIndexed { i, n -> partTraj.append(n, txs[n]!!.dest, scores[i]) }
+          nextTokensAndScores.map { (t, s) -> partTraj.append(t, txs[t]!!.dest, s) }
             .flatMap { traj ->
               if (traj.isComplete) {
                 fullTrajectories.add(traj)

@@ -35,9 +35,9 @@ class ModelConfig:
     vocab_size: int = None # the input integers are in range [0 .. vocab_size -1]
     # parameters below control the sizes of each model slightly differently
     n_layer: int = 8
-    n_embd: int = 64
-    n_embd2: int = 64
-    n_head: int = 4
+    n_embd: int = 128
+    n_embd2: int = 128
+    n_head: int = 8
 
 # -----------------------------------------------------------------------------
 # Transformer Language Model (*exactly* as used in GPT-2)

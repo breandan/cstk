@@ -63,7 +63,7 @@ fun main() {
 }
 
 fun prepareFixerDataset() {
-  File("good_code.txt").readLines().shuffled().filter { it.length < 100 }.forEach {
+  File("scripts/good_code.txt").readLines().shuffled().filter { it.length < 100 }.forEach {
     var (fixed, dist, broken) = MakeMore.complete("${(MakeMore.PyTokMap.size + 34).toChar()}$it ${Random().nextInt(1, 4)} ").split(" ")
     fixed = fixed.drop(1)
     broken = broken.dropLast(1)
@@ -79,8 +79,8 @@ fun measureThroughput() {
 
   while (startTime.elapsedNow() < 10.seconds) {
     try {
-      str += URL("http://localhost:8000/makemore?next=${URLEncoder.encode(str, "utf-8")}").readText().tokenizeByWhitespace().random()
-      println(str.map { MakeMore.PyTokMap.mt[it] ?: "ERROR" }.joinToString(" "))
+      str += MakeMore.nextTokensReadable(str).random()
+      println(str)
     } catch (_: Exception) { str = "" }
     i++
   }

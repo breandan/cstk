@@ -10,7 +10,8 @@ from makemore import ModelConfig, Transformer, create_datasets, generate
 
 
 # Load datasets
-train_dataset, test_dataset = create_datasets('names.txt')
+model_name = 'unsupervised'
+train_dataset, test_dataset = create_datasets(f'{model_name}.txt')
 vocab_size = train_dataset.get_vocab_size()
 print(f"vocab size: {vocab_size}")
 block_size = train_dataset.get_output_length()
@@ -22,8 +23,8 @@ class Args:
     device = 'mps'                  # or 'cuda' if you have a GPU
     n_layer = 8
     n_head = 8
-    n_embd = 256
-    n_embd2 = 256
+    n_embd = 128
+    n_embd2 = 128
     top_k = vocab_size
 args = Args()
 
@@ -34,9 +35,9 @@ config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
 model = Transformer(config)
 model.to(args.device)
 
-model_path = "breaker.pt"
+model_path = f'{model_name}.pt'
 if not os.path.exists(model_path):
-    print(f"Model not found at {model_path}. Please train and place model.pt in the out directory.")
+    print(f"Model not found at {model_path}. Please train and place {model_name}.pt in the scripts directory.")
     sys.exit(1)
 
 model.load_state_dict(torch.load(model_path, map_location=args.device))
@@ -94,6 +95,7 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
             # Now extract the top n suggestions
             values, indices = torch.topk(probs, k=args.top_k, dim=-1)
             top_n_token_ids = indices[0].tolist()
+            top_n_probs = values[0].tolist()
 
             # Decode these token IDs into characters
             top_n_chars = [
@@ -102,8 +104,14 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
                 if 0 < token_id <= len(train_dataset.itos)
             ]
 
+            lines = []
+            for ch, p in zip(top_n_chars, top_n_probs):
+                # Align the token and print the probability
+                # Adjust formatting as needed; here we use a fixed width and 4 decimal places.
+                lines.append(f"{ch} {p:.4f}")
+
             # Join them or handle them as needed
-            next_chars = ' '.join(top_n_chars)
+            next_chars = '\n'.join(lines)
 
             # Send response
             self.send_response(200)
