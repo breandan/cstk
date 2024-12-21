@@ -262,8 +262,8 @@ ${prettyDiffNoFrillsTrimAndAlignWithOriginal(brokeTksInt.joinToString(" "), minF
   }
 }
 
-val typoContext: CEADist by lazy { File("context_typos.csv").readTrigramStats() }
-val contextCSV: CEADist by lazy { File("context_edits.csv").readTrigramStats() }
+val typoContext: CEADist by lazy { File("data/context_typos.csv").readTrigramStats() }
+val contextCSV: CEADist by lazy { File("data/context_edits.csv").readTrigramStats() }
 
 enum class EditType { INS, DEL, SUB }
 data class ContextEdit(val type: EditType, val context: Context, val newMid: Int) {

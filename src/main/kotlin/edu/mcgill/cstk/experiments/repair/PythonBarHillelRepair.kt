@@ -429,7 +429,7 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
 }
 
 val corruptedBIFIGoodCode by lazy {
-  readBIFIContents()
+  readBIFIContents().asStream().parallel()
     .map { it.mapToUnquotedPythonTokens().addNewLineIfMissing() }
     .filter {
       it.tokenizeByWhitespace().size in MIN_TOKENS..MAX_TOKENS &&
@@ -439,8 +439,8 @@ val corruptedBIFIGoodCode by lazy {
       goodCode.naturalPythonCorruptions().distinct().filter {
         levenshtein(goodCode, it) <= MAX_RADIUS &&
             it !in vanillaS2PCFG.language
-      }.take(10).map { it to goodCode }
-    }.rebalancePrelexedOnlineByLenAndDist()
+      }.take(10).map { it to goodCode }.asStream()
+    }
 }
 
 val balancedSmallRepairsUnminimized: Sequence<Π2A<Σᐩ>> by lazy {
