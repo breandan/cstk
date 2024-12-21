@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=makemore
-#SBATCH --time=01:00:00
+#SBATCH --time=10:00:00
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
