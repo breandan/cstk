@@ -417,7 +417,7 @@ if __name__ == '__main__':
     print(f"model #params: {sum(p.numel() for p in model.parameters())}")
     if args.resume or args.sample_only: # note: if we sample-only then we also assume we are resuming
         print("resuming from existing model in the workdir")
-        model.load_state_dict(torch.load(os.path.join(args.work_dir, f'{args.input_file.split('.')[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')))
+        model.load_state_dict(torch.load(os.path.join(args.work_dir, f'{args.input_file.split(".")[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')))
     if args.sample_only:
         print_samples(num=50)
         sys.exit()
@@ -467,7 +467,7 @@ if __name__ == '__main__':
             print(f"step {step} train loss: {train_loss} test loss: {test_loss}")
             # save the model to disk if it has improved
             if best_loss is None or test_loss < best_loss:
-                out_path = os.path.join(args.work_dir, f'{args.input_file.split('.')[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')
+                out_path = os.path.join(args.work_dir, f'{args.input_file.split(".")[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')
                 print(f"test loss {test_loss} is the best so far, saving model to {out_path}")
                 torch.save(model.state_dict(), out_path)
                 best_loss = test_loss
