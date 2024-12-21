@@ -73,7 +73,7 @@ fun prepareFixerDataset() {
   corruptedBIFIGoodCode.map { (a, b) ->
     val i = a.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it] }.joinToString("")
     val o = b.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it] }.joinToString("")
-    val d = levenshtein(i, o)
+    val d = levenshtein(a, b)
     Triple(i, d, o)
   }
   .forEach { (a, d, b) -> println("|$a $d $b}") }

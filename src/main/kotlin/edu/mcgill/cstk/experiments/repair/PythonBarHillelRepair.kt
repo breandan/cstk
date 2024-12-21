@@ -437,7 +437,7 @@ val corruptedBIFIGoodCode by lazy {
     }
     .flatMap { goodCode ->
       goodCode.naturalPythonCorruptions().distinct().filter {
-        levenshtein(goodCode, it) <= MAX_RADIUS &&
+        levenshtein(goodCode, it) in 1..3 &&
             it !in vanillaS2PCFG.language
       }.take(10).map { it to goodCode }.asStream()
     }
