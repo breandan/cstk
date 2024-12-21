@@ -36,7 +36,6 @@ class ModelConfig:
     # parameters below control the sizes of each model slightly differently
     n_layer: int = 8
     n_embd: int = 128
-    n_embd2: int = 128
     n_head: int = 8
 
 # -----------------------------------------------------------------------------
@@ -377,7 +376,6 @@ if __name__ == '__main__':
     parser.add_argument('--n-layer', type=int, default=8, help="number of layers")
     parser.add_argument('--n-head', type=int, default=8, help="number of heads (in a transformer)")
     parser.add_argument('--n-embd', type=int, default=256, help="number of feature channels in the model")
-    parser.add_argument('--n-embd2', type=int, default=256, help="number of feature channels elsewhere in the model")
     # optimization
     parser.add_argument('--batch-size', '-b', type=int, default=128, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
@@ -400,7 +398,7 @@ if __name__ == '__main__':
     # init model
     config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
                          n_layer=args.n_layer, n_head=args.n_head,
-                         n_embd=args.n_embd, n_embd2=args.n_embd2)
+                         n_embd=args.n_embd)
     if args.type == 'transformer':
         model = Transformer(config)
     elif args.type == 'bigram':
@@ -419,7 +417,7 @@ if __name__ == '__main__':
     print(f"model #params: {sum(p.numel() for p in model.parameters())}")
     if args.resume or args.sample_only: # note: if we sample-only then we also assume we are resuming
         print("resuming from existing model in the workdir")
-        model.load_state_dict(torch.load(os.path.join(args.work_dir, 'model.pt')))
+        model.load_state_dict(torch.load(os.path.join(args.work_dir, f'{args.input_file.split('.')[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')))
     if args.sample_only:
         print_samples(num=50)
         sys.exit()
@@ -469,7 +467,7 @@ if __name__ == '__main__':
             print(f"step {step} train loss: {train_loss} test loss: {test_loss}")
             # save the model to disk if it has improved
             if best_loss is None or test_loss < best_loss:
-                out_path = os.path.join(args.work_dir, "model.pt")
+                out_path = os.path.join(args.work_dir, f'{args.input_file.split('.')[0]}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt')
                 print(f"test loss {test_loss} is the best so far, saving model to {out_path}")
                 torch.save(model.state_dict(), out_path)
                 best_loss = test_loss

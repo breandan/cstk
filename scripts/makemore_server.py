@@ -24,14 +24,13 @@ class Args:
     n_layer = 8
     n_head = 8
     n_embd = 128
-    n_embd2 = 128
     top_k = vocab_size
 args = Args()
 
 # Load model
 config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
                      n_layer=args.n_layer, n_head=args.n_head,
-                     n_embd=args.n_embd, n_embd2=args.n_embd2)
+                     n_embd=args.n_embd)
 model = Transformer(config)
 model.to(args.device)
 
