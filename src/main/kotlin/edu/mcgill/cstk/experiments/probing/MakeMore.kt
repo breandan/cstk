@@ -19,6 +19,10 @@ import kotlin.time.TimeSource
 
 // Character-level LLM, transforms Python lexical tokens to ASCII characters
 object MakeMore {
+  // BIFI dataset vocab, n.b. does not include entire vanillaS2PCFG alphabet due to rare tokens, e.g., <>
+  val vocab = " !\"#\$%'()+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdfhklmnopqrstuvwxyz|}~"
+  val terms = vocab.map { decode("$it") }.toSet()
+
   object PyTokMap {
     val tm: Map<Σᐩ, Char> = vanillaS2PCFG.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
     val mt: Map<Char, Σᐩ> = vanillaS2PCFG.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
@@ -37,6 +41,7 @@ object MakeMore {
   }
 
   fun encode(str: String) = str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString("")
+  fun decode(str: String) = str.map { PyTokMap.mt[it] }.joinToString(" ")
 
   private fun req(str: String) = URL(MAKEMORE_URL + URLEncoder.encode(str, "utf-8")).readText()
 
@@ -122,12 +127,14 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
       val nextBeam = try {
         beam.parallelStream().flatMap { partTraj ->
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
-          val lastToks = partTraj.traj.reversed().filterNotNull()
+          val lastToks = partTraj.traj.reversed().filterNotNull().joinToString(" ")
           val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next.dest } }.toMap()
 
           val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
-            else nextTokensAndScores("|$origStr" + encode(lastToks.joinToString(" "))).filter { it.first in txs }
-          } catch (ex: Exception) { ex.printStackTrace(); listOf() }.ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size } }
+            else nextTokensAndScores("|$origStr${encode(lastToks)}").filter { it.first in txs }
+          } catch (ex: Exception) { ex.printStackTrace(); listOf() }
+            // Fallback to uniform distribution over alphabet if error or empty transitions
+            .ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size }.filter { it.first in terms } }
 
           nextTokensAndScores.map { (t, s) -> partTraj.append(t, txs[t]!!, s) }
             .flatMap { traj ->
