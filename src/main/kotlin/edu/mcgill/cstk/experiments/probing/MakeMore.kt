@@ -38,14 +38,15 @@ object MakeMore {
 
   fun encode(str: String) = str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString("")
 
-  private fun req(str: String) =
-    URL(MAKEMORE_URL + URLEncoder.encode(str, "utf-8")).readText()
+  private fun req(str: String) = URL(MAKEMORE_URL + URLEncoder.encode(str, "utf-8")).readText()
 
   fun nextTokens(str: String): List<Σᐩ> = req(str).lines().map { it.tokenizeByWhitespace().first() }
 
   fun nextTokensAndScores(str: String): List<Pair<Σᐩ, Double>> =
-    req(str).lines().take(10).filter { it.split(" ").size == 2 }
-      .map { it.split(" ").let { (a, b) -> PyTokMap.mt[a.first()]!! to b.toDouble() } }
+    req(str).lines().take(10).filter { it.split(" ").size == 2 }.mapNotNull {
+      val (a, b) = it.split(" ").let { (a, b) -> PyTokMap.mt[a.first()] to b.toDouble() }
+      if (a == null) null else a to b
+    }
 
   fun nextTokensReadable(str: String): List<Σᐩ> = nextTokens(str).map { PyTokMap.mt[it.first()]!! }
 
@@ -105,7 +106,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     dec: Map<Char, Σᐩ>, // Maps unicode characters back to strings
     callback: (Σᐩ) -> Unit = {},
     timeout: Duration = Duration.INFINITE,
-    beamWidth: Long = 100L, // Maximum number of trajectories to keep at each step
+    beamWidth: Int = 100, // Maximum number of trajectories to keep at each step
   ): List<Σᐩ> {
     val startTime = TimeSource.Monotonic.markNow()
     val fullTrajectories = PriorityBlockingQueue<FSATrajectory>(10000) // Max-heap for full trajectories
@@ -122,12 +123,13 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         beam.parallelStream().flatMap { partTraj ->
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
           val lastToks = partTraj.traj.reversed().filterNotNull()
-          val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next } }.toMap()
+          val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next.dest } }.toMap()
+
           val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
             else nextTokensAndScores("|$origStr" + encode(lastToks.joinToString(" "))).filter { it.first in txs }
-          } catch (_: Exception) { listOf() }.ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size } }
+          } catch (ex: Exception) { ex.printStackTrace(); listOf() }.ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size } }
 
-          nextTokensAndScores.map { (t, s) -> partTraj.append(t, txs[t]!!.dest, s) }
+          nextTokensAndScores.map { (t, s) -> partTraj.append(t, txs[t]!!, s) }
             .flatMap { traj ->
               if (traj.isComplete) {
                 fullTrajectories.add(traj)
@@ -135,7 +137,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
                 if (traj.lastState.transitions.isNotEmpty()) listOf(traj) else emptyList()
               } else { listOf(traj) }
             }.stream()
-        }.sorted().limit(beamWidth).toList()
+        }.sorted().limit(beamWidth.toLong()).toList()
       } catch (_: Exception) { emptyList<FSATrajectory>() }
 
       beam.clear()
