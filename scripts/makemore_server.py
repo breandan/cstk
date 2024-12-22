@@ -1,7 +1,7 @@
 import os
 import sys
 import torch
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs, unquote
 
 # Import everything from makemore (assuming makemore.py is in the same directory)
@@ -124,6 +124,6 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
 # ------------------------------------------------------------
 if __name__ == '__main__':
     server_address = ('', 8000)
-    httpd = HTTPServer(server_address, MakeMoreHandler)
+    httpd = ThreadingHTTPServer(server_address, MakeMoreHandler)
     print("Serving on http://localhost:8000")
     httpd.serve_forever()

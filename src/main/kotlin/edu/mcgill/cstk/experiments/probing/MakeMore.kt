@@ -111,7 +111,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     dec: Map<Char, Σᐩ>, // Maps unicode characters back to strings
     callback: (Σᐩ) -> Unit = {},
     timeout: Duration = Duration.INFINITE,
-    beamWidth: Int = 100, // Maximum number of trajectories to keep at each step
+    beamWidth: Int = 200, // Maximum number of trajectories to keep at each step
   ): List<Σᐩ> {
     val startTime = TimeSource.Monotonic.markNow()
     val fullTrajectories = PriorityBlockingQueue<FSATrajectory>(10000) // Max-heap for full trajectories
@@ -129,10 +129,11 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
           val lastToks = partTraj.traj.reversed().filterNotNull().joinToString(" ")
           val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next.dest } }.toMap()
+          val query = "|$origStr${encode(lastToks)}"
 
           val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
-            else nextTokensAndScores("|$origStr${encode(lastToks)}").filter { it.first in txs }
-          } catch (ex: Exception) { ex.printStackTrace(); listOf() }
+            else nextTokensAndScores(query).filter { it.first in txs }
+          } catch (ex: Exception) { println("$ex / $query"); listOf() }
             // Fallback to uniform distribution over alphabet if error or empty transitions
             .ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size }.filter { it.first in terms } }
 
