@@ -205,6 +205,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //    )
 
     val rankedResults = MakeMore.decodeDFA(
+      origStr = MakeMore.encode(invalidTokens) + " $levDist ",
       bAutomaton = dfa,
       timeout = timeout,
       dec = termDict,

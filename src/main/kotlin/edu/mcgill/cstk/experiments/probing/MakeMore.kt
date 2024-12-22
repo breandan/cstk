@@ -39,13 +39,13 @@ object MakeMore {
   fun encode(str: String) = str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString("")
 
   private fun req(str: String) =
-    URLEncoder.encode(str.tokenizeByWhitespace().map { PyTokMap.tm[it] }.joinToString(""), "utf-8")
-      .let { req -> URL(MAKEMORE_URL + req) }.readText()
+    URL(MAKEMORE_URL + URLEncoder.encode(str, "utf-8")).readText()
 
   fun nextTokens(str: String): List<Σᐩ> = req(str).lines().map { it.tokenizeByWhitespace().first() }
 
   fun nextTokensAndScores(str: String): List<Pair<Σᐩ, Double>> =
-    req(str).lines().take(10).filter { it.split(" ").size == 2 }.map { it.split(" ").let { (a, b) -> a to b.toDouble() } }
+    req(str).lines().take(10).filter { it.split(" ").size == 2 }
+      .map { it.split(" ").let { (a, b) -> PyTokMap.mt[a.first()]!! to b.toDouble() } }
 
   fun nextTokensReadable(str: String): List<Σᐩ> = nextTokens(str).map { PyTokMap.mt[it.first()]!! }
 
@@ -98,6 +98,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
   // Steers a random walk using the last n-1 transitions from the Markov Chain
   fun decodeDFA(
+    origStr: String,
     bAutomaton: BAutomaton,
     // BAutomata uses a Unicode alphabet, and the Markov Chain recognizes a
     // string-based alphabet, so we need a way to translate between the two
@@ -123,7 +124,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           val lastToks = partTraj.traj.reversed().filterNotNull()
           val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next } }.toMap()
           val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
-            else nextTokensAndScores(lastToks.joinToString(" ")).filter { it.first in txs }
+            else nextTokensAndScores("|$origStr" + encode(lastToks.joinToString(" "))).filter { it.first in txs }
           } catch (_: Exception) { listOf() }.ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size } }
 
           nextTokensAndScores.map { (t, s) -> partTraj.append(t, txs[t]!!.dest, s) }

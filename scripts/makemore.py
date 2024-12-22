@@ -373,11 +373,11 @@ if __name__ == '__main__':
     parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
     # model
     parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
-    parser.add_argument('--n-layer', type=int, default=8, help="number of layers")
-    parser.add_argument('--n-head', type=int, default=8, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=128, help="number of feature channels in the model")
+    parser.add_argument('--n-layer', type=int, default=4, help="number of layers")
+    parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
+    parser.add_argument('--n-embd', type=int, default=32, help="number of feature channels in the model")
     # optimization
-    parser.add_argument('--batch-size', '-b', type=int, default=128, help="batch size during optimization")
+    parser.add_argument('--batch-size', '-b', type=int, default=64, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
     parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
     args = parser.parse_args()
@@ -401,16 +401,6 @@ if __name__ == '__main__':
                          n_embd=args.n_embd)
     if args.type == 'transformer':
         model = Transformer(config)
-    elif args.type == 'bigram':
-        model = Bigram(config)
-    elif args.type == 'mlp':
-        model = MLP(config)
-    elif args.type == 'rnn':
-        model = RNN(config, cell_type='rnn')
-    elif args.type == 'gru':
-        model = RNN(config, cell_type='gru')
-    elif args.type == 'bow':
-        model = BoW(config)
     else:
         raise ValueError(f'model type {args.type} is not recognized')
     model.to(args.device)

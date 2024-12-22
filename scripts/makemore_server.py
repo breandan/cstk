@@ -10,7 +10,7 @@ from makemore import ModelConfig, Transformer, create_datasets, generate
 
 
 # Load datasets
-model_name = 'unsupervised'
+model_name = 'denoiser'
 train_dataset, test_dataset = create_datasets(f'{model_name}.txt')
 vocab_size = train_dataset.get_vocab_size()
 print(f"vocab size: {vocab_size}")
@@ -23,7 +23,7 @@ class Args:
     device = 'mps'                  # or 'cuda' if you have a GPU
     n_layer = 8
     n_head = 8
-    n_embd = 128
+    n_embd = 64
     top_k = vocab_size
 args = Args()
 
@@ -72,10 +72,6 @@ class MakeMoreHandler(BaseHTTPRequestHandler):
                 idx = train_dataset.encode(input_text).unsqueeze(0).to(args.device)
             else:
                 # If empty, start from the start token (0)
-                # However note that in the makemore code, the data loading logic:
-                # The x/y sequences start with a <START> token as 0. If you want to
-                # generate the next token for an empty string, you might start from
-                # just a zero input.
                 idx = torch.zeros((1,1), dtype=torch.long, device=args.device)
 
             # Forward the model with the current idx to get the logits for the next token
