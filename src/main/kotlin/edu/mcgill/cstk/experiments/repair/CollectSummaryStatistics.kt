@@ -62,24 +62,19 @@ fun main() {
 //  correctNames()
 }
 
-fun prepareFixerDataset() {
-//  File("scripts/good_code.txt").readLines().shuffled().filter { it.length < 100 }.forEach {
-//    var (fixed, dist, broken) = MakeMore.complete("${(MakeMore.PyTokMap.size + 34).toChar()}$it ${Random().nextInt(1, 4)} ").split(" ")
-//    fixed = fixed.drop(1)
-//    broken = broken.dropLast(1)
-//    val delta = levenshtein(broken, it) - dist.toInt()
-//    if (delta == 0) println("|$broken $dist $fixed}")
-//  }
-  corruptedBIFIGoodCode.map { (a, b) ->
-    val i = a.tokenizeByWhitespace().map {
-      if (MakeMore.PyTokMap.tm[it] == null) { println("ERROR ($it): $a"); throw Exception("IDK") }
-      MakeMore.PyTokMap.tm[it] }.joinToString("")
-    val o = b.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it] }.joinToString("")
-    val d = levenshtein(a, b)
-    Triple(i, d, o)
-  }
-  .forEach { (a, d, b) -> println("|$a $d $b}") }
-}
+fun prepareFixerDataset() =
+  File("names.txt").readLines().stream().parallel()
+    .map { MakeMore.decode(it) }
+    .flatMap { goodCode ->
+      goodCode.naturalPythonCorruptions().distinct()
+        .filter { levenshtein(goodCode, it) in 1..3 && it !in vanillaS2PCFG.language }
+        .take(10).map { it to goodCode }.asStream()
+    }.forEach { (a, b) ->
+      val i = a.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it] }.joinToString("")
+      val o = b.tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it] }.joinToString("")
+      val d = levenshtein(a, b)
+      println("|$i $d $o}")
+    }
 
 fun measureThroughput() {
   var str = ""

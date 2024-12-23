@@ -262,7 +262,9 @@ ${prettyDiffNoFrillsTrimAndAlignWithOriginal(brokeTksInt.joinToString(" "), minF
   }
 }
 
+// Typo edits with surrounding context (noising)
 val typoContext: CEADist by lazy { File("data/context_typos.csv").readTrigramStats() }
+// Fix edits with surrounding context (denoising)
 val contextCSV: CEADist by lazy { File("data/context_edits.csv").readTrigramStats() }
 
 enum class EditType { INS, DEL, SUB }
@@ -312,8 +314,10 @@ data class CEADist(val allProbs: Map<ContextEdit, Int>) {
 }
 
 // Divesity: lower is more diverse, higher is less diverse, 1.0 is natural frequencies
-fun File.readTrigramStats(diversity: Double = 1.0): CEADist =
-  readLines().drop(1).map { it.split(", ") }.associate {
+fun File.readTrigramStats(diversity: Double = 1.0, allowUnknownChars: Boolean = false): CEADist =
+  readLines().drop(1)
+    .let { if (allowUnknownChars) it.filter { "UNKNOWN_CHAR" !in it } else it }
+    .map { it.split(", ") }.associate {
     (ContextEdit(
       type = EditType.valueOf(it[0].trim()),
       context = Context(it[1], it[2], it[3]),
