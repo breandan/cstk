@@ -57,9 +57,23 @@ fun main() {
 //  measureThroughput()
 //  MakeMore.checkSamples()
 //  prepareBreakerDataset()
-//  MakeMore.checkCorruptedSamples()
-  prepareFixerDataset()
+//  MakeMore.checkPairwiseSamples()
+//  prepareFixerDataset()
 //  correctNames()
+  errorPredDiscrepancy()
+}
+
+fun errorPredDiscrepancy() {
+  var (sum, acc, total) = 0 to 0 to 0
+  sizeAndDistBalancedRepairsUnminimized.forEach {
+    val trueDist = levenshtein(it.π1, it.π2)
+    println("TrueDist = $trueDist")
+    val predDist = MakeMore.checkEditRadiusPred(it.π1)
+    println("PredDist = $predDist")
+    sum += (trueDist - predDist).absoluteValue
+    acc += if (trueDist == predDist) 1 else 0
+    println("Running average edit distance discrepancy: sum=${sum.toDouble() / ++total}, acc=${acc.toDouble() / total}")
+  }
 }
 
 fun prepareFixerDataset() =

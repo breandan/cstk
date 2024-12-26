@@ -3,8 +3,8 @@
 #SBATCH --time=10:00:00
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=64G
 #SBATCH --gres=gpu:a100:1
 #SBATCH --output=/scratch/breandan/slurm-%j.out
 #SBATCH --error=/scratch/breandan/slurm-%j.err

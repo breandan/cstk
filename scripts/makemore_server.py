@@ -10,7 +10,7 @@ from makemore import ModelConfig, Transformer, create_datasets, generate
 
 
 # Load datasets
-model_name = 'denoiser'
+model_name = 'synt_fixes'
 train_dataset, test_dataset = create_datasets(f'{model_name}.txt')
 vocab_size = train_dataset.get_vocab_size()
 print(f"vocab size: {vocab_size}")
@@ -22,8 +22,8 @@ block_size = train_dataset.get_output_length()
 class Args:
     device = 'mps'                  # or 'cuda' if you have a GPU
     n_layer = 8
-    n_head = 8
-    n_embd = 64
+    n_head = 4
+    n_embd = 32
     top_k = vocab_size
 args = Args()
 

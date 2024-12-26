@@ -45,7 +45,11 @@ object MakeMore {
 
   private fun req(str: String) = URL(MAKEMORE_URL + URLEncoder.encode(str, "utf-8")).readText()
 
-  fun nextTokens(str: String): List<Σᐩ> = req(str).lines().map { it.tokenizeByWhitespace().first() }
+  fun nextTokens(str: String): List<Σᐩ> =
+    req(str).lines().map {
+      val t = it.tokenizeByWhitespace()
+      if (t.size < 2) " " else t.first()
+    }
 
   fun nextTokensAndScores(str: String): List<Pair<Σᐩ, Double>> =
     req(str).lines().take(10).filter { it.split(" ").size == 2 }.mapNotNull {
@@ -70,22 +74,25 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
       .forEach { println(it); println(it in vanillaS2PCFG.language) }
   }
 
-  fun checkCorruptedSamples() {
+  fun checkEditRadiusPred(broken: String): Int =
+    nextTokens("|" + encode(broken) + " ").first { it.first().isDigit() }.toInt()
+
+  fun checkPairwiseSamples() {
     """
-      "V"V"#z!K"L"W"="W"XXT!R"#"="W"s"Vw="W"XX!"#"="="W"V"X!"="W"X!"="WX!S! 5 "V"V"#zT!K"L"W"="W"="XXT!R"#"="W"s"Vw="W"X"#"="="W"V"X"="W"X!S!
-      C"W"XT!R"V"#"="W"X!G"bwT!R"="W"X!"="W"X!SIT!R"="W"X!SSZ! 6 C"W"XT!"V"#"="W"X!G"bwT!G"bwT!R"="W"X!"="WvX!SI!
-      ;"<"!C"WXT!R"#v!"#"WX!"#"W"X!K"V"L"W"XT!R"'"WvV"X="WX!S8"="WX!S! 5 ;"<"!"WXT!R"#"!"WX!"#"W"X!K"V"L"W"XT!R"'"WvV"X="WX!S8"="WX!S!
-      C"WXT!RK"L"="T!R"#"!"#"W"V"X!S"#"WQ"T"="X!"#"WX!S! 5 C"WXT!RK"L"="T!R"#"!"#""W"V"X!"#"WQ""T"="X!"#"WX!SS!
-      D"W"XT!RC"W"XT!R"W"X!"="#v!SS"#"W"WXX!"#"W"X! 1 D"W"XT!RC"W"XT!R"W"X!"="#v!SS"#"W"WXX!"#"W"X!
-      OT!R"#"="W"="W"#"XV"#"="X!SN"="T!R"#"="="W"#"V"#"="X!S! 1 OT!R"#"="W"="W"#""X"#"="XX!SN"="T!R"#"="="W"#"vV"#"="!S!
-      C"W"V"XT!R"#"WYW"V"XK"L"ZK"L"="X!K"L"W"V"XT!R"#"W"V"#"W"XXW"X!8"!SS! 5 "W"V"XT!R"#"WYW"V"XK"L"ZK"L"="WXXT!RK"L""="W"XT!R"#"W"V"#"W"XXW"X!S8"!SS!
-      "YwZ#w!"#Y"K"L"G"="W"XZ!"#x!K"L"T!RG"="W"XY"Zb"T!R"="W"X!SS! 2 "YwZ#w!"#Y"K"L"G"="W"XZ!"#x!K"L"T!RG"="W"XY"Zb"T!R"="W"X!SS!
-      "#"W"="V"="V"X="W"="V"="VwX! 1 ""#"W"="V"="V"X="W"="V"="VwX!
-      ;="<"!<"!"#"W[WwVwV[wTw\VwT[wTw\VwT[wTwVwTw\VwT[wTwVwTw\\V"#[wT[wTwV\VwT[wTwVwTw\\V[wT[wTy\VwTw\X! 1 <"="<"!<"!"#"W[WwVwV\V[wTw\VwT[wTw\VwT[wTwVwTw\VwT[wTwVwTw\\V"#[wT[wTw\VwT[wTwVwTw\\!V[wT[wTwVwTw\\ZXV!
+      D"W"="XT!R"#YWwVwXVZ!R#Y"="W"#wV"#wV"#"="W"#wV"#wV"#yVY#vXVXVZ!S! 2 D"W"="XT!R"#YWwVwXVZ!"#Y"="W"#wV"#wV"#"="W"#wV"#wV"#yV"#vXVXVZ!S!
+      D"W"="XT!C"W"XT!R"="="WwV[w#w\X!SS! 2 D"W"="XT!RC"W"XT!R"="="WwV[wTw\X!SS!
+      C""X!""V"X="WX!"="#"="WX!"="WX!S! 3 C"W"XT!R"W"V"X="WX!"="#"="WX!"="WX!S!
+      C"W"w"V"XT!Rw!"#"="="W"X!"#"="W"X!9"="W"#"V"#"V"#yX!"#""="V"#"V"#["="T"="\X!"="W"X!S! 2 C"W"V"V"XT!Rw!"#"="="W"X!"#"="W"X!9"="W"#"V"#"V"#yX!"#"W"="V"#"V"#["="T"="\X!"="W"X!S!
+      C"W"V"XT!RG"YwZbwT!8"="WX!S8"="WX!S! 1 C"W"V"XT!RG"YwZbwT!R8"="WX!S8"="WX!S!
+      C"W"XT!Rw!R#""="X="WX!"="W"X!S! 2 C"W"XT!Rw!"#"W"="X="WX!"="W"X!S!
+      C"W"XT!R"#"WX!"#"WX!"="#w!"="#"WX!RW"="VvX!"W"="Vv!"W"="VvX!"W"="VvX!SS 3 C"W"XT!R"#"WX!"#"WX!"="#w!"="#"WX!"W"="VvX!"W"="VvX!"W"="VvX!"W"="VvX!S!
+      C"W"V"X!R"V"#"YvZ!"#"=""X!S#"="="!P"W"VwXT!R"#"Y"Z="!S8"!S! 3 C"W"V"XT!R"V"#"YvZ!"#"="W"X!"#"="="!P"W"VwXT!R"#"Y"Z="!S8"!S!
+      C"W"T!Rw!""#"WX!"="="s"YvZ#"!8"!S! 2 C"W"XT!Rw!"V"#"WX!"="="s"YvZ#"!8"!S!
+      "W"V"XT!Rw!"V"#"="WYwV"W"Y"ZXV"W"Y"ZXZX!"="#"="YwZow!S! 1 C"W"V"XT!Rw!"V"#"="WYwV"W"Y"ZXV"W"Y"ZXZX!"="#"="YwZow!S!
     """.trimIndent().lines().forEach {
       it.trim().split(" ").let { (a, b, c) ->
-        val fixed = a.map { PyTokMap.mt[it] }.joinToString(" ")
-        val broke = c.map { PyTokMap.mt[it] }.joinToString(" ")
+        val fixed = c.map { PyTokMap.mt[it] }.joinToString(" ")
+        val broke = a.map { PyTokMap.mt[it] }.joinToString(" ")
         val valid = "${fixed in vanillaS2PCFG.language} ${broke !in vanillaS2PCFG.language}"
         val eq = "$b = ${levenshtein(a.map { it }.joinToString(" "), c.map { it }.joinToString(" "))}"
         println("$fixed\n$broke\n$valid\n$eq")

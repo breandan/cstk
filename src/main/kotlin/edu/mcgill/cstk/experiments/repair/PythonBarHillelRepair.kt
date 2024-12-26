@@ -113,14 +113,14 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val humanRepair = validTokens.tokenizeByWhitespace()
     val target = humanRepair.joinToString(" ")
     val levAlign = levenshteinAlign(toRepair, humanRepair)
-    val levGuess = levAlign.patchSize()
-//    val levGuess = (1..MAX_RADIUS).firstOrNull {
-//      try {
-//        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
-//        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
-//        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
-//      } catch (e: Exception) { println("Failed $it, increasing..."); false }
-//    } ?: MAX_RADIUS
+//    val levGuess = levAlign.patchSize()
+    val levGuess = (1..MAX_RADIUS).firstOrNull {
+      try {
+        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
+        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
+        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+      } catch (_: Exception) { println("Failed $it, increasing..."); false }
+    } ?: MAX_RADIUS
     val levDist = levAlign.patchSize()
     val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -190,23 +190,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(termDict.encode(humanRepair)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
-//    val rankedResults = dfa.decodeDFA(
-//      mc = P_BIFI_PY150,
-//      timeout = timeout,
-//      dec = termDict,
-//      callback = {
-//        totalSamples++
-//        if (it == target) {
-//          matchFound = true
-//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-//          elapsed = clock.elapsedNow().inWholeMilliseconds
-//        }
-//      }
-//    )
-
-    val rankedResults = MakeMore.decodeDFA(
-      origStr = MakeMore.encode(invalidTokens) + " $levDist ",
-      bAutomaton = dfa,
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
       timeout = timeout,
       dec = termDict,
       callback = {
@@ -218,6 +203,21 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         }
       }
     )
+
+//    val rankedResults = MakeMore.decodeDFA(
+//      origStr = MakeMore.encode(invalidTokens) + " $levDist ",
+//      bAutomaton = dfa,
+//      timeout = timeout,
+//      dec = termDict,
+//      callback = {
+//        totalSamples++
+//        if (it == target) {
+//          matchFound = true
+//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+//          elapsed = clock.elapsedNow().inWholeMilliseconds
+//        }
+//      }
+//    )
 
 //    rankedResults.take(100).forEach {
 //      println("Sample: ${levenshteinAlign(humanRepair, it.tokenizeByWhitespace()).paintANSIColors()}")
@@ -712,7 +712,85 @@ fun profileRecognizer() {
 }
 
 /*
-w/ LLM denoiser
+w/ LLM pairwise denoiser
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 38 / 191 ≈ 0.19895287958115182
+|σ|∈[10, 20): Top-1/total: 47 / 363 ≈ 0.12947658402203857
+|σ|∈[20, 30): Top-1/total: 55 / 362 ≈ 0.15193370165745856
+|σ|∈[30, 40): Top-1/total: 61 / 393 ≈ 0.15521628498727735
+|σ|∈[40, 50): Top-1/total: 64 / 342 ≈ 0.1871345029239766
+|σ|∈[50, 60): Top-1/total: 79 / 337 ≈ 0.2344213649851632
+|σ|∈[60, 70): Top-1/total: 55 / 255 ≈ 0.21568627450980393
+|σ|∈[70, 80): Top-1/total: 49 / 216 ≈ 0.22685185185185186
+Δ(1)= Top-1/total: 390 / 1007 ≈ 0.3872889771598808
+Δ(2)= Top-1/total: 48 / 930 ≈ 0.05161290322580645
+Δ(3)= Top-1/total: 10 / 522 ≈ 0.019157088122605363
+(|σ|∈[0, 10), Δ=1): Top-1/total: 37 / 91 ≈ 0.4065934065934066
+(|σ|∈[0, 10), Δ=2): Top-1/total: 1 / 68 ≈ 0.014705882352941176
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 32 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 41 / 138 ≈ 0.2971014492753623
+(|σ|∈[10, 20), Δ=2): Top-1/total: 5 / 141 ≈ 0.03546099290780142
+(|σ|∈[10, 20), Δ=3): Top-1/total: 1 / 84 ≈ 0.011904761904761904
+(|σ|∈[20, 30), Δ=1): Top-1/total: 48 / 135 ≈ 0.35555555555555557
+(|σ|∈[20, 30), Δ=2): Top-1/total: 7 / 142 ≈ 0.04929577464788732
+(|σ|∈[20, 30), Δ=3): Top-1/total: 0 / 85 ≈ 0.0
+(|σ|∈[30, 40), Δ=1): Top-1/total: 52 / 139 ≈ 0.37410071942446044
+(|σ|∈[30, 40), Δ=2): Top-1/total: 8 / 146 ≈ 0.0547945205479452
+(|σ|∈[30, 40), Δ=3): Top-1/total: 1 / 108 ≈ 0.009259259259259259
+(|σ|∈[40, 50), Δ=1): Top-1/total: 57 / 141 ≈ 0.40425531914893614
+(|σ|∈[40, 50), Δ=2): Top-1/total: 5 / 140 ≈ 0.03571428571428571
+(|σ|∈[40, 50), Δ=3): Top-1/total: 2 / 61 ≈ 0.03278688524590164
+(|σ|∈[50, 60), Δ=1): Top-1/total: 60 / 131 ≈ 0.4580152671755725
+(|σ|∈[50, 60), Δ=2): Top-1/total: 14 / 139 ≈ 0.10071942446043165
+(|σ|∈[50, 60), Δ=3): Top-1/total: 5 / 67 ≈ 0.07462686567164178
+(|σ|∈[60, 70), Δ=1): Top-1/total: 51 / 123 ≈ 0.4146341463414634
+(|σ|∈[60, 70), Δ=2): Top-1/total: 4 / 81 ≈ 0.04938271604938271
+(|σ|∈[60, 70), Δ=3): Top-1/total: 0 / 51 ≈ 0.0
+(|σ|∈[70, 80), Δ=1): Top-1/total: 44 / 109 ≈ 0.4036697247706422
+(|σ|∈[70, 80), Δ=2): Top-1/total: 4 / 73 ≈ 0.0547945205479452
+(|σ|∈[70, 80), Δ=3): Top-1/total: 1 / 34 ≈ 0.029411764705882353
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 75 / 191 ≈ 0.39267015706806285
+|σ|∈[10, 20): Top-1/total: 155 / 363 ≈ 0.42699724517906334
+|σ|∈[20, 30): Top-1/total: 141 / 362 ≈ 0.38950276243093923
+|σ|∈[30, 40): Top-1/total: 141 / 393 ≈ 0.35877862595419846
+|σ|∈[40, 50): Top-1/total: 140 / 342 ≈ 0.4093567251461988
+|σ|∈[50, 60): Top-1/total: 143 / 337 ≈ 0.42433234421364985
+|σ|∈[60, 70): Top-1/total: 111 / 255 ≈ 0.43529411764705883
+|σ|∈[70, 80): Top-1/total: 105 / 216 ≈ 0.4861111111111111
+Δ(1)= Top-1/total: 757 / 1007 ≈ 0.7517378351539226
+Δ(2)= Top-1/total: 208 / 930 ≈ 0.22365591397849463
+Δ(3)= Top-1/total: 46 / 522 ≈ 0.08812260536398467
+(|σ|∈[0, 10), Δ=1): Top-1/total: 56 / 91 ≈ 0.6153846153846154
+(|σ|∈[0, 10), Δ=2): Top-1/total: 16 / 68 ≈ 0.23529411764705882
+(|σ|∈[0, 10), Δ=3): Top-1/total: 3 / 32 ≈ 0.09375
+(|σ|∈[10, 20), Δ=1): Top-1/total: 104 / 138 ≈ 0.7536231884057971
+(|σ|∈[10, 20), Δ=2): Top-1/total: 43 / 141 ≈ 0.3049645390070922
+(|σ|∈[10, 20), Δ=3): Top-1/total: 8 / 84 ≈ 0.09523809523809523
+(|σ|∈[20, 30), Δ=1): Top-1/total: 105 / 135 ≈ 0.7777777777777778
+(|σ|∈[20, 30), Δ=2): Top-1/total: 29 / 142 ≈ 0.20422535211267606
+(|σ|∈[20, 30), Δ=3): Top-1/total: 7 / 85 ≈ 0.08235294117647059
+(|σ|∈[30, 40), Δ=1): Top-1/total: 106 / 139 ≈ 0.762589928057554
+(|σ|∈[30, 40), Δ=2): Top-1/total: 29 / 146 ≈ 0.19863013698630136
+(|σ|∈[30, 40), Δ=3): Top-1/total: 6 / 108 ≈ 0.05555555555555555
+(|σ|∈[40, 50), Δ=1): Top-1/total: 103 / 141 ≈ 0.7304964539007093
+(|σ|∈[40, 50), Δ=2): Top-1/total: 33 / 140 ≈ 0.2357142857142857
+(|σ|∈[40, 50), Δ=3): Top-1/total: 4 / 61 ≈ 0.06557377049180328
+(|σ|∈[50, 60), Δ=1): Top-1/total: 104 / 131 ≈ 0.7938931297709924
+(|σ|∈[50, 60), Δ=2): Top-1/total: 28 / 139 ≈ 0.2014388489208633
+(|σ|∈[50, 60), Δ=3): Top-1/total: 11 / 67 ≈ 0.16417910447761194
+(|σ|∈[60, 70), Δ=1): Top-1/total: 92 / 123 ≈ 0.7479674796747967
+(|σ|∈[60, 70), Δ=2): Top-1/total: 15 / 81 ≈ 0.18518518518518517
+(|σ|∈[60, 70), Δ=3): Top-1/total: 4 / 51 ≈ 0.0784313725490196
+(|σ|∈[70, 80), Δ=1): Top-1/total: 87 / 109 ≈ 0.7981651376146789
+(|σ|∈[70, 80), Δ=2): Top-1/total: 15 / 73 ≈ 0.2054794520547945
+(|σ|∈[70, 80), Δ=3): Top-1/total: 3 / 34 ≈ 0.08823529411764706
+
+w/ LLM unsupervised denoiser
 
 Precision@1
 ===========
