@@ -9,6 +9,7 @@ import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.to
+import java.io.File
 import java.net.URL
 import java.net.URLEncoder
 import java.util.PriorityQueue
@@ -98,6 +99,15 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         println("$fixed\n$broke\n$valid\n$eq")
       }
     }
+  }
+
+  fun previewSamples() {
+    File("synt_fixes.txt").readLines().filter { it.length < 30 }
+      .take(100_000).shuffled().toList().take(10)
+      .also { it.forEach { println(it) } }
+      .map { it.tokenizeByWhitespace() }
+      .map { decode(it[0]) to " ${it[1]} " to decode(it[2]) }
+      .forEach { println((it.first + it.second + it.third).replace("null", "")) }
   }
 
   fun prepTrainingSet() {
