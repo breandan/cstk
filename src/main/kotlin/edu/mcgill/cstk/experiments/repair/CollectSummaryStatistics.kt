@@ -57,11 +57,11 @@ fun main() {
 //  measureThroughput()
 //  MakeMore.checkSamples()
 //  prepareBreakerDataset()
-//  MakeMore.checkPairwiseSamples()
+  MakeMore.checkPairwiseSamples()
 //  MakeMore.previewSamples()
 //  prepareFixerDataset()
 //  correctNames()
-  errorPredDiscrepancy()
+//  errorPredDiscrepancy()
 }
 
 fun errorPredDiscrepancy() {

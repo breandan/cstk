@@ -147,33 +147,33 @@ class Transformer(nn.Module):
         # Create standard positional indices
         pos = torch.arange(t, dtype=torch.long, device=device)  # shape: (t,)
 
-        # Identify where the space token occurs in each sequence.
-        # idx shape is (b, t), we need to handle each sequence in the batch.
-        # This code assumes we fold after the *first* space in each sequence.
-        # If no space is found, no folding is performed.
-        new_pos = torch.zeros_like(pos).unsqueeze(0).expand(b, -1)  # Initialize
-        for i in range(b):
-            seq = idx[i]  # shape: (t,)
-            # Find positions of the space token
-            space_positions = torch.where(seq == space_token_id)[0]
-            if len(space_positions) > 0:
-                # Suppose we only fold after the first space token
-                fold_pos = space_positions[0].item()
-
-                # Before the space: positions remain unchanged
-                new_pos[i, :fold_pos+1] = pos[:fold_pos+1]
-
-                # After the space: reset positions starting from zero again
-                length_after = t - (fold_pos + 1)
-                # This will map [fold_pos+1 ... t-1] to [0 ... length_after-1]
-                new_pos[i, fold_pos+1:] = torch.arange(length_after, device=device)
-            else:
-                # If no space token is found, just use the original positions
-                new_pos[i] = pos
-        ############################################################################################################
+        # # Identify where the space token occurs in each sequence.
+        # # idx shape is (b, t), we need to handle each sequence in the batch.
+        # # This code assumes we fold after the *first* space in each sequence.
+        # # If no space is found, no folding is performed.
+        # new_pos = torch.zeros_like(pos).unsqueeze(0).expand(b, -1)  # Initialize
+        # for i in range(b):
+        #     seq = idx[i]  # shape: (t,)
+        #     # Find positions of the space token
+        #     space_positions = torch.where(seq == space_token_id)[0]
+        #     if len(space_positions) > 0:
+        #         # Suppose we only fold after the first space token
+        #         fold_pos = space_positions[0].item()
+        #
+        #         # Before the space: positions remain unchanged
+        #         new_pos[i, :fold_pos+1] = pos[:fold_pos+1]
+        #
+        #         # After the space: reset positions starting from zero again
+        #         length_after = t - (fold_pos + 1)
+        #         # This will map [fold_pos+1 ... t-1] to [0 ... length_after-1]
+        #         new_pos[i, fold_pos+1:] = torch.arange(length_after, device=device)
+        #     else:
+        #         # If no space token is found, just use the original positions
+        #         new_pos[i] = pos
+        # ############################################################################################################
         # forward the GPT model itself
         tok_emb = self.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
-        pos_emb = self.transformer.wpe(new_pos) # position embeddings of shape (1, t, n_embd)
+        pos_emb = self.transformer.wpe(pos) # position embeddings of shape (1, t, n_embd)
         x = tok_emb + pos_emb
         for block in self.transformer.h:
             x = block(x)
@@ -373,11 +373,11 @@ if __name__ == '__main__':
     parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
     # model
     parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
-    parser.add_argument('--n-layer', type=int, default=4, help="number of layers")
+    parser.add_argument('--n-layer', type=int, default=5, help="number of layers")
     parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=32, help="number of feature channels in the model")
+    parser.add_argument('--n-embd', type=int, default=400, help="number of feature channels in the model")
     # optimization
-    parser.add_argument('--batch-size', '-b', type=int, default=64, help="batch size during optimization")
+    parser.add_argument('--batch-size', '-b', type=int, default=74, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
     parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
     args = parser.parse_args()

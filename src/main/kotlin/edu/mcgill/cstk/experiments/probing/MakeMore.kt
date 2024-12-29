@@ -80,16 +80,15 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
   fun checkPairwiseSamples() {
     """
-      D"W"="XT!R"#YWwVwXVZ!R#Y"="W"#wV"#wV"#"="W"#wV"#wV"#yVY#vXVXVZ!S! 2 D"W"="XT!R"#YWwVwXVZ!"#Y"="W"#wV"#wV"#"="W"#wV"#wV"#yV"#vXVXVZ!S!
-      D"W"="XT!C"W"XT!R"="="WwV[w#w\X!SS! 2 D"W"="XT!RC"W"XT!R"="="WwV[wTw\X!SS!
-      C""X!""V"X="WX!"="#"="WX!"="WX!S! 3 C"W"XT!R"W"V"X="WX!"="#"="WX!"="WX!S!
-      C"W"w"V"XT!Rw!"#"="="W"X!"#"="W"X!9"="W"#"V"#"V"#yX!"#""="V"#"V"#["="T"="\X!"="W"X!S! 2 C"W"V"V"XT!Rw!"#"="="W"X!"#"="W"X!9"="W"#"V"#"V"#yX!"#"W"="V"#"V"#["="T"="\X!"="W"X!S!
-      C"W"V"XT!RG"YwZbwT!8"="WX!S8"="WX!S! 1 C"W"V"XT!RG"YwZbwT!R8"="WX!S8"="WX!S!
-      C"W"XT!Rw!R#""="X="WX!"="W"X!S! 2 C"W"XT!Rw!"#"W"="X="WX!"="W"X!S!
-      C"W"XT!R"#"WX!"#"WX!"="#w!"="#"WX!RW"="VvX!"W"="Vv!"W"="VvX!"W"="VvX!SS 3 C"W"XT!R"#"WX!"#"WX!"="#w!"="#"WX!"W"="VvX!"W"="VvX!"W"="VvX!"W"="VvX!S!
-      C"W"V"X!R"V"#"YvZ!"#"=""X!S#"="="!P"W"VwXT!R"#"Y"Z="!S8"!S! 3 C"W"V"XT!R"V"#"YvZ!"#"="W"X!"#"="="!P"W"VwXT!R"#"Y"Z="!S8"!S!
-      C"W"T!Rw!""#"WX!"="="s"YvZ#"!8"!S! 2 C"W"XT!Rw!"V"#"WX!"="="s"YvZ#"!8"!S!
-      "W"V"XT!Rw!"V"#"="WYwV"W"Y"ZXV"W"Y"ZXZX!"="#"="YwZow!S! 1 C"W"V"XT!Rw!"V"#"="WYwV"W"Y"ZXV"W"Y"ZXZX!"="#"="YwZow!S!
+      C"W"V"V"#xXT!Rw!G_"T!R8xVx!S"#"WX!"="W"V"X!"#"="W"X!"="W"="X!8w="WYwVwVw="ws"Y"ZK"L"ZX!S! 2 C"W"V"V"#xXT!Rw!G_"T!R8xVx!S"#"WX!"="W"V"X!"#"="W"X!"="W"="X!8w="WYwVwVws"Vws"Y"ZK"L"ZX!S!
+      C"W"XT!R"="="WyX!"="W"="="WXX!R="="WzX!"="W"="="WXX!"="W"="="WXX!S! 1 C"W"XT!R"="="WyX!"="W"="="WXX!"="="WzX!"="W"="="WXX!"="W"="="WXX!S!
+      C"WXT!RG_"="="WwXT!R8z!S"#"WX!8"!SS 1 C"WXT!RG_"="="WwXT!R8z!S"#"WX!8"!S!
+      C"W"XT!Rw!8""!"#vX!S! 2 C"W"XT!Rw!8"W"#"V"#vX!S!
+      C"W"V"V"V"V"XT!Rw!G"c"="]_"="]"`v]"c"="]"`vT!R8x!SIT!R8"="WW"V"V"V"V"#wG"="b"="IwXV"X!S! 1 C"W"V"V"V"V"XT!Rw!G"c"="]_"="]"`v]"c"="]"`vT!R8x!SIT!R8"="WW"V"V"V"V"#wG"="b"="IwXV"X!SS!
+      C"W"V"XT!R"#v!J"a"T!RG"b"T!R"'v!"(v!SIT!RG"b"T!R8!SH"`"T!R"#"!SIT!R"#"!6!S8"!SSJ"W"p"XcvT!RG_"s"fxT!R""!"("!SSS! 1 C"W"V"XT!R"#v!J"a"T!RG"b"T!R"'v!"(v!SIT!RG"b"T!R8!SH"`"T!R"#"!SIT!R"#"!6!S8"!SSJ"W"p"XcvT!RG_"s"fxT!R"#"!"("!SSS!
+      D"W"XT!R"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!n#v!"#v!R#v!"#v!"#v!"#v!S! 2 D"W"XT!R"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!"#v!S!
+      ;"<"T"#"#v!S#v!! 3 ;"<"!"#"#v!"#v!!
+      C"W"V"V"#YZV"#zXT5R;"="="="<"V"aG"^"T!R"V"#"!S8"="W"V"V"X!S! 2 C"W"V"V"#YZV"#zXT!R;"="="="<"V"!G"^"T!R"V"#"!S8"="W"V"V"X!S!
     """.trimIndent().lines().forEach {
       it.trim().split(" ").let { (a, b, c) ->
         val fixed = c.map { PyTokMap.mt[it] }.joinToString(" ")
