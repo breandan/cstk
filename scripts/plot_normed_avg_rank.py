@@ -31,17 +31,25 @@ def plot_interwoven_histograms(file1, file2):
 
     bar_width = 1 / (2 * num_buckets)
 
+    plt.rcParams.update({
+      "pgf.texsystem": "pdflatex",
+      'font.family': 'serif',
+      'text.usetex': True,
+      'pgf.rcfonts': False,
+    })
     plt.figure(figsize=(10, 6))
     plt.bar(bucket_centers - bar_width / 2, averages1, yerr=errors1, width=bar_width, color='b', edgecolor='black', alpha=0.7, capsize=5, label='Constrained')
     plt.bar(bucket_centers + bar_width / 2, averages2, yerr=errors2, width=bar_width, color='r', edgecolor='black', alpha=0.7, capsize=5, label='Unconstrained')
 
     plt.yscale('log')
-    plt.title('Normalized Position vs. Averaged Rank (Constrained vs. Unconstrained)')
+    # plt.title('True next-token rank over normalized snippet positions (Constrained vs. Unconstrained)')
     plt.xlabel('Normalized Position')
     plt.ylabel('Log Averaged Rank')
     plt.legend()
     plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.show()
+    # plt.show()
+
+    plt.savefig('../galoisenne/latex/figures/rank_cst_unc.pgf')
 
 # Example usage:
 # (on MakeMore.measureRankOfTrueNextTokenWithLBHConstraints())
@@ -49,4 +57,4 @@ def plot_interwoven_histograms(file1, file2):
 # cat next_tok_ranks.txt | grep '^CRANK_IDX' >> scripts/rank_idx_cst.txt
 # cat next_tok_ranks.txt | grep '^URANK_IDX' >> scripts/rank_idx_unc.txt
 
-plot_interwoven_histograms('rank_idx_cst.txt', 'urank_idx_unc.txt')
+plot_interwoven_histograms('crank_idx.txt', 'urank_idx.txt')
