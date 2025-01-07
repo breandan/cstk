@@ -373,9 +373,9 @@ if __name__ == '__main__':
     parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
     # model
     parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
-    parser.add_argument('--n-layer', type=int, default=5, help="number of layers")
-    parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=400, help="number of feature channels in the model")
+    parser.add_argument('--n-layer', type=int, default=3, help="number of layers")
+    parser.add_argument('--n-head', type=int, default=3, help="number of heads (in a transformer)")
+    parser.add_argument('--n-embd', type=int, default=90, help="number of feature channels in the model")
     # optimization
     parser.add_argument('--batch-size', '-b', type=int, default=74, help="batch size during optimization")
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")

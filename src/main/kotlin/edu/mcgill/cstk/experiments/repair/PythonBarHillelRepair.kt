@@ -6,7 +6,6 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
-import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
@@ -31,7 +30,7 @@ fun main() {
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
-//  evaluateBIFIRepair()
+  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
 //  writeParikhMap()
 }
@@ -107,36 +106,35 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val editLocationsByLenAndDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
-  dataset.forEach { (invalidTokens, validTokens) ->
+  dataset.forEach { (brokeStr, fixedStr) ->
     val allTime = TimeSource.Monotonic.markNow()
-    val toRepair = invalidTokens.tokenizeByWhitespace()
-    val humanRepair = validTokens.tokenizeByWhitespace()
-    val target = humanRepair.joinToString(" ")
-    val levAlign = levenshteinAlign(toRepair, humanRepair)
+    val brokeToks = brokeStr.tokenizeByWhitespace()
+    val fixedToks = fixedStr.tokenizeByWhitespace()
+    val levAlign = levenshteinAlign(brokeToks, fixedToks)
 //    val levGuess = levAlign.patchSize()
     val levGuess = (1..MAX_RADIUS).firstOrNull {
       try {
-        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = it)
-        val fsa = makeLevFSA(toRepair, it, monoEditBounds)
+        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
+        val fsa = makeLevFSA(brokeToks, it, monoEditBounds)
         s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
       } catch (_: Exception) { println("Failed $it, increasing..."); false }
     } ?: MAX_RADIUS
     val levDist = levAlign.patchSize()
-    val lenBucket = (toRepair.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
+    val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
-    val humanRepairANSI = levenshteinAlign(toRepair, humanRepair).paintANSIColors()
-    println("Source: ${toRepair.joinToString(" ")}")
+    val humanRepairANSI = levenshteinAlign(brokeToks, fixedToks).paintANSIColors()
+    println("Source: ${brokeToks.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
 
     val intGram = try {
-      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levGuess)
+      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = levGuess)
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
-      val fsa = makeLevFSA(toRepair, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
+      val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
 
-      if (!fsa.recognizes(humanRepair))
+      if (!fsa.recognizes(fixedToks))
         throw Exception("Human repair is unrecognizable! (Total time=${allTime.elapsedNow()})")
       else println("LEV-FSA recognizes human repair (Total time=${allTime.elapsedNow()})")
 
@@ -145,7 +143,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     } catch (e: Exception) { println("$humanRepairANSI\nIntersection exception: ${e.stackTraceToString()}"); null }
     catch (e: Error) { println("$humanRepairANSI\nIntersection error: ${e.stackTraceToString()}"); null }
 
-    if (intGram != null) println("Constructed LEV($levGuess, ${toRepair.size}, $levBallSize) " +
+    if (intGram != null) println("Constructed LEV($levGuess, ${brokeToks.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
     println("Implicated nonterminals: " + (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) + " / " + s2pg.nonterminals.size)
@@ -154,15 +152,15 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     try {
       if (intGram == null) throw Exception("Exception while building grammar!")
       else if (MAX_DFA_IN < intGram.size) throw Exception("Int grammar was still too large!")
-      else if (humanRepair !in intGram.language) {
-        println("Human repair recognized by original CFG: " + (humanRepair in vanillaS2PCFG.language))
+      else if (fixedToks !in intGram.language) {
+        println("Human repair recognized by original CFG: " + (fixedToks in vanillaS2PCFG.language))
         throw Exception("Human repair is unrecognizable by LEV ∩ CFG! (Total time=${allTime.elapsedNow()})")
       } else println("Human repair is recognized by LEV ∩ CFG! (Total time=${allTime.elapsedNow()})")
     } catch (e: Exception) {
       println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
       println(allRate.toString())
-      negative.appendText("${toRepair.size}, $levDist, 0, " +
+      negative.appendText("${brokeToks.size}, $levDist, 0, " +
         "${levBallSize}, ${intGram?.size ?: 0}, ${levAlign.summarize()}\n")
 
       println()
@@ -187,7 +185,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
 //    println(dfa.toDot().replaceAll(vanillaS2PCFG.unicodeMap))
 
-    val dfaRecognized = try { dfa.run(termDict.encode(humanRepair)) } catch (_: Exception) { false }
+    val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
     val rankedResults = dfa.decodeDFA(
@@ -196,7 +194,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       dec = termDict,
       callback = {
         totalSamples++
-        if (it == target) {
+        if (it == fixedStr) {
           matchFound = true
           println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
           elapsed = clock.elapsedNow().inWholeMilliseconds
@@ -205,13 +203,13 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     )
 
 //    val rankedResults = MakeMore.decodeDFA(
-//      origStr = MakeMore.encode(invalidTokens) + " $levDist ",
+//      origStr = MakeMore.encode(brokeTks) + " $levDist ",
 //      bAutomaton = dfa,
 //      timeout = timeout,
 //      dec = termDict,
 //      callback = {
 //        totalSamples++
-//        if (it == target) {
+//        if (it == fixedStr) {
 //          matchFound = true
 //          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
 //          elapsed = clock.elapsedNow().inWholeMilliseconds
@@ -224,20 +222,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //      println(it in vanillaS2PCFG.language)
 //    }
 
-    val indexOfTarget = rankedResults.indexOf(target).also {
+    val indexOfTarget = rankedResults.indexOf(fixedStr).also {
       if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
       if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
     }
 
     rankedResults.firstOrNull()?.tokenizeByWhitespace()
-      ?.let { println("Top1 scoring repair: ${levenshteinAlign(toRepair, it).paintANSIColors()}") }
+      ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ${intGram.size} prods, " +
 //        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
           "length-$levDist human repair not found")
       negative.appendText(
-        "${toRepair.size}, $levDist, $totalSamples, ${levBallSize}, " +
+        "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
           "${intGram.size}, $langSize, " +
 //          "${dfa.states.size}, ${dfa.numberOfTransitions}, " +
           "${levAlign.summarize()}\n"
@@ -248,7 +246,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
       println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
-        " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(target) + 1} / ${rankedResults.size}")
+        " $totalSamples samples, ${intGram.size} prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
 //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
@@ -257,7 +255,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
       samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
-      positive.appendText("${toRepair.size}, $levDist, $elapsed, $allElapsed, " +
+      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
         "$totalSamples, ${levBallSize}, ${intGram.size}, $langSize, " +
           "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
           "$indexOfTarget, ${levAlign.summarize()}\n")
@@ -401,6 +399,7 @@ val shortcutTestcases: List<Pair<String, String>> = listOf(
 //  "NAME = NAME . NAME . NAME ( STRING ) . NAME ( ) NEWLINE NAME = NUMBER NEWLINE NAME = NUMBER NEWLINE"
 )
 
+// Returns a quintuple of lexical (broke, fixed) and original code (broke, fixed) pairs
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
 //  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
 //  val file = File(File("").absolutePath + path).readText()
@@ -792,7 +791,7 @@ Precision@All
 
 
 /**
-             Unupervised                                      Supervised
+             Unsupervised                                      Supervised
 
  Precision@1                                   Precision@1
  Δ(1)= Top-1/total: 579 / 1340 ≈ 0.4320895     Δ(1)= Top-1/total: 390 / 1007 ≈ 0.38728

@@ -11,8 +11,6 @@ import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
-import java.net.URL
-import java.net.URLEncoder
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
@@ -27,6 +25,7 @@ import kotlin.time.Duration.Companion.seconds
 ./gradlew collectSummaryStats
  */
 fun main() {
+  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
 //  stackOverflowSnips().computeRawTokenFrequencies()
 //  seq2ParseSnips().computeBigramFrequencies()
@@ -57,7 +56,9 @@ fun main() {
 //  measureThroughput()
 //  MakeMore.checkSamples()
 //  prepareBreakerDataset()
-  MakeMore.checkPairwiseSamples()
+//  MakeMore.checkPairwiseSamples()
+//  MakeMore.measureRankOfTrueNextTokenWithoutConstraints()
+  MakeMore.measureRankOfTrueNextTokenWithLBHConstraints()
 //  MakeMore.previewSamples()
 //  prepareFixerDataset()
 //  correctNames()

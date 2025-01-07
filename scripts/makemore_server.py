@@ -21,9 +21,9 @@ block_size = train_dataset.get_output_length()
 # ------------------------------------------------------------
 class Args:
     device = 'mps'                  # or 'cuda' if you have a GPU
-    n_layer = 8
-    n_head = 4
-    n_embd = 32
+    n_layer = 3
+    n_head = 3
+    n_embd = 90
     top_k = vocab_size
 args = Args()
 
@@ -34,7 +34,7 @@ config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
 model = Transformer(config)
 model.to(args.device)
 
-model_path = f'{model_name}.pt'
+model_path = f'{model_name}_{args.n_embd}_{args.n_layer}_{args.n_head}.pt'
 if not os.path.exists(model_path):
     print(f"Model not found at {model_path}. Please train and place {model_name}.pt in the scripts directory.")
     sys.exit(1)

@@ -3,12 +3,18 @@ package edu.mcgill.cstk.experiments.probing
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.automata.BAutomaton
 import ai.hypergraph.kaliningraph.automata.FSATrajectory
+import ai.hypergraph.kaliningraph.automata.options
+import ai.hypergraph.kaliningraph.automata.toDFA
 import ai.hypergraph.kaliningraph.parsing.language
 import ai.hypergraph.kaliningraph.parsing.terminals
 import ai.hypergraph.kaliningraph.parsing.Σᐩ
+import ai.hypergraph.kaliningraph.repair.MAX_DFA_IN
+import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
+import ai.hypergraph.kaliningraph.repair.vanillaS2PCFGWE
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.to
+import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import java.io.File
 import java.net.URL
 import java.net.URLEncoder
@@ -16,7 +22,9 @@ import java.util.PriorityQueue
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.collections.plus
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
+import kotlin.time.measureTimedValue
 
 // Character-level LLM, transforms Python lexical tokens to ASCII characters
 object MakeMore {
@@ -53,7 +61,7 @@ object MakeMore {
     }
 
   fun nextTokensAndScores(str: String): List<Pair<Σᐩ, Double>> =
-    req(str).lines().take(10).filter { it.split(" ").size == 2 }.mapNotNull {
+    req(str).lines().filter { it.split(" ").size == 2 }.mapNotNull {
       val (a, b) = it.split(" ").let { (a, b) -> PyTokMap.mt[a.first()] to b.toDouble() }
       if (a == null) null else a to b
     }
@@ -118,6 +126,109 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         .map { PyTokMap.tm[it]!! }.joinToString("")) } catch (e: Exception) {} }
   }
 
+  fun measureRankOfTrueNextTokenWithoutConstraints() {
+    var runningTotal = 0.0
+    var instances = 0
+    sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
+      val levGuess = levenshtein(broke, fixed)
+      val tokIndices = decodeLLMWithGroundTruthSteering("${encode(broke)} $levGuess ", encode(fixed))
+      runningTotal += tokIndices.let { it.sum() / it.size.toDouble() }
+      println(runningTotal / ++instances)
+    }
+  }
+
+  fun measureRankOfTrueNextTokenWithSyntaxConstraints() { TODO() }
+
+  fun measureRankOfTrueNextTokenWithLBHConstraints() {
+    val s2pg = vanillaS2PCFG
+    val parikhMap = s2pg.parikhMap
+    val termDict = TermDict(s2pg.terminals)
+
+    var runningTotal = 0.0
+    var instances = 0
+
+    sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
+      val toRepair = broke.tokenizeByWhitespace()
+      val humanRepair = fixed.tokenizeByWhitespace()
+      val levGuess = levenshtein(broke, fixed)
+
+      val intGram = try {
+        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levGuess)
+//    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
+        val fsa = makeLevFSA(toRepair, levGuess, monoEditBounds)
+
+        if (!fsa.recognizes(fixed))
+          throw Exception("Human repair is unrecognizable!")
+        else println("LEV-FSA recognizes human repair")
+
+        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
+          .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
+      } catch (e: Exception) { null }
+      catch (e: Error) { null }
+
+      try {
+        if (intGram == null) throw Exception("Exception while building grammar!")
+        else if (MAX_DFA_IN < intGram.size) throw Exception("Int grammar was still too large!")
+        else if (humanRepair !in intGram.language) {
+          println("Human repair recognized by original CFG: " + (humanRepair in vanillaS2PCFG.language))
+          throw Exception("Human repair is unrecognizable by LEV ∩ CFG!")
+        } else println("Human repair is recognized by LEV ∩ CFG!")
+      } catch (e: Exception) {
+        return@forEach
+      }
+
+      val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
+        .also { println("Constructed PTree in ${it.duration}") }.value
+
+      val dfa = pTree.toDFA(minimize = true)!!
+
+      val tokIndices = decodeDFAWithGroundTruthSteering(
+        origStr = encode(broke) + " $levGuess ",
+        trueRepair = encode(fixed),
+        bAutomaton = dfa,
+        dec = termDict,
+      )
+      runningTotal += tokIndices.let { it.sum().toDouble() / it.size }
+      println("IDXs: ${tokIndices.joinToString(" ")}")
+      println("AVGs: " + runningTotal / ++instances)
+    }
+  }
+
+  fun decodeLLMWithGroundTruthSteering( // What was the rank of the true next token under no constraints?
+      origStr: String,
+      trueRepair: String,
+    ): List<Int> {
+      var indices = mutableListOf<Int>()
+
+      trueRepair.map { "$it" }.fold(origStr) { a, b ->
+        indices += nextTokens(a).indexOf(b)
+
+        a + b
+      }
+      println(indices.joinToString(" "))
+      return indices
+    }
+
+  fun decodeDFAWithGroundTruthSteering( // What was the rank of the true next token under LBH constraints?
+    origStr: String,
+    trueRepair: String,
+    bAutomaton: BAutomaton,
+    dec: Map<Char, Σᐩ>, // Maps unicode characters back to strings
+  ): List<Int> {
+    var indices = mutableListOf<Int>()
+    var options = bAutomaton.initialState.options(dec)
+
+    trueRepair.map { "$it" }.fold(origStr) { a, b ->
+      val nextToks = nextTokens(a).filter { PyTokMap.mt[it.first()]?.let { it in options } == true }
+      indices += nextToks.indexOf(b)
+
+      options = options[PyTokMap.mt[b.first()]]!!.options(dec)
+      a + b
+    }
+
+    return indices
+  }
+
   // Steers a random walk using the last n-1 transitions from the Markov Chain
   fun decodeDFA(
     origStr: String,
@@ -144,7 +255,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         beam.parallelStream().flatMap { partTraj ->
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
           val lastToks = partTraj.traj.reversed().filterNotNull().joinToString(" ")
-          val txs = partTraj.lastState.transitions.flatMap { next -> (next.min..next.max).map { tok -> dec[tok] to next.dest } }.toMap()
+          val txs = partTraj.lastState.options(dec)
           val query = "|$origStr${encode(lastToks)}"
 
           val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
