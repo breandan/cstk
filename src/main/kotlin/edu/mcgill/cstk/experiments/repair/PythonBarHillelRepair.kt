@@ -6,6 +6,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
+import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
@@ -110,16 +111,23 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val allTime = TimeSource.Monotonic.markNow()
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
+    val encString = "|${MakeMore.encode(brokeStr)} "
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
-//    val levGuess = levAlign.patchSize()
-    val levGuess = (1..MAX_RADIUS).firstOrNull {
-      try {
-        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
-        val fsa = makeLevFSA(brokeToks, it, monoEditBounds)
-        s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
-      } catch (_: Exception) { println("Failed $it, increasing..."); false }
-    } ?: MAX_RADIUS
-    val levDist = levAlign.patchSize()
+
+    // Declare the number of edits we are going to make up front
+    var levGuess = MakeMore.predDist(encString)
+    val langEditDist = if (levGuess == MAX_RADIUS) levGuess
+      else (levGuess..MAX_RADIUS).firstOrNull {
+        try {
+          val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
+          val fsa = makeLevFSA(brokeToks, it, monoEditBounds)
+          s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+        } catch (_: Exception) { println("Failed $it, increasing..."); false }
+      } ?: MAX_RADIUS
+    levGuess = langEditDist
+
+    val levDist = levAlign.patchSize() // True distance, only used for logging purposes
+
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -188,23 +196,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
-    val rankedResults = dfa.decodeDFA(
-      mc = P_BIFI_PY150,
-      timeout = timeout,
-      dec = termDict,
-      callback = {
-        totalSamples++
-        if (it == fixedStr) {
-          matchFound = true
-          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-          elapsed = clock.elapsedNow().inWholeMilliseconds
-        }
-      }
-    )
-
-//    val rankedResults = MakeMore.decodeDFA(
-//      origStr = MakeMore.encode(brokeTks) + " $levDist ",
-//      bAutomaton = dfa,
+//    val rankedResults = dfa.decodeDFA(
+//      mc = P_BIFI_PY150,
 //      timeout = timeout,
 //      dec = termDict,
 //      callback = {
@@ -216,6 +209,21 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //        }
 //      }
 //    )
+
+    val rankedResults = MakeMore.decodeDFA(
+      origStr = "$encString $levGuess ",
+      bAutomaton = dfa,
+      timeout = timeout,
+      dec = termDict,
+      callback = {
+        totalSamples++
+        if (it == fixedStr) {
+          matchFound = true
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
+      }
+    )
 
 //    rankedResults.take(100).forEach {
 //      println("Sample: ${levenshteinAlign(humanRepair, it.tokenizeByWhitespace()).paintANSIColors()}")

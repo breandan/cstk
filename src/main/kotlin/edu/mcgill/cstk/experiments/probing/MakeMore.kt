@@ -127,17 +127,6 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
         .map { PyTokMap.tm[it]!! }.joinToString("")) } catch (e: Exception) {} }
   }
 
-  fun measureRankOfTrueNextTokenWithoutConstraints() {
-    var runningTotal = 0.0
-    var instances = 0
-    sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
-      val levGuess = levenshtein(broke, fixed)
-      val tokIndices = decodeLLMWithGroundTruthSteering("|${encode(broke)} $levGuess ", encode(fixed))
-      runningTotal += tokIndices.let { it.sum() / it.size.toDouble() }
-      println(runningTotal / ++instances)
-    }
-  }
-
   fun measureRankOfTrueNextTokenWithSyntaxConstraints() { TODO() }
 
   fun measureRankOfTrueNextTokenWithLBHConstraints() {
@@ -202,21 +191,6 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     }
   }
 
-  fun decodeLLMWithGroundTruthSteering( // What was the rank of the true next token under no constraints?
-      origStr: String,
-      trueRepair: String,
-    ): List<Int> {
-      var indices = mutableListOf<Int>()
-
-      trueRepair.map { "$it" }.fold(origStr) { a, b ->
-        indices += nextTokens(a).indexOf(b)
-
-        a + b
-      }
-      println(indices.joinToString(" "))
-      return indices
-    }
-
   fun decodeDFAWithGroundTruthSteering( // What was the rank of the true next token under LBH constraints?
     origStr: String,
     trueRepair: String,
@@ -227,14 +201,15 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     val constrainedIndices = mutableListOf<Int>()
     var options = bAutomaton.initialState.options(dec)
 
-    trueRepair.map { "$it" }.fold(origStr) { a, b ->
-      val nextToks = nextTokens(a)
-      unconstrainedIndices += nextToks.indexOf(b)
-      val constrainedNexToks = nextToks.filter { PyTokMap.mt[it.first()]?.let { it in options } == true }
-      constrainedIndices += constrainedNexToks.indexOf(b)
+    trueRepair.map { "$it" }.fold(origStr) { acc, tok ->
+      val nextToks = nextTokens(acc)
+      unconstrainedIndices += nextToks.indexOf(tok)
+      constrainedIndices +=
+        if (unconstrainedIndices.last() == 0) 0 // Unconstrained 0-index implies the constrained index will be 0
+        else nextToks.filter { PyTokMap.mt[it.first()]?.let { it in options } == true }.indexOf(tok)
 
-      options = options[PyTokMap.mt[b.first()]]!!.options(dec)
-      a + b
+      options = options[PyTokMap.mt[tok.first()]]!!.options(dec)
+      acc + tok
     }
 
     return unconstrainedIndices to constrainedIndices
@@ -269,8 +244,9 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           val txs = partTraj.lastState.options(dec)
           val query = "|$origStr${encode(lastToks)}"
 
-          val nextTokensAndScores = try { if (txs.size == 1) listOf(txs.keys.first() to 1.0)
-            else nextTokensAndScores(query).filter { it.first in txs }
+          val nextTokensAndScores = try {
+            if (txs.size == 1) listOf(txs.keys.first() to 1.0) // Short-circuit if only one option is available
+            else nextTokensAndScores(query).filter { it.first in txs } // Otherwise, call LLM to fetch logProbs
           } catch (ex: Exception) { println("$ex / $query"); listOf() }
             // Fallback to uniform distribution over alphabet if error or empty transitions
             .ifEmpty { txs.keys.map { it to 1.0 / txs.keys.size }.filter { it.first in terms } }
