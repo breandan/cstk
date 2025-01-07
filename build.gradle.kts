@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.31.0"
+  val djlVersion = "0.31.1"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -39,7 +39,7 @@ dependencies {
   implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "1.1.2"
+  val hnswlibVersion = "1.1.3"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
@@ -51,13 +51,13 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:5.0.1")
+  implementation("com.github.ajalt.clikt:clikt:5.0.2")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.41.1"
+  val openrwVersion = "8.42.5"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
@@ -86,7 +86,7 @@ dependencies {
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.7")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.9.2")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.9.3")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.27.0")
@@ -163,7 +163,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:3.0.0.RC2")
+  implementation("com.diffplug.spotless:spotless-lib:3.0.1")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))

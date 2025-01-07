@@ -67,6 +67,8 @@ object MakeMore {
 
   fun nextTokensReadable(str: String): List<Σᐩ> = nextTokens(str).map { PyTokMap.mt[it.first()]!! }
 
+  fun predDist(str: String) = nextTokens("|$str ").first { it.first().isDigit() && it != "0" }.toInt()
+
   fun checkSamples() {
     """
 C"W"XT!R"="#"WX!"="WX!"="#"WX!"="#"="="!"="#"="="!"="#"="="!S!
@@ -130,7 +132,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     var instances = 0
     sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
       val levGuess = levenshtein(broke, fixed)
-      val tokIndices = decodeLLMWithGroundTruthSteering("${encode(broke)} $levGuess ", encode(fixed))
+      val tokIndices = decodeLLMWithGroundTruthSteering("|${encode(broke)} $levGuess ", encode(fixed))
       runningTotal += tokIndices.let { it.sum() / it.size.toDouble() }
       println(runningTotal / ++instances)
     }
@@ -150,12 +152,14 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
       val toRepair = broke.tokenizeByWhitespace()
       val humanRepair = fixed.tokenizeByWhitespace()
-      val levGuess = levenshtein(broke, fixed)
+      val trueLevDist = levenshtein(broke, fixed)
+      val encoded = encode(broke)
+      val predLevDist = predDist(encoded)
 
       val intGram = try {
-        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = levGuess)
+        val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = trueLevDist)
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
-        val fsa = makeLevFSA(toRepair, levGuess, monoEditBounds)
+        val fsa = makeLevFSA(toRepair, trueLevDist, monoEditBounds)
 
         if (!fsa.recognizes(fixed))
           throw Exception("Human repair is unrecognizable!")
@@ -163,8 +167,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
         s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
           .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
-      } catch (e: Exception) { null }
-      catch (e: Error) { null }
+      } catch (e: Exception) { null } catch (e: Error) { null }
 
       try {
         if (intGram == null) throw Exception("Exception while building grammar!")
@@ -173,9 +176,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           println("Human repair recognized by original CFG: " + (humanRepair in vanillaS2PCFG.language))
           throw Exception("Human repair is unrecognizable by LEV ∩ CFG!")
         } else println("Human repair is recognized by LEV ∩ CFG!")
-      } catch (e: Exception) {
-        return@forEach
-      }
+      } catch (e: Exception) { return@forEach }
 
       val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
         .also { println("Constructed PTree in ${it.duration}") }.value
@@ -183,7 +184,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
       val dfa = pTree.toDFA(minimize = true)!!
 
       val (uTokIndices, cTokIndices) = decodeDFAWithGroundTruthSteering(
-        origStr = encode(broke) + " $levGuess ",
+        origStr = "|$encoded $trueLevDist ",
         trueRepair = encode(fixed),
         bAutomaton = dfa,
         dec = termDict,
@@ -194,6 +195,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
       println("BROKE_SEQ: $broke")
       println("FIXED_SEQ: $fixed")
+      println("PRED_DIST: $predLevDist (ACT_DIST=$trueLevDist)")
       println("URANK_IDX: ${uTokIndices.joinToString(" ")}")
       println("CRANK_IDX: ${cTokIndices.joinToString(" ")}")
       println("AVGs: UNC=${urankTot / ++instances}, CST=${crankTot / instances}")
