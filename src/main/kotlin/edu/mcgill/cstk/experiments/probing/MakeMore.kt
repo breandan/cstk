@@ -9,11 +9,11 @@ import ai.hypergraph.kaliningraph.parsing.language
 import ai.hypergraph.kaliningraph.parsing.terminals
 import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import ai.hypergraph.kaliningraph.repair.MAX_DFA_IN
-import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFGWE
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.to
+import ai.hypergraph.kaliningraph.types.Π2A
 import edu.mcgill.cstk.experiments.repair.sizeAndDistBalancedRepairsUnminimized
 import java.io.File
 import java.net.URL
@@ -22,7 +22,6 @@ import java.util.PriorityQueue
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.collections.plus
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
@@ -144,7 +143,8 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     val parikhMap = s2pg.parikhMap
     val termDict = TermDict(s2pg.terminals)
 
-    var runningTotal = 0.0
+    var crankTot = 0.0
+    var urankTot = 0.0
     var instances = 0
 
     sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
@@ -182,15 +182,21 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
 
       val dfa = pTree.toDFA(minimize = true)!!
 
-      val tokIndices = decodeDFAWithGroundTruthSteering(
+      val (uTokIndices, cTokIndices) = decodeDFAWithGroundTruthSteering(
         origStr = encode(broke) + " $levGuess ",
         trueRepair = encode(fixed),
         bAutomaton = dfa,
         dec = termDict,
       )
-      runningTotal += tokIndices.let { it.sum().toDouble() / it.size }
-      println("IDXs: ${tokIndices.joinToString(" ")}")
-      println("AVGs: " + runningTotal / ++instances)
+
+      urankTot += uTokIndices.let { it.sum().toDouble() / it.size }
+      crankTot += cTokIndices.let { it.sum().toDouble() / it.size }
+
+      println("BROKE_SEQ: $broke")
+      println("FIXED_SEQ: $fixed")
+      println("URANK_IDX: ${uTokIndices.joinToString(" ")}")
+      println("CRANK_IDX: ${cTokIndices.joinToString(" ")}")
+      println("AVGs: UNC=${urankTot / ++instances}, CST=${crankTot / instances}")
     }
   }
 
@@ -214,19 +220,22 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
     trueRepair: String,
     bAutomaton: BAutomaton,
     dec: Map<Char, Σᐩ>, // Maps unicode characters back to strings
-  ): List<Int> {
-    var indices = mutableListOf<Int>()
+  ): Π2A<List<Int>> {
+    val unconstrainedIndices = mutableListOf<Int>()
+    val constrainedIndices = mutableListOf<Int>()
     var options = bAutomaton.initialState.options(dec)
 
     trueRepair.map { "$it" }.fold(origStr) { a, b ->
-      val nextToks = nextTokens(a).filter { PyTokMap.mt[it.first()]?.let { it in options } == true }
-      indices += nextToks.indexOf(b)
+      val nextToks = nextTokens(a)
+      unconstrainedIndices += nextToks.indexOf(b)
+      val constrainedNexToks = nextToks.filter { PyTokMap.mt[it.first()]?.let { it in options } == true }
+      constrainedIndices += constrainedNexToks.indexOf(b)
 
       options = options[PyTokMap.mt[b.first()]]!!.options(dec)
       a + b
     }
 
-    return indices
+    return unconstrainedIndices to constrainedIndices
   }
 
   // Steers a random walk using the last n-1 transitions from the Markov Chain
