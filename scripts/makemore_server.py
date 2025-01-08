@@ -28,7 +28,8 @@ class Args:
 args = Args()
 
 # Load model
-config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
+config = ModelConfig(vocab_size=vocab_size + 4, # + 4 due to |} and ` ` for contextual repair
+                     block_size=block_size,
                      n_layer=args.n_layer, n_head=args.n_head,
                      n_embd=args.n_embd)
 model = Transformer(config)

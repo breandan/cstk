@@ -31,7 +31,7 @@ fun main() {
   CFG_THRESH = 10_000
   evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
-  evaluateBIFIRepair()
+//  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
 //  writeParikhMap()
 }
@@ -115,18 +115,18 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
 
     // Declare the number of edits we are going to make up front
-    var levGuess = MakeMore.predDist(encString)
-    val langEditDist = if (levGuess == MAX_RADIUS) levGuess
-      else (levGuess..MAX_RADIUS).firstOrNull {
+    val predDist = MakeMore.predDist(encString)
+    val langEditDist = (1..MAX_RADIUS).firstOrNull {
         try {
           val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
           val fsa = makeLevFSA(brokeToks, it, monoEditBounds)
           s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
         } catch (_: Exception) { println("Failed $it, increasing..."); false }
       } ?: MAX_RADIUS
-    levGuess = langEditDist
+    val levGuess = langEditDist//min(predDist, langEditDist)
 
     val levDist = levAlign.patchSize() // True distance, only used for logging purposes
+    println("Predicted edit dist: $predDist (true dist: $levDist, LED: $langEditDist)")
 
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -211,7 +211,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 //    )
 
     val rankedResults = MakeMore.decodeDFA(
-      origStr = "$encString $levGuess ",
+      origStr = "$encString$levGuess ",
       bAutomaton = dfa,
       timeout = timeout,
       dec = termDict,

@@ -67,7 +67,7 @@ object MakeMore {
 
   fun nextTokensReadable(str: String): List<Σᐩ> = nextTokens(str).map { PyTokMap.mt[it.first()]!! }
 
-  fun predDist(str: String) = nextTokens("|$str ").first { it.first().isDigit() && it != "0" }.toInt()
+  fun predDist(str: String) = nextTokens("$str ").first { it.first().isDigit() && it != "0" }.toInt()
 
   fun checkSamples() {
     """
@@ -143,7 +143,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
       val humanRepair = fixed.tokenizeByWhitespace()
       val trueLevDist = levenshtein(broke, fixed)
       val encoded = encode(broke)
-      val predLevDist = predDist(encoded)
+      val predLevDist = predDist("|$encoded")
 
       val intGram = try {
         val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(toRepair, pad = trueLevDist)
@@ -242,7 +242,7 @@ C"W"XT!R"#"Y"W"XTZ!JW"W"W"XXf"XT!R"V"#"V"!S8"!S!
           if (startTime.elapsedNow() > timeout) throw Exception("Timeout!")
           val lastToks = partTraj.traj.reversed().filterNotNull().joinToString(" ")
           val txs = partTraj.lastState.options(dec)
-          val query = "|$origStr${encode(lastToks)}"
+          val query = "$origStr${encode(lastToks)}"
 
           val nextTokensAndScores = try {
             if (txs.size == 1) listOf(txs.keys.first() to 1.0) // Short-circuit if only one option is available
