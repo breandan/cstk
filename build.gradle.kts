@@ -209,6 +209,7 @@ tasks {
     "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
     "javaSemanticRepair" to "edu.mcgill.cstk.experiments.repair.JavaSemanticRepairKt",
     "collectSummaryStats" to "edu.mcgill.cstk.experiments.repair.CollectSummaryStatisticsKt",
+    "cudaTest" to "edu.mcgill.cstk.experiments.repair.CudaTestKt",
     "kotlinSemanticRepair" to "edu.mcgill.cstk.experiments.repair.KotlinSemanticRepairKt",
     "kotlinStatementRepair" to "edu.mcgill.cstk.experiments.repair.KotlinStatementRepairKt",
     "pythonStatementRepair" to "edu.mcgill.cstk.experiments.repair.PythonStatementRepairKt",
