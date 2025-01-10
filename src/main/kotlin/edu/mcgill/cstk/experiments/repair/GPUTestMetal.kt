@@ -1,26 +1,22 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.tensor.DoubleMatrix
 import com.sun.jna.*
 import org.intellij.lang.annotations.Language
 import java.io.File
 import java.security.MessageDigest
 import kotlin.random.Random
+import kotlin.random.nextInt
 
 // 1) JNA Interface to our bridging .dylib
 //    Declares a single function: metalDotProduct(int*, int*, int).
-interface MetalBridge : Library {
-  fun metalDotProduct(arr1: Pointer, arr2: Pointer, count: Int): Int
-}
+interface MetalBridge : Library { fun metalDotProduct(arr1: Pointer, arr2: Pointer, count: Int): Int }
 
 fun main() {
   // Our input data
-  val l1 = List(10000) { Random.nextInt() }
-  val l2 = List(10000) { Random.nextInt() }
-  require(l1.size == l2.size)
-  val count = l1.size
-
-  // For timing
-  val startTime = System.currentTimeMillis()
+  val t = 400
+  val arr1 = IntArray(t*t) { Random.nextInt(10) }
+  val count = arr1.size
 
   // -------------------------------------------------------------------------
   // 2) Embedded Metal Shader
@@ -28,17 +24,35 @@ fun main() {
   // -------------------------------------------------------------------------
   @Language("c++") // close enough
   val metalSource = """
-        #include <metal_stdlib>
-        using namespace metal;
+    #include <metal_stdlib>
+    using namespace metal;
 
-        kernel void dot_product(const device int* array1 [[ buffer(0) ]],
-                                const device int* array2 [[ buffer(1) ]],
-                                device atomic_int* result [[ buffer(2) ]],
-                                uint tid [[ thread_position_in_grid ]]) {
-            int product = array1[tid] * array2[tid];
-            atomic_fetch_add_explicit(result, product, memory_order_relaxed);
+    kernel void dot_product(const device int* array1 [[ buffer(0) ]],
+                            const device int* array2 [[ buffer(1) ]],
+                            device atomic_int* result [[ buffer(2) ]],
+                            uint tid [[ thread_position_in_grid ]]) {
+        // Number of total elements in one flattened matrix
+        uint n = $t;
+
+        // Derive row and col from tid
+        uint row = tid / n;
+        uint col = tid % n;
+
+        // Make sure we're in range
+        if (row < n && col < n) {
+            // Naive matrix multiplication for the single entry [row, col]
+            int sum = 0;
+            for (uint k = 0; k < n; k++) {
+                sum += array1[row * n + k] * array2[k * n + col];
+            }
+
+            // We only store the top-right corner (row=0, col=n-1)
+            if (row == 0 && col == (n - 1)) {
+                atomic_fetch_add_explicit(result, sum, memory_order_relaxed);
+            }
         }
-    """.trimIndent()
+    }
+  """.trimIndent()
 
   // Where we'll store the compiled .metallib
   val metallibFile = File("dot_product.metallib")
@@ -154,9 +168,7 @@ fun main() {
   if (needsRebuild(metallibFile, metalHashFile, metalHash)) {
     println("Compiling .metal -> .metallib ...")
     // Write a temp .metal file
-    val metalFile = File("dot_product.metal").apply {
-      writeText(metalSource)
-    }
+    val metalFile = File("dot_product.metal").apply { writeText(metalSource) }
     // metal -> AIR
     val airFile = File("dot_product.air")
     val pb1 = ProcessBuilder(
@@ -180,9 +192,7 @@ fun main() {
   if (needsRebuild(dylibFile, bridgingHashFile, bridgingHash)) {
     println("Compiling bridging .m -> .dylib ...")
     // Write bridging code to bridging.m
-    val bridgingM = File("MetalBridge.m").apply {
-      writeText(bridgingSource)
-    }
+    val bridgingM = File("MetalBridge.m").apply { writeText(bridgingSource) }
 
     // Compile bridging .m to .o
     val objFile = File("MetalBridge.o")
@@ -212,26 +222,21 @@ fun main() {
   // -------------------------------------------------------------------------
   val metalLib = Native.load("libMetalBridge.dylib", MetalBridge::class.java) as MetalBridge
 
-  // Convert Kotlin Lists to int[]
-  val arr1 = l1.toIntArray()
-  val arr2 = l2.toIntArray()
-
   // Allocate native memory using JNA’s Memory class, which is a Pointer
   val sizeBytes = (count * 4).toLong()  // each int is 4 bytes
-  val mem1 = Memory(sizeBytes).apply {
-    write(0, arr1, 0, arr1.size)
-  }
-  val mem2 = Memory(sizeBytes).apply {
-    write(0, arr2, 0, arr2.size)
-  }
+  val mem1 = Memory(sizeBytes).apply { write(0, arr1, 0, arr1.size) }
 
-  // Now we can pass mem1 and mem2 (both Pointer) to metalDotProduct
-  val gpuResult = metalLib.metalDotProduct(mem1, mem2, count)
+  // Metal GEMMs start paying off right quick around t=30 and is about 1000x faster for t=400
+  val mtRuntime = System.currentTimeMillis()
+  val gpuResult = metalLib.metalDotProduct(mem1, mem1, count)
+  println("MT result: $gpuResult (${System.currentTimeMillis() - mtRuntime}ms)")
 
-  val expected = l1.zip(l2).sumOf { (a, b) -> a * b }
+  val mat1 = DoubleMatrix(arr1.map { it.toDouble() })
 
-  println("GPU Dot Product = $gpuResult (expected $expected)")
-  println("Took: ${System.currentTimeMillis() - startTime}ms")
+  val ktRuntime = System.currentTimeMillis()
+  val cpuResult = (mat1 * mat1)[0, mat1.numRows - 1].toInt()
+  println("KT result: $cpuResult (${System.currentTimeMillis() - ktRuntime}ms)")
+  assert(gpuResult==cpuResult)
 }
 
 // Helper to compute MD5 of a string
