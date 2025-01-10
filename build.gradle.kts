@@ -167,6 +167,8 @@ dependencies {
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
+
+  implementation("net.java.dev.jna:jna:5.13.0")
 }
 
 configurations.all {
@@ -209,7 +211,8 @@ tasks {
     "organicSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.OrganicSyntaxRepairKt",
     "javaSemanticRepair" to "edu.mcgill.cstk.experiments.repair.JavaSemanticRepairKt",
     "collectSummaryStats" to "edu.mcgill.cstk.experiments.repair.CollectSummaryStatisticsKt",
-    "cudaTest" to "edu.mcgill.cstk.experiments.repair.CudaTestKt",
+    "testCuda" to "edu.mcgill.cstk.experiments.repair.GPUTestCudaKt",
+    "testMetal" to "edu.mcgill.cstk.experiments.repair.GPUTestMetalKt",
     "kotlinSemanticRepair" to "edu.mcgill.cstk.experiments.repair.KotlinSemanticRepairKt",
     "kotlinStatementRepair" to "edu.mcgill.cstk.experiments.repair.KotlinStatementRepairKt",
     "pythonStatementRepair" to "edu.mcgill.cstk.experiments.repair.PythonStatementRepairKt",
