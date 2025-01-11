@@ -17,8 +17,10 @@ class FilteredOutputStream(out: OutputStream) : PrintStream(out) {
   }
 }
 
-fun Σᐩ.execute() =
+fun Σᐩ.execute(): Int =
   ProcessBuilder(split(' ')).start().waitFor()
+
+fun Σᐩ.execInheritIO() = ProcessBuilder(split(' ')).inheritIO().start().waitFor()
 
 fun Σᐩ.execAndCapture() =
   ProcessBuilder(split(' ')).start().inputStream.bufferedReader().readText()
