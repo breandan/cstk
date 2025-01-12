@@ -3,12 +3,10 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.tensor.DoubleMatrix
 import com.sun.jna.*
 import edu.mcgill.cstk.utils.execInheritIO
-import edu.mcgill.cstk.utils.execute
 import org.intellij.lang.annotations.Language
 import java.io.File
 import java.security.MessageDigest
 import kotlin.random.Random
-import kotlin.random.nextInt
 
 // 1) JNA Interface to our bridging .dylib
 //    Declares a single function: metalMatMul(int*, int*, int).
