@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.theory.diameter
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.experiments.probing.MakeMore
@@ -115,7 +116,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
 
     // Declare the number of edits we are going to make up front
-    val predDist = MakeMore.predDist(encString)
+//    val predDist = MakeMore.predDist(encString)
+    val predDist = 0
     val langEditDist = (1..MAX_RADIUS).firstOrNull {
         try {
           val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
@@ -123,7 +125,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
           s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
         } catch (_: Exception) { println("Failed $it, increasing..."); false }
       } ?: MAX_RADIUS
-    val levGuess = langEditDist//min(predDist, langEditDist)
+    val levGuess = levAlign.patchSize() //min(predDist, langEditDist)
 
     val levDist = levAlign.patchSize() // True distance, only used for logging purposes
     println("Predicted edit dist: $predDist (true dist: $levDist, LED: $langEditDist)")
@@ -196,23 +198,8 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
-//    val rankedResults = dfa.decodeDFA(
-//      mc = P_BIFI_PY150,
-//      timeout = timeout,
-//      dec = termDict,
-//      callback = {
-//        totalSamples++
-//        if (it == fixedStr) {
-//          matchFound = true
-//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-//          elapsed = clock.elapsedNow().inWholeMilliseconds
-//        }
-//      }
-//    )
-
-    val rankedResults = MakeMore.decodeDFA(
-      origStr = "$encString$levGuess ",
-      bAutomaton = dfa,
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
       timeout = timeout,
       dec = termDict,
       callback = {
@@ -224,6 +211,21 @@ fun evaluateBarHillelRepairOnStackOverflow() {
         }
       }
     )
+
+//    val rankedResults = MakeMore.decodeDFA(
+//      origStr = "$encString$levGuess ",
+//      bAutomaton = dfa,
+//      timeout = timeout,
+//      dec = termDict,
+//      callback = {
+//        totalSamples++
+//        if (it == fixedStr) {
+//          matchFound = true
+//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+//          elapsed = clock.elapsedNow().inWholeMilliseconds
+//        }
+//      }
+//    )
 
 //    rankedResults.take(100).forEach {
 //      println("Sample: ${levenshteinAlign(humanRepair, it.tokenizeByWhitespace()).paintANSIColors()}")
@@ -240,12 +242,12 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ${intGram.size} prods, " +
-//        "${dfa.states.size} states, ${dfa.numberOfTransitions} transitions, " +
+//        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
           "length-$levDist human repair not found")
       negative.appendText(
         "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
           "${intGram.size}, $langSize, " +
-//          "${dfa.states.size}, ${dfa.numberOfTransitions}, " +
+//          "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
           "${levAlign.summarize()}\n"
       )
     } else {
