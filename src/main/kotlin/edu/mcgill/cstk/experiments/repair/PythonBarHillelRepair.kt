@@ -18,10 +18,25 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.to
 
+object Grammars {
+  val dyck by lazy { """S -> ( S ) | ( ) | S S""".parseCFG().noEpsilonOrNonterminalStubs }
+}
+
 /*
 ./gradlew pythonBarHillelRepair
  */
 fun main() {
+//  LangCache.prepopPythonLangCache()
+//  val str = "NAME ( STRING . NAME ( ( NAME & NAME ) ) or "
+//  println(vanillaS2PCFG.jvmLED(str))
+  val str = "( ( ("
+  println(str.tokenizeByWhitespace().size)
+
+  println(Grammars.dyck.LED(str))
+
+  println(Grammars.dyck.jvmIntersectLevFSAP(makeLevFSA(str, 1)).prettyPrint())
+}
+  fun test() {
   printMemoryUsage()
   LangCache.prepopPythonLangCache()
 //  MAX_UNIQUE = 1_000
