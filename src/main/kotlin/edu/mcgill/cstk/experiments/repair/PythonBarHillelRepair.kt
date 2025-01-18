@@ -4,7 +4,6 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
-import ai.hypergraph.kaliningraph.theory.diameter
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.experiments.probing.MakeMore
@@ -18,10 +17,6 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.to
 
-object Grammars {
-  val dyck by lazy { """S -> ( S ) | ( ) | S S""".parseCFG().noEpsilonOrNonterminalStubs }
-}
-
 /*
 ./gradlew pythonBarHillelRepair
  */
@@ -34,7 +29,8 @@ fun main() {
   MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateBarHillelRepairOnStackOverflow()
+  evaluateMatrixBarHillelRepairOnStackOverflow()
+//  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
@@ -100,11 +96,12 @@ fun evaluateBarHillelRepairOnStackOverflow() {
   val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
       "total_samples, lev_ball_arcs, productions, lang_size, dfa_states, dfa_transitions, rank, edit1, edit2, edit3\n"
   val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, dfa_states, dfa_transitions, edit1, edit2, edit3\n"
-  val positive = try { File("data/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  val title = "matrix_bar_hillel"
+  val positive = try { File("data/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
     .also { println("Writing positive CSV to: ${it.absolutePath}") }
-  val negative = try { File("data/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/bar_hillel_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  val negative = try { File("data/${title}_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
     .also { println("Writing negative CSV to: ${it.absolutePath}") }
   println()
 
