@@ -98,10 +98,10 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 
     if (timedTree == null) return@forEach
     val pTree = timedTree.value!!
-    val icfg = pTree.toCFG
+    val icfg = pTree.toCFG.freeze()
+    val icfgRecognized = fixedToks in icfg.language
     val intGramSize = icfg.size
     val langSize = pTree.totalTreesStr
-    // TODO: Why so many productions? Need to implement PTree.toCFG()
     println("Constructed PTree in ${timedTree.duration} with $intGramSize productions and $langSize words")
     val clock = TimeSource.Monotonic.markNow()
     var totalSamples = 0
@@ -112,7 +112,8 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     val dfa = icfg.toPTree().toDFA(minimize = true)!!
 
     val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
+    println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
 
     val rankedResults = dfa.decodeDFA(
       mc = P_BIFI_PY150,
@@ -162,9 +163,9 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
           "length-$levDist human repair not found")
       negative.appendText(
         "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
-            "$intGramSize, $langSize, " +
-//          "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
-            "${levAlign.summarize()}\n"
+        "$intGramSize, $langSize, " +
+//      "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
+        "${levAlign.summarize()}\n"
       )
     } else {
       val allElapsed = allTime.elapsedNow().inWholeMilliseconds
