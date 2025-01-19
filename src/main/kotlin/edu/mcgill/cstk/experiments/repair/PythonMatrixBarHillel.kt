@@ -57,8 +57,13 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     val encString = "|${MakeMore.encode(brokeStr)} "
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
 
+    val humanRepairANSI = levAlign.paintANSIColors()
+    println("Source: ${brokeToks.joinToString(" ")}")
+    println("Repair: $humanRepairANSI")
+
     // Declare the number of edits we are going to make up front
-    val langEditDist = FSA.LED(s2pg, brokeStr)
+    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = 2* MAX_RADIUS)
+    val langEditDist = FSA.LED(s2pg, brokeToks, monoEditBounds = monoEditBounds)
     val levGuess = levAlign.patchSize()
 
     val levDist = levAlign.patchSize() // True distance, only used for logging purposes
@@ -69,16 +74,12 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
 
     var levBallSize = 1
-    val humanRepairANSI = levenshteinAlign(brokeToks, fixedToks).paintANSIColors()
-    println("Source: ${brokeToks.joinToString(" ")}")
-    println("Repair: $humanRepairANSI")
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
 
     try {
-      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = levGuess)
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
       val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
-      val tt = measureTimedValue { FSA.intersectPTree(brokeStr, s2pg, levGuess, fsa) }
+      val tt = measureTimedValue { FSA.intersectPTree(brokeToks, s2pg, levGuess, fsa) }
       val pTree = tt.value!!
       val icfg = pTree.toCFG.freeze()
       val icfgRecognized = fixedToks in icfg.language
