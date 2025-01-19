@@ -3,33 +3,14 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.automata.FSA
 import ai.hypergraph.kaliningraph.automata.decodeDFA
 import ai.hypergraph.kaliningraph.automata.toDFA
-import ai.hypergraph.kaliningraph.parsing.NUM_CORES
-import ai.hypergraph.kaliningraph.parsing.TermDict
-import ai.hypergraph.kaliningraph.parsing.levenshteinAlign
-import ai.hypergraph.kaliningraph.parsing.makeLevFSA
-import ai.hypergraph.kaliningraph.parsing.maxParsableFragmentB
-import ai.hypergraph.kaliningraph.parsing.nonterminals
-import ai.hypergraph.kaliningraph.parsing.paintANSIColors
-import ai.hypergraph.kaliningraph.parsing.parikhMap
-import ai.hypergraph.kaliningraph.parsing.patchSize
-import ai.hypergraph.kaliningraph.parsing.sampleDirectlyWOR
-import ai.hypergraph.kaliningraph.parsing.sampleDirectlyWORAndScore
-import ai.hypergraph.kaliningraph.parsing.summarize
-import ai.hypergraph.kaliningraph.parsing.terminals
-import ai.hypergraph.kaliningraph.repair.CFG_THRESH
-import ai.hypergraph.kaliningraph.repair.MAX_RADIUS
-import ai.hypergraph.kaliningraph.repair.MAX_TOKENS
-import ai.hypergraph.kaliningraph.repair.MAX_UNIQUE
-import ai.hypergraph.kaliningraph.repair.TIMEOUT_MS
-import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
-import ai.hypergraph.kaliningraph.repair.vanillaS2PCFGWE
+import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
+import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
-import kotlin.time.measureTimedValue
 
 fun evaluateMatrixBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
@@ -99,8 +80,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
       val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
       measureTimedValue { FSA.intersectPTree(brokeStr, s2pg, levGuess, fsa) }
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
       println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
       allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
       println(allRate.toString())
@@ -118,7 +98,8 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 
     if (timedTree == null) return@forEach
     val pTree = timedTree.value!!
-    val intGramSize = pTree.totalProds
+    val icfg = pTree.toCFG
+    val intGramSize = icfg.size
     val langSize = pTree.totalTreesStr
     // TODO: Why so many productions? Need to implement PTree.toCFG()
     println("Constructed PTree in ${timedTree.duration} with $intGramSize productions and $langSize words")
@@ -128,34 +109,24 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-//    val dfa = pTree.toDFA(minimize = true)!!
-//
-//    val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
-//    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
+    val dfa = icfg.toPTree().toDFA(minimize = true)!!
 
-//    val rankedResults = dfa.decodeDFA(
-//      mc = P_BIFI_PY150,
-//      timeout = timeout,
-//      dec = termDict,
-//      callback = {
-//        totalSamples++
-//        if (it == fixedStr) {
-//          matchFound = true
-//          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-//          elapsed = clock.elapsedNow().inWholeMilliseconds
-//        }
-//      }
-//    )
-    val rankedResults = pTree.sampleDirectlyWOR { clock.elapsedNow() < timeout }.distinct().map {
-      totalSamples++
-      if (it == fixedStr) {
-        matchFound = true
-        println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-        elapsed = clock.elapsedNow().inWholeMilliseconds
+    val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
+
+    val rankedResults = dfa.decodeDFA(
+      mc = P_BIFI_PY150,
+      timeout = timeout,
+      dec = termDict,
+      callback = {
+        totalSamples++
+        if (it == fixedStr) {
+          matchFound = true
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
       }
-      it to P_BIFI_PY150.score(it.tokenizeByWhitespace())
-    }
-    .toList().sortedBy { it.second }.map { it.first }
+    )
 
 //    val rankedResults = MakeMore.decodeDFA(
 //      origStr = "$encString$levGuess ",
