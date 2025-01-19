@@ -76,6 +76,21 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     var levBallSize = 1
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
 
+    fun failed(msg: Σᐩ?, st: Σᐩ) {
+      println("Encountered error $msg ${allTime.elapsedNow()}):\n$humanRepairANSI\n$st")
+      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
+      println(allRate.toString())
+      negative.appendText("${brokeToks.size}, $levDist, 0, " +
+          "${levBallSize}, 0, ${levAlign.summarize()}\n")
+
+      println()
+      println("Precision@1\n===========")
+      println(P_1ByLevDist.summarizeLenAndDist())
+      println("Precision@All\n=============")
+      println(P_AllByLevDist.summarizeLenAndDist())
+      println()
+    }
+
     try {
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
       val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
@@ -100,6 +115,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
       var matchFound = false
       val timeout = (TIMEOUT_MS / 1000).seconds
       var elapsed = clock.elapsedNow().inWholeMilliseconds
+
 
       val rankedResults = dfa.decodeDFA(
         mc = P_BIFI_PY150,
@@ -180,20 +196,8 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
       println("Precision@All\n=============")
       println(P_AllByLevDist.summarizeLenAndDist())
       println()
-    } catch (e: Exception) {
-      println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
-      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
-      println(allRate.toString())
-      negative.appendText("${brokeToks.size}, $levDist, 0, " +
-          "${levBallSize}, 0, ${levAlign.summarize()}\n")
-
-      println()
-      println("Precision@1\n===========")
-      println(P_1ByLevDist.summarizeLenAndDist())
-      println("Precision@All\n=============")
-      println(P_AllByLevDist.summarizeLenAndDist())
-      println()
-      null
     }
+    catch (e: Exception) { failed(e.message, e.stackTraceToString()) }
+    catch (e: Error) { failed(e.message, e.stackTraceToString()) }
   }
 }
