@@ -59,11 +59,10 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 
     // Declare the number of edits we are going to make up front
     val langEditDist = FSA.LED(s2pg, brokeStr)
-    val levGuess = langEditDist + 1
-    val predDist = levGuess
+    val levGuess = levAlign.patchSize()
 
     val levDist = levAlign.patchSize() // True distance, only used for logging purposes
-    println("Predicted edit dist: $predDist (true dist: $levDist, LED: $langEditDist)")
+    println("Predicted edit dist: $levGuess (true dist: $levDist, LED: $langEditDist)")
 
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -101,7 +100,8 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     val icfg = pTree.toCFG.freeze()
     val icfgRecognized = fixedToks in icfg.language
     val intGramSize = icfg.size
-    val langSize = pTree.totalTreesStr
+    val icfgpt = icfg.toPTree()
+    val langSize = icfgpt.totalTreesStr
     println("Constructed PTree in ${timedTree.duration} with $intGramSize productions and $langSize words")
     val clock = TimeSource.Monotonic.markNow()
     var totalSamples = 0
@@ -109,7 +109,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     val timeout = (TIMEOUT_MS / 1000).seconds
     var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-    val dfa = icfg.toPTree().toDFA(minimize = true)!!
+    val dfa = icfgpt.toDFA(minimize = true)!!
 
     val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
     println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
