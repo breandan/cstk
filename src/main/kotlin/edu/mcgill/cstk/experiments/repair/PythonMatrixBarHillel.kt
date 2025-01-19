@@ -74,60 +74,45 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     println("Repair: $humanRepairANSI")
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
 
-    val timedTree = try {
+    try {
       val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = levGuess)
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
       val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
-      measureTimedValue { FSA.intersectPTree(brokeStr, s2pg, levGuess, fsa) }
-    } catch (e: Exception) {
-      println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
-      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
-      println(allRate.toString())
-      negative.appendText("${brokeToks.size}, $levDist, 0, " +
-          "${levBallSize}, 0, ${levAlign.summarize()}\n")
+      val tt = measureTimedValue { FSA.intersectPTree(brokeStr, s2pg, levGuess, fsa) }
+      val pTree = tt.value!!
+      val icfg = pTree.toCFG.freeze()
+      val icfgRecognized = fixedToks in icfg.language
+      val intGramSize = icfg.size
+      val icfgpt = icfg.toPTree()
+      val langSize = icfgpt.totalTreesStr
+      println("Constructed PTree in ${tt.duration} with $intGramSize productions and $langSize trees")
 
-      println()
-      println("Precision@1\n===========")
-      println(P_1ByLevDist.summarizeLenAndDist())
-      println("Precision@All\n=============")
-      println(P_AllByLevDist.summarizeLenAndDist())
-      println()
-      null
-    }
+      val dfa = icfgpt.toDFA(minimize = true)!!
 
-    if (timedTree == null) return@forEach
-    val pTree = timedTree.value!!
-    val icfg = pTree.toCFG.freeze()
-    val icfgRecognized = fixedToks in icfg.language
-    val intGramSize = icfg.size
-    val icfgpt = icfg.toPTree()
-    val langSize = icfgpt.totalTreesStr
-    println("Constructed PTree in ${timedTree.duration} with $intGramSize productions and $langSize words")
-    val clock = TimeSource.Monotonic.markNow()
-    var totalSamples = 0
-    var matchFound = false
-    val timeout = (TIMEOUT_MS / 1000).seconds
-    var elapsed = clock.elapsedNow().inWholeMilliseconds
+      val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
+      println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
+      println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
+      if (!dfaRecognized || !icfgRecognized) { throw Exception("Unrecognizable repair!") }
 
-    val dfa = icfgpt.toDFA(minimize = true)!!
+      val clock = TimeSource.Monotonic.markNow()
+      var totalSamples = 0
+      var matchFound = false
+      val timeout = (TIMEOUT_MS / 1000).seconds
+      var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-    val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
-    println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
-
-    val rankedResults = dfa.decodeDFA(
-      mc = P_BIFI_PY150,
-      timeout = timeout,
-      dec = termDict,
-      callback = {
-        totalSamples++
-        if (it == fixedStr) {
-          matchFound = true
-          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
-          elapsed = clock.elapsedNow().inWholeMilliseconds
+      val rankedResults = dfa.decodeDFA(
+        mc = P_BIFI_PY150,
+        timeout = timeout,
+        dec = termDict,
+        callback = {
+          totalSamples++
+          if (it == fixedStr) {
+            matchFound = true
+            println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+            elapsed = clock.elapsedNow().inWholeMilliseconds
+          }
         }
-      }
-    )
+      )
 
 //    val rankedResults = MakeMore.decodeDFA(
 //      origStr = "$encString$levGuess ",
@@ -149,50 +134,65 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 //      println(it in vanillaS2PCFG.language)
 //    }
 
-    val indexOfTarget = rankedResults.indexOf(fixedStr).also {
-      if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-      if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      val indexOfTarget = rankedResults.indexOf(fixedStr).also {
+        if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+        if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      }
+
+      rankedResults.firstOrNull()?.tokenizeByWhitespace()
+        ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
+
+      if (indexOfTarget < 0) {
+        println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with $intGramSize prods, " +
+  //        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
+            "length-$levDist human repair not found")
+        negative.appendText(
+          "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
+          "$intGramSize, $langSize, " +
+  //      "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
+          "${levAlign.summarize()}\n"
+        )
+      } else {
+        val allElapsed = allTime.elapsedNow().inWholeMilliseconds
+
+        allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
+        indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
+        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
+            " $totalSamples samples, $intGramSize prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
+        allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
+  //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+        sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
+        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
+        allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
+        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
+        samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
+        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
+        positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
+            "$totalSamples, $levBallSize, $intGramSize, $langSize, " +
+  //          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
+            "$indexOfTarget, ${levAlign.summarize()}\n")
+      }
+
+      println()
+      println("Precision@1\n===========")
+      println(P_1ByLevDist.summarizeLenAndDist())
+      println("Precision@All\n=============")
+      println(P_AllByLevDist.summarizeLenAndDist())
+      println()
+    } catch (e: Exception) {
+      println("Encountered error ${e.message} ${allTime.elapsedNow()}):\n$humanRepairANSI\n${e.stackTraceToString()}")
+      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
+      println(allRate.toString())
+      negative.appendText("${brokeToks.size}, $levDist, 0, " +
+          "${levBallSize}, 0, ${levAlign.summarize()}\n")
+
+      println()
+      println("Precision@1\n===========")
+      println(P_1ByLevDist.summarizeLenAndDist())
+      println("Precision@All\n=============")
+      println(P_AllByLevDist.summarizeLenAndDist())
+      println()
+      null
     }
-
-    rankedResults.firstOrNull()?.tokenizeByWhitespace()
-      ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
-
-    if (indexOfTarget < 0) {
-      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with $intGramSize prods, " +
-//        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
-          "length-$levDist human repair not found")
-      negative.appendText(
-        "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
-        "$intGramSize, $langSize, " +
-//      "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
-        "${levAlign.summarize()}\n"
-      )
-    } else {
-      val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-
-      allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
-      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
-          " $totalSamples samples, $intGramSize prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
-      allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
-//      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
-      sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
-      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
-      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
-      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
-      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
-          "$totalSamples, $levBallSize, $intGramSize, $langSize, " +
-//          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
-          "$indexOfTarget, ${levAlign.summarize()}\n")
-    }
-
-    println()
-    println("Precision@1\n===========")
-    println(P_1ByLevDist.summarizeLenAndDist())
-    println("Precision@All\n=============")
-    println(P_AllByLevDist.summarizeLenAndDist())
-    println()
   }
 }
