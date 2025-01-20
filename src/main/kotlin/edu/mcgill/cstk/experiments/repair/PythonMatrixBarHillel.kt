@@ -6,6 +6,7 @@ import ai.hypergraph.kaliningraph.automata.toDFA
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.types.π2
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
@@ -62,7 +63,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     println("Repair: $humanRepairANSI")
 
     // Declare the number of edits we are going to make up front
-    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = 2* MAX_RADIUS)
+    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = 2 * MAX_RADIUS)
     val langEditDist = FSA.LED(s2pg, brokeToks, monoEditBounds = monoEditBounds)
     val levGuess = levAlign.patchSize()
 
