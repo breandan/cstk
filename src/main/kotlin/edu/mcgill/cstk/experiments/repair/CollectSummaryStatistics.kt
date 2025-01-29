@@ -58,11 +58,38 @@ fun main() {
 //  prepareBreakerDataset()
 //  MakeMore.checkPairwiseSamples()
 //  MakeMore.measureRankOfTrueNextTokenWithoutConstraints()
-  MakeMore.measureRankOfTrueNextTokenWithLBHConstraints()
+//  MakeMore.measureRankOfTrueNextTokenWithLBHConstraints()
 //  MakeMore.previewSamples()
 //  prepareFixerDataset()
+  collectSingleLineExamples()
 //  correctNames()
 //  errorPredDiscrepancy()
+}
+
+fun collectSingleLineExamples() {
+  sizeAndDistBalancedRepairsUnminimized.filter {
+    "NEWLINE" !in it.π1.tokenizeByWhitespace().dropLast(1) &&
+        "NEWLINE" !in it.π2.tokenizeByWhitespace().dropLast(1) &&
+        "\n" !in it.π4 &&
+        it.π1.tokenizeByWhitespace().size in 5..15
+//        it.π4.length in 50..80
+  }.take(100)
+    .forEach {
+//      println(it.π1)
+//      println(it.π2)
+      println(it.π3)
+      println(it.π4)
+      println()
+  }
+}
+
+fun filterProductionsByPopularity() {
+  val map = readPCFG3()
+  pythonStatementCNF.filter { (a, b) ->
+    b.size == 1 || (map[Triple(a, b[0], b[1])] ?: 10001) > 10000
+  }.toSet().normalize().noEpsilonOrNonterminalStubs.forEach {
+    println(it.first + " -> " + it.second.joinToString(" "))
+  }
 }
 
 fun errorPredDiscrepancy() {
