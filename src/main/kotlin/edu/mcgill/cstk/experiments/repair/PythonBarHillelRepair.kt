@@ -157,7 +157,9 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     if (intGram != null) println("Constructed LEV($levGuess, ${brokeToks.size}, $levBallSize) " +
       "∩ CFG grammar with ${intGram.size} productions in ${allTime.elapsedNow()}")
 
-    println("Implicated nonterminals: " + (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) + " / " + s2pg.nonterminals.size)
+    println("Implicated nonterminals: " +
+        (intGram?.nonterminals?.map { if(it == "START") it else it.split("~")[1] }?.toSet()?.size ?: 0) +
+        " / " + s2pg.nonterminals.size)
 
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
     try {

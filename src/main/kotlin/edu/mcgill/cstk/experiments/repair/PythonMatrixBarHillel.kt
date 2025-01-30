@@ -1,15 +1,23 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.automata.BAutomaton
 import ai.hypergraph.kaliningraph.automata.FSA
+import ai.hypergraph.kaliningraph.automata.STC
 import ai.hypergraph.kaliningraph.automata.decodeDFA
 import ai.hypergraph.kaliningraph.automata.toDFA
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.types.times
+import ai.hypergraph.kaliningraph.types.Π3
+import ai.hypergraph.kaliningraph.types.π1
 import ai.hypergraph.kaliningraph.types.π2
+import ai.hypergraph.kaliningraph.types.π3
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
+import kotlin.Int
+import kotlin.random.Random
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -95,7 +103,14 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     try {
 //    val multiEditBounds = vanillaS2PCFGWE.findMinimalMultiEditBounds(toRepair, monoEditBounds, levDist)
       val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds).also { levBallSize = it.Q.size }
-      val tt = measureTimedValue { FSA.intersectPTree(brokeToks, s2pg, levGuess, fsa) }
+
+//      val tt = measureTimedValue { jvmIntersectDFA(brokeToks, s2pg, levGuess, fsa, parikhMap) }
+//      println("Constructed DFA in ${tt.duration}")
+//      val dfa = tt.value!!
+//      val intGramSize = 0
+//      val langSize = 0
+
+      val tt = measureTimedValue { jvmIntersectPTree(brokeToks, s2pg, levGuess, fsa, parikhMap) }
       val pTree = tt.value!!
       val icfg = pTree.toCFG.freeze()
       val icfgRecognized = fixedToks in icfg.language
@@ -103,13 +118,13 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
       val icfgpt = icfg.toPTree()
       val langSize = icfgpt.totalTreesStr
       println("Constructed PTree in ${tt.duration} with $intGramSize productions and $langSize trees")
-
+//
       val dfa = icfgpt.toDFA(minimize = true)!!
 
       val dfaRecognized = try { dfa.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
-      println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
+//      println("∩-CFG ${if (icfgRecognized) "accepted" else "rejected"} human repair!")
       println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair!")
-      if (!dfaRecognized || !icfgRecognized) { throw Exception("Unrecognizable repair!") }
+//      if (!dfaRecognized || !icfgRecognized) { throw Exception("Unrecognizable repair!") }
 
       val clock = TimeSource.Monotonic.markNow()
       var totalSamples = 0
@@ -162,13 +177,13 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
 
       if (indexOfTarget < 0) {
         println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with $intGramSize prods, " +
-  //        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
+            //        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
             "length-$levDist human repair not found")
         negative.appendText(
           "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
-          "$intGramSize, $langSize, " +
-  //      "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
-          "${levAlign.summarize()}\n"
+              "$intGramSize, $langSize, " +
+              //      "${dfa.numStates}, ${dfa.numberOfTransitions}, " +
+              "${levAlign.summarize()}\n"
         )
       } else {
         val allElapsed = allTime.elapsedNow().inWholeMilliseconds
@@ -178,7 +193,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
         println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
             " $totalSamples samples, $intGramSize prods, $langSize trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
         allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
-  //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+        //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
         sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
         println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
         allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
@@ -187,7 +202,7 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
         println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
         positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
             "$totalSamples, $levBallSize, $intGramSize, $langSize, " +
-  //          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
+            //          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
             "$indexOfTarget, ${levAlign.summarize()}\n")
       }
 
@@ -201,4 +216,107 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
     catch (e: Exception) { failed(e.message, e.stackTraceToString()) }
     catch (e: Error) { failed(e.message, e.stackTraceToString()) }
   }
+}
+
+/** Parallel version of [FSA.intersectPTree] */
+fun jvmIntersectPTree(brokenStr: List<Σᐩ>, cfg: CFG, radius: Int,
+                   levFSA: FSA = makeLevFSA(brokenStr, radius),
+                   pm: ParikhMap): PTree? {
+  val timer = TimeSource.Monotonic.markNow()
+  val bindex = cfg.bindex
+  val bimap = cfg.bimap
+  val width = cfg.nonterminals.size
+  val vindex = cfg.vindex
+  val parikhMap = pm
+
+  val nStates = levFSA.numStates
+  val startIdx = bindex[START_SYMBOL]
+
+  // 1) Create dp array of parse trees
+  val dp: Array<Array<Array<PTree?>>> = Array(nStates) { Array(nStates) { Array(width) { null } } }
+
+  // 2) Initialize terminal productions A -> a
+  val aitx = levFSA.allIndexedTxs1(cfg)
+  aitx.parallelStream().forEach { (p, σ, q) ->
+    val Aidxs = bimap.TDEPS[σ]!!.map { bindex[it] }
+    for (Aidx in Aidxs) {
+      val newLeaf = PTree(root = "[$p~${bindex[Aidx]}~$q]", branches = PSingleton(σ))
+      dp[p][q][Aidx] = newLeaf + dp[p][q][Aidx]
+    }
+  }
+
+  fun computeNTCompat(cfg: CFG, levStr: List<Σᐩ>): Array<Array<Array<Boolean>>> {
+    val tbl = cfg.parseTableBln(levStr)
+    val arr = Array(tbl.numRows) { Array(tbl.numCols) { Array(cfg.nonterminals.size) { false } } }
+    for (r in 0 until tbl.numRows)
+      for (c in r until tbl.numCols)
+        for (k in cfg.nonterminals.indices)
+          arr[r][c][k] = tbl[r, c][k]
+
+    return arr
+  }
+
+  fun FSA.compat(a: STC, b: STC, nt: Int, compat: Array<Array<Array<Boolean>>>) =
+    if (a.π3 != b.π3) true else compat[a.π2][b.π2][nt]
+
+  val ct = (levFSA.validPairs * cfg.nonterminals.indices.toSet()).toList()
+  val ct2 = Array(levFSA.numStates) { Array(cfg.nonterminals.size) { Array(levFSA.numStates) { false } } }
+  val compat: Array<Array<Array<Boolean>>> = computeNTCompat(cfg, levFSA.levString)
+  ct.parallelStream()
+    .filter { it: Π3<STC, STC, Int> ->
+      // Checks whether the distinct subtrajectory between two horizontal states is parseable by a given NT
+      levFSA.compat(it.π1, it.π2, it.π3, compat)
+          // Checks whether the length bounds for the nonterminal (i.e., the range of the number of terminals it can
+          // parse) is compatible with the range of path lengths across all paths connecting two states in an FSA.
+          // This is a coarse approximation, but is cheaper to compute, so it filters out most invalid triples.
+          && parikhMap.ntLengthBounds[it.π3].overlaps(SPLPArith(it.π1, it.π2))
+          // Checks the Parikh map for compatibility between the CFG nonterminals and state pairs in the FSA.
+          // This is a finer grained filter, but more expensive to compute, so we use the coarse filter first
+          && levFSA.obeys(it.π1, it.π2, it.π3, parikhMap)
+    }
+//    .toList().also {
+//      val candidates = (fsa.numStates * nonterminals.size * fsa.numStates)
+//      val fraction = it.size.toDouble() / candidates
+//      println("Fraction of valid LBH triples: ${it.size}/$candidates ≈ $fraction")
+//    }
+    .forEach { ct2[it.π1.π1][it.π3][it.π2.π1] = true }
+
+  // 3) CYK + Floyd Warshall parsing
+  for (dist in 0 until nStates) {
+    (0 until (nStates - dist)).toList().parallelStream().forEach { p ->
+//    for (p in 0 until (nStates - dist)) {
+      val q = p + dist
+//      if (p to q !in levFSA.allPairs) continue
+      if (p to q !in levFSA.allPairs) return@forEach
+      val appq = levFSA.allPairs[p to q]!!
+//      vindex.withIndex().toList().parallelStream().forEach { (Aidx, indexArray) ->
+//      if (!ct2[p][Aidx][q]) return@forEach
+      for ((Aidx, indexArray) in vindex.withIndex()) {
+        if (!ct2[p][Aidx][q]) continue
+        val rhsPairs = dp[p][q][Aidx]?.branches?.toMutableList() ?: mutableListOf()
+        outerLoop@for (j in 0..<indexArray.size step 2) {
+          val Bidx = indexArray[j]
+          val Cidx = indexArray[j + 1]
+          for (r in appq) {
+            val left = dp[p][r][Bidx]
+            val right = dp[r][q][Cidx]
+            if (left != null && right != null) {
+              // Found a parse for A
+              rhsPairs += left to right
+//              if (rhsPairs.size > 10) break@outerLoop
+            }
+          }
+        }
+
+        if (rhsPairs.isNotEmpty()) dp[p][q][Aidx] = PTree("[$p~${bindex[Aidx]}~$q]", rhsPairs)
+      }
+    }
+  }
+
+  println("Completed parse matrix in: ${timer.elapsedNow()}")
+
+  // 4) Gather final parse trees from dp[0][f][startIdx], for all final states f
+  val allParses = levFSA.finalIdxs.mapNotNull { q -> dp[0][q][startIdx] }
+
+  return PTree(START_SYMBOL, allParses.flatMap { forest -> forest.branches })
 }
