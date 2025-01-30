@@ -1,23 +1,13 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.automata.BAutomaton
-import ai.hypergraph.kaliningraph.automata.FSA
-import ai.hypergraph.kaliningraph.automata.STC
-import ai.hypergraph.kaliningraph.automata.decodeDFA
-import ai.hypergraph.kaliningraph.automata.toDFA
+import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
-import ai.hypergraph.kaliningraph.types.times
-import ai.hypergraph.kaliningraph.types.Π3
-import ai.hypergraph.kaliningraph.types.π1
-import ai.hypergraph.kaliningraph.types.π2
-import ai.hypergraph.kaliningraph.types.π3
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
-import kotlin.Int
-import kotlin.random.Random
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 
