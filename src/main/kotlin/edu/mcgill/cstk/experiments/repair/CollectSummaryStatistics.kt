@@ -10,6 +10,7 @@ import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
+import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -66,12 +67,22 @@ fun main() {
 //  errorPredDiscrepancy()
 }
 
+fun filterNgramsByGrammar() {
+  val allowed = pythonStatementCNF.terminals + setOf("BOS", "EOS")
+  P_BIFI_PY150.counter.nrmCounts
+    .getFrequentItems(ErrorType.NO_FALSE_NEGATIVES)
+    .filter { it.item.all { it in allowed } }
+    .map { it.item.joinToString(" ") to it.estimate }
+    .sortedBy { -it.second }
+    .forEach { println("${it.first} ::: ${it.second}") }
+}
+
 fun collectSingleLineExamples() {
   sizeAndDistBalancedRepairsUnminimized.filter {
     "NEWLINE" !in it.π1.tokenizeByWhitespace().dropLast(1) &&
         "NEWLINE" !in it.π2.tokenizeByWhitespace().dropLast(1) &&
         "\n" !in it.π4 &&
-        it.π1.tokenizeByWhitespace().size in 5..15
+        it.π3.tokenizeByWhitespace().size in 10..15
 //        it.π4.length in 50..80
   }.take(100)
     .forEach {

@@ -13,6 +13,8 @@ import ai.hypergraph.kaliningraph.parsing.prettyPrint
 import ai.hypergraph.kaliningraph.parsing.vindex
 import kotlin.random.Random
 import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.visualization.html
+import ai.hypergraph.kaliningraph.visualization.show
 
 
 fun generatePrettyLaTeXArray(
@@ -86,45 +88,49 @@ fun main() {
   println(dyck.nonterminals)
   println()
 
-  val lfsa = makeLevFSA("( ) )", 1)
+  val lfsa = makeLevFSA("( ) ) ) )", 3)
   val states = lfsa.stateLst.map { it.lsaStateToString() }
-  val cfg = dyck
-  val ap: Map<Pair<Int, Int>, Set<Int>> = lfsa.allPairs
 
+  println(states)
+  println(lfsa.graph.toDot())
 
-  val dp = Array(8) { Array(8) { Array(4) { false } } }
-
-  val aitx = lfsa.allIndexedTxs1(cfg)
-  for ((p, σ, q) in aitx) {
-    val Aidxs = cfg.bimap.TDEPS[σ]!!.map { cfg.bindex[it] }
-    for (Aidx in Aidxs) {
-      dp[p][q][Aidx] = true
-    }
-  }
-
-  println(generatePrettyLaTeXArray(dp, rowLabels = states, colLabels = states))
-  println()
-
-  for (dist in 0 until lfsa.numStates) {
-    for (iP in 0 until lfsa.numStates - dist) {
-      val p = iP
-      val q = iP + dist
-      if (p to q !in ap) continue
-      val appq = ap[p to q]!!
-      for ((A, indexArray) in cfg.vindex.withIndex()) {
-        outerloop@for(j in 0..<indexArray.size step 2) {
-          val B = indexArray[j]
-          val C = indexArray[j + 1]
-          for (r in appq) {
-            if (dp[p][r][B] && dp[r][q][C]) {
-              dp[p][q][A] = true
-            }
-          }
-        }
-      }
-    }
-  }
-
-  println(generatePrettyLaTeXArray(dp, rowLabels = states, colLabels = states))
-  println()
+//  val cfg = dyck
+//  val ap: Map<Pair<Int, Int>, Set<Int>> = lfsa.allPairs
+//
+//
+//  val dp = Array(8) { Array(8) { Array(4) { false } } }
+//
+//  val aitx = lfsa.allIndexedTxs1(cfg)
+//  for ((p, σ, q) in aitx) {
+//    val Aidxs = cfg.bimap.TDEPS[σ]!!.map { cfg.bindex[it] }
+//    for (Aidx in Aidxs) {
+//      dp[p][q][Aidx] = true
+//    }
+//  }
+//
+//  println(generatePrettyLaTeXArray(dp, rowLabels = states, colLabels = states))
+//  println()
+//
+//  for (dist in 0 until lfsa.numStates) {
+//    for (iP in 0 until lfsa.numStates - dist) {
+//      val p = iP
+//      val q = iP + dist
+//      if (p to q !in ap) continue
+//      val appq = ap[p to q]!!
+//      for ((A, indexArray) in cfg.vindex.withIndex()) {
+//        outerloop@for(j in 0..<indexArray.size step 2) {
+//          val B = indexArray[j]
+//          val C = indexArray[j + 1]
+//          for (r in appq) {
+//            if (dp[p][r][B] && dp[r][q][C]) {
+//              dp[p][q][A] = true
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//
+//  println(generatePrettyLaTeXArray(dp, rowLabels = states, colLabels = states))
+//  println()
 }
