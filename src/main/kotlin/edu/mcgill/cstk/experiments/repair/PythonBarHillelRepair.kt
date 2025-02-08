@@ -67,7 +67,7 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
   readResourceFile("models/pcfg5_BIFI.csv")
     .lines().map { it.split(" ::: ") }
     .associate { Pair(it[0].split(" ")
-      .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.ntMap[it.dropLast(1)]!!) else s2pg.ntMap[it] ?: Int.MAX_VALUE }
+      .map { if (it.endsWith('*') && it.length > 1) (31 * s2pg.symMap[it.dropLast(1)]!!) else s2pg.symMap[it] ?: Int.MAX_VALUE }
       /** See [Tree.quintuples] */
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
