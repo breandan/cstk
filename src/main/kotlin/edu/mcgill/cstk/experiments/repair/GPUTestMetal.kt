@@ -3,20 +3,58 @@ package edu.mcgill.cstk.experiments.repair
 import com.sun.jna.*
 import org.intellij.lang.annotations.Language
 import java.io.File
-import java.security.MessageDigest
-import kotlin.math.ceil
-import kotlin.math.log
+import kotlin.math.*
 import kotlin.random.Random
 import kotlin.system.measureTimeMillis
-import kotlin.time.TimeSource
+import kotlin.time.*
 
 fun main() {
-  val clock = TimeSource.Monotonic.markNow()
   val t = 1000
   var arr = IntArray(t * t) { Random.nextInt(100) }
-  val dylib = File("libMetalBridge.dylib")
 
-  @Language("c++") val mpsSrc = """
+  println("Linked GPU in ${measureTimeMillis { GPUBridge }}ms")
+  val outGPU = measureTimedValue { GPUBridge.completeMat(arr) }
+    .also { println("GPU took ${it.duration.inWholeMilliseconds}ms") }.value
+
+  val outCPU = IntArray(arr.size)
+  val cpuMs = measureTimeMillis {
+    for (e in 0..<ceil(log(t.toDouble(), 2.0)).toInt()) {
+      val temp = arr.copyOf()
+
+      for (r in 0 until t) for (c in 0 until t) {
+        if (r <= c) continue
+        var s = 0
+        for (k in 0 until t) s += temp[r*t + k] * temp[k*t + c]
+        outCPU[r*t + c] = s
+      }
+      arr = outCPU.copyOf()
+    }
+  }
+  println("CPU took ${cpuMs}ms")
+
+  (0..(t * t - 1)).forEach { if (outGPU[it] != outCPU[it]) error("GPU[$it]=${outGPU[it]} != CPU[it]=${outCPU[it]}") }
+  println("GPU=CPU")
+}
+
+object GPUBridge {
+  fun completeMat(arr: IntArray): IntArray {
+    val memInp = Memory((arr.size * 4).toLong()).apply { write(0, arr, 0, arr.size) }
+    val memOut = Memory((arr.size * 4).toLong())
+    nativeBridge.imm(memInp, sqrt(arr.size.toDouble()).toInt(), memOut)
+    return memOut.getIntArray(0, arr.size)
+  }
+
+  interface NativeBridge : Library {
+    fun setup()
+    fun imm(a: Pointer, n: Int, out: Pointer)
+  }
+
+  private val nativeBridge: NativeBridge = if (System.getProperty("os.name").startsWith("Mac")) getMetalBridge() else TODO()
+
+  private fun getMetalBridge(): NativeBridge {
+    val dylib = File("libMetalBridge.dylib")
+
+    @Language("c++") val mpsSrc = """
   #include <metal_stdlib>
   using namespace metal;
   kernel void mat_mul(
@@ -43,12 +81,12 @@ fun main() {
   inline int getBit(int value, uint bitIndex) { return (value >> bitIndex) & 1; }
   """
 
-  @Language("swift") val swiftSrc = """
+    @Language("swift") val swiftSrc = """
 import Foundation
 import Metal
 private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineState!, cpsab: MTLComputePipelineState!
   
-@_cdecl("initMetalStuff") public func initMetalStuff() {
+@_cdecl("setup") public func setup() {
   let metalSrc = #${"\"\"\""}$mpsSrc${"\"\"\""}#
   dvc = MTLCreateSystemDefaultDevice()!
   mtq = dvc.makeCommandQueue()!
@@ -75,57 +113,21 @@ private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineSta
   memcpy(out, BA.contents(), sz)
 }""".trimIndent()
 
-  val hash = md5(swiftSrc)
-  val hashFile = File(".swiftHash")
-  fun needsRebuild() = !dylib.exists() || !hashFile.exists() || hashFile.readText() != hash
+    fun String.exec() = ProcessBuilder(split(" ")).inheritIO().start().waitFor()
+    val hash = swiftSrc.hashCode().toString()
+    val hashFile = File(".swiftHash")
+    fun needsRebuild() = !dylib.exists() || !hashFile.exists() || hashFile.readText() != hash
 
-  if (needsRebuild()) {
-    val clock = TimeSource.Monotonic.markNow()
-    File("MetalBridge.swift").writeText(swiftSrc)
-    val cmd = "xcrun swiftc -emit-library MetalBridge.swift -o ${dylib.absolutePath} -module-name M " +
-        "-Xlinker -install_name -Xlinker @rpath/libMetalBridge.dylib"
-    if (cmd.exec() != 0) error("Failed to build Swift bridging code!")
-    hashFile.writeText(hash)
-    println("Finished rebuild in ${clock.elapsedNow()}")
-  }
-
-  val lib = (Native.load(dylib.absolutePath, MetalBridge::class.java) as MetalBridge).also { it.initMetalStuff() }
-
-  println("Linking took: ${clock.elapsedNow()}")
-
-  val memA = Memory((arr.size * 4).toLong()).apply { write(0, arr, 0, arr.size) }
-  val memOut = Memory((arr.size * 4).toLong())
-
-  val gpuMs = measureTimeMillis { lib.imm(memA, t, memOut) }
-  println("GPU took ${gpuMs}ms")
-
-  val outCPU = IntArray(arr.size)
-  val cpuMs = measureTimeMillis {
-    for (e in 0..<ceil(log(t.toDouble(), 2.0)).toInt()) {
-      val temp = arr.copyOf()
-
-      for (r in 0 until t) for (c in 0 until t) {
-        if (r <= c) continue
-        var s = 0
-        for (k in 0 until t) s += temp[r*t + k] * temp[k*t + c]
-        outCPU[r*t + c] = s
-      }
-      arr = outCPU.copyOf()
+    if (needsRebuild()) {
+      val clock = TimeSource.Monotonic.markNow()
+      File("MetalBridge.swift").writeText(swiftSrc)
+      val cmd = "xcrun swiftc -emit-library MetalBridge.swift -o ${dylib.absolutePath} -module-name M " +
+          "-Xlinker -install_name -Xlinker @rpath/libMetalBridge.dylib"
+      if (cmd.exec() != 0) error("Failed to build Swift bridging code!")
+      hashFile.writeText(hash)
+      println("Finished rebuild in ${clock.elapsedNow()}")
     }
+
+    return (Native.load(dylib.absolutePath, NativeBridge::class.java) as NativeBridge).also { it.setup() }
   }
-  println("CPU took ${cpuMs}ms")
-
-  val outGPU = memOut.getIntArray(0, arr.size)
-  listOf(0, t - 1, t * (t - 1), t * t - 1).forEach {
-    if (outGPU[it] != outCPU[it]) error("Mismatch @ $it: GPU=${outGPU[it]}, CPU=${outCPU[it]}")
-  }
-  println("GPU=CPU")
 }
-
-interface MetalBridge : Library {
-  fun initMetalStuff()
-  fun imm(a: Pointer, n: Int, out: Pointer)
-}
-
-fun md5(s: String) = MessageDigest.getInstance("MD5").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
-fun String.exec() = ProcessBuilder(split(" ")).inheritIO().start().waitFor()
