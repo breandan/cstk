@@ -16,49 +16,54 @@ fun main() {
   var arr = IntArray(t * t) { Random.nextInt(100) }
   val dylib = File("libMetalBridge.dylib")
 
-  @Language("c++") // close enough
-  val mpsSrc = """
+  @Language("c++") val mpsSrc = """
   #include <metal_stdlib>
   using namespace metal;
   kernel void mat_mul(
     const device int* A[[buffer(0)]],
-      device int* O[[buffer(1)]],
-      constant uint& n[[buffer(2)]],
-      uint i[[thread_position_in_grid]]
+    device int* O[[buffer(1)]],
+    constant uint& n[[buffer(2)]],
+    uint i[[thread_position_in_grid]]
   ) {
     if (i < n * n) {
       uint r = i / n, c = i % n; int s = 0;
+      if (r <= c) return;
       for (uint k = 0; k < n; k++) s += A[r * n + k] * A[k * n + c];
       O[i] = s;
     }
   }
 
+  kernel void add_buf(
+      const device int* bufferA[[buffer(0)]],
+      const device int* bufferB[[buffer(1)]],
+      device int* output[[buffer(2)]],
+      uint index[[thread_position_in_grid]]
+  ) { output[index] = bufferA[index] + bufferB[index]; }
+
   inline int getBit(int value, uint bitIndex) { return (value >> bitIndex) & 1; }
   """
 
-  @Language("swift")
-  val swiftSrc = """
+  @Language("swift") val swiftSrc = """
 import Foundation
 import Metal
-private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cps: MTLComputePipelineState!
-
-@_cdecl("initMetalStuff")
-public func initMetalStuff() {
+private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineState!, cpsab: MTLComputePipelineState!
+  
+@_cdecl("initMetalStuff") public func initMetalStuff() {
   let metalSrc = #${"\"\"\""}$mpsSrc${"\"\"\""}#
   dvc = MTLCreateSystemDefaultDevice()!
   mtq = dvc.makeCommandQueue()!
   let lib = try! dvc.makeLibrary(source: metalSrc, options:nil)
-  cps = try! dvc.makeComputePipelineState(function:lib.makeFunction(name:"mat_mul")!)
+  cpsmm = try! dvc.makeComputePipelineState(function:lib.makeFunction(name:"mat_mul")!)
+  cpsab = try! dvc.makeComputePipelineState(function:lib.makeFunction(name:"add_buf")!)
 }
 
-@_cdecl("imm")
-public func imm(_ A: UnsafePointer<CInt>?, _ n: CInt, _ out: UnsafeMutablePointer<CInt>?) {
+@_cdecl("imm") public func imm(_ A: UnsafePointer<CInt>?, _ n: CInt, _ out: UnsafeMutablePointer<CInt>?) {
   let nn = Int(n), sz = nn * nn * 4, reps = Int(ceil(log2(Double(nn))))
   let BA = dvc.makeBuffer(bytes: A!, length: sz, options: [])!,
       BO = dvc.makeBuffer(length: sz, options: [])!
   for _ in 0..<reps {
     let cb = mtq.makeCommandBuffer()!, enc = cb.makeComputeCommandEncoder()!
-    enc.setComputePipelineState(cps)
+    enc.setComputePipelineState(cpsmm)
 
     enc.setBuffer(BA, offset: 0, index: 0)
     enc.setBuffer(BO, offset: 0, index: 1)
@@ -98,7 +103,9 @@ public func imm(_ A: UnsafePointer<CInt>?, _ n: CInt, _ out: UnsafeMutablePointe
   val cpuMs = measureTimeMillis {
     for (e in 0..<ceil(log(t.toDouble(), 2.0)).toInt()) {
       val temp = arr.copyOf()
+
       for (r in 0 until t) for (c in 0 until t) {
+        if (r <= c) continue
         var s = 0
         for (k in 0 until t) s += temp[r*t + k] * temp[k*t + c]
         outCPU[r*t + c] = s
