@@ -13,53 +13,57 @@ import kotlin.time.TimeSource
 fun main() {
   val clock = TimeSource.Monotonic.markNow()
   val t = 1000
-  var arr = IntArray(t * t) { Random.nextInt(3) }
+  var arr = IntArray(t * t) { Random.nextInt(100) }
   val dylib = File("libMetalBridge.dylib")
 
   @Language("c++") // close enough
-  val mpsSrc = """#include <metal_stdlib>
+  val mpsSrc = """
+  #include <metal_stdlib>
   using namespace metal;
   kernel void mat_mul(
     const device int* A[[buffer(0)]],
-    device int* O[[buffer(1)]],
-    uint i[[thread_position_in_grid]]
+      device int* O[[buffer(1)]],
+      constant uint& n[[buffer(2)]],
+      uint i[[thread_position_in_grid]]
   ) {
-    uint n=$t;
-    if (i < n*n) {
-      uint r=i/n, c=i%n; int s=0;
-      for (uint k=0; k<n; k++) s+=A[r*n+k]*A[k*n+c];
-      O[i]=s;
+    if (i < n * n) {
+      uint r = i / n, c = i % n; int s = 0;
+      for (uint k = 0; k < n; k++) s += A[r * n + k] * A[k * n + c];
+      O[i] = s;
     }
-  }"""
+  }
+
+  inline int getBit(int value, uint bitIndex) { return (value >> bitIndex) & 1; }
+  """
 
   @Language("swift")
   val swiftSrc = """
 import Foundation
 import Metal
-private var d: MTLDevice!, q: MTLCommandQueue!, p: MTLComputePipelineState!
+private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cps: MTLComputePipelineState!
 
 @_cdecl("initMetalStuff")
 public func initMetalStuff() {
-  let metalSrc = #${"\"\"\""}
-  $mpsSrc
-  ${"\"\"\""}#
-  d=MTLCreateSystemDefaultDevice()!
-  q=d.makeCommandQueue()!
-  let L=try! d.makeLibrary(source: metalSrc, options:nil)
-  p=try! d.makeComputePipelineState(function:L.makeFunction(name:"mat_mul")!)
+  let metalSrc = #${"\"\"\""}$mpsSrc${"\"\"\""}#
+  dvc = MTLCreateSystemDefaultDevice()!
+  mtq = dvc.makeCommandQueue()!
+  let lib = try! dvc.makeLibrary(source: metalSrc, options:nil)
+  cps = try! dvc.makeComputePipelineState(function:lib.makeFunction(name:"mat_mul")!)
 }
 
 @_cdecl("imm")
 public func imm(_ A: UnsafePointer<CInt>?, _ n: CInt, _ out: UnsafeMutablePointer<CInt>?) {
-  let nn = Int(n), sz = nn*nn*4, reps = Int(ceil(log2(Double(nn))))
-  let BA = d.makeBuffer(bytes:A!, length:sz, options:[])!,
-      BO = d.makeBuffer(length:sz, options:[])!
+  let nn = Int(n), sz = nn * nn * 4, reps = Int(ceil(log2(Double(nn))))
+  let BA = dvc.makeBuffer(bytes: A!, length: sz, options: [])!,
+      BO = dvc.makeBuffer(length: sz, options: [])!
   for _ in 0..<reps {
-    let cb = q.makeCommandBuffer()!, enc = cb.makeComputeCommandEncoder()!
-    enc.setComputePipelineState(p)
-    enc.setBuffer(BA, offset:0, index:0)
-    enc.setBuffer(BO, offset:0, index:1)
-    enc.dispatchThreads(MTLSizeMake(nn*nn,1,1), threadsPerThreadgroup:MTLSizeMake(1,1,1))
+    let cb = mtq.makeCommandBuffer()!, enc = cb.makeComputeCommandEncoder()!
+    enc.setComputePipelineState(cps)
+
+    enc.setBuffer(BA, offset: 0, index: 0)
+    enc.setBuffer(BO, offset: 0, index: 1)
+    var cpn = n; enc.setBytes(&cpn, length: MemoryLayout<CInt>.size, index: 2)
+    enc.dispatchThreads(MTLSizeMake(nn * nn, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
     enc.endEncoding(); cb.commit(); cb.waitUntilCompleted()
     memcpy(BA.contents(), BO.contents(), sz)
   }
