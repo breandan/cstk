@@ -113,7 +113,6 @@ private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineSta
   memcpy(out, BA.contents(), sz)
 }""".trimIndent()
 
-    fun String.exec() = ProcessBuilder(split(" ")).inheritIO().start().waitFor()
     val hash = swiftSrc.hashCode().toString()
     val hashFile = File(".swiftHash")
     fun needsRebuild() = !dylib.exists() || !hashFile.exists() || hashFile.readText() != hash
@@ -121,9 +120,11 @@ private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineSta
     if (needsRebuild()) {
       val clock = TimeSource.Monotonic.markNow()
       File("MetalBridge.swift").writeText(swiftSrc)
-      val cmd = "xcrun swiftc -emit-library MetalBridge.swift -o ${dylib.absolutePath} -module-name M " +
-          "-Xlinker -install_name -Xlinker @rpath/libMetalBridge.dylib"
-      if (cmd.exec() != 0) error("Failed to build Swift bridging code!")
+      ("xcrun swiftc -emit-library MetalBridge.swift -o ${dylib.absolutePath} -module-name M " +
+          "-Xlinker -install_name -Xlinker @rpath/libMetalBridge.dylib")
+        .run { ProcessBuilder(split(" ")).inheritIO().start().waitFor() }
+        .also { if (it != 0) error("Failed to build Swift bridging code!") }
+
       hashFile.writeText(hash)
       println("Finished rebuild in ${clock.elapsedNow()}")
     }
