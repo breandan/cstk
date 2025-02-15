@@ -29,14 +29,14 @@ fun Stream<Π2A<Σᐩ>>.minimizeFix(
   isValid: Σᐩ.() -> Boolean
 ): Stream<Π3A<Σᐩ>> =
   map { (broke, fixed) ->
-    minimizeFix(broke, tokenize, fixed, "", isValid) }
+    minimizeFixStr(broke, tokenize, fixed, "", isValid) }
 
 fun Sequence<Π2A<Σᐩ>>.minimizeFix(
   tokenize: Σᐩ.() -> List<Σᐩ>,
   isValid: Σᐩ.() -> Boolean
 ): Sequence<Π3A<Σᐩ>> =
   map { (broke, fixed) ->
-    minimizeFix(broke, tokenize, fixed, "", isValid) }
+    minimizeFixStr(broke, tokenize, fixed, "", isValid) }
 
 fun CFG.metrizedRepair(refStr: List<Σᐩ>, mc: MarkovChain<Σᐩ>): List<Repair> =
   solve(List(refStr.size + 3) { "_" }) {
