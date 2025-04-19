@@ -31,7 +31,7 @@ fun Array<DoubleArray>.reduceDim(
   perplexity: Double = 10.0,
   iterations: Int = 99999
 ): Array<out DoubleArray> =
-  tsne(this, d = outputDims, perplexity = perplexity, iterations = iterations).coordinates()
+  tsne(this, d = outputDims, perplexity = perplexity, maxIter = iterations).coordinates()
 
 fun plotTsneEmbeddingsWithLabels(
   embeddings: Array<out DoubleArray>,

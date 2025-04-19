@@ -4,7 +4,8 @@ import com.gargoylesoftware.htmlunit.*
 import com.gargoylesoftware.htmlunit.BrowserVersion.CHROME
 import com.gargoylesoftware.htmlunit.html.HtmlPage
 import com.gargoylesoftware.htmlunit.javascript.JavaScriptEngine
-import com.squareup.okhttp.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.gitlab4j.api.GitLabApi
 import org.kohsuke.github.*
 import java.io.File
@@ -92,7 +93,7 @@ fun sendGET(queryUrl: String) =
         .header("PRIVATE-TOKEN", gitlabApiToken)
         .build()
     ).execute()
-    .let { if (it.isSuccessful) it.body().string() else "" }
+    .let { if (it.isSuccessful) it.body?.string() else "" }
   } catch (e: Exception) { "" }
 
 fun sampleGitlab() {
@@ -109,10 +110,10 @@ fun sampleGitlab() {
       val queryUrl =
         "https://gitlab.com/api/v4/search?scope=projects&search=$query&per_page=96&page=${i++}"
       val text = sendGET(queryUrl)
-      if (text.length < 200) noError = false
+      if ((text?.length ?: 201) < 200) noError = false else break
 
       val regex = Regex("https://gitlab.com/[^/]+?/[^/]+?\\.git")
-      val matches = regex.findAll(text).map { it.value.dropLast(4).substringAfter("https://gitlab.com/") }.toList()
+      val matches = regex.findAll(text!!).map { it.value.dropLast(4).substringAfter("https://gitlab.com/") }.toList()
       if (matches.isEmpty()) noError = false
       val uniqueMatches = matches.filter { url ->
         val name = url.substringAfterLast('/')

@@ -39,9 +39,11 @@ dependencies {
   implementation("ai.djl.huggingface:tokenizers:$djlVersion")
 
   // Vector embedding index
-  val hnswlibVersion = "1.1.3"
+  val hnswlibVersion = "1.2.1"
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
+
+  implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
   val multikVersion = "0.2.3"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
@@ -51,17 +53,17 @@ dependencies {
   implementation("info.debatty:java-string-similarity:2.0.0")
 
   // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:5.0.2")
+  implementation("com.github.ajalt.clikt:clikt:5.0.3")
 
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.45.0"
+  val openrwVersion = "8.50.2"
   implementation("org.openrewrite:rewrite-java:$openrwVersion")
   runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
-  val smileVersion = "4.2.0"
+  val smileVersion = "4.3.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
   implementation("com.github.haifengl:smile-core:$smileVersion")
 
@@ -86,14 +88,14 @@ dependencies {
   implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.7")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.9.3")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.10.0")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.27.0")
-  implementation("org.apache.commons:commons-vfs2:2.9.0")
+  implementation("org.apache.commons:commons-vfs2:2.10.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.11.4210"
+  val ortoolsVersion = "9.12.4544"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -147,28 +149,28 @@ dependencies {
   }
   //implementation("org.apache.datasketches:datasketches-memory:3.0.1")
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
-  implementation("org.apache.datasketches:datasketches-java:7.0.1")
+  implementation("org.apache.datasketches:datasketches-java:8.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
   implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
 
   // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.1.1-beta-15")
+  implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:4.0.1")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:3.1")
+  implementation("org.hipparchus:hipparchus-stat:4.0.1")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:3.0.2")
+  implementation("com.diffplug.spotless:spotless-lib:3.1.1")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 
-  implementation("net.java.dev.jna:jna:5.13.0")
+  implementation("net.java.dev.jna:jna:5.17.0")
 }
 
 configurations.all {

@@ -1,8 +1,8 @@
 package edu.mcgill.cstk.disk.indices
 
 import ai.hypergraph.kaliningraph.types.*
-import com.github.jelmerk.knn.Item
-import com.github.jelmerk.knn.hnsw.HnswIndex
+import com.github.jelmerk.hnswlib.core.Item
+import com.github.jelmerk.hnswlib.core.hnsw.HnswIndex
 import edu.mcgill.cstk.disk.*
 import edu.mcgill.cstk.math.EMD
 import edu.mcgill.cstk.utils.vectorize

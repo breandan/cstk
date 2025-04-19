@@ -1,6 +1,6 @@
 package edu.mcgill.cstk.experiments.search
 
-import com.github.jelmerk.knn.SearchResult
+import com.github.jelmerk.hnswlib.core.SearchResult
 import com.googlecode.concurrenttrees.radix.node.concrete.DefaultCharSequenceNodeFactory
 import com.googlecode.concurrenttrees.solver.LCSubstringSolver
 import edu.mcgill.cstk.disk.TEST_DIR

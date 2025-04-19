@@ -72,10 +72,10 @@ object GPUBridge {
   }
 
   kernel void add_buf(
-      const device int* bufferA[[buffer(0)]],
-      const device int* bufferB[[buffer(1)]],
-      device int* output[[buffer(2)]],
-      uint index[[thread_position_in_grid]]
+    const device int* bufferA[[buffer(0)]],
+    const device int* bufferB[[buffer(1)]],
+    device int* output[[buffer(2)]],
+    uint index[[thread_position_in_grid]]
   ) { output[index] = bufferA[index] + bufferB[index]; }
 
   inline int getBit(int value, uint bitIndex) { return (value >> bitIndex) & 1; }
@@ -87,7 +87,7 @@ import Metal
 private var dvc: MTLDevice!, mtq: MTLCommandQueue!, cpsmm: MTLComputePipelineState!, cpsab: MTLComputePipelineState!
   
 @_cdecl("setup") public func setup() {
-  let metalSrc = #${"\"\"\""}$mpsSrc${"\"\"\""}#
+  let metalSrc = #""${'"'}$mpsSrc${'"'}""#
   dvc = MTLCreateSystemDefaultDevice()!
   mtq = dvc.makeCommandQueue()!
   let lib = try! dvc.makeLibrary(source: metalSrc, options:nil)
