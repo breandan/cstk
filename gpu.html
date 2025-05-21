@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><title>GPU</title>
+<script type="module">
+    const WGSL=`@group(0)@binding(0)var<storage,read>i:array<i32>;
+@group(0)@binding(1)var<storage,read_write>o:array<i32>;
+@compute@workgroup_size(1)
+fn main(@builtin(global_invocation_id)id:vec3<u32>){o[id.x]=i[id.x]*2;}`;
+
+    async function runShader(a){
+        const d=await(await navigator.gpu.requestAdapter()).requestDevice();
+        const mod=d.createShaderModule({code:WGSL});
+        const p=d.createComputePipeline({layout:'auto',
+            compute:{module:mod,entryPoint:'main'}});
+        const bytes=new Int32Array(a).buffer,
+            inB=d.createBuffer({size:bytes.byteLength,
+                usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+        d.queue.writeBuffer(inB,0,bytes);
+        const outB=d.createBuffer({size:bytes.byteLength,
+            usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC});
+        const bg=d.createBindGroup({layout:p.getBindGroupLayout(0),
+            entries:[{binding:0,resource:{buffer:inB}},
+                {binding:1,resource:{buffer:outB}}]});
+        const enc=d.createCommandEncoder();
+        const pass=enc.beginComputePass();
+        pass.setPipeline(p); pass.setBindGroup(0,bg);
+        pass.dispatchWorkgroups(a.length); pass.end();
+        d.queue.submit([enc.finish()]);
+        const read=d.createBuffer({size:bytes.byteLength,
+            usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+        const enc2=d.createCommandEncoder();
+        enc2.copyBufferToBuffer(outB,0,read,0,bytes.byteLength);
+        d.queue.submit([enc2.finish()]);
+        await read.mapAsync(GPUMapMode.READ);
+        return Array.from(new Int32Array(read.getMappedRange()));
+    }
+
+    const es = new EventSource('/stream');
+    es.onmessage = async e => {
+        const nums = e.data.split(',').map(Number);
+        const out  = await runShader(nums);
+        await fetch('/result', {method:'POST', body: out.join(', ')});
+    };
+</script>

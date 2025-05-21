@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.32.0"
+  val djlVersion = "0.33.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -59,9 +59,6 @@ dependencies {
 
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
-  val openrwVersion = "8.50.2"
-  implementation("org.openrewrite:rewrite-java:$openrwVersion")
-  runtimeOnly("org.openrewrite:rewrite-java-11:$openrwVersion")
 
   val smileVersion = "4.3.0"
   implementation("com.github.haifengl:smile-kotlin:$smileVersion")
@@ -222,6 +219,7 @@ tasks {
     "contextualRepair" to "edu.mcgill.cstk.experiments.repair.PythonContextualRepairKt",
     "pythonBarHillelRepair" to "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt",
     "javaBarHillelRepair" to "edu.mcgill.cstk.experiments.repair.JavaBarHillelRepairKt",
+    "wgpuBarHillelRepair" to "edu.mcgill.cstk.experiments.repair.KotlinWGPUHarnessKt",
     "aggregateAndPlot" to "edu.mcgill.cstk.experiments.repair.AggregateAndPlotKt",
     "extractRepairSamples" to "edu.mcgill.cstk.experiments.repair.ExtractRepairSamplesKt",
     "promptRepair" to "edu.mcgill.cstk.experiments.repair.RepairPromptingKt",
