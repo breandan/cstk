@@ -14,16 +14,23 @@ import kotlin.system.measureTimeMillis
 fun main() {
   startWGPUServer()
 
+  val list = """
+    [ NAME for NAME in NAME ] ]
+    [ NAME for NAME , NAME in NAME ( NAME , NUMBER ) if ( NAME & ( NAME - NUMBER ) ]
+  """.lines().filter { it.isNotEmpty() }
+
   measureTimeMillis {
-    println(send(1, 2, 3, 4))
-    println(send(5, 6))
+    for (snippet in list) {
+      println(send(snippet).lines().take(10).joinToString("\n"))
+      println()
+    }
   }.also { println("Total time: ${it / 1000.0}s") }
 
   stopWGPUServer()
 }
 
 private const val PORT = 8000
-private val page by lazy { File("gpu.html").readText() }
+private val page by lazy { File(System.getProperty("user.home"), "tidyparse.html").readText() }
 private val streams = LinkedBlockingQueue<HttpExchange>()
 @Volatile private var resultWaiter: CompletableFuture<String>? = null
 private lateinit var server: HttpServer
@@ -51,12 +58,12 @@ fun startWGPUServer() {
   Desktop.getDesktop().browse(URI("http://localhost:$PORT/"))
 }
 
-fun send(vararg ints: Int, timeoutSec: Long = 30): String {
+fun send(query: String, timeoutSec: Long = 30): String {
   val ex = streams.poll(timeoutSec, TimeUnit.SECONDS) ?: error("browser did not open /stream in time")
   resultWaiter = CompletableFuture()
   ex.responseHeaders.add("Content-Type", "text/event-stream")
   ex.sendResponseHeaders(200, 0)
-  ex.responseBody.use { os -> os.write("retry: 0\ndata: ${ints.joinToString(",")}\n\n".toByteArray()) }
+  ex.responseBody.use { os -> os.write("retry: 0\ndata: $query\n\n".toByteArray()) }
   return resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
 }
 
