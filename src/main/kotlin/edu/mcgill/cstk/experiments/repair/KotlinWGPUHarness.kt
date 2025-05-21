@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import com.sun.net.httpserver.*
 import java.awt.Desktop
 import java.io.File
@@ -9,15 +10,12 @@ import java.util.concurrent.*
 import kotlin.system.measureTimeMillis
 
 /**
-./gradlew -q wgpuBarHillelRepair
+cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
 */
 fun main() {
   startWGPUServer()
 
-  val list = """
-    [ NAME for NAME in NAME ] ]
-    [ NAME for NAME , NAME in NAME ( NAME , NUMBER ) if ( NAME & ( NAME - NUMBER ) ]
-  """.lines().filter { it.isNotEmpty() }
+  val list = sizeAndDistBalancedRepairsUnminimized.map { it.π1 }
 
   measureTimeMillis {
     for (snippet in list) {
