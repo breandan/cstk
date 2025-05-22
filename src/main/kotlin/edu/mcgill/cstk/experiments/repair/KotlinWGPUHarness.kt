@@ -93,6 +93,10 @@ private fun evaluateWGPURepairOnStackOverflow() {
     try {
       val clock = TimeSource.Monotonic.markNow()
       val rankedResults = send(brokeToks.dropLast(1).joinToString(" ")).lines().filter { it.isNotBlank() }
+        .also { println("Received ${it.size} samples in ${clock.elapsedNow()}") }
+        .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+        .sortedBy { it.second }.map { it.first }
+
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
       val indexOfTarget = rankedResults.indexOf(fixedStr.addNewLineIfMissing()).also {
@@ -112,9 +116,9 @@ private fun evaluateWGPURepairOnStackOverflow() {
         println("Found length-$levDist repair in $elapsed ms, $indexOfTarget rank")
         allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
         sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
-        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
+        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / (levRates[it.key]?.recall ?: 0) }}")
         samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + rankedResults.size
-        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
+        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / (levRates[it.key]?.recall ?: 0) }}")
         positive.appendText("${brokeToks.size}, $levDist, $elapsed, $indexOfTarget, ${levAlign.summarize()}\n")
       }
 
