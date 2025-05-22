@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
@@ -19,13 +20,7 @@ cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBa
 fun main() {
   startWGPUServer()
 
-//  val list = sizeAndDistBalancedRepairsUnminimized.map { it.π1 }
-
-//  measureTimeMillis {
-//    for (snippet in list) println(send(snippet).lines().take(10).joinToString("\n") + "\n")
-//  }.also { println("Total time: ${it / 1000.0}s") }
-
-  evaluateWGPURepairOnStackOverflow()
+  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
 
   stopWGPUServer()
 }
@@ -40,12 +35,10 @@ private fun evaluateWGPURepairOnStackOverflow() {
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
-  val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
 
   println("Running Matrix Bar-Hillel repair on Python snippets with $NUM_CORES cores")
-  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, " +
-      "max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
+  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
   dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
@@ -99,7 +92,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
 
     try {
       val clock = TimeSource.Monotonic.markNow()
-      val rankedResults = send(brokeStr).lines().filter { it.isNotBlank() }
+      val rankedResults = send(brokeToks.dropLast(1).joinToString(" ")).lines().filter { it.isNotBlank() }
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
       val indexOfTarget = rankedResults.indexOf(fixedStr.addNewLineIfMissing()).also {
@@ -114,20 +107,15 @@ private fun evaluateWGPURepairOnStackOverflow() {
         println("Drew ${rankedResults.size} samples in ${clock.elapsedNow()}/$timeout length-$levDist human repair not found")
         negative.appendText("${brokeToks.size}, $levDist, ${rankedResults.size}, ${levAlign.summarize()}\n")
       } else {
-        val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-
         allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
         indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-        println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, $indexOfTarget rank")
+        println("Found length-$levDist repair in $elapsed ms, $indexOfTarget rank")
         allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
-        //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
         sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
-        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
-        allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
-        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
+        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
         samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + rankedResults.size
-        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
-        positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, $indexOfTarget, ${levAlign.summarize()}\n")
+        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
+        positive.appendText("${brokeToks.size}, $levDist, $elapsed, $indexOfTarget, ${levAlign.summarize()}\n")
       }
 
       println()
@@ -181,3 +169,129 @@ fun send(query: String, timeoutSec: Long = 30): String {
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit
+
+/*
+w/ wGPU LBH, Markov Chain and MAX_LED=5
+
+Lev(*): Top-1/rec/pos/total: 326 / 2677 / 7041 / 7044, errors: 3, P@1: 0.04628052243043725, P@All: 0.3800397501419648
+Lev(1): Top-1/rec/pos/total: 258 / 2073 / 2169 / 2172, errors: 3, P@1: 0.11878453038674033, P@All: 0.9544198895027625
+Lev(2): Top-1/rec/pos/total: 33 / 403 / 1909 / 1909, errors: 0, P@1: 0.017286537454164485, P@All: 0.21110529072812992
+Lev(3): Top-1/rec/pos/total: 12 / 121 / 1064 / 1064, errors: 0, P@1: 0.011278195488721804, P@All: 0.1137218045112782
+Lev(4): Top-1/rec/pos/total: 18 / 65 / 1123 / 1123, errors: 0, P@1: 0.016028495102404273, P@All: 0.0578806767586821
+Lev(5): Top-1/rec/pos/total: 5 / 15 / 776 / 776, errors: 0, P@1: 0.006443298969072165, P@All: 0.019329896907216496
+Draw timings (ms): {1=1068.1139335076577, 2=177.1258871871498, 3=45.29174449010086, 4=26.103100485618228, 5=8.396339185655584}
+Full timings (ms): {1=1068.2607396339185, 2=177.14979454613373, 3=45.29958909226746, 4=26.10870377288009, 5=8.396712738139708}
+Avg samples drawn: {1=107.48487112439298, 2=43.35674262233844, 3=10.301456854688084, 4=5.065745237205827, 5=1.0590212924915952}
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 47 / 450 ≈ 0.10444444444444445
+|σ|∈[10, 20): Top-1/total: 50 / 1094 ≈ 0.04570383912248629
+|σ|∈[20, 30): Top-1/total: 42 / 1091 ≈ 0.0384967919340055
+|σ|∈[30, 40): Top-1/total: 46 / 1102 ≈ 0.041742286751361164
+|σ|∈[40, 50): Top-1/total: 39 / 1021 ≈ 0.03819784524975514
+|σ|∈[50, 60): Top-1/total: 47 / 921 ≈ 0.051031487513572206
+|σ|∈[60, 70): Top-1/total: 36 / 769 ≈ 0.04681404421326398
+|σ|∈[70, 80): Top-1/total: 19 / 596 ≈ 0.031879194630872486
+Δ(1)= Top-1/total: 258 / 2172 ≈ 0.11878453038674033
+Δ(2)= Top-1/total: 33 / 1909 ≈ 0.017286537454164485
+Δ(3)= Top-1/total: 12 / 1064 ≈ 0.011278195488721804
+Δ(4)= Top-1/total: 18 / 1123 ≈ 0.016028495102404273
+Δ(5)= Top-1/total: 5 / 776 ≈ 0.006443298969072165
+(|σ|∈[0, 10), Δ=1): Top-1/total: 34 / 184 ≈ 0.18478260869565216
+(|σ|∈[0, 10), Δ=2): Top-1/total: 6 / 133 ≈ 0.045112781954887216
+(|σ|∈[0, 10), Δ=3): Top-1/total: 2 / 58 ≈ 0.034482758620689655
+(|σ|∈[0, 10), Δ=4): Top-1/total: 5 / 42 ≈ 0.11904761904761904
+(|σ|∈[0, 10), Δ=5): Top-1/total: 0 / 33 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 37 / 298 ≈ 0.12416107382550336
+(|σ|∈[10, 20), Δ=2): Top-1/total: 6 / 296 ≈ 0.02027027027027027
+(|σ|∈[10, 20), Δ=3): Top-1/total: 3 / 174 ≈ 0.017241379310344827
+(|σ|∈[10, 20), Δ=4): Top-1/total: 3 / 197 ≈ 0.015228426395939087
+(|σ|∈[10, 20), Δ=5): Top-1/total: 1 / 129 ≈ 0.007751937984496124
+(|σ|∈[20, 30), Δ=1): Top-1/total: 33 / 292 ≈ 0.11301369863013698
+(|σ|∈[20, 30), Δ=2): Top-1/total: 5 / 291 ≈ 0.01718213058419244
+(|σ|∈[20, 30), Δ=3): Top-1/total: 2 / 182 ≈ 0.01098901098901099
+(|σ|∈[20, 30), Δ=4): Top-1/total: 2 / 195 ≈ 0.010256410256410256
+(|σ|∈[20, 30), Δ=5): Top-1/total: 0 / 131 ≈ 0.0
+(|σ|∈[30, 40), Δ=1): Top-1/total: 37 / 296 ≈ 0.125
+(|σ|∈[30, 40), Δ=2): Top-1/total: 7 / 290 ≈ 0.02413793103448276
+(|σ|∈[30, 40), Δ=3): Top-1/total: 0 / 192 ≈ 0.0
+(|σ|∈[30, 40), Δ=4): Top-1/total: 2 / 185 ≈ 0.010810810810810811
+(|σ|∈[30, 40), Δ=5): Top-1/total: 0 / 139 ≈ 0.0
+(|σ|∈[40, 50), Δ=1): Top-1/total: 31 / 290 ≈ 0.10689655172413794
+(|σ|∈[40, 50), Δ=2): Top-1/total: 3 / 292 ≈ 0.010273972602739725
+(|σ|∈[40, 50), Δ=3): Top-1/total: 4 / 138 ≈ 0.028985507246376812
+(|σ|∈[40, 50), Δ=4): Top-1/total: 1 / 168 ≈ 0.005952380952380952
+(|σ|∈[40, 50), Δ=5): Top-1/total: 0 / 133 ≈ 0.0
+(|σ|∈[50, 60), Δ=1): Top-1/total: 37 / 290 ≈ 0.12758620689655173
+(|σ|∈[50, 60), Δ=2): Top-1/total: 5 / 265 ≈ 0.018867924528301886
+(|σ|∈[50, 60), Δ=3): Top-1/total: 0 / 132 ≈ 0.0
+(|σ|∈[50, 60), Δ=4): Top-1/total: 2 / 145 ≈ 0.013793103448275862
+(|σ|∈[50, 60), Δ=5): Top-1/total: 3 / 89 ≈ 0.033707865168539325
+(|σ|∈[60, 70), Δ=1): Top-1/total: 34 / 278 ≈ 0.1223021582733813
+(|σ|∈[60, 70), Δ=2): Top-1/total: 0 / 197 ≈ 0.0
+(|σ|∈[60, 70), Δ=3): Top-1/total: 1 / 110 ≈ 0.00909090909090909
+(|σ|∈[60, 70), Δ=4): Top-1/total: 1 / 112 ≈ 0.008928571428571428
+(|σ|∈[60, 70), Δ=5): Top-1/total: 0 / 72 ≈ 0.0
+(|σ|∈[70, 80), Δ=1): Top-1/total: 15 / 244 ≈ 0.06147540983606557
+(|σ|∈[70, 80), Δ=2): Top-1/total: 1 / 145 ≈ 0.006896551724137931
+(|σ|∈[70, 80), Δ=3): Top-1/total: 0 / 78 ≈ 0.0
+(|σ|∈[70, 80), Δ=4): Top-1/total: 2 / 79 ≈ 0.02531645569620253
+(|σ|∈[70, 80), Δ=5): Top-1/total: 1 / 50 ≈ 0.02
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 202 / 450 ≈ 0.4488888888888889
+|σ|∈[10, 20): Top-1/total: 386 / 1094 ≈ 0.35283363802559414
+|σ|∈[20, 30): Top-1/total: 379 / 1091 ≈ 0.3473877176901925
+|σ|∈[30, 40): Top-1/total: 402 / 1102 ≈ 0.3647912885662432
+|σ|∈[40, 50): Top-1/total: 334 / 1021 ≈ 0.32713026444662097
+|σ|∈[50, 60): Top-1/total: 391 / 921 ≈ 0.4245385450597177
+|σ|∈[60, 70): Top-1/total: 332 / 769 ≈ 0.4317295188556567
+|σ|∈[70, 80): Top-1/total: 251 / 596 ≈ 0.4211409395973154
+Δ(1)= Top-1/total: 2073 / 2172 ≈ 0.9544198895027625
+Δ(2)= Top-1/total: 403 / 1909 ≈ 0.21110529072812992
+Δ(3)= Top-1/total: 121 / 1064 ≈ 0.1137218045112782
+Δ(4)= Top-1/total: 65 / 1123 ≈ 0.0578806767586821
+Δ(5)= Top-1/total: 15 / 776 ≈ 0.019329896907216496
+(|σ|∈[0, 10), Δ=1): Top-1/total: 153 / 184 ≈ 0.8315217391304348
+(|σ|∈[0, 10), Δ=2): Top-1/total: 31 / 133 ≈ 0.23308270676691728
+(|σ|∈[0, 10), Δ=3): Top-1/total: 7 / 58 ≈ 0.1206896551724138
+(|σ|∈[0, 10), Δ=4): Top-1/total: 11 / 42 ≈ 0.2619047619047619
+(|σ|∈[0, 10), Δ=5): Top-1/total: 0 / 33 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 294 / 298 ≈ 0.9865771812080537
+(|σ|∈[10, 20), Δ=2): Top-1/total: 51 / 296 ≈ 0.17229729729729729
+(|σ|∈[10, 20), Δ=3): Top-1/total: 22 / 174 ≈ 0.12643678160919541
+(|σ|∈[10, 20), Δ=4): Top-1/total: 14 / 197 ≈ 0.07106598984771574
+(|σ|∈[10, 20), Δ=5): Top-1/total: 5 / 129 ≈ 0.03875968992248062
+(|σ|∈[20, 30), Δ=1): Top-1/total: 291 / 292 ≈ 0.9965753424657534
+(|σ|∈[20, 30), Δ=2): Top-1/total: 58 / 291 ≈ 0.19931271477663232
+(|σ|∈[20, 30), Δ=3): Top-1/total: 24 / 182 ≈ 0.13186813186813187
+(|σ|∈[20, 30), Δ=4): Top-1/total: 6 / 195 ≈ 0.03076923076923077
+(|σ|∈[20, 30), Δ=5): Top-1/total: 0 / 131 ≈ 0.0
+(|σ|∈[30, 40), Δ=1): Top-1/total: 295 / 296 ≈ 0.9966216216216216
+(|σ|∈[30, 40), Δ=2): Top-1/total: 75 / 290 ≈ 0.25862068965517243
+(|σ|∈[30, 40), Δ=3): Top-1/total: 23 / 192 ≈ 0.11979166666666667
+(|σ|∈[30, 40), Δ=4): Top-1/total: 9 / 185 ≈ 0.04864864864864865
+(|σ|∈[30, 40), Δ=5): Top-1/total: 0 / 139 ≈ 0.0
+(|σ|∈[40, 50), Δ=1): Top-1/total: 262 / 290 ≈ 0.903448275862069
+(|σ|∈[40, 50), Δ=2): Top-1/total: 51 / 292 ≈ 0.17465753424657535
+(|σ|∈[40, 50), Δ=3): Top-1/total: 13 / 138 ≈ 0.09420289855072464
+(|σ|∈[40, 50), Δ=4): Top-1/total: 7 / 168 ≈ 0.041666666666666664
+(|σ|∈[40, 50), Δ=5): Top-1/total: 1 / 133 ≈ 0.007518796992481203
+(|σ|∈[50, 60), Δ=1): Top-1/total: 288 / 290 ≈ 0.993103448275862
+(|σ|∈[50, 60), Δ=2): Top-1/total: 73 / 265 ≈ 0.27547169811320754
+(|σ|∈[50, 60), Δ=3): Top-1/total: 16 / 132 ≈ 0.12121212121212122
+(|σ|∈[50, 60), Δ=4): Top-1/total: 8 / 145 ≈ 0.05517241379310345
+(|σ|∈[50, 60), Δ=5): Top-1/total: 6 / 89 ≈ 0.06741573033707865
+(|σ|∈[60, 70), Δ=1): Top-1/total: 274 / 278 ≈ 0.9856115107913669
+(|σ|∈[60, 70), Δ=2): Top-1/total: 39 / 197 ≈ 0.19796954314720813
+(|σ|∈[60, 70), Δ=3): Top-1/total: 12 / 110 ≈ 0.10909090909090909
+(|σ|∈[60, 70), Δ=4): Top-1/total: 6 / 112 ≈ 0.05357142857142857
+(|σ|∈[60, 70), Δ=5): Top-1/total: 1 / 72 ≈ 0.013888888888888888
+(|σ|∈[70, 80), Δ=1): Top-1/total: 216 / 244 ≈ 0.8852459016393442
+(|σ|∈[70, 80), Δ=2): Top-1/total: 25 / 145 ≈ 0.1724137931034483
+(|σ|∈[70, 80), Δ=3): Top-1/total: 4 / 78 ≈ 0.05128205128205128
+(|σ|∈[70, 80), Δ=4): Top-1/total: 4 / 79 ≈ 0.05063291139240506
+(|σ|∈[70, 80), Δ=5): Top-1/total: 2 / 50 ≈ 0.04
+*/

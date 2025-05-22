@@ -708,10 +708,8 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
         .joinToString("\n", "", "\n") { (k, v) -> "(|σ|∈[${k.first}, ${k.first+LEN_BUCKET_INTERVAL}), Δ=${k.second}): $v" }
 
 data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
-  operator fun plus(other: S2PMetrics) =
-    S2PMetrics(top1 + other.top1, total + other.total)
-  override fun toString() =
-    "Top-1/total: $top1 / $total ≈ ${top1.toDouble() / total}"
+  operator fun plus(other: S2PMetrics) = S2PMetrics(top1 + other.top1, total + other.total)
+  override fun toString() = "Top-1/total: $top1 / $total ≈ ${top1.toDouble() / total}"
 }
 
 fun profileRecognizer() {

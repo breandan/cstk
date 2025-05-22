@@ -185,11 +185,11 @@ fun evaluateMatrixBarHillelRepairOnStackOverflow() {
         allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
         //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
         sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
-        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
+        println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
         allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
-        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
+        println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
         samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
-        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
+        println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / levRates[it.key]!!.recall }}")
         positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
             "$totalSamples, $levBallSize, $intGramSize, $langSize, " +
             //          "${dfa.numberOfStates}, ${dfa.numberOfTransitions}, " +
