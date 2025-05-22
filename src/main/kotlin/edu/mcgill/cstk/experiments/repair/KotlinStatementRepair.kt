@@ -14,8 +14,7 @@ import kotlin.time.*
 const val keywordFile = "src/main/resources/datasets/kotlin/keywords.txt"
 
 val mostCommonKotlinKeywords by lazy {
-  File(keywordFile)
-    .readLines().map { it.trim() }.filter { it.isNotBlank() }
+  File(keywordFile).readLines().map { it.trim() }.filter { it.isNotBlank() }
 }
 
 val mostCommonSymbols by lazy {
