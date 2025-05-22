@@ -71,6 +71,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
+    val levDist = levAlign.patchSize()
 
     val humanRepairANSI = levAlign.paintANSIColors()
     println("Source: ${brokeToks.joinToString(" ")}")
@@ -98,7 +99,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
 
     try {
       val clock = TimeSource.Monotonic.markNow()
-      val rankedResults = send(brokeStr).lines()
+      val rankedResults = send(brokeStr).lines().filter { it.isNotBlank() }
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
       val indexOfTarget = rankedResults.indexOf(fixedStr.addNewLineIfMissing()).also {
