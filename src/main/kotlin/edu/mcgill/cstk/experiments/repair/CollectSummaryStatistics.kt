@@ -210,13 +210,17 @@ fun streamBIFIContents(
   filename: String = "src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
   file: File = File(filename)
 ): Stream<String> =
-  file.readLines().stream().parallel()
-    .filter { it.trimStart().startsWith("\"code_string\": \"") }
-    .map {
-      val json = "{$it}"
-      val parsedObject = Klaxon().parseJsonObject(json.reader())
-      parsedObject.string("code_string")
-    }
+  file.readLines().stream().parallel().filter { it.trimStart().startsWith("\"code_string\": \"") }
+    .map { Klaxon().parseJsonObject("{$it}".reader()).string("code_string") }
+
+fun iterBIFIContents(
+  good: Boolean = true,
+  kind: String = if (good) "good" else "bad",
+  filename: String = "src/main/resources/datasets/python/bifi/data/orig_${kind}_code/orig.${kind}.json",
+  file: File = File(filename)
+): Sequence<String> =
+  file.readLines().asSequence().filter { it.trimStart().startsWith("\"code_string\": \"") }
+    .mapNotNull { Klaxon().parseJsonObject("{$it}".reader()).string("code_string") }
 
 fun collectPCFGTriples() {
   val i = AtomicInteger(0)

@@ -12,16 +12,19 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
 */
 fun main() {
+  startTrainingService()
   startWGPUServer()
 
-  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
+  // Now, wait forever or until CTRL+C is pressed
+  while (true) Thread.sleep(10_000)
+//  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
 
+  stopTrainingService()
   stopWGPUServer()
 }
 
@@ -139,6 +142,7 @@ private val page by lazy { File(System.getProperty("user.home"), "tidyparse.html
 private val streams = LinkedBlockingQueue<HttpExchange>()
 @Volatile private var resultWaiter: CompletableFuture<String>? = null
 private lateinit var server: HttpServer
+private lateinit var trainingService: HttpServer
 
 private fun HttpExchange.send(code: Int, mime: String, body: ByteArray) {
   responseHeaders.add("Content-Type", mime)
@@ -163,6 +167,36 @@ fun startWGPUServer() {
   Desktop.getDesktop().browse(URI("http://localhost:$PORT/"))
 }
 
+fun String.charify() = "|${encodeToMakemore()}}"
+fun startTrainingService() {
+  val seq = iterBIFIContents().map {
+    val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
+    if (str in vanillaS2PCFG.language) str else null
+  }.asSequence().filterNotNull().iterator()
+
+  if (::trainingService.isInitialized) return
+  trainingService = HttpServer.create(InetSocketAddress(PORT + 1), 0).apply {
+    createContext("/fetch") { exchange ->
+      var body: String
+      while(true) {
+        val query = seq.next()
+        val reprs = send(query, 10_000)
+        if (reprs.isEmpty()) continue
+        val qenc = query.charify()
+        val renc = reprs.lines().map { it.charify() }.shuffled()
+        body = renc.first() + "\n" + qenc + "\n" + renc.drop(1).joinToString("\n")
+        break
+      }
+      exchange.sendResponseHeaders(200, body.length.toLong())
+      exchange.responseBody.use { it.write(body.toByteArray()) }
+    }
+    executor = null
+    start()
+  }
+
+  println("BIFI iterator service started at http://localhost:${PORT + 1}/fetch")
+}
+
 fun send(query: String, timeoutSec: Long = 30): String {
   val ex = streams.poll(timeoutSec, TimeUnit.SECONDS) ?: error("browser did not open /stream in time")
   resultWaiter = CompletableFuture()
@@ -173,6 +207,7 @@ fun send(query: String, timeoutSec: Long = 30): String {
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit
+fun stopTrainingService() = if (::trainingService.isInitialized) trainingService.stop(0) else Unit
 
 /*
 w/ wGPU LBH, Markov Chain and MAX_LED=5
