@@ -12,20 +12,19 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
+2>&1 | tee scripts/confounders.txt (optional)
 */
 fun main() {
-  startTrainingService()
-  startWGPUServer()
-
-  // Now, wait forever or until CTRL+C is pressed
-  while (true) Thread.sleep(10_000)
+  writeCharBIFIToDisk()
+//  startWGPUServer()
+//
 //  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
-
-  stopTrainingService()
-  stopWGPUServer()
+//
+//  stopWGPUServer()
 }
 
 private fun evaluateWGPURepairOnStackOverflow() {
@@ -178,9 +177,9 @@ fun startTrainingService() {
   trainingService = HttpServer.create(InetSocketAddress(PORT + 1), 0).apply {
     createContext("/fetch") { exchange ->
       var body: String
-      while(true) {
+      while (true) {
         val query = seq.next()
-        val reprs = send(query, 10_000)
+        val reprs = send(query)
         if (reprs.isEmpty()) continue
         val qenc = query.charify()
         val renc = reprs.lines().map { it.charify() }.shuffled()
@@ -195,6 +194,25 @@ fun startTrainingService() {
   }
 
   println("BIFI iterator service started at http://localhost:${PORT + 1}/fetch")
+}
+
+fun writeCharBIFIToDisk() {
+  startWGPUServer()
+
+  iterBIFIContents().map {
+    val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
+    if (str in vanillaS2PCFG.language) str else null
+  }.filterNotNull().forEach {
+    try {
+      val query = it
+      val reprs = send(query)
+      if (reprs.isNotBlank()) {
+        val qenc = query.charify()
+        val renc = reprs.lines().map { it.charify() }.shuffled()
+        println(renc.first() + "\n" + qenc + "\n" + renc.drop(1).joinToString("\n") + "\n")
+      }
+    } catch (_: Exception) {}
+  }
 }
 
 fun send(query: String, timeoutSec: Long = 30): String {

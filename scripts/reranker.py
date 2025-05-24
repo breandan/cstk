@@ -18,10 +18,29 @@ SAVE_EVERY   = 100         # steps
 DEVICE       = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # --------------------------- Utilities ---------------------------------- #
-def fetch_batch(url: str = 'http://localhost:8001/fetch') -> Tuple[str, List[str]]:
-    """Return (query, [doc₀, doc₁, …])  doc₀ is the positive example."""
-    txt = requests.get(url, timeout=100).text.strip().splitlines()
-    return txt[0], txt[1:]
+def fetch_batch(path: str = 'data.txt'):
+    """
+    Read from a single text file where blank lines separate batches.
+    In each batch the first non-empty line is the query; the rest are docs.
+    When the file ends we rewind so training can run indefinitely.
+    """
+    global _batch_gen
+
+    if _batch_gen is None:
+        def _reader():
+            with Path(path).open(encoding='utf-8') as f:
+                for is_gap, group in itertools.groupby(f, key=lambda l: l.strip() == ''):
+                    if not is_gap:
+                        lines = [l.rstrip('\n') for l in group]
+                        if lines:
+                            yield lines[0], lines[1:]
+        _batch_gen = _reader()
+
+    try:
+        return next(_batch_gen)
+    except StopIteration:
+        _batch_gen = None
+        return fetch_batch(path)
 
 def encode(txt: str) -> Tuple[List[int], int]:
     """ASCII-encode and pad; returns ([ids...], valid_len)."""
