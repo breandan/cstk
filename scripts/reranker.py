@@ -13,18 +13,21 @@ from pathlib import Path
 _batch_gen = None
 
 # --------------------------- Hyper-parameters --------------------------- #
-DIM          = 64          # embedding size
+DIM          = 128          # embedding size
+N_LAYERS     = 2
+N_HEADS      = 8
 MAX_LEN      = 100         # truncate / pad length (query & docs)
 VOCAB        = 128         # ASCII subset
 LR           = 3e-3
 SAVE_EVERY   = 100         # steps
+BATCH_SIZE   = 8
 DEVICE       = DEVICE = torch.device(
   "mps"  if torch.backends.mps.is_available() else
   "cuda" if torch.cuda.is_available()         else "cpu"
 )
 
 # --------------------------- Utilities ---------------------------------- #
-def fetch_batch(path: str = 'repairs_bifi.txt'):
+def fetch_batch(path: str = 'char_bifi_ts.txt'):
     """
     Read from a single text file where blank lines separate batches.
     In each batch the first non-empty line is the query; the rest are docs.
@@ -48,6 +51,18 @@ def fetch_batch(path: str = 'repairs_bifi.txt'):
         _batch_gen = None
         return fetch_batch(path)
 
+def load_validation(path: str = 'char_bifi_vs.txt'):
+    data = []
+    with Path(path).open(encoding="utf-8") as f:
+        for is_gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
+            if not is_gap:
+                lines = [l.rstrip("\n") for l in grp]
+                if lines:
+                    data.append((lines[0], lines[1:]))       # (query, docs)
+    return data
+
+VAL_DATA = load_validation()
+
 def encode(txt: str) -> Tuple[List[int], int]:
     """ASCII-encode and pad; returns ([ids...], valid_len)."""
     ids = [ord(c) % VOCAB for c in txt[:MAX_LEN]]
@@ -66,65 +81,89 @@ class CharRanker(nn.Module):
         super().__init__()
         self.emb = nn.Embedding(VOCAB, DIM)
         self.pos = nn.Embedding(MAX_LEN, DIM)
-        enc = nn.TransformerEncoderLayer(DIM, nhead=4, dim_feedforward=4*DIM, activation='gelu', batch_first=True)
-        self.tf = nn.TransformerEncoder(enc, num_layers=1)
 
-    def mean_embed(self, ids, lens):
+        enc_layer = nn.TransformerEncoderLayer(
+            d_model=DIM,
+            nhead=N_HEADS,
+            dim_feedforward=4*DIM,
+            dropout=0.1,
+            activation='gelu',
+            batch_first=True)
+        self.tf = nn.TransformerEncoder(enc_layer, num_layers=N_LAYERS)
+
+        self.proj = nn.Linear(DIM, DIM, bias=False)
+
+    def encode(self, ids, lens):
         B, L = ids.shape
-        pos_ids = torch.arange(L, device=ids.device).expand(B, L)
-        x = self.emb(ids) + self.pos(pos_ids)           # [B, L, D]
+        pos = torch.arange(L, device=ids.device).expand(B, L)
+        x = self.emb(ids) + self.pos(pos)
 
-        pad_mask = torch.arange(L, device=ids.device).expand(B, L) >= lens.unsqueeze(1)
-        x = self.tf(x, src_key_padding_mask=pad_mask)   # attention ignores pads
+        pad = torch.arange(L, device=ids.device).expand(B, L) >= lens.unsqueeze(1)
+        x = self.tf(x, src_key_padding_mask=pad)
 
-        x = x.masked_fill(pad_mask.unsqueeze(2), 0).sum(1) / lens.unsqueeze(1)
-        return x * DIM**-0.5
+        x = x.masked_fill(pad.unsqueeze(2), 0).sum(1) / lens.unsqueeze(1)
+        return F.normalize(self.proj(x), dim=1)        # [B, DIM]
 
-    def forward(self, q_ids, q_len, d_ids, d_lens) -> torch.Tensor:
-        q = self.mean_embed(q_ids, q_len)               # [1×D]
-        d = self.mean_embed(d_ids, d_lens)              # [N×D]
-        return torch.matmul(d, q.T).squeeze(1)          # [N] scores
+    def forward(self, q_ids, q_len, d_ids, d_lens):
+        q = self.encode(q_ids, q_len)                  # [1, D]
+        d = self.encode(d_ids, d_lens)                 # [N, D]
+        return (d @ q.T).squeeze(1)                    # cosine-like scores
 
 # --------------------------- Training loop ------------------------------ #
-def train(steps=10_000, out='char_ranker.pt') -> None:
+def train(steps=14_000, out='char_ranker.pt') -> None:
     mdl = CharRanker().to(DEVICE)
-    opt = torch.optim.AdamW(mdl.parameters(), lr=LR)
-    total_time, num_timed = 0.0, 0
+    opt = torch.optim.SGD(mdl.parameters(), lr=LR, momentum=0.9, weight_decay=1e-4)
 
-    for step in range(1, steps+1):
-        t0 = time.perf_counter()
-        # ---- data ------------------------------------------------------ #
-        q_txt, docs = fetch_batch()
-        perm = torch.randperm(len(docs))
-        docs_shuf = [docs[i] for i in perm]                   # shuffle
-        tgt = (perm == 0).nonzero(as_tuple=False)[0,0].item() # new idx of pos
+    for step in range(1, steps + 1):
+        opt.zero_grad()
+        total_loss, hard_ranks = 0.0, []
 
-        q_ids, q_len  = to_tensor([q_txt])                    #  shape → [1×L], [1]
-        d_ids, d_lens = to_tensor(docs_shuf)                  #  shape → [N×L], [N]
+        for _ in range(BATCH_SIZE):
+            q_txt, docs = fetch_batch()
 
-        # ---- forward --------------------------------------------------- #
-        scores = mdl(q_ids, q_len, d_ids, d_lens)             # [N]
-        if DEVICE.type == 'cuda':
-            torch.cuda.synchronize()
-        dt = time.perf_counter() - t0
-        total_time += dt; num_timed += 1
-        avg_ms = 1000 * total_time / num_timed
+            perm = torch.randperm(len(docs))
+            docs = [docs[i] for i in perm]
+            tgt  = (perm == 0).nonzero(as_tuple=False)[0, 0].item()
 
-        # ---- smooth rank & loss ---------------------------------------- #
-        diff  = scores - scores[tgt]                          # [N]
-        mask  = torch.ones_like(scores, dtype=torch.bool); mask[tgt] = False
-        soft_rank = 1 + torch.sigmoid(diff[mask]).sum()
-        loss = soft_rank.pow(2)                               # squared rank
+            q_ids, q_len  = to_tensor([q_txt])
+            d_ids, d_lens = to_tensor(docs)
 
-        opt.zero_grad(); loss.backward(); opt.step()
+            scores = mdl(q_ids, q_len, d_ids, d_lens)
+
+            target = torch.tensor([tgt], device=DEVICE)
+            loss   = F.cross_entropy(scores.unsqueeze(0), target)   # list-wise CE
+            loss.backward()
+            total_loss += loss.item()
+
+            with torch.no_grad():
+                rk = (scores.argsort(descending=True) == tgt).nonzero()[0, 0].item() + 1
+                hard_ranks.append(rk)
+
+        opt.step()
 
         # ---- metrics --------------------------------------------------- #
-        with torch.no_grad():
-            hard_rank = (scores.argsort(descending=True)==tgt).nonzero()[0,0]+1
-        if step % 10 == 0:                          # print every 10 steps
-            print(f'{step:>6} | loss {loss.item():.3f} | '
-                  f'hard-rank {hard_rank:<4} | '
-                  f'avg_fwd {avg_ms:6.2f} ms')
+        if step % 10 == 0:
+            avg_loss = total_loss / BATCH_SIZE
+            avg_rank = sum(hard_ranks) / len(hard_ranks)
+            print(f"{step:>6} | loss {avg_loss:.3f} | mean-rank {avg_rank:.1f}")
+
+        if step % 100 == 0:
+            with torch.no_grad():
+                ranks = []
+                sample_size = 0
+                for vq, vdocs in VAL_DATA:
+                    q_ids, q_len  = to_tensor([vq])
+                    d_ids, d_lens = to_tensor(vdocs)
+                    sc  = mdl(q_ids, q_len, d_ids, d_lens)
+                    rnk = (sc.argsort(descending=True) == 0).nonzero(as_tuple=False)[0, 0].item() + 1
+                    ranks.append(rnk)
+                    sample_size += 1
+                    if sample_size >= 100: break
+            acc1   = sum(r == 1 for r in ranks) / len(ranks)
+            acc10  = sum(r <= 10 for r in ranks) / len(ranks)
+            acc100 = sum(r <= 100 for r in ranks) / len(ranks)
+            mean_r = sum(ranks) / len(ranks)
+            print(f"└─ val@1 {acc1:.3f} | val@10 {acc10:.3f} | val@100 {acc100:.3f} | mean_rank {mean_r:.1f}")
 
         # ---- checkpoint ------------------------------------------------- #
         if step % SAVE_EVERY == 0:

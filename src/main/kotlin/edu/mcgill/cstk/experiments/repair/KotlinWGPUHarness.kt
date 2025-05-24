@@ -1,5 +1,7 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.automata.FSA
+import ai.hypergraph.kaliningraph.automata.GRE
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
@@ -10,16 +12,19 @@ import java.io.File
 import java.net.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
+import kotlin.collections.plusAssign
+import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
 2>&1 | tee scripts/confounders.txt (optional)
 */
 fun main() {
-  writeCharBIFIToDisk()
+  writeValidationSet()
+
+//  writeCharBIFIToDisk()
 //  startWGPUServer()
 //
 //  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
@@ -94,7 +99,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
 
     try {
       val clock = TimeSource.Monotonic.markNow()
-      val rankedResults = send(brokeToks.dropLast(1).joinToString(" ")).lines().filter { it.isNotBlank() }
+      val rankedResults = sendGPU(brokeToks.dropLast(1).joinToString(" ")).lines().filter { it.isNotBlank() }
         .also { println("Received ${it.size} samples in ${clock.elapsedNow()}") }
         .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
         .sortedBy { it.second }.map { it.first }
@@ -179,7 +184,7 @@ fun startTrainingService() {
       var body: String
       while (true) {
         val query = seq.next()
-        val reprs = send(query)
+        val reprs = sendGPU(query)
         if (reprs.isEmpty()) continue
         val qenc = query.charify()
         val renc = reprs.lines().map { it.charify() }.shuffled()
@@ -196,23 +201,163 @@ fun startTrainingService() {
   println("BIFI iterator service started at http://localhost:${PORT + 1}/fetch")
 }
 
-fun writeValidationSet() {
-  startWGPUServer()
+fun sendCPU(query: String): String =
+  initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toList()
+  .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+  .sortedBy { it.second }.map { it.first }.take(580).joinToString("\n")
 
-  sizeAndDistBalancedRepairsUnminimized
-    .map { (b, f) -> b.addNewLineIfMissing() to f.addNewLineIfMissing() }
-    .forEach { (broke, fixed) ->
-      try {
-        val query = broke
-        val reprs = send(query)
-        if (reprs.isNotBlank()) {
-          val qenc = query.charify()
-          val fenc = fixed.charify()
-          val renc = reprs.lines().map { it.charify() } - fenc
-          println(qenc.first() + "\n" + fenc + "\n" + renc.joinToString("\n") + "\n")
+fun initiateSerialRepair(brokenStr: List<Σᐩ>, cfg: CFG): Sequence<Σᐩ> {
+  val upperBound = MAX_RADIUS * 3
+//  val monoEditBounds = cfg.maxParsableFragmentB(brokenStr, pad = upperBound)
+  val timer = TimeSource.Monotonic.markNow()
+  val bindex = cfg.bindex
+  val width = cfg.nonterminals.size
+  val vindex = cfg.vindex
+  val ups = cfg.unitProductions
+  val t2vs = cfg.tmToVidx
+  val maxBranch = vindex.maxOf { it.size }
+  val startIdx = bindex[START_SYMBOL]
+
+  fun nonemptyLevInt(levFSA: FSA): Int? {
+    val ap: List<List<List<Int>?>> = levFSA.allPairs
+    val dp = Array(levFSA.numStates) { Array(levFSA.numStates) { BooleanArray(width) { false } } }
+
+    levFSA.allIndexedTxs0(ups, bindex).forEach { (q0, nt, q1) -> dp[q0][q1][nt] = true }
+    var minRad: Int = Int.MAX_VALUE
+
+    // For pairs (p,q) in topological order
+    for (dist: Int in 1..<dp.size) {
+      for (iP: Int in 0..<dp.size - dist) {
+        val p = iP
+        val q = iP + dist
+        if (ap[p][q] == null) continue
+        val appq = ap[p][q]!!
+        for ((A: Int, indexArray: IntArray) in vindex.withIndex()) {
+          outerloop@for(j: Int in 0..<indexArray.size step 2) {
+            val B = indexArray[j]
+            val C = indexArray[j + 1]
+            for (r in appq)
+              if (dp[p][r][B] && dp[r][q][C]) {
+                dp[p][q][A] = true
+                break@outerloop
+              }
+          }
+
+          if (p == 0 && A == startIdx && q in levFSA.finalIdxs && dp[p][q][A]) {
+            val (x, y) = levFSA.idsToCoords[q]!!
+            /** See final state conditions for [makeExactLevCFL] */
+            // The minimum radius such that this final state is included in the L-FSA
+            minRad = minOf(minRad, (brokenStr.size - x + y).absoluteValue)
+          }
         }
-      } catch (_: Exception) {}
+      }
     }
+
+    return if (minRad == Int.MAX_VALUE) null else minRad
+  }
+
+  val led = (3..<upperBound)
+    .firstNotNullOfOrNull { nonemptyLevInt(makeLevFSA(brokenStr, it)) } ?:
+  upperBound//.also { println("Hit upper bound") }
+  val radius = led + LED_BUFFER
+
+//  println("Identified LED=$led, radius=$radius in ${timer.elapsedNow()}")
+
+  val levFSA = makeLevFSA(brokenStr, radius)
+
+  val nStates = levFSA.numStates
+  val tml = cfg.tmLst
+  val tms = tml.size
+  val tmm = cfg.tmMap
+
+  // 1) Create dp array of parse trees
+  val dp: Array<Array<Array<GRE?>>> = Array(nStates) { Array(nStates) { Array(width) { null } } }
+
+  // 2) Initialize terminal productions A -> a
+  val aitx = levFSA.allIndexedTxs1(ups)
+  for ((p, σ, q) in aitx) for (Aidx in t2vs[tmm[σ]!!])
+    dp[p][q][Aidx] = ((dp[p][q][Aidx] as? GRE.SET) ?: GRE.SET(tms))
+      .apply { s.set(tmm[σ]!!)/*; dq[p][q].set(Aidx)*/ }
+
+  var maxChildren = 0
+  var location = -1 to -1
+
+  // 3) CYK + Floyd Warshall parsing
+  for (dist in 1..<nStates) {
+    for (p in 0..<(nStates - dist)) {
+      val q = p + dist
+      if (levFSA.allPairs[p][q] == null) continue
+      val appq = levFSA.allPairs[p][q]!!
+
+      for ((Aidx, indexArray) in vindex.withIndex()) {
+        //      println("${cfg.bindex[Aidx]}(${pm!!.ntLengthBounds[Aidx]}):${levFSA.stateLst[p]}-${levFSA.stateLst[q]}(${levFSA.SPLP(p, q)})")
+        val rhsPairs = dp[p][q][Aidx]?.let { mutableListOf(it) } ?: mutableListOf()
+        outerLoop@for (j in 0..<indexArray.size step 2) {
+          val Bidx = indexArray[j]
+          val Cidx = indexArray[j + 1]
+          for (r in appq) {
+            val left = dp[p][r][Bidx]
+            if (left == null) continue
+            val right = dp[r][q][Cidx]
+            if (right == null) continue
+            // Found a parse for A
+            rhsPairs += left * right
+            //            if (rhsPairs.size > 10) break@outerLoop
+          }
+        }
+
+        val list = rhsPairs.toTypedArray()
+        if (rhsPairs.isNotEmpty()) {
+          if (list.size > maxChildren) {
+            maxChildren = list.size
+            location = p to q
+          }
+          dp[p][q][Aidx] = GRE.CUP(*list)
+        }
+      }
+    }
+  }
+
+//  println("Completed parse matrix in: ${timer.elapsedNow()}")
+
+  // 4) Gather final parse trees from dp[0][f][startIdx], for all final states f
+  val allParses = levFSA.finalIdxs.mapNotNull { q -> dp[0][q][startIdx] }
+
+  val clock = TimeSource.Monotonic.markNow()
+  // 5) Combine them under a single GRE
+  return (
+      if (allParses.isEmpty()) sequenceOf()
+      else GRE.CUP(*allParses.toTypedArray()).let {
+        it.words(tml) { clock.hasTimeLeft() }
+//      if ( == null) it.words(tml) { clock.hasTimeLeft() }
+//      else it.wordsOrdered(tml, ngrams) { clock.hasTimeLeft() }
+      }
+  )
+//    .also { println("Parsing took ${timer.elapsedNow()} with |σ|=${brokenStr.size}, " +
+//        "|Q|=$nStates, |G|=${cfg.size}, maxBranch=$maxBranch, |V|=$width, |Σ|=$tms, maxChildren=$maxChildren@$location") }
+}
+
+fun TimeSource.Monotonic.ValueTimeMark.hasTimeLeft() = elapsedNow().inWholeMilliseconds < TIMEOUT_MS
+
+fun writeValidationSet() {
+  LED_BUFFER = 2
+  P_BIFI_PY150.score(listOf("hello", "world"))
+  sizeAndDistBalancedRepairsUnminimized.chunked(100) {
+      it.parallelStream()
+        .map { (b, f) -> b.addNewLineIfMissing() to f.addNewLineIfMissing() }
+        .forEach { (broke, fixed) ->
+          try {
+            val query = broke
+            val reprs = sendCPU(query)
+            if (reprs.isNotBlank()) {
+              val qenc = query.charify()
+              val fenc = fixed.charify()
+              val renc = reprs.lines().map { it.charify() } - fenc
+              println(qenc + "\n" + fenc + "\n" + renc.joinToString("\n") + "\n")
+            }
+          } catch (_: Exception) {}
+        }
+    }.toList()
 }
 
 // Training set for reranker.py
@@ -225,7 +370,7 @@ fun writeCharBIFIToDisk() {
   }.filterNotNull().forEach {
     try {
       val query = it
-      val reprs = send(query)
+      val reprs = sendGPU(query)
       if (reprs.isNotBlank()) {
         val qenc = query.charify()
         val renc = reprs.lines().map { it.charify() }.shuffled()
@@ -235,7 +380,7 @@ fun writeCharBIFIToDisk() {
   }
 }
 
-fun send(query: String, timeoutSec: Long = 30): String {
+fun sendGPU(query: String, timeoutSec: Long = 30): String {
   val ex = streams.poll(timeoutSec, TimeUnit.SECONDS) ?: error("browser did not open /stream in time")
   resultWaiter = CompletableFuture()
   ex.responseHeaders.add("Content-Type", "text/event-stream")
