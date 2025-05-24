@@ -6,8 +6,11 @@ Forward =  mean( Emb(q) ) · mean( Emb(d) )      # dot product
 Loss    =  cross-entropy over the score list    # listwise
 """
 
-import os, time, json, requests, torch, torch.nn as nn, torch.nn.functional as F
+import os, time, itertools, json, requests, torch, torch.nn as nn, torch.nn.functional as F
 from typing import List, Tuple
+from pathlib import Path
+
+_batch_gen = None
 
 # --------------------------- Hyper-parameters --------------------------- #
 DIM          = 64          # embedding size
@@ -15,10 +18,13 @@ MAX_LEN      = 100         # truncate / pad length (query & docs)
 VOCAB        = 128         # ASCII subset
 LR           = 3e-3
 SAVE_EVERY   = 100         # steps
-DEVICE       = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE       = DEVICE = torch.device(
+  "mps"  if torch.backends.mps.is_available() else
+  "cuda" if torch.cuda.is_available()         else "cpu"
+)
 
 # --------------------------- Utilities ---------------------------------- #
-def fetch_batch(path: str = 'data.txt'):
+def fetch_batch(path: str = 'repairs_bifi.txt'):
     """
     Read from a single text file where blank lines separate batches.
     In each batch the first non-empty line is the query; the rest are docs.
