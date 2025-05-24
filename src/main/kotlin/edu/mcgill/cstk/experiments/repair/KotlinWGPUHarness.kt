@@ -196,11 +196,31 @@ fun startTrainingService() {
   println("BIFI iterator service started at http://localhost:${PORT + 1}/fetch")
 }
 
+fun writeValidationSet() {
+  startWGPUServer()
+
+  sizeAndDistBalancedRepairsUnminimized
+    .map { (b, f) -> b.addNewLineIfMissing() to f.addNewLineIfMissing() }
+    .forEach { (broke, fixed) ->
+      try {
+        val query = broke
+        val reprs = send(query)
+        if (reprs.isNotBlank()) {
+          val qenc = query.charify()
+          val fenc = fixed.charify()
+          val renc = reprs.lines().map { it.charify() } - fenc
+          println(qenc.first() + "\n" + fenc + "\n" + renc.joinToString("\n") + "\n")
+        }
+      } catch (_: Exception) {}
+    }
+}
+
+// Training set for reranker.py
 fun writeCharBIFIToDisk() {
   startWGPUServer()
 
   iterBIFIContents().map {
-    val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
+    val str = it.mapToUnquotedPythonTokens().addNewLineIfMissing()
     if (str in vanillaS2PCFG.language) str else null
   }.filterNotNull().forEach {
     try {
