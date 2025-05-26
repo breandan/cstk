@@ -11,13 +11,13 @@ from typing import List, Tuple
 import torch, torch.nn as nn, torch.nn.functional as F
 
 # --------------------------- Hyper-parameters -------------------------- #
-DIM, N_HEADS, N_LAYERS = 128, 8, 2      # model size -- safe <60 ms
+DIM, N_HEADS, N_LAYERS = 128, 16, 4      # model size -- safe <60 ms
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
 MAX_NEG                = 127            # 1 pos + 127 neg = 128-way softmax
 TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 8              # optimiser batch
-LR                     = 2e-3           # AdamW
+LR                     = 1e-4           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
 
@@ -86,135 +86,112 @@ class InteractionRanker(nn.Module):
         N, Lq, Ld = d_ids.size(0), q_ids.size(1), d_ids.size(1)
         if N == 0:
             return torch.empty((0,), device=d_ids.device)
-
         q_ids_expanded = q_ids.expand(N, -1); q_len_expanded = q_len.expand(N)
-
         cls_token_id = VOCAB - 1
         sep_token_id = VOCAB - 2
-
         x = torch.cat([ torch.full((N,1), cls_token_id, device=DEVICE, dtype=torch.long), q_ids_expanded,
                         torch.full((N,1), sep_token_id, device=DEVICE, dtype=torch.long), d_ids
                         ], dim=1)
-
         pos_indices  = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
-
         effective_lengths = (1 + q_len_expanded + 1 + d_lens).unsqueeze(1)
         mask = torch.arange(x.size(1), device=DEVICE).expand(N, -1) >= effective_lengths
-
         h = self.emb(x) + self.pos(pos_indices)
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:,0]).squeeze(1)
 
-def train(steps=20_000, out="num_reranker.pt", val_data_global=None): # Pass VAL_DATA
+def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
     mdl = InteractionRanker().to(DEVICE)
     opt = torch.optim.AdamW(mdl.parameters(), lr=LR, weight_decay=1e-4)
 
-    if val_data_global is None: # Should be passed from __main__
+    if val_data_global is None:
         print("Warning: VAL_DATA not passed to train function. Validation will be empty.")
         val_data_global = []
 
-
     for step in range(1, steps+1):
         mdl.train()
-        opt.zero_grad(); tot_loss = 0.0; ranks = []
+        opt.zero_grad(); tot_loss = 0.0
+        current_batch_reciprocal_ranks = [] # For MRR
 
         for _ in range(BATCH_QUERIES):
             q_txt, docs_all = fetch_batch()
-
             if not docs_all: continue
-
             pos_doc_text = docs_all[0]
             neg_all_texts = docs_all[1:]
-
             neg_sampled_texts = random.sample(neg_all_texts, min(len(neg_all_texts), MAX_NEG)) \
                 if neg_all_texts else []
-
             current_docs_texts = [pos_doc_text] + neg_sampled_texts
             perm = torch.randperm(len(current_docs_texts))
             shuffled_docs_texts = [current_docs_texts[i] for i in perm]
             target_idx = (perm == 0).nonzero(as_tuple=False).item()
-
             q_ids_train, q_len_train  = to_tensor([q_txt])
             d_ids_train, d_lens_train = to_tensor(shuffled_docs_texts)
-
-            if d_ids_train.size(0) == 0:
-                continue
-
+            if d_ids_train.size(0) == 0: continue
             scores_train = mdl(q_ids_train, q_len_train, d_ids_train, d_lens_train) / TAU
-
-            if scores_train.numel() == 0:
-                continue
-
+            if scores_train.numel() == 0: continue
             loss = F.cross_entropy(scores_train.unsqueeze(0), torch.tensor([target_idx], device=DEVICE))
             loss.backward(); tot_loss += loss.item()
-
             with torch.no_grad():
                 rank_of_positive_train = (scores_train.argsort(descending=True) == target_idx).nonzero(as_tuple=True)[0].item() + 1
-                ranks.append(rank_of_positive_train)
+                current_batch_reciprocal_ranks.append(1.0 / rank_of_positive_train)
 
-        if ranks:
+        if current_batch_reciprocal_ranks: # Check if any ranks were recorded (batches processed)
             torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
             opt.step()
             if step % 10 == 0:
-                print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mean-rank {sum(ranks)/len(ranks):.1f}")
+                mrr_train_batch = sum(current_batch_reciprocal_ranks) / len(current_batch_reciprocal_ranks)
+                print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr {mrr_train_batch:.3f}")
         elif step % 10 == 0:
-            print(f"{step:>6} | loss N/A | mean-rank N/A (all query batches skipped or no ranks recorded)")
+            print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr N/A (no ranks recorded this batch acc)")
 
 
         if step % VAL_EVERY == 0:
             mdl.eval()
             with torch.no_grad():
-                vr = []
+                val_ranks = [] # For Acc@N
+                val_reciprocal_ranks = [] # For MRR
                 printed_val_examples = 0
                 num_examples_to_print = 3
 
-                for vq_idx, (vq_text, vdocs_texts) in enumerate(val_data_global): # Use passed VAL_DATA
-                    if not vdocs_texts:
-                        continue
-
+                for vq_idx, (vq_text, vdocs_texts) in enumerate(val_data_global):
+                    if not vdocs_texts: continue
                     q_ids_val, q_len_val  = to_tensor([vq_text])
                     d_ids_val, d_lens_val = to_tensor(vdocs_texts)
+                    if d_ids_val.size(0) == 0: continue
 
-                    if d_ids_val.size(0) == 0:
-                        continue
-
-                    scores_val = mdl(q_ids_val, q_len_val, d_ids_val, d_lens_val) / TAU
-
-                    if scores_val.numel() == 0:
-                        continue
+                    # For inspecting raw scores vs scaled scores
+                    raw_scores_val = mdl(q_ids_val, q_len_val, d_ids_val, d_lens_val)
+                    if raw_scores_val.numel() == 0: continue
+                    scores_val = raw_scores_val / TAU
 
                     true_positive_idx_in_vdocs = 0
-
                     sorted_indices_val = scores_val.argsort(descending=True)
                     rank_of_true_positive = (sorted_indices_val == true_positive_idx_in_vdocs).nonzero(as_tuple=True)[0].item() + 1
-                    vr.append(rank_of_true_positive)
+                    val_ranks.append(rank_of_true_positive)
+                    val_reciprocal_ranks.append(1.0 / rank_of_true_positive)
 
                     if printed_val_examples < num_examples_to_print and val_data_global:
                         print(f"  --- Validation Example {vq_idx+1}/{len(val_data_global)} ---")
                         print(f"    Query: '{vq_text[:150]}{'...' if len(vq_text) > 150 else ''}'")
-
                         positive_doc_text_val = vdocs_texts[true_positive_idx_in_vdocs]
                         print(f"    True Positive (Rank {rank_of_true_positive}): '{positive_doc_text_val[:150]}{'...' if len(positive_doc_text_val) > 150 else ''}'")
-
                         print(f"    Top 5 Ranked Documents by Model:")
                         top_k_val = min(5, len(vdocs_texts))
-
                         for i in range(top_k_val):
                             doc_idx_in_vdocs = sorted_indices_val[i].item()
                             retrieved_doc_text = vdocs_texts[doc_idx_in_vdocs]
-                            retrieved_doc_score = scores_val[doc_idx_in_vdocs].item()
+                            retrieved_raw_score = raw_scores_val[doc_idx_in_vdocs].item() # Raw score
+                            retrieved_scaled_score = scores_val[doc_idx_in_vdocs].item() # Scaled score
                             is_true_positive_marker = " (*True Positive*)" if doc_idx_in_vdocs == true_positive_idx_in_vdocs else ""
-
-                            print(f"      {i+1}. (Score: {retrieved_doc_score:.3f}) '{retrieved_doc_text[:100]}{'...' if len(retrieved_doc_text) > 100 else ''}'{is_true_positive_marker}")
+                            print(f"      {i+1}. (Raw: {retrieved_raw_score:.3f}, Scaled: {retrieved_scaled_score:.3f}) '{retrieved_doc_text[:100]}{'...' if len(retrieved_doc_text) > 100 else ''}'{is_true_positive_marker}")
                         printed_val_examples += 1
                         if printed_val_examples == num_examples_to_print and vq_idx < len(val_data_global) -1 : print("    ---")
 
-            if vr:
-                acc1   = sum(r == 1 for r in vr) / len(vr)
-                acc10  = sum(r <= 10 for r in vr) / len(vr)
-                acc100 = sum(r <= 100 for r in vr) / len(vr)
-                mean_r = sum(vr) / len(vr)
-                print(f"└─ val@1 {acc1:.3f} | val@10 {acc10:.3f} | val@100 {acc100:.3f} | mean_rank {mean_r:.1f}")
+            if val_ranks:
+                acc1   = sum(r == 1 for r in val_ranks) / len(val_ranks)
+                acc10  = sum(r <= 10 for r in val_ranks) / len(val_ranks)
+                acc100 = sum(r <= 100 for r in val_ranks) / len(val_ranks)
+                mrr_val = sum(val_reciprocal_ranks) / len(val_reciprocal_ranks)
+                print(f"└─ val@1 {acc1:.3f} | val@10 {acc10:.3f} | val@100 {acc100:.3f} | val_mrr {mrr_val:.3f}")
             else:
                 print(f"└─ val metrics N/A (no validation data processed or VAL_DATA empty)")
 
@@ -225,14 +202,13 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     random.seed(0)
 
-    # Initialize VAL_DATA after seeding
     VAL_DATA = load_validation()
 
     print("Testing fetch_batch with actual text (first few items):")
     _fetch_batch_gen_orig = _batch_gen
     _batch_gen = None
     try:
-        for _i in range(min(10, BATCH_QUERIES if BATCH_QUERIES > 0 else 3)): # Fetch a few batches to show
+        for _i in range(min(3, BATCH_QUERIES if BATCH_QUERIES > 0 else 3)):
             q_example, d_example_list = fetch_batch()
             print(f"  Batch {_i+1}: Query='{q_example[:70]}...', Docs (first doc, {len(d_example_list)} total)='{d_example_list[0][:70]}...'")
             if d_example_list:
@@ -253,4 +229,4 @@ if __name__ == "__main__":
             print(f"    Expected Positive (vd[0]): '{vd[0][:70]}...' (should match query)")
     print("-" * 20)
 
-    train(val_data_global=VAL_DATA) # Pass VAL_DATA to train function
+    train(val_data_global=VAL_DATA)
