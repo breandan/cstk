@@ -1,174 +1,142 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Tiny char-level reranker.
-Forward =  mean( Emb(q) ) · mean( Emb(d) )      # dot product
-Loss    =  cross-entropy over the score list    # listwise
+Char-level reranker with cross-attention, negative sub-sampling, temperature-scaled list-wise CE.
 """
 
-import os, time, itertools, json, requests, torch, torch.nn as nn, torch.nn.functional as F
-from typing import List, Tuple
+import time, random, itertools
 from pathlib import Path
+from typing import List, Tuple
 
-_batch_gen = None
+import torch, torch.nn as nn, torch.nn.functional as F
 
-# --------------------------- Hyper-parameters --------------------------- #
-DIM          = 128          # embedding size
-N_LAYERS     = 2
-N_HEADS      = 8
-MAX_LEN      = 100         # truncate / pad length (query & docs)
-VOCAB        = 128         # ASCII subset
-LR           = 3e-3
-SAVE_EVERY   = 100         # steps
-BATCH_SIZE   = 8
-DEVICE       = DEVICE = torch.device(
-  "mps"  if torch.backends.mps.is_available() else
-  "cuda" if torch.cuda.is_available()         else "cpu"
+# --------------------------- Hyper-parameters -------------------------- #
+DIM, N_HEADS, N_LAYERS = 128, 8, 2      # model size -- safe <60 ms
+MAX_LEN                = 100            # truncate / pad length
+VOCAB                  = 128            # ASCII
+MAX_NEG                = 127            # 1 pos + 127 neg = 128-way softmax
+TAU                    = 0.1            # temperature
+BATCH_QUERIES          = 8              # optimiser batch
+LR                     = 2e-3           # AdamW
+SAVE_EVERY             = 500            # steps
+VAL_EVERY              = 100            # steps
+
+DEVICE = torch.device(
+    "mps"  if torch.backends.mps.is_available() else
+    "cuda" if torch.cuda.is_available()         else "cpu"
 )
 
-# --------------------------- Utilities ---------------------------------- #
-def fetch_batch(path: str = 'char_bifi_ts.txt'):
-    """
-    Read from a single text file where blank lines separate batches.
-    In each batch the first non-empty line is the query; the rest are docs.
-    When the file ends we rewind so training can run indefinitely.
-    """
+_batch_gen = None
+def fetch_batch(path: str = "char_bifi_ts.txt"):
+    """Yield (query, [docs…]) from a file with blank-line delimited blocks."""
     global _batch_gen
-
     if _batch_gen is None:
         def _reader():
-            with Path(path).open(encoding='utf-8') as f:
-                for is_gap, group in itertools.groupby(f, key=lambda l: l.strip() == ''):
-                    if not is_gap:
-                        lines = [l.rstrip('\n') for l in group]
-                        if lines:
-                            yield lines[0], lines[1:]
+            with Path(path).open(encoding="utf-8") as f:
+                for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
+                    if not gap:
+                        lines = [l.rstrip("\n") for l in grp]
+                        if lines: yield lines[0], lines[1:]
         _batch_gen = _reader()
-
-    try:
-        return next(_batch_gen)
+    try:               return next(_batch_gen)
     except StopIteration:
-        _batch_gen = None
-        return fetch_batch(path)
+        _batch_gen = None; return fetch_batch(path)
 
-def load_validation(path: str = 'char_bifi_vs.txt'):
+def load_validation(path="char_bifi_vs.txt", cap=100):
     data = []
     with Path(path).open(encoding="utf-8") as f:
-        for is_gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
-            if not is_gap:
+        for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
+            if not gap and len(data) < cap:
                 lines = [l.rstrip("\n") for l in grp]
-                if lines:
-                    data.append((lines[0], lines[1:]))       # (query, docs)
+                if lines: data.append((lines[0], lines[1:]))
     return data
-
 VAL_DATA = load_validation()
 
 def encode(txt: str) -> Tuple[List[int], int]:
-    """ASCII-encode and pad; returns ([ids...], valid_len)."""
     ids = [ord(c) % VOCAB for c in txt[:MAX_LEN]]
-    pad = [0] * (MAX_LEN - len(ids))
-    return ids + pad, len(ids)
+    return ids + [0]*(MAX_LEN-len(ids)), len(ids)
 
-def to_tensor(strings: List[str]) -> Tuple[torch.LongTensor, torch.Tensor]:
-    """Vectorise a list of strings ⟶ (ids [N×L], lengths [N])."""
+def to_tensor(strings: List[str]):
     ids, lens = zip(*(encode(s) for s in strings))
     return (torch.tensor(ids,  dtype=torch.long,  device=DEVICE),
             torch.tensor(lens, dtype=torch.float, device=DEVICE))
 
-# --------------------------- Model -------------------------------------- #
-class CharRanker(nn.Module):
+MAX_TOK = 1 + MAX_LEN + 1 + MAX_LEN      # [CLS] q [SEP] d
+class InteractionRanker(nn.Module):
     def __init__(self):
         super().__init__()
-        self.emb = nn.Embedding(VOCAB, DIM)
-        self.pos = nn.Embedding(MAX_LEN, DIM)
-
-        enc_layer = nn.TransformerEncoderLayer(
-            d_model=DIM,
-            nhead=N_HEADS,
-            dim_feedforward=4*DIM,
-            dropout=0.1,
-            activation='gelu',
-            batch_first=True)
-        self.tf = nn.TransformerEncoder(enc_layer, num_layers=N_LAYERS)
-
-        self.proj = nn.Linear(DIM, DIM, bias=False)
-
-    def encode(self, ids, lens):
-        B, L = ids.shape
-        pos = torch.arange(L, device=ids.device).expand(B, L)
-        x = self.emb(ids) + self.pos(pos)
-
-        pad = torch.arange(L, device=ids.device).expand(B, L) >= lens.unsqueeze(1)
-        x = self.tf(x, src_key_padding_mask=pad)
-
-        x = x.masked_fill(pad.unsqueeze(2), 0).sum(1) / lens.unsqueeze(1)
-        return F.normalize(self.proj(x), dim=1)        # [B, DIM]
+        self.emb  = nn.Embedding(VOCAB, DIM)
+        self.pos  = nn.Embedding(MAX_TOK, DIM)
+        enc_layer = nn.TransformerEncoderLayer(DIM, N_HEADS, 4*DIM, activation="gelu", dropout=0.1, batch_first=True)
+        self.tf   = nn.TransformerEncoder(enc_layer, N_LAYERS)
+        self.head = nn.Linear(DIM, 1)
 
     def forward(self, q_ids, q_len, d_ids, d_lens):
-        q = self.encode(q_ids, q_len)                  # [1, D]
-        d = self.encode(d_ids, d_lens)                 # [N, D]
-        return (d @ q.T).squeeze(1)                    # cosine-like scores
+        N, Lq, Ld = d_ids.size(0), q_ids.size(1), d_ids.size(1)
+        q_ids = q_ids.expand(N, -1); q_len = q_len.expand(N)
 
-# --------------------------- Training loop ------------------------------ #
-def train(steps=14_000, out='char_ranker.pt') -> None:
-    mdl = CharRanker().to(DEVICE)
-    opt = torch.optim.SGD(mdl.parameters(), lr=LR, momentum=0.9, weight_decay=1e-4)
+        x = torch.cat([ torch.full((N,1), VOCAB-1, device=DEVICE), q_ids,
+                        torch.full((N,1), VOCAB-2, device=DEVICE), d_ids ], dim=1)
 
-    for step in range(1, steps + 1):
-        opt.zero_grad()
-        total_loss, hard_ranks = 0.0, []
+        pos  = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
+        mask = torch.arange(x.size(1), device=DEVICE) >= (1+q_len+1).unsqueeze(1) + d_lens.unsqueeze(1)
 
-        for _ in range(BATCH_SIZE):
-            q_txt, docs = fetch_batch()
+        h = self.emb(x) + self.pos(pos)
+        h = self.tf(h, src_key_padding_mask=mask)
+        return self.head(h[:,0]).squeeze(1)               # logits [N]
 
-            perm = torch.randperm(len(docs))
+def train(steps=20_000, out="reranker.pt"):
+    mdl = InteractionRanker().to(DEVICE)
+    opt = torch.optim.AdamW(mdl.parameters(), lr=LR, weight_decay=1e-4)
+
+    for step in range(1, steps+1):
+        opt.zero_grad(); tot_loss = 0.0; ranks = []
+
+        for _ in range(BATCH_QUERIES):
+            q_txt, docs_all = fetch_batch()
+
+            pos, neg_all   = docs_all[0], docs_all[1:]
+            neg            = random.sample(neg_all, min(len(neg_all), MAX_NEG))
+            docs           = [pos] + neg                      # pos at 0
+
+            perm = torch.randperm(len(docs))                  # shuffle
             docs = [docs[i] for i in perm]
-            tgt  = (perm == 0).nonzero(as_tuple=False)[0, 0].item()
+            tgt  = (perm == 0).nonzero(as_tuple=False)[0,0].item()
 
             q_ids, q_len  = to_tensor([q_txt])
             d_ids, d_lens = to_tensor(docs)
+            scores        = mdl(q_ids, q_len, d_ids, d_lens) / TAU
 
-            scores = mdl(q_ids, q_len, d_ids, d_lens)
-
-            target = torch.tensor([tgt], device=DEVICE)
-            loss   = F.cross_entropy(scores.unsqueeze(0), target)   # list-wise CE
-            loss.backward()
-            total_loss += loss.item()
+            loss = F.cross_entropy(scores.unsqueeze(0), torch.tensor([tgt], device=DEVICE))
+            loss.backward(); tot_loss += loss.item()
 
             with torch.no_grad():
-                rk = (scores.argsort(descending=True) == tgt).nonzero()[0, 0].item() + 1
-                hard_ranks.append(rk)
+                rk = (scores.argsort(descending=True)==tgt).nonzero()[0,0].item()+1
+                ranks.append(rk)
 
+        torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
         opt.step()
 
-        # ---- metrics --------------------------------------------------- #
         if step % 10 == 0:
-            avg_loss = total_loss / BATCH_SIZE
-            avg_rank = sum(hard_ranks) / len(hard_ranks)
-            print(f"{step:>6} | loss {avg_loss:.3f} | mean-rank {avg_rank:.1f}")
+            print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mean-rank {sum(ranks)/len(ranks):.1f}")
 
-        if step % 100 == 0:
+        if step % VAL_EVERY == 0:
             with torch.no_grad():
-                ranks = []
-                sample_size = 0
+                vr = []
                 for vq, vdocs in VAL_DATA:
                     q_ids, q_len  = to_tensor([vq])
                     d_ids, d_lens = to_tensor(vdocs)
-                    sc  = mdl(q_ids, q_len, d_ids, d_lens)
-                    rnk = (sc.argsort(descending=True) == 0).nonzero(as_tuple=False)[0, 0].item() + 1
-                    ranks.append(rnk)
-                    sample_size += 1
-                    if sample_size >= 100: break
-            acc1   = sum(r == 1 for r in ranks) / len(ranks)
-            acc10  = sum(r <= 10 for r in ranks) / len(ranks)
-            acc100 = sum(r <= 100 for r in ranks) / len(ranks)
-            mean_r = sum(ranks) / len(ranks)
+                    sc = mdl(q_ids,q_len,d_ids,d_lens)/TAU
+                    vr.append((sc.argsort(descending=True)==0).nonzero()[0,0].item()+1)
+            acc1   = sum(r == 1 for r in vr) / len(vr)
+            acc10  = sum(r <= 10 for r in vr) / len(vr)
+            acc100 = sum(r <= 100 for r in vr) / len(vr)
+            mean_r = sum(vr) / len(vr)
             print(f"└─ val@1 {acc1:.3f} | val@10 {acc10:.3f} | val@100 {acc100:.3f} | mean_rank {mean_r:.1f}")
 
-        # ---- checkpoint ------------------------------------------------- #
         if step % SAVE_EVERY == 0:
-            torch.save({'step': step, 'model': mdl.state_dict(), 'opt': opt.state_dict()}, out)
+            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, out)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     torch.manual_seed(0)
     train()
