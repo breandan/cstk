@@ -14,6 +14,8 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
 import kotlin.collections.plusAssign
 import kotlin.math.absoluteValue
+import kotlin.sequences.forEach
+import kotlin.sequences.map
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -22,7 +24,7 @@ cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBa
 2>&1 | tee scripts/confounders.txt (optional)
 */
 fun main() {
-  writeValidationSet()
+  writeTSonCPU()
 
 //  writeCharBIFIToDisk()
 //  startWGPUServer()
@@ -358,6 +360,28 @@ fun writeValidationSet() {
           } catch (_: Exception) {}
         }
     }.toList()
+}
+
+// Training set for reranker.py
+fun writeTSonCPU() {
+  LED_BUFFER = 2
+  P_BIFI_PY150.score(listOf("hello", "world"))
+  iterBIFIContents().chunked(100) {
+    it.parallelStream().map {
+      val str = it.mapToUnquotedPythonTokens().addNewLineIfMissing()
+      if (str in vanillaS2PCFG.language) str else null
+    }.toList().filterNotNull().forEach {
+      try {
+        val query = it
+        val reprs = sendCPU(query)
+        if (reprs.isNotBlank()) {
+          val qenc = query.charify()
+          val renc = reprs.lines().map { it.charify() }.shuffled()
+          println(renc.first() + "\n" + qenc + "\n" + renc.drop(1).joinToString("\n") + "\n")
+        }
+      } catch (_: Exception) {}
+    }
+  }.toList()
 }
 
 // Training set for reranker.py
