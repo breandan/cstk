@@ -24,7 +24,7 @@ cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBa
 2>&1 | tee scripts/confounders.txt (optional)
 */
 fun main() {
-  writeTSonCPU()
+  writeTrainingSetonMulticoreCPU()
 
 //  writeCharBIFIToDisk()
 //  startWGPUServer()
@@ -204,7 +204,7 @@ fun startTrainingService() {
 }
 
 fun sendCPU(query: String): String =
-  initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toList()
+  initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toSet()
   .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
   .sortedBy { it.second }.map { it.first }.take(580).joinToString("\n")
 
@@ -363,16 +363,15 @@ fun writeValidationSet() {
 }
 
 // Training set for reranker.py
-fun writeTSonCPU() {
-  LED_BUFFER = 2
+fun writeTrainingSetonMulticoreCPU() {
+  LED_BUFFER = 3
   P_BIFI_PY150.score(listOf("hello", "world"))
-  iterBIFIContents().chunked(100) {
-    it.parallelStream().map {
+  streamBIFIContents().map {
       val str = it.mapToUnquotedPythonTokens().addNewLineIfMissing()
       if (str in vanillaS2PCFG.language) str else null
-    }.toList().filterNotNull().forEach {
+    }.filter { it != null }.forEach {
       try {
-        val query = it
+        val query = it!!
         val reprs = sendCPU(query)
         if (reprs.isNotBlank()) {
           val qenc = query.charify()
@@ -380,8 +379,7 @@ fun writeTSonCPU() {
           println(renc.first() + "\n" + qenc + "\n" + renc.drop(1).joinToString("\n") + "\n")
         }
       } catch (_: Exception) {}
-    }
-  }.toList()
+  }
 }
 
 // Training set for reranker.py

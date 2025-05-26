@@ -255,7 +255,7 @@ tasks {
   shadowJar {
     manifest.attributes["Main-Class"] =
 //      "edu.mcgill.cstk.experiments.probing.ProbeLLaMAKt"
-      "edu.mcgill.cstk.experiments.repair.PythonBarHillelRepairKt"
+      "edu.mcgill.cstk.experiments.repair.KotlinWGPUHarnessKt"
 //      "edu.mcgill.cstk.experiments.CodeCompletionKt"
 //      "edu.mcgill.cstk.experiments.DocCompletionKt"
     // Use this to generate the training dataset
