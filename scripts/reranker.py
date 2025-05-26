@@ -11,13 +11,13 @@ from typing import List, Tuple
 import torch, torch.nn as nn, torch.nn.functional as F
 
 # --------------------------- Hyper-parameters -------------------------- #
-DIM, N_HEADS, N_LAYERS = 128, 16, 4      # model size -- safe <60 ms
+DIM, N_HEADS, N_LAYERS = 128, 8, 2      # model size -- safe <60 ms
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
 MAX_NEG                = 127            # 1 pos + 127 neg = 128-way softmax
-TAU                    = 0.1            # temperature
+TAU                    = 0.3            # temperature
 BATCH_QUERIES          = 8              # optimiser batch
-LR                     = 1e-4           # AdamW
+LR                     = 5e-4           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
 
