@@ -4,11 +4,10 @@ import ai.hypergraph.kaliningraph.visualization.show
 import org.jetbrains.letsPlot.*
 import org.jetbrains.letsPlot.awt.plot.PlotSvgExport
 import org.jetbrains.letsPlot.commons.geometry.DoubleVector
-import org.jetbrains.letsPlot.themes.theme
 import org.jetbrains.letsPlot.geom.geomPoint
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.label.ggtitle
-import smile.manifold.tsne
+import org.jetbrains.letsPlot.themes.theme
 import java.io.File
 
 fun main() {
@@ -30,8 +29,8 @@ fun Array<DoubleArray>.reduceDim(
   outputDims: Int = 2,
   perplexity: Double = 10.0,
   iterations: Int = 99999
-): Array<out DoubleArray> =
-  tsne(this, d = outputDims, perplexity = perplexity, maxIter = iterations).coordinates()
+): Array<out DoubleArray> = TODO()
+  //tsne(this, d = outputDims, perplexity = perplexity, maxIter = iterations).coordinates()
 
 fun plotTsneEmbeddingsWithLabels(
   embeddings: Array<out DoubleArray>,

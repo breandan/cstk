@@ -60,10 +60,6 @@ dependencies {
   // Source code transformation
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
 
-  val smileVersion = "4.3.0"
-  implementation("com.github.haifengl:smile-kotlin:$smileVersion")
-  implementation("com.github.haifengl:smile-core:$smileVersion")
-
   // https://github.com/LearnLib/learnlib
 //  implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
   // https://github.com/LearnLib/automatalib
