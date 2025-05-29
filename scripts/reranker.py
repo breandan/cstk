@@ -126,10 +126,7 @@ def scores_matrix(mdl, q_ids, q_lens, d_ids, d_lens):
     return flat_scores.view(B, B)                                # (B,B)
 
 def train(steps=20_000, out="num_reranker.pt", val_data_global=None, batch_queries=BATCH_QUERIES):
-    if DEVICE.type == "cuda":
-        mdl = torch.compile(InteractionRanker().to(DEVICE), mode="max-autotune")
-    else:
-        mdl = InteractionRanker().to(DEVICE)
+    mdl = InteractionRanker().to(DEVICE)
 
     opt = torch.optim.AdamW(mdl.parameters(), lr=LR, weight_decay=1e-4)
 
