@@ -8,6 +8,8 @@
     80 | loss 5.752 | mrr 0.038
     90 | loss 5.667 | mrr 0.012
    100 | loss 5.795 | mrr 0.013
+/lustre06/project/6025349/breandan/cstk/scripts/env/lib/python3.11/site-packages/torch/nn/modules/transformer.py:502: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. (Triggered internally at /shared_tmp/build_wheels_tmp.4407/python-3.11/torch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
   --- Validation Example 1/1000 ---
     Query: '|$"$#w!}'
     True Positive (Rank 503): '|"#w!}'
@@ -271,3 +273,1219 @@
       5. (Raw: 1.015, Scaled: 10.150) '|"="W"V"X!}'
     ---
 └─ val@1 0.708 | val@10 0.823 | val@100 0.894 | val_mrr 0.748
+   710 | loss 5.624 | mrr 0.017
+   720 | loss 5.405 | mrr 0.015
+   730 | loss 5.554 | mrr 0.018
+   740 | loss 5.400 | mrr 0.078
+   750 | loss 5.670 | mrr 0.012
+   760 | loss 5.617 | mrr 0.037
+   770 | loss 5.528 | mrr 0.023
+   780 | loss 5.792 | mrr 0.007
+   790 | loss 5.569 | mrr 0.025
+   800 | loss 5.675 | mrr 0.013
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.889, Scaled: 8.885) '|"#w!}' (*True Positive*)
+      2. (Raw: 0.889, Scaled: 8.885) '|$Fw!}'
+      3. (Raw: 0.889, Scaled: 8.885) '|$uw!}'
+      4. (Raw: 0.889, Scaled: 8.885) '|>$w!}'
+      5. (Raw: 0.889, Scaled: 8.885) '|4$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.889, Scaled: 8.885) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 0.889, Scaled: 8.885) '|"#"WwVwX!}'
+      3. (Raw: 0.889, Scaled: 8.885) '|"="#wVwVw!}'
+      4. (Raw: 0.889, Scaled: 8.885) '|"="VwVwV!}'
+      5. (Raw: 0.889, Scaled: 8.885) '|"="VwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.889, Scaled: 8.885) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 0.889, Scaled: 8.885) '|"="="W"X!}'
+      3. (Raw: 0.889, Scaled: 8.885) '|"="W"X!}'
+      4. (Raw: 0.889, Scaled: 8.885) '|"="="W"V"X!}'
+      5. (Raw: 0.889, Scaled: 8.885) '|"="W"V"X!}'
+    ---
+└─ val@1 0.733 | val@10 0.806 | val@100 0.887 | val_mrr 0.759
+   810 | loss 5.785 | mrr 0.013
+   820 | loss 5.646 | mrr 0.007
+   830 | loss 5.667 | mrr 0.012
+   840 | loss 5.513 | mrr 0.030
+   850 | loss 5.566 | mrr 0.017
+   860 | loss 5.605 | mrr 0.026
+   870 | loss 5.373 | mrr 0.022
+   880 | loss 5.675 | mrr 0.029
+   890 | loss 5.509 | mrr 0.012
+   900 | loss 5.568 | mrr 0.017
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 86): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.961, Scaled: 9.611) '|$"W"X#w!}'
+      2. (Raw: 0.961, Scaled: 9.611) '|"="$"#w!}'
+      3. (Raw: 0.961, Scaled: 9.611) '|"#"$"#w!}'
+      4. (Raw: 0.961, Scaled: 9.611) '|"="$v#w!}'
+      5. (Raw: 0.961, Scaled: 9.611) '|"="$>#w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.961, Scaled: 9.611) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 0.961, Scaled: 9.611) '|"#"WwVwVwX!}'
+      3. (Raw: 0.961, Scaled: 9.611) '|"="#wVwVwV!}'
+      4. (Raw: 0.961, Scaled: 9.611) '|"#"WwVwX!}'
+      5. (Raw: 0.961, Scaled: 9.611) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 0.961, Scaled: 9.611) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 0.961, Scaled: 9.611) '|"="="W"X!}'
+      3. (Raw: 0.961, Scaled: 9.611) '|"="="W"V"X!}'
+      4. (Raw: 0.961, Scaled: 9.611) '|"="W"V"X!}'
+      5. (Raw: 0.961, Scaled: 9.611) '|"#"="W"V"X!}'
+    ---
+└─ val@1 0.650 | val@10 0.712 | val@100 0.810 | val_mrr 0.672
+   910 | loss 5.564 | mrr 0.018
+   920 | loss 5.479 | mrr 0.029
+   930 | loss 5.493 | mrr 0.040
+   940 | loss 5.549 | mrr 0.015
+   950 | loss 5.686 | mrr 0.011
+   960 | loss 5.430 | mrr 0.016
+   970 | loss 5.492 | mrr 0.023
+   980 | loss 5.526 | mrr 0.072
+   990 | loss 5.556 | mrr 0.030
+  1000 | loss 5.565 | mrr 0.072
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.056, Scaled: 10.564) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.056, Scaled: 10.564) '|$w!}'
+      3. (Raw: 1.056, Scaled: 10.564) '|$Fw!}'
+      4. (Raw: 1.056, Scaled: 10.564) '|$uw!}'
+      5. (Raw: 1.056, Scaled: 10.564) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.056, Scaled: 10.564) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.056, Scaled: 10.564) '|"#"WwVwVwX!}'
+      3. (Raw: 1.056, Scaled: 10.564) '|"="#wVwVwV!}'
+      4. (Raw: 1.056, Scaled: 10.564) '|"#"WwVwX!}'
+      5. (Raw: 1.056, Scaled: 10.564) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.056, Scaled: 10.564) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.056, Scaled: 10.564) '|"="="W"X!}'
+      3. (Raw: 1.056, Scaled: 10.564) '|"="W"X!}'
+      4. (Raw: 1.056, Scaled: 10.564) '|"="="W"V"X!}'
+      5. (Raw: 1.056, Scaled: 10.564) '|"="W"V"X!}'
+    ---
+└─ val@1 0.977 | val@10 0.992 | val@100 0.997 | val_mrr 0.981
+  1010 | loss 5.643 | mrr 0.014
+  1020 | loss 5.530 | mrr 0.037
+  1030 | loss 5.568 | mrr 0.034
+  1040 | loss 5.575 | mrr 0.016
+  1050 | loss 5.778 | mrr 0.010
+  1060 | loss 5.469 | mrr 0.023
+  1070 | loss 5.715 | mrr 0.026
+  1080 | loss 5.468 | mrr 0.021
+  1090 | loss 5.734 | mrr 0.017
+  1100 | loss 5.491 | mrr 0.027
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.211, Scaled: 12.106) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.211, Scaled: 12.106) '|$Fw!}'
+      3. (Raw: 1.211, Scaled: 12.106) '|$uw!}'
+      4. (Raw: 1.211, Scaled: 12.106) '|>$w!}'
+      5. (Raw: 1.211, Scaled: 12.106) '|4$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.211, Scaled: 12.106) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.211, Scaled: 12.106) '|"#"WwVwVwX!}'
+      3. (Raw: 1.211, Scaled: 12.106) '|"="#wVwVwV!}'
+      4. (Raw: 1.211, Scaled: 12.106) '|"#"WwVwX!}'
+      5. (Raw: 1.211, Scaled: 12.106) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.211, Scaled: 12.106) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.211, Scaled: 12.106) '|"="W"X!}'
+      3. (Raw: 1.211, Scaled: 12.106) '|!"="="W"V"X!}'
+      4. (Raw: 1.211, Scaled: 12.106) '|"="="W"V"X!!}'
+      5. (Raw: 1.211, Scaled: 12.106) '|"="="W"VX!}'
+    ---
+└─ val@1 0.663 | val@10 0.711 | val@100 0.785 | val_mrr 0.679
+  1110 | loss 5.558 | mrr 0.033
+  1120 | loss 5.491 | mrr 0.017
+  1130 | loss 5.610 | mrr 0.012
+  1140 | loss 5.629 | mrr 0.014
+  1150 | loss 5.726 | mrr 0.009
+  1160 | loss 5.643 | mrr 0.030
+  1170 | loss 5.517 | mrr 0.024
+  1180 | loss 5.638 | mrr 0.011
+  1190 | loss 5.556 | mrr 0.072
+  1200 | loss 5.565 | mrr 0.019
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.059, Scaled: 10.592) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.059, Scaled: 10.592) '|$w!}'
+      3. (Raw: 1.059, Scaled: 10.592) '|$Fw!}'
+      4. (Raw: 1.059, Scaled: 10.592) '|$uw!}'
+      5. (Raw: 1.059, Scaled: 10.592) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.059, Scaled: 10.592) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.059, Scaled: 10.592) '|"#"WwVwVwX!}'
+      3. (Raw: 1.059, Scaled: 10.592) '|"="#wVwVwV!}'
+      4. (Raw: 1.059, Scaled: 10.592) '|"#"WwVwX!}'
+      5. (Raw: 1.059, Scaled: 10.592) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.059, Scaled: 10.592) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.059, Scaled: 10.592) '|"="="W"X!}'
+      3. (Raw: 1.059, Scaled: 10.592) '|"="W"X!}'
+      4. (Raw: 1.059, Scaled: 10.592) '|"="="W"V"X!}'
+      5. (Raw: 1.059, Scaled: 10.592) '|"="W"V"X!}'
+    ---
+└─ val@1 0.811 | val@10 0.834 | val@100 0.891 | val_mrr 0.820
+  1210 | loss 5.562 | mrr 0.010
+  1220 | loss 5.556 | mrr 0.025
+  1230 | loss 5.598 | mrr 0.015
+  1240 | loss 5.417 | mrr 0.034
+  1250 | loss 5.470 | mrr 0.035
+  1260 | loss 5.614 | mrr 0.009
+  1270 | loss 5.447 | mrr 0.041
+  1280 | loss 5.663 | mrr 0.020
+  1290 | loss 5.618 | mrr 0.015
+  1300 | loss 5.491 | mrr 0.080
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.858) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.858) '|$w!}'
+      3. (Raw: 1.286, Scaled: 12.858) '|$Fw!}'
+      4. (Raw: 1.286, Scaled: 12.858) '|$uw!}'
+      5. (Raw: 1.286, Scaled: 12.858) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.858) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.858) '|"#"WwVwVwX!}'
+      3. (Raw: 1.286, Scaled: 12.858) '|"="#wVwVwV!}'
+      4. (Raw: 1.286, Scaled: 12.858) '|"#"WwVwX!}'
+      5. (Raw: 1.286, Scaled: 12.858) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.858) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.858) '|"="="W"X!}'
+      3. (Raw: 1.286, Scaled: 12.858) '|"="W"X!}'
+      4. (Raw: 1.286, Scaled: 12.858) '|"="="W"V"X!}'
+      5. (Raw: 1.286, Scaled: 12.858) '|"="W"V"X!}'
+    ---
+└─ val@1 0.903 | val@10 0.937 | val@100 0.973 | val_mrr 0.915
+  1310 | loss 5.582 | mrr 0.012
+  1320 | loss 5.555 | mrr 0.013
+  1330 | loss 5.475 | mrr 0.011
+  1340 | loss 5.572 | mrr 0.015
+  1350 | loss 5.548 | mrr 0.015
+  1360 | loss 5.599 | mrr 0.017
+  1370 | loss 5.579 | mrr 0.014
+  1380 | loss 5.387 | mrr 0.015
+  1390 | loss 5.347 | mrr 0.033
+  1400 | loss 5.690 | mrr 0.021
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.856) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.856) '|$w!}'
+      3. (Raw: 1.286, Scaled: 12.856) '|$Fw!}'
+      4. (Raw: 1.286, Scaled: 12.856) '|$uw!}'
+      5. (Raw: 1.286, Scaled: 12.856) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.856) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.856) '|"#"WwVwVwX!}'
+      3. (Raw: 1.286, Scaled: 12.856) '|"="#wVwVwV!}'
+      4. (Raw: 1.286, Scaled: 12.856) '|"#"WwVwX!}'
+      5. (Raw: 1.286, Scaled: 12.856) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.286, Scaled: 12.856) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.286, Scaled: 12.856) '|"="="W"X!}'
+      3. (Raw: 1.286, Scaled: 12.856) '|"="W"X!}'
+      4. (Raw: 1.286, Scaled: 12.856) '|"="="W"V"X!}'
+      5. (Raw: 1.286, Scaled: 12.856) '|"="W"V"X!}'
+    ---
+└─ val@1 0.755 | val@10 0.804 | val@100 0.914 | val_mrr 0.771
+  1410 | loss 5.484 | mrr 0.027
+  1420 | loss 5.266 | mrr 0.034
+  1430 | loss 5.429 | mrr 0.026
+  1440 | loss 5.663 | mrr 0.009
+  1450 | loss 5.537 | mrr 0.012
+  1460 | loss 5.556 | mrr 0.027
+  1470 | loss 5.490 | mrr 0.021
+  1480 | loss 5.506 | mrr 0.015
+  1490 | loss 5.405 | mrr 0.020
+  1500 | loss 5.538 | mrr 0.021
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 489): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.385, Scaled: 13.852) '|$"W"X!}'
+      2. (Raw: 1.385, Scaled: 13.852) '|"="#w!}'
+      3. (Raw: 1.385, Scaled: 13.852) '|"#"#w!}'
+      4. (Raw: 1.385, Scaled: 13.852) '|"="$w!}'
+      5. (Raw: 1.385, Scaled: 13.852) '|$"!<"!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.385, Scaled: 13.852) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.385, Scaled: 13.852) '|"="#wVwVw!}'
+      3. (Raw: 1.385, Scaled: 13.852) '|"#"VwVwVw!}'
+      4. (Raw: 1.385, Scaled: 13.852) '|"#"V"VYwZ!}'
+      5. (Raw: 1.385, Scaled: 13.852) '|"#wVwV"V"!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.385, Scaled: 13.852) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.385, Scaled: 13.852) '|"="="W"X!}'
+      3. (Raw: 1.385, Scaled: 13.852) '|"="="W"V"X!}'
+      4. (Raw: 1.385, Scaled: 13.852) '|"="W"V"X!}'
+      5. (Raw: 1.385, Scaled: 13.852) '|"#"="W"V"X!}'
+    ---
+└─ val@1 0.455 | val@10 0.548 | val@100 0.723 | val_mrr 0.488
+  1510 | loss 5.589 | mrr 0.016
+  1520 | loss 5.618 | mrr 0.011
+  1530 | loss 5.446 | mrr 0.016
+  1540 | loss 5.392 | mrr 0.028
+  1550 | loss 5.498 | mrr 0.017
+  1560 | loss 5.568 | mrr 0.020
+  1570 | loss 5.621 | mrr 0.011
+  1580 | loss 5.515 | mrr 0.073
+  1590 | loss 5.459 | mrr 0.020
+  1600 | loss 5.562 | mrr 0.025
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.514, Scaled: 15.137) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.514, Scaled: 15.137) '|$w!}'
+      3. (Raw: 1.514, Scaled: 15.137) '|$Fw!}'
+      4. (Raw: 1.514, Scaled: 15.137) '|$uw!}'
+      5. (Raw: 1.514, Scaled: 15.137) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.514, Scaled: 15.137) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.514, Scaled: 15.137) '|"#"WwVwVwX!}'
+      3. (Raw: 1.514, Scaled: 15.137) '|"="#wVwVwV!}'
+      4. (Raw: 1.514, Scaled: 15.137) '|"#"WwVwX!}'
+      5. (Raw: 1.514, Scaled: 15.137) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.514, Scaled: 15.137) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.514, Scaled: 15.137) '|"="="W"X!}'
+      3. (Raw: 1.514, Scaled: 15.137) '|"="W"X!}'
+      4. (Raw: 1.514, Scaled: 15.137) '|"="="W"V"X!}'
+      5. (Raw: 1.514, Scaled: 15.137) '|"="W"V"X!}'
+    ---
+└─ val@1 0.793 | val@10 0.846 | val@100 0.918 | val_mrr 0.811
+  1610 | loss 5.494 | mrr 0.032
+  1620 | loss 5.386 | mrr 0.025
+^[  1630 | loss 5.515 | mrr 0.020
+  1640 | loss 5.501 | mrr 0.029
+  1650 | loss 5.300 | mrr 0.024
+  1660 | loss 5.535 | mrr 0.071
+  1670 | loss 5.644 | mrr 0.010
+  1680 | loss 5.539 | mrr 0.014
+  1690 | loss 5.420 | mrr 0.039
+  1700 | loss 5.551 | mrr 0.022
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 19): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.636, Scaled: 16.359) '|$w!}'
+      2. (Raw: 1.636, Scaled: 16.359) '|$"!}'
+      3. (Raw: 1.636, Scaled: 16.359) '|$"$"V"#w!}'
+      4. (Raw: 1.636, Scaled: 16.359) '|$"$w!"#w!}'
+      5. (Raw: 1.636, Scaled: 16.359) '|$"$wV"#w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 83): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.636, Scaled: 16.359) '|"#"WwVwX!}'
+      2. (Raw: 1.636, Scaled: 16.359) '|"="VwVwV!}'
+      3. (Raw: 1.636, Scaled: 16.359) '|"="VwVw!}'
+      4. (Raw: 1.636, Scaled: 16.359) '|"#wV"V"V!}'
+      5. (Raw: 1.636, Scaled: 16.359) '|"W"VwVwX!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.636, Scaled: 16.359) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.636, Scaled: 16.359) '|"="="W"X!}'
+      3. (Raw: 1.636, Scaled: 16.359) '|"="W"X!}'
+      4. (Raw: 1.636, Scaled: 16.359) '|"="="W"V"X!}'
+      5. (Raw: 1.636, Scaled: 16.359) '|"="W"V"X!}'
+    ---
+└─ val@1 0.617 | val@10 0.711 | val@100 0.871 | val_mrr 0.651
+  1710 | loss 5.573 | mrr 0.025
+  1720 | loss 5.494 | mrr 0.022
+  1730 | loss 5.384 | mrr 0.033
+  1740 | loss 5.437 | mrr 0.029
+  1750 | loss 5.628 | mrr 0.012
+  1760 | loss 5.657 | mrr 0.010
+  1770 | loss 5.462 | mrr 0.031
+  1780 | loss 5.594 | mrr 0.010
+  1790 | loss 5.476 | mrr 0.026
+  1800 | loss 5.646 | mrr 0.025
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.852, Scaled: 18.517) '|"#w!}' (*True Positive*)
+      2. (Raw: 1.852, Scaled: 18.517) '|$w!}'
+      3. (Raw: 1.852, Scaled: 18.517) '|$Fw!}'
+      4. (Raw: 1.852, Scaled: 18.517) '|$uw!}'
+      5. (Raw: 1.852, Scaled: 18.517) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.852, Scaled: 18.517) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 1.852, Scaled: 18.517) '|"#"WwVwVwX!}'
+      3. (Raw: 1.852, Scaled: 18.517) '|"="#wVwVwV!}'
+      4. (Raw: 1.852, Scaled: 18.517) '|"#"WwVwX!}'
+      5. (Raw: 1.852, Scaled: 18.517) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 1.852, Scaled: 18.517) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 1.852, Scaled: 18.517) '|"="="W"X!}'
+      3. (Raw: 1.852, Scaled: 18.517) '|"="W"X!}'
+      4. (Raw: 1.852, Scaled: 18.517) '|"="="W"V"X!}'
+      5. (Raw: 1.852, Scaled: 18.517) '|"="W"V"X!}'
+    ---
+└─ val@1 0.992 | val@10 0.993 | val@100 0.996 | val_mrr 0.992
+  1810 | loss 5.392 | mrr 0.017
+  1820 | loss 5.527 | mrr 0.013
+  1830 | loss 5.554 | mrr 0.012
+  1840 | loss 5.494 | mrr 0.023
+  1850 | loss 5.501 | mrr 0.018
+  1860 | loss 5.543 | mrr 0.040
+  1870 | loss 5.408 | mrr 0.019
+  1880 | loss 5.511 | mrr 0.018
+  1890 | loss 5.470 | mrr 0.035
+  1900 | loss 5.429 | mrr 0.034
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.065, Scaled: 20.651) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.065, Scaled: 20.651) '|$w!}'
+      3. (Raw: 2.065, Scaled: 20.651) '|$Fw!}'
+      4. (Raw: 2.065, Scaled: 20.651) '|$uw!}'
+      5. (Raw: 2.065, Scaled: 20.651) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.065, Scaled: 20.651) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.065, Scaled: 20.651) '|"#"WwVwVwX!}'
+      3. (Raw: 2.065, Scaled: 20.651) '|"="#wVwVwV!}'
+      4. (Raw: 2.065, Scaled: 20.651) '|"#"WwVwX!}'
+      5. (Raw: 2.065, Scaled: 20.651) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.065, Scaled: 20.651) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 2.065, Scaled: 20.651) '|"="="W"X!}'
+      3. (Raw: 2.065, Scaled: 20.651) '|"="W"X!}'
+      4. (Raw: 2.065, Scaled: 20.651) '|"="="W"V"X!}'
+      5. (Raw: 2.065, Scaled: 20.651) '|"="W"V"X!}'
+    ---
+└─ val@1 0.996 | val@10 0.996 | val@100 0.996 | val_mrr 0.996
+  1910 | loss 5.514 | mrr 0.045
+  1920 | loss 5.562 | mrr 0.012
+  1930 | loss 5.231 | mrr 0.057
+  1940 | loss 5.549 | mrr 0.014
+  1950 | loss 5.546 | mrr 0.013
+  1960 | loss 5.539 | mrr 0.031
+  1970 | loss 5.547 | mrr 0.015
+  1980 | loss 5.354 | mrr 0.037
+  1990 | loss 5.555 | mrr 0.023
+  2000 | loss 5.552 | mrr 0.014
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.109, Scaled: 21.093) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.109, Scaled: 21.093) '|$w!}'
+      3. (Raw: 2.109, Scaled: 21.093) '|$Fw!}'
+      4. (Raw: 2.109, Scaled: 21.093) '|$uw!}'
+      5. (Raw: 2.109, Scaled: 21.093) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.109, Scaled: 21.093) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.109, Scaled: 21.093) '|"#"WwVwVwX!}'
+      3. (Raw: 2.109, Scaled: 21.093) '|"="#wVwVwV!}'
+      4. (Raw: 2.109, Scaled: 21.093) '|"#"WwVwX!}'
+      5. (Raw: 2.109, Scaled: 21.093) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.109, Scaled: 21.093) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 2.109, Scaled: 21.093) '|"="="W"X!}'
+      3. (Raw: 2.109, Scaled: 21.093) '|"="W"X!}'
+      4. (Raw: 2.109, Scaled: 21.093) '|"="="W"V"X!}'
+      5. (Raw: 2.109, Scaled: 21.093) '|"="W"V"X!}'
+    ---
+└─ val@1 1.000 | val@10 1.000 | val@100 1.000 | val_mrr 1.000
+  2010 | loss 5.686 | mrr 0.008
+  2020 | loss 5.490 | mrr 0.028
+  2030 | loss 5.548 | mrr 0.030
+  2040 | loss 5.669 | mrr 0.009
+  2050 | loss 5.677 | mrr 0.010
+  2060 | loss 5.538 | mrr 0.019
+  2070 | loss 5.570 | mrr 0.013
+  2080 | loss 5.355 | mrr 0.034
+  2090 | loss 5.664 | mrr 0.011
+  2100 | loss 5.539 | mrr 0.009
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.297, Scaled: 22.969) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.297, Scaled: 22.969) '|$w!}'
+      3. (Raw: 2.297, Scaled: 22.969) '|$Fw!}'
+      4. (Raw: 2.297, Scaled: 22.969) '|$uw!}'
+      5. (Raw: 2.297, Scaled: 22.969) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.297, Scaled: 22.969) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.297, Scaled: 22.969) '|"#"WwVwVwX!}'
+      3. (Raw: 2.297, Scaled: 22.969) '|"="#wVwVwV!}'
+      4. (Raw: 2.297, Scaled: 22.969) '|"#"WwVwX!}'
+      5. (Raw: 2.297, Scaled: 22.969) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.297, Scaled: 22.969) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 2.297, Scaled: 22.969) '|"="="W"X!}'
+      3. (Raw: 2.297, Scaled: 22.969) '|"="W"X!}'
+      4. (Raw: 2.297, Scaled: 22.969) '|"="="W"V"X!}'
+      5. (Raw: 2.297, Scaled: 22.969) '|"="W"V"X!}'
+    ---
+└─ val@1 0.677 | val@10 0.716 | val@100 0.821 | val_mrr 0.692
+  2110 | loss 5.551 | mrr 0.027
+  2120 | loss 5.511 | mrr 0.018
+  2130 | loss 5.661 | mrr 0.013
+  2140 | loss 5.630 | mrr 0.013
+  2150 | loss 5.722 | mrr 0.013
+  2160 | loss 5.477 | mrr 0.025
+  2170 | loss 5.539 | mrr 0.018
+  2180 | loss 5.530 | mrr 0.025
+  2190 | loss 5.435 | mrr 0.025
+  2200 | loss 5.489 | mrr 0.019
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.394, Scaled: 23.939) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.394, Scaled: 23.939) '|$w!}'
+      3. (Raw: 2.394, Scaled: 23.939) '|$Fw!}'
+      4. (Raw: 2.394, Scaled: 23.939) '|$uw!}'
+      5. (Raw: 2.394, Scaled: 23.939) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.394, Scaled: 23.939) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.394, Scaled: 23.939) '|"#"WwVwVwX!}'
+      3. (Raw: 2.394, Scaled: 23.939) '|"="#wVwVwV!}'
+      4. (Raw: 2.394, Scaled: 23.939) '|"#"WwVwX!}'
+      5. (Raw: 2.394, Scaled: 23.939) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.394, Scaled: 23.939) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 2.394, Scaled: 23.939) '|"="="W"X!}'
+      3. (Raw: 2.394, Scaled: 23.939) '|"="W"X!}'
+      4. (Raw: 2.394, Scaled: 23.939) '|"="="W"V"X!}'
+      5. (Raw: 2.394, Scaled: 23.939) '|"="W"V"X!}'
+    ---
+└─ val@1 0.988 | val@10 0.994 | val@100 0.999 | val_mrr 0.991
+  2210 | loss 5.563 | mrr 0.017
+  2220 | loss 5.633 | mrr 0.013
+  2230 | loss 5.765 | mrr 0.007
+  2240 | loss 5.514 | mrr 0.017
+  2250 | loss 5.487 | mrr 0.038
+  2260 | loss 5.471 | mrr 0.034
+  2270 | loss 5.494 | mrr 0.025
+  2280 | loss 5.589 | mrr 0.021
+  2290 | loss 5.348 | mrr 0.024
+  2300 | loss 5.626 | mrr 0.011
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.774, Scaled: 27.741) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.774, Scaled: 27.741) '|$w!}'
+      3. (Raw: 2.774, Scaled: 27.741) '|$Fw!}'
+      4. (Raw: 2.774, Scaled: 27.741) '|$uw!}'
+      5. (Raw: 2.774, Scaled: 27.741) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.774, Scaled: 27.741) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.774, Scaled: 27.741) '|"#"WwVwVwX!}'
+      3. (Raw: 2.774, Scaled: 27.741) '|"="#wVwVwV!}'
+      4. (Raw: 2.774, Scaled: 27.741) '|"#"WwVwX!}'
+      5. (Raw: 2.774, Scaled: 27.741) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.774, Scaled: 27.741) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 2.774, Scaled: 27.741) '|"="="W"X!}'
+      3. (Raw: 2.774, Scaled: 27.741) '|"="W"X!}'
+      4. (Raw: 2.774, Scaled: 27.741) '|"="="W"V"X!}'
+      5. (Raw: 2.774, Scaled: 27.741) '|"="W"V"X!}'
+    ---
+└─ val@1 0.834 | val@10 0.886 | val@100 0.930 | val_mrr 0.850
+  2310 | loss 5.466 | mrr 0.030
+  2320 | loss 5.538 | mrr 0.018
+  2330 | loss 5.607 | mrr 0.014
+  2340 | loss 5.438 | mrr 0.014
+  2350 | loss 5.411 | mrr 0.035
+  2360 | loss 5.559 | mrr 0.075
+  2370 | loss 5.670 | mrr 0.009
+  2380 | loss 5.632 | mrr 0.040
+  2390 | loss 5.523 | mrr 0.035
+  2400 | loss 5.572 | mrr 0.025
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.824, Scaled: 28.236) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.824, Scaled: 28.236) '|$w!}'
+      3. (Raw: 2.824, Scaled: 28.236) '|$Fw!}'
+      4. (Raw: 2.824, Scaled: 28.236) '|$uw!}'
+      5. (Raw: 2.824, Scaled: 28.236) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.824, Scaled: 28.236) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 2.824, Scaled: 28.236) '|"#"WwVwVwX!}'
+      3. (Raw: 2.824, Scaled: 28.236) '|"="#wVwVwV!}'
+      4. (Raw: 2.824, Scaled: 28.236) '|"="#wVwVw!}'
+      5. (Raw: 2.824, Scaled: 28.236) '|"="#wVwVw!!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 2): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.824, Scaled: 28.236) '|"="W"VX!}'
+      2. (Raw: 2.824, Scaled: 28.236) '|"Ww="W"V"XX!}' (*True Positive*)
+      3. (Raw: 2.824, Scaled: 28.236) '|"="="W"X!}'
+      4. (Raw: 2.824, Scaled: 28.236) '|"="W"X!}'
+      5. (Raw: 2.824, Scaled: 28.236) '|"="="W"V"X!}'
+    ---
+└─ val@1 0.906 | val@10 0.929 | val@100 0.957 | val_mrr 0.913
+  2410 | loss 5.564 | mrr 0.045
+  2420 | loss 5.334 | mrr 0.087
+  2430 | loss 5.625 | mrr 0.010
+  2440 | loss 5.478 | mrr 0.040
+  2450 | loss 5.467 | mrr 0.017
+  2460 | loss 5.403 | mrr 0.015
+  2470 | loss 5.533 | mrr 0.016
+  2480 | loss 5.521 | mrr 0.026
+  2490 | loss 5.482 | mrr 0.028
+  2500 | loss 5.496 | mrr 0.037
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.989, Scaled: 29.892) '|"#w!}' (*True Positive*)
+      2. (Raw: 2.989, Scaled: 29.892) '|$w!}'
+      3. (Raw: 2.989, Scaled: 29.892) '|$Fw!}'
+      4. (Raw: 2.989, Scaled: 29.892) '|$uw!}'
+      5. (Raw: 2.989, Scaled: 29.892) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 308): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.989, Scaled: 29.892) '|"#"WwVwVwX!}'
+      2. (Raw: 2.989, Scaled: 29.892) '|"="#wVwVwV!}'
+      3. (Raw: 2.989, Scaled: 29.892) '|"="#wVwVw!!}'
+      4. (Raw: 2.989, Scaled: 29.892) '|"="#wVwVwU!}'
+      5. (Raw: 2.989, Scaled: 29.892) '|"="#YwVwVwZ!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 3): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 2.989, Scaled: 29.892) '|"="W"X!}'
+      2. (Raw: 2.989, Scaled: 29.892) '|"="W"VX!}'
+      3. (Raw: 2.989, Scaled: 29.892) '|"Ww="W"V"XX!}' (*True Positive*)
+      4. (Raw: 2.989, Scaled: 29.892) '|"="="W"X!}'
+      5. (Raw: 2.989, Scaled: 29.892) '|"="="W"V"X!}'
+    ---
+└─ val@1 0.827 | val@10 0.866 | val@100 0.927 | val_mrr 0.842
+  2510 | loss 5.538 | mrr 0.035
+  2520 | loss 5.422 | mrr 0.068
+  2530 | loss 5.518 | mrr 0.011
+  2540 | loss 5.609 | mrr 0.025
+  2550 | loss 5.432 | mrr 0.053
+  2560 | loss 5.526 | mrr 0.042
+  2570 | loss 5.454 | mrr 0.012
+  2580 | loss 5.578 | mrr 0.014
+  2590 | loss 5.646 | mrr 0.014
+  2600 | loss 5.597 | mrr 0.016
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.021, Scaled: 30.213) '|"#w!}' (*True Positive*)
+      2. (Raw: 3.021, Scaled: 30.213) '|$w!}'
+      3. (Raw: 3.021, Scaled: 30.213) '|$Fw!}'
+      4. (Raw: 3.021, Scaled: 30.213) '|$uw!}'
+      5. (Raw: 3.021, Scaled: 30.213) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.021, Scaled: 30.213) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 3.021, Scaled: 30.213) '|"#"WwVwVwX!}'
+      3. (Raw: 3.021, Scaled: 30.213) '|"="#wVwVwV!}'
+      4. (Raw: 3.021, Scaled: 30.213) '|"#"WwVwX!}'
+      5. (Raw: 3.021, Scaled: 30.213) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.021, Scaled: 30.213) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 3.021, Scaled: 30.213) '|"="="W"X!}'
+      3. (Raw: 3.021, Scaled: 30.213) '|"="W"X!}'
+      4. (Raw: 3.021, Scaled: 30.213) '|"="="W"V"X!}'
+      5. (Raw: 3.021, Scaled: 30.213) '|"="W"V"X!}'
+    ---
+└─ val@1 0.996 | val@10 0.997 | val@100 0.997 | val_mrr 0.996
+  2610 | loss 5.583 | mrr 0.017
+  2620 | loss 5.552 | mrr 0.030
+  2630 | loss 5.409 | mrr 0.030
+  2640 | loss 5.536 | mrr 0.026
+  2650 | loss 5.537 | mrr 0.009
+  2660 | loss 5.570 | mrr 0.016
+  2670 | loss 5.606 | mrr 0.013
+  2680 | loss 5.428 | mrr 0.025
+  2690 | loss 5.223 | mrr 0.024
+  2700 | loss 5.497 | mrr 0.026
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 199): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.122, Scaled: 31.225) '|!"="#w!}'
+      2. (Raw: 3.122, Scaled: 31.225) '|<"!"#w!}'
+      3. (Raw: 3.122, Scaled: 31.225) '|"W"X#w!}'
+      4. (Raw: 3.122, Scaled: 31.225) '|"="V#w!}'
+      5. (Raw: 3.122, Scaled: 31.225) '|$"!"#"!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 3): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.122, Scaled: 31.225) '|wVwVwV!}'
+      2. (Raw: 3.122, Scaled: 31.225) '|"#"VwV!}'
+      3. (Raw: 3.122, Scaled: 31.225) '|"#YwVwVwZ!}' (*True Positive*)
+      4. (Raw: 3.122, Scaled: 31.225) '|"#"WwVwVwX!}'
+      5. (Raw: 3.122, Scaled: 31.225) '|"="#wVwVwV!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 441): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.122, Scaled: 31.225) '|"="="W"V"X!}'
+      2. (Raw: 3.122, Scaled: 31.225) '|"#"="W"V"X!}'
+      3. (Raw: 3.122, Scaled: 31.225) '|"="W"V"V"X!}'
+      4. (Raw: 3.122, Scaled: 31.225) '|"="="W"="X!}'
+      5. (Raw: 3.122, Scaled: 31.225) '|"#"="W"="X!}'
+    ---
+└─ val@1 0.562 | val@10 0.669 | val@100 0.815 | val_mrr 0.599
+  2710 | loss 5.477 | mrr 0.085
+  2720 | loss 5.468 | mrr 0.031
+  2730 | loss 5.556 | mrr 0.014
+  2740 | loss 5.522 | mrr 0.014
+  2750 | loss 5.506 | mrr 0.102
+  2760 | loss 5.524 | mrr 0.021
+  2770 | loss 5.505 | mrr 0.013
+  2780 | loss 5.470 | mrr 0.034
+  2790 | loss 5.468 | mrr 0.022
+  2800 | loss 5.256 | mrr 0.051
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.608, Scaled: 36.080) '|"#w!}' (*True Positive*)
+      2. (Raw: 3.608, Scaled: 36.080) '|$w!}'
+      3. (Raw: 3.608, Scaled: 36.080) '|$Fw!}'
+      4. (Raw: 3.608, Scaled: 36.080) '|$uw!}'
+      5. (Raw: 3.608, Scaled: 36.080) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.608, Scaled: 36.080) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 3.608, Scaled: 36.080) '|"#"WwVwVwX!}'
+      3. (Raw: 3.608, Scaled: 36.080) '|"="#wVwVwV!}'
+      4. (Raw: 3.608, Scaled: 36.080) '|"#"WwVwX!}'
+      5. (Raw: 3.608, Scaled: 36.080) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.608, Scaled: 36.080) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 3.608, Scaled: 36.080) '|"="="W"V"X!}'
+      3. (Raw: 3.608, Scaled: 36.080) '|"#"="W"V"X!}'
+      4. (Raw: 3.608, Scaled: 36.080) '|!"="="W"V"X!}'
+      5. (Raw: 3.608, Scaled: 36.080) '|"="="W"V"X!!}'
+    ---
+└─ val@1 0.562 | val@10 0.678 | val@100 0.821 | val_mrr 0.602
+  2810 | loss 5.519 | mrr 0.015
+  2820 | loss 5.579 | mrr 0.019
+  2830 | loss 5.590 | mrr 0.011
+  2840 | loss 5.321 | mrr 0.034
+  2850 | loss 5.365 | mrr 0.086
+  2860 | loss 5.535 | mrr 0.011
+  2870 | loss 5.315 | mrr 0.028
+  2880 | loss 5.538 | mrr 0.016
+  2890 | loss 5.492 | mrr 0.074
+  2900 | loss 5.584 | mrr 0.071
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.836, Scaled: 38.360) '|"#w!}' (*True Positive*)
+      2. (Raw: 3.836, Scaled: 38.360) '|$w!}'
+      3. (Raw: 3.836, Scaled: 38.360) '|$Fw!}'
+      4. (Raw: 3.836, Scaled: 38.360) '|$uw!}'
+      5. (Raw: 3.836, Scaled: 38.360) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.836, Scaled: 38.360) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 3.836, Scaled: 38.360) '|"#"WwVwVwX!}'
+      3. (Raw: 3.836, Scaled: 38.360) '|"="#wVwVwV!}'
+      4. (Raw: 3.836, Scaled: 38.360) '|"#"WwVwX!}'
+      5. (Raw: 3.836, Scaled: 38.360) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.836, Scaled: 38.360) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 3.836, Scaled: 38.360) '|"="="W"X!}'
+      3. (Raw: 3.836, Scaled: 38.360) '|"="W"X!}'
+      4. (Raw: 3.836, Scaled: 38.360) '|"="="W"V"X!}'
+      5. (Raw: 3.836, Scaled: 38.360) '|"="W"V"X!}'
+    ---
+└─ val@1 0.660 | val@10 0.754 | val@100 0.883 | val_mrr 0.692
+  2910 | loss 5.614 | mrr 0.009
+  2920 | loss 5.555 | mrr 0.015
+  2930 | loss 5.577 | mrr 0.016
+  2940 | loss 5.539 | mrr 0.010
+  2950 | loss 5.529 | mrr 0.049
+  2960 | loss 5.533 | mrr 0.031
+  2970 | loss 5.536 | mrr 0.013
+  2980 | loss 5.584 | mrr 0.017
+  2990 | loss 5.445 | mrr 0.066
+  3000 | loss 5.561 | mrr 0.029
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.778, Scaled: 37.785) '|"#w!}' (*True Positive*)
+      2. (Raw: 3.778, Scaled: 37.785) '|$w!}'
+      3. (Raw: 3.778, Scaled: 37.785) '|$Fw!}'
+      4. (Raw: 3.778, Scaled: 37.785) '|$uw!}'
+      5. (Raw: 3.778, Scaled: 37.785) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.778, Scaled: 37.785) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 3.778, Scaled: 37.785) '|"#"WwVwVwX!}'
+      3. (Raw: 3.778, Scaled: 37.785) '|"="#wVwVwV!}'
+      4. (Raw: 3.778, Scaled: 37.785) '|"#"WwVwX!}'
+      5. (Raw: 3.778, Scaled: 37.785) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 3): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 3.778, Scaled: 37.785) '|"="W"X!}'
+      2. (Raw: 3.778, Scaled: 37.785) '|"="W"VX!}'
+      3. (Raw: 3.778, Scaled: 37.785) '|"Ww="W"V"XX!}' (*True Positive*)
+      4. (Raw: 3.778, Scaled: 37.785) '|"="="W"X!}'
+      5. (Raw: 3.778, Scaled: 37.785) '|"="="W"V"X!}'
+    ---
+└─ val@1 0.626 | val@10 0.720 | val@100 0.855 | val_mrr 0.658
+  3010 | loss 5.519 | mrr 0.014
+  3020 | loss 5.468 | mrr 0.015
+  3030 | loss 5.569 | mrr 0.017
+  3040 | loss 5.525 | mrr 0.041
+  3050 | loss 5.552 | mrr 0.011
+  3060 | loss 5.344 | mrr 0.086
+  3070 | loss 5.491 | mrr 0.023
+  3080 | loss 5.510 | mrr 0.023
+  3090 | loss 5.563 | mrr 0.028
+  3100 | loss 5.632 | mrr 0.033
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.194, Scaled: 41.940) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.194, Scaled: 41.940) '|$w!}'
+      3. (Raw: 4.194, Scaled: 41.940) '|$Fw!}'
+      4. (Raw: 4.194, Scaled: 41.940) '|$uw!}'
+      5. (Raw: 4.194, Scaled: 41.940) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 83): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.194, Scaled: 41.940) '|"#"WwVwX!}'
+      2. (Raw: 4.194, Scaled: 41.940) '|"="VwVwV!}'
+      3. (Raw: 4.194, Scaled: 41.940) '|"="VwVw!}'
+      4. (Raw: 4.194, Scaled: 41.940) '|"#wV"V"V!}'
+      5. (Raw: 4.194, Scaled: 41.940) '|"W"VwVwX!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.194, Scaled: 41.940) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.194, Scaled: 41.940) '|"="="W"X!}'
+      3. (Raw: 4.194, Scaled: 41.940) '|"="="W"V"X!}'
+      4. (Raw: 4.194, Scaled: 41.940) '|"="W"V"X!}'
+      5. (Raw: 4.194, Scaled: 41.940) '|"#"="W"V"X!}'
+    ---
+└─ val@1 0.585 | val@10 0.682 | val@100 0.826 | val_mrr 0.620
+  3110 | loss 5.532 | mrr 0.022
+  3120 | loss 5.471 | mrr 0.041
+  3130 | loss 5.510 | mrr 0.042
+  3140 | loss 5.656 | mrr 0.014
+  3150 | loss 5.503 | mrr 0.024
+  3160 | loss 5.512 | mrr 0.025
+  3170 | loss 5.473 | mrr 0.015
+  3180 | loss 5.600 | mrr 0.008
+  3190 | loss 5.441 | mrr 0.017
+  3200 | loss 5.523 | mrr 0.019
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 491): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.334, Scaled: 43.342) '|$w!}'
+      2. (Raw: 4.334, Scaled: 43.342) '|$"!}'
+      3. (Raw: 4.334, Scaled: 43.342) '|$"$"V"#w!}'
+      4. (Raw: 4.334, Scaled: 43.342) '|$"$w!"#w!}'
+      5. (Raw: 4.334, Scaled: 43.342) '|$"$wV"#w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.334, Scaled: 43.342) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.334, Scaled: 43.342) '|"#"WwVwVwX!}'
+      3. (Raw: 4.334, Scaled: 43.342) '|"="#wVwVwV!}'
+      4. (Raw: 4.334, Scaled: 43.342) '|"#"WwVwX!}'
+      5. (Raw: 4.334, Scaled: 43.342) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.334, Scaled: 43.342) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.334, Scaled: 43.342) '|"="="W"X!}'
+      3. (Raw: 4.334, Scaled: 43.342) '|"="="W"V"X!}'
+      4. (Raw: 4.334, Scaled: 43.342) '|"="W"V"X!}'
+      5. (Raw: 4.334, Scaled: 43.342) '|"#"="W"V"X!}'
+    ---
+└─ val@1 0.471 | val@10 0.561 | val@100 0.731 | val_mrr 0.500
+  3210 | loss 5.633 | mrr 0.010
+  3220 | loss 5.462 | mrr 0.011
+  3230 | loss 5.433 | mrr 0.020
+  3240 | loss 5.595 | mrr 0.016
+  3250 | loss 5.402 | mrr 0.021
+  3260 | loss 5.550 | mrr 0.014
+  3270 | loss 5.484 | mrr 0.019
+  3280 | loss 5.438 | mrr 0.025
+  3290 | loss 5.433 | mrr 0.021
+  3300 | loss 5.500 | mrr 0.032
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 473): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.547, Scaled: 45.469) '|$"W"X!}'
+      2. (Raw: 4.547, Scaled: 45.469) '|"="#w!}'
+      3. (Raw: 4.547, Scaled: 45.469) '|"#"#w!}'
+      4. (Raw: 4.547, Scaled: 45.469) '|"="$w!}'
+      5. (Raw: 4.547, Scaled: 45.469) '|$"!<"!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.547, Scaled: 45.469) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.547, Scaled: 45.469) '|"#"WwVwVwX!}'
+      3. (Raw: 4.547, Scaled: 45.469) '|"="#wVwVwV!}'
+      4. (Raw: 4.547, Scaled: 45.469) '|"="#wVwVw!}'
+      5. (Raw: 4.547, Scaled: 45.469) '|"="#wVwVw!!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 2): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.547, Scaled: 45.469) '|"#w!"="W"V"X!}'
+      2. (Raw: 4.547, Scaled: 45.469) '|"Ww="W"V"XX!}' (*True Positive*)
+      3. (Raw: 4.547, Scaled: 45.469) '|"="="W"X!}'
+      4. (Raw: 4.547, Scaled: 45.469) '|"="="W"V"X!}'
+      5. (Raw: 4.547, Scaled: 45.469) '|"="W"V"X!}'
+    ---
+└─ val@1 0.478 | val@10 0.575 | val@100 0.753 | val_mrr 0.512
+  3310 | loss 5.590 | mrr 0.029
+  3320 | loss 5.545 | mrr 0.012
+  3330 | loss 5.503 | mrr 0.012
+  3340 | loss 5.600 | mrr 0.040
+  3350 | loss 5.346 | mrr 0.029
+  3360 | loss 5.392 | mrr 0.035
+  3370 | loss 5.551 | mrr 0.008
+  3380 | loss 5.462 | mrr 0.012
+  3390 | loss 5.532 | mrr 0.027
+  3400 | loss 5.477 | mrr 0.022
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.384, Scaled: 43.836) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.384, Scaled: 43.836) '|$w!}'
+      3. (Raw: 4.384, Scaled: 43.836) '|$Fw!}'
+      4. (Raw: 4.384, Scaled: 43.836) '|$uw!}'
+      5. (Raw: 4.384, Scaled: 43.836) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 13): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.384, Scaled: 43.836) '|"="VwVw!}'
+      2. (Raw: 4.384, Scaled: 43.836) '|"#"V"Vw!}'
+      3. (Raw: 4.384, Scaled: 43.836) '|"#wV"V"!}'
+      4. (Raw: 4.384, Scaled: 43.836) '|"#wV"#w!}'
+      5. (Raw: 4.384, Scaled: 43.836) '|wVwVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 4): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.384, Scaled: 43.836) '|"="W"X!}'
+      2. (Raw: 4.384, Scaled: 43.836) '|"="W"VX!}'
+      3. (Raw: 4.384, Scaled: 43.836) '|"#w!"="W"V"X!}'
+      4. (Raw: 4.384, Scaled: 43.836) '|"Ww="W"V"XX!}' (*True Positive*)
+      5. (Raw: 4.384, Scaled: 43.836) '|"="="W"X!}'
+    ---
+└─ val@1 0.643 | val@10 0.759 | val@100 0.863 | val_mrr 0.678
+  3410 | loss 5.505 | mrr 0.028
+  3420 | loss 5.572 | mrr 0.013
+  3430 | loss 5.509 | mrr 0.033
+  3440 | loss 5.553 | mrr 0.022
+  3450 | loss 5.491 | mrr 0.012
+  3460 | loss 5.565 | mrr 0.014
+  3470 | loss 5.547 | mrr 0.012
+  3480 | loss 5.533 | mrr 0.012
+  3490 | loss 5.526 | mrr 0.132
+  3500 | loss 5.612 | mrr 0.012
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.779, Scaled: 47.786) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.779, Scaled: 47.786) '|$w!}'
+      3. (Raw: 4.779, Scaled: 47.786) '|$Fw!}'
+      4. (Raw: 4.779, Scaled: 47.786) '|$uw!}'
+      5. (Raw: 4.779, Scaled: 47.786) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.779, Scaled: 47.786) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.779, Scaled: 47.786) '|"#"WwVwVwX!}'
+      3. (Raw: 4.779, Scaled: 47.786) '|"="#wVwVwV!}'
+      4. (Raw: 4.779, Scaled: 47.786) '|"="#wVwVw!}'
+      5. (Raw: 4.779, Scaled: 47.786) '|"="#wVwVw!!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.779, Scaled: 47.786) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.779, Scaled: 47.786) '|"="="W"X!}'
+      3. (Raw: 4.779, Scaled: 47.786) '|"="W"X!}'
+      4. (Raw: 4.779, Scaled: 47.786) '|"="="W"V"X!}'
+      5. (Raw: 4.779, Scaled: 47.786) '|"="W"V"X!}'
+    ---
+└─ val@1 0.656 | val@10 0.767 | val@100 0.867 | val_mrr 0.689
+  3510 | loss 5.405 | mrr 0.024
+  3520 | loss 5.569 | mrr 0.012
+  3530 | loss 5.507 | mrr 0.025
+  3540 | loss 5.546 | mrr 0.026
+  3550 | loss 5.482 | mrr 0.024
+  3560 | loss 5.538 | mrr 0.056
+  3570 | loss 5.598 | mrr 0.007
+  3580 | loss 5.503 | mrr 0.028
+  3590 | loss 5.579 | mrr 0.012
+  3600 | loss 5.461 | mrr 0.045
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.397, Scaled: 43.965) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.397, Scaled: 43.965) '|$w!}'
+      3. (Raw: 4.397, Scaled: 43.965) '|$Fw!}'
+      4. (Raw: 4.397, Scaled: 43.965) '|$uw!}'
+      5. (Raw: 4.397, Scaled: 43.965) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.397, Scaled: 43.965) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.397, Scaled: 43.965) '|"#"WwVwVwX!}'
+      3. (Raw: 4.397, Scaled: 43.965) '|"="#wVwVwV!}'
+      4. (Raw: 4.397, Scaled: 43.965) '|"#"WwVwX!}'
+      5. (Raw: 4.397, Scaled: 43.965) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.397, Scaled: 43.965) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.397, Scaled: 43.965) '|"="="W"X!}'
+      3. (Raw: 4.397, Scaled: 43.965) '|"="W"X!}'
+      4. (Raw: 4.397, Scaled: 43.965) '|"="="W"V"X!}'
+      5. (Raw: 4.397, Scaled: 43.965) '|"="W"V"X!}'
+    ---
+└─ val@1 0.625 | val@10 0.736 | val@100 0.880 | val_mrr 0.661
+  3610 | loss 5.573 | mrr 0.011
+  3620 | loss 5.509 | mrr 0.017
+  3630 | loss 5.570 | mrr 0.033
+  3640 | loss 5.438 | mrr 0.014
+  3650 | loss 5.544 | mrr 0.016
+  3660 | loss 5.417 | mrr 0.092
+  3670 | loss 5.464 | mrr 0.027
+  3680 | loss 5.495 | mrr 0.026
+  3690 | loss 5.499 | mrr 0.030
+  3700 | loss 5.280 | mrr 0.023
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.553, Scaled: 45.526) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.553, Scaled: 45.526) '|$w!}'
+      3. (Raw: 4.553, Scaled: 45.526) '|$Fw!}'
+      4. (Raw: 4.553, Scaled: 45.526) '|$uw!}'
+      5. (Raw: 4.553, Scaled: 45.526) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.553, Scaled: 45.526) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.553, Scaled: 45.526) '|"#"WwVwVwX!}'
+      3. (Raw: 4.553, Scaled: 45.526) '|"="#wVwVwV!}'
+      4. (Raw: 4.553, Scaled: 45.526) '|"#"WwVwX!}'
+      5. (Raw: 4.553, Scaled: 45.526) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.553, Scaled: 45.526) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.553, Scaled: 45.526) '|"="="W"X!}'
+      3. (Raw: 4.553, Scaled: 45.526) '|"="W"X!}'
+      4. (Raw: 4.553, Scaled: 45.526) '|"="="W"V"X!}'
+      5. (Raw: 4.553, Scaled: 45.526) '|"="W"V"X!}'
+    ---
+└─ val@1 0.706 | val@10 0.788 | val@100 0.910 | val_mrr 0.736
+  3710 | loss 5.603 | mrr 0.010
+  3720 | loss 5.431 | mrr 0.016
+  3730 | loss 5.588 | mrr 0.016
+  3740 | loss 5.388 | mrr 0.036
+  3750 | loss 5.533 | mrr 0.028
+  3760 | loss 5.423 | mrr 0.055
+  3770 | loss 5.245 | mrr 0.077
+  3780 | loss 5.550 | mrr 0.055
+  3790 | loss 5.538 | mrr 0.018
+  3800 | loss 5.503 | mrr 0.071
+  --- Validation Example 1/1000 ---
+    Query: '|$"$#w!}'
+    True Positive (Rank 1): '|"#w!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.875, Scaled: 48.753) '|"#w!}' (*True Positive*)
+      2. (Raw: 4.875, Scaled: 48.753) '|$w!}'
+      3. (Raw: 4.875, Scaled: 48.753) '|$Fw!}'
+      4. (Raw: 4.875, Scaled: 48.753) '|$uw!}'
+      5. (Raw: 4.875, Scaled: 48.753) '|>$w!}'
+  --- Validation Example 2/1000 ---
+    Query: '|"#wVwVwZ!}'
+    True Positive (Rank 1): '|"#YwVwVwZ!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.875, Scaled: 48.753) '|"#YwVwVwZ!}' (*True Positive*)
+      2. (Raw: 4.875, Scaled: 48.753) '|"#"WwVwVwX!}'
+      3. (Raw: 4.875, Scaled: 48.753) '|"="#wVwVwV!}'
+      4. (Raw: 4.875, Scaled: 48.753) '|"#"WwVwX!}'
+      5. (Raw: 4.875, Scaled: 48.753) '|"="#wVwVw!}'
+  --- Validation Example 3/1000 ---
+    Query: '|"w="W"V"X!}'
+    True Positive (Rank 1): '|"Ww="W"V"XX!}'
+    Top 5 Ranked Documents by Model:
+      1. (Raw: 4.875, Scaled: 48.753) '|"Ww="W"V"XX!}' (*True Positive*)
+      2. (Raw: 4.875, Scaled: 48.753) '|"="W"X!}'
+      3. (Raw: 4.875, Scaled: 48.753) '|"="="W"V"X!}'
+      4. (Raw: 4.875, Scaled: 48.753) '|"#"="W"V"X!}'
+      5. (Raw: 4.875, Scaled: 48.753) '|!"="="W"V"X!}'
+    ---
+└─ val@1 0.756 | val@10 0.833 | val@100 0.919 | val_mrr 0.782
+  3810 | loss 5.495 | mrr 0.039
+  3820 | loss 5.519 | mrr 0.023
+salloc: Job 44335685 has exceeded its time limit and its allocation has been revoked.
+                                                                                     slurmstepd: error: *** STEP 44335685.interactive ON ng10604 CANCELLED AT 2025-05-29T21:58:49 DUE TO TIME LIMIT ***
+srun: Job step aborted: Waiting up to 62 seconds for job step to finish.
+  3830 | loss 5.553 | mrr 0.019
+  3840 | loss 5.546 | mrr 0.029
