@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.1.0"
   id("com.github.ben-manes.versions") version "0.52.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "9.0.0-bet15"
+  id("com.gradleup.shadow") version "9.0.0-beta15"
 }
 
 group = "com.github.breandan"
