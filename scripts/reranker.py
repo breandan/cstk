@@ -11,12 +11,12 @@ from typing import List, Tuple
 import torch, torch.nn as nn, torch.nn.functional as F
 
 # --------------------------- Hyper-parameters -------------------------- #
-DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size -- safe <60 ms
+DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
 MAX_NEG                = 255            # 1 pos + 127 neg = 128-way softmax
 TAU                    = 0.1            # temperature
-BATCH_QUERIES          = 8              # optimiser batch
+BATCH_QUERIES          = 16             # optimiser batch
 LR                     = 2e-3           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
@@ -25,14 +25,6 @@ DEVICE = torch.device(
     "mps"  if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available()         else "cpu"
 )
-
-if DEVICE.type == "mps":
-    print(
-        "MPS device detected. Setting PYTORCH_ENABLE_MPS_FALLBACK=1 "
-        "to potentially mitigate NotImplementedError for certain Transformer ops. "
-        "This may result in slower execution for an unsupported op as it will fall back to CPU."
-    )
-    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 _batch_gen = None
 def fetch_batch(path: str = "char_bifi_ts.txt"):
@@ -101,6 +93,13 @@ class InteractionRanker(nn.Module):
 
 def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
     mdl = InteractionRanker().to(DEVICE)
+    total_params = sum(p.numel() for p in mdl.parameters())
+    trainable_params = sum(p.numel() for p in mdl.parameters() if p.requires_grad)
+
+    print(f"Model: InteractionRanker")
+    print(f"Total parameters: {total_params:,}")
+    print(f"Trainable parameters: {trainable_params:,}")
+
     opt = torch.optim.AdamW(mdl.parameters(), lr=LR, weight_decay=1e-4)
 
     if val_data_global is None:
