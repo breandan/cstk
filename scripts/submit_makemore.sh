@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=makemore
-#SBATCH --time=10:00:00
+#SBATCH --time=04:00:00
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=48
@@ -15,6 +15,6 @@ module load StdEnv/2020
 module load python/3.11
 source env/bin/activate
 
-pip install --no-index --find-links /cvmfs/soft.computecanada.ca/custom/python/wheelhouse torch tensorboard
+#pip install --no-index --find-links /cvmfs/soft.computecanada.ca/custom/python/wheelhouse torch tensorboard
 
 python makemore.py
