@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.1.0"
   id("com.github.ben-manes.versions") version "0.52.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "8.3.3"
+  id("com.gradleup.shadow") version "9.0.0-bet15"
 }
 
 group = "com.github.breandan"
@@ -158,7 +158,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:3.1.1")
+  implementation("com.diffplug.spotless:spotless-lib:3.1.2")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
