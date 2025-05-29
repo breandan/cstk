@@ -16,7 +16,7 @@ MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
 MAX_NEG                = 255            # 1 pos + 127 neg = 128-way softmax
 TAU                    = 0.1            # temperature
-BATCH_QUERIES          = 8              # optimiser batch
+BATCH_QUERIES          = 16              # optimiser batch
 LR                     = 2e-3           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
@@ -99,50 +99,76 @@ class InteractionRanker(nn.Module):
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:,0]).squeeze(1)
 
-def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
-    mdl = InteractionRanker().to(DEVICE)
+def pairwise_expand(q_ids, q_lens, d_ids, d_lens):
+    """
+    Broadcast queries and docs so that we can score *every* (qᵢ,dⱼ) pair in
+    a single forward pass.
+
+    Returns tensors of shape ((B², L), ...).
+    """
+    B, L = q_ids.size()
+    q_ids_rep = q_ids.unsqueeze(1).expand(B, B, L).reshape(-1, L)
+    d_ids_rep = d_ids.unsqueeze(0).expand(B, B, L).reshape(-1, L)
+
+    q_lens_rep = q_lens.unsqueeze(1).expand(B, B).reshape(-1)
+    d_lens_rep = d_lens.unsqueeze(0).expand(B, B).reshape(-1)
+    return q_ids_rep, q_lens_rep, d_ids_rep, d_lens_rep
+
+
+def scores_matrix(mdl, q_ids, q_lens, d_ids, d_lens):
+    """
+    Returns a B × B matrix where entry (i,j) is the (scaled) score for
+    query i vs. doc j.
+    """
+    q_rep, ql_rep, d_rep, dl_rep = pairwise_expand(q_ids, q_lens, d_ids, d_lens)
+    flat_scores = mdl(q_rep, ql_rep, d_rep, dl_rep) / TAU        # (B²,)
+    B = q_ids.size(0)
+    return flat_scores.view(B, B)                                # (B,B)
+
+def train(steps=20_000, out="num_reranker.pt", val_data_global=None, batch_queries=BATCH_QUERIES):
+    if DEVICE.type == "cuda":
+        mdl = torch.compile(InteractionRanker().to(DEVICE), mode="max-autotune")
+    else:
+        mdl = InteractionRanker().to(DEVICE)
+
     opt = torch.optim.AdamW(mdl.parameters(), lr=LR, weight_decay=1e-4)
 
     if val_data_global is None:
         print("Warning: VAL_DATA not passed to train function. Validation will be empty.")
         val_data_global = []
 
-    for step in range(1, steps+1):
+    for step in range(1, steps + 1):
         mdl.train()
-        opt.zero_grad(); tot_loss = 0.0
-        current_batch_reciprocal_ranks = [] # For MRR
+        opt.zero_grad(set_to_none=True)
 
-        for _ in range(BATCH_QUERIES):
-            q_txt, docs_all = fetch_batch()
-            if not docs_all: continue
-            pos_doc_text = docs_all[0]
-            neg_all_texts = docs_all[1:]
-            neg_sampled_texts = random.sample(neg_all_texts, min(len(neg_all_texts), MAX_NEG)) \
-                if neg_all_texts else []
-            current_docs_texts = [pos_doc_text] + neg_sampled_texts
-            perm = torch.randperm(len(current_docs_texts))
-            shuffled_docs_texts = [current_docs_texts[i] for i in perm]
-            target_idx = (perm == 0).nonzero(as_tuple=False).item()
-            q_ids_train, q_len_train  = to_tensor([q_txt])
-            d_ids_train, d_lens_train = to_tensor(shuffled_docs_texts)
-            if d_ids_train.size(0) == 0: continue
-            scores_train = mdl(q_ids_train, q_len_train, d_ids_train, d_lens_train) / TAU
-            if scores_train.numel() == 0: continue
-            loss = F.cross_entropy(scores_train.unsqueeze(0), torch.tensor([target_idx], device=DEVICE))
-            loss.backward(); tot_loss += loss.item()
+        q_txts, pos_txts = [], []
+        for _ in range(batch_queries):
+            q, docs = fetch_batch()
+            if not docs:
+                continue
+            q_txts.append(q)
+            pos_txts.append(docs[0])
+
+        if not q_txts:
+            continue
+
+        q_ids, q_lens = to_tensor(q_txts)         # (B,L)
+        d_ids, d_lens = to_tensor(pos_txts)       # (B,L)
+
+        S = scores_matrix(mdl, q_ids, q_lens, d_ids, d_lens) # (B,B)
+
+        targets = torch.arange(S.size(0), device=DEVICE)
+        loss = F.cross_entropy(S, targets)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
+        opt.step()
+
+        if step % 10 == 0:
             with torch.no_grad():
-                rank_of_positive_train = (scores_train.argsort(descending=True) == target_idx).nonzero(as_tuple=True)[0].item() + 1
-                current_batch_reciprocal_ranks.append(1.0 / rank_of_positive_train)
-
-        if current_batch_reciprocal_ranks: # Check if any ranks were recorded (batches processed)
-            torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
-            opt.step()
-            if step % 10 == 0:
-                mrr_train_batch = sum(current_batch_reciprocal_ranks) / len(current_batch_reciprocal_ranks)
-                print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr {mrr_train_batch:.3f}")
-        elif step % 10 == 0:
-            print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr N/A (no ranks recorded this batch acc)")
-
+                ranks = S.argsort(dim=1, descending=True)
+                gold_ranks = ((ranks == targets.unsqueeze(1)).nonzero(as_tuple=False)[:, 1] + 1)
+                mrr = (1.0 / gold_ranks.float()).mean().item()
+            print(f"{step:>6} | loss {loss.item():.3f} | mrr {mrr:.3f}")
 
         if step % VAL_EVERY == 0:
             mdl.eval()
