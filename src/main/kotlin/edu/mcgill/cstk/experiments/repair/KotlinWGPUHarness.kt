@@ -10,6 +10,9 @@ import edu.mcgill.cstk.utils.lastGitMessage
 import java.awt.Desktop
 import java.io.File
 import java.net.*
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
 import kotlin.collections.plusAssign
@@ -18,20 +21,26 @@ import kotlin.sequences.forEach
 import kotlin.sequences.map
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
+import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
 2>&1 | tee scripts/confounders.txt (optional)
+
+// Evaluate neural reranker
+scp breandan@narval.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk/scripts/num_reranker.pt scripts/
+cd scripts && export PYTORCH_ENABLE_MPS_FALLBACK=1 && python reranker_serve.py
+cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair 2>&1 | tee cbifi_eval.txt
 */
 fun main() {
-  writeTrainingSetonMulticoreCPU()
+//  writeTrainingSetWithGPU()
 
 //  writeCharBIFIToDisk()
-//  startWGPUServer()
+  startWGPUServer()
 //
-//  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
+  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
 //
-//  stopWGPUServer()
+  stopWGPUServer()
 }
 
 private fun evaluateWGPURepairOnStackOverflow() {
@@ -101,7 +110,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
 
     try {
       val clock = TimeSource.Monotonic.markNow()
-      val rankedResults = sendGPU(brokeToks.dropLast(1).joinToString(" ")).lines().filter { it.isNotBlank() }
+      val rankedResults = rerankGPU(brokeToks.dropLast(1).joinToString(" "))
         .also { println("Received ${it.size} samples in ${clock.elapsedNow()}") }
         .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
         .sortedBy { it.second }.map { it.first }
@@ -174,6 +183,8 @@ fun startWGPUServer() {
 }
 
 fun String.charify() = "|${encodeToMakemore()}}"
+fun String.uncharify() = removePrefix("|").removeSuffix("}").decodeFromMakemore()
+
 fun startTrainingService() {
   val seq = iterBIFIContents().map {
     val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
@@ -363,7 +374,7 @@ fun writeValidationSet() {
 }
 
 // Training set for reranker.py
-fun writeTrainingSetonMulticoreCPU() {
+fun writeTrainingSetWithMulticoreCPU() {
   LED_BUFFER = 3
   P_BIFI_PY150.score(listOf("hello", "world"))
   streamBIFIContents().map {
@@ -383,7 +394,7 @@ fun writeTrainingSetonMulticoreCPU() {
 }
 
 // Training set for reranker.py
-fun writeCharBIFIToDisk() {
+fun writeTrainingSetWithGPU() {
   startWGPUServer()
 
   iterBIFIContents().map {
@@ -409,6 +420,21 @@ fun sendGPU(query: String, timeoutSec: Long = 30): String {
   ex.sendResponseHeaders(200, 0)
   ex.responseBody.use { os -> os.write("retry: 0\ndata: $query\n\n".toByteArray()) }
   return resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
+}
+
+fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http://localhost:8082/rerank"): List<String> {
+  if (docs.isEmpty()) return emptyList()
+  val client = HttpClient.newBuilder().build()
+
+  val query = query.charify()
+  val docs = docs.lines().filter { it.isNotBlank() }.map { it.charify() }
+  val reqBody = "$query\n${docs.joinToString("\n")}"
+  val request = HttpRequest.newBuilder().uri(URI.create(url))
+    .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build()
+
+  val scores = client.send(request, HttpResponse.BodyHandlers.ofString()).body()
+    .drop(1).dropLast(1).split(", ").map { it.toFloat() }
+  return docs.zip(scores).sortedBy { it.second }.map { it.first.uncharify() }
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit

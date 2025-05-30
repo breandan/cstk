@@ -155,6 +155,7 @@ fun prepareUnsupervisedMakemoreDataset() {
 }
 
 fun Σᐩ.encodeToMakemore() = tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString("")
+fun Σᐩ.decodeFromMakemore() = map { MakeMore.PyTokMap.mt[it]!! }.joinToString(" ")
 
 fun prepareBreakerDataset() {
   val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
