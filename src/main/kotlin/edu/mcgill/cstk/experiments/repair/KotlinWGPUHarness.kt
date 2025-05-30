@@ -27,6 +27,8 @@ import kotlin.time.measureTime
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
 2>&1 | tee scripts/confounders.txt (optional)
 
+./gradlew -q wgpuBarHillelRepair 2>&1 | tee scripts/so_ts.txt
+
 // Evaluate neural reranker
 scp breandan@narval.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk/scripts/num_reranker.pt scripts/
 cd scripts && export PYTORCH_ENABLE_MPS_FALLBACK=1 && python reranker_serve.py
@@ -36,10 +38,21 @@ fun main() {
 //  writeTrainingSetWithGPU()
 
 //  writeCharBIFIToDisk()
+//  startWGPUServer()
+//
+//  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
+//
+//  stopWGPUServer()
+
+  makeTSFromStackOverflow()
+}
+
+fun makeTSFromStackOverflow() {
   startWGPUServer()
-//
-  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
-//
+  sizeAndDistBalancedRepairsUnminimized.mapNotNull { (brokeStr, fixedStr) ->
+    val results = sendGPU(brokeStr).lines()
+    if (fixedStr in results) listOf(brokeStr, fixedStr) + (results - fixedStr) else null
+  }.map { it.map { it.charify() } }.forEach { println(it.joinToString("\n") + "\n") }
   stopWGPUServer()
 }
 
@@ -401,7 +414,6 @@ fun writeTrainingSetWithGPU() {
     val str = it.mapToUnquotedPythonTokens().addNewLineIfMissing()
     if (str in vanillaS2PCFG.language) str else null
   }.filterNotNull().forEach {
-    try {
       val query = it
       val reprs = sendGPU(query)
       if (reprs.isNotBlank()) {
@@ -409,18 +421,17 @@ fun writeTrainingSetWithGPU() {
         val renc = reprs.lines().map { it.charify() }.shuffled()
         println(renc.first() + "\n" + qenc + "\n" + renc.drop(1).joinToString("\n") + "\n")
       }
-    } catch (_: Exception) {}
   }
 }
 
-fun sendGPU(query: String, timeoutSec: Long = 30): String {
+fun sendGPU(query: String, timeoutSec: Long = 30) = try {
   val ex = streams.poll(timeoutSec, TimeUnit.SECONDS) ?: error("browser did not open /stream in time")
   resultWaiter = CompletableFuture()
   ex.responseHeaders.add("Content-Type", "text/event-stream")
   ex.sendResponseHeaders(200, 0)
   ex.responseBody.use { os -> os.write("retry: 0\ndata: $query\n\n".toByteArray()) }
-  return resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
-}
+  resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
+} catch (e: Exception) { "" }
 
 fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http://localhost:8082/rerank"): List<String> {
   if (docs.isEmpty()) return emptyList()
