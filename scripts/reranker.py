@@ -16,9 +16,9 @@ MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
 MAX_NEG                = 255            # 1 pos + 127 neg = 128-way softmax
 TAU                    = 0.1            # temperature
-BATCH_QUERIES          = 16             # optimiser batch
+BATCH_QUERIES          = 1              # optimiser batch
 LR                     = 2e-3           # AdamW
-SAVE_EVERY             = 500            # steps
+SAVE_EVERY             = 200            # steps
 VAL_EVERY              = 100            # steps
 
 DEVICE = torch.device(
@@ -142,7 +142,7 @@ def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
         elif step % 10 == 0:
             print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr N/A (no ranks recorded this batch acc)")
 
-        if step % VAL_EVERY == 0:
+        if step % VAL_EVERY == 1:
             mdl.eval()
             with torch.no_grad():
                 val_ranks = [] # For Acc@N
@@ -194,7 +194,7 @@ def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
                 print(f"└─ val metrics N/A (no validation data processed or VAL_DATA empty)")
 
         if step % SAVE_EVERY == 0:
-            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, out)
+            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"{out}x{step}")
 
 if __name__ == "__main__":
     torch.manual_seed(0)

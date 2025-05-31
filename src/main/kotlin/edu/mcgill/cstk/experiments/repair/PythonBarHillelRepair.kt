@@ -71,6 +71,45 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
       /** See [Tree.quintuples] */
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
+val s2pg by lazy { vanillaS2PCFG }
+val parikhMap by lazy {
+  LangCache.prepopPythonLangCache()
+  s2pg.parikhMap }
+val termDict by lazy { TermDict(s2pg.terminals) }
+
+fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
+  val brokeToks = brokeStr.tokenizeByWhitespace()
+
+  val langEditDist = (1..MAX_RADIUS).firstOrNull {
+    try {
+      val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks, pad = it)
+      val fsa = makeLevFSA(brokeToks, it, monoEditBounds)
+      s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
+    } catch (_: Exception) { println("Failed $it, increasing..."); false }
+  } ?: MAX_RADIUS
+
+  val levGuess = langEditDist + 2
+
+  val intGram = try {
+    val monoEditBounds = vanillaS2PCFGWE.maxParsableFragmentB(brokeToks)
+    val fsa = makeLevFSA(brokeToks, levGuess, monoEditBounds)
+
+    s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap)
+      .also { intGram -> intGram.ifEmpty { println("Intersection grammar was empty!"); null } }
+  } catch (e: Exception) { return emptyList() }
+  catch (e: Error) { return emptyList() }
+
+  val pTree = measureTimedValue { intGram.toPTree(origCFG = s2pg) }
+    .also { println("Constructed PTree in ${it.duration}") }.value
+  val timeout = (TIMEOUT_MS / 1000).seconds
+
+  val dfa = pTree.toDFA(minimize = false)!!
+
+  val rankedResults = dfa.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict)
+
+  return rankedResults
+}
+
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
    // timeoutCases // corruptedBIFIGoodCode // balancedSmallRepairsUnminimized.toList() // naturallySmallRepairs //pairwiseUniformAll
@@ -416,7 +455,7 @@ val shortcutTestcases: List<Pair<String, String>> = listOf(
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
 //  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
 //  val file = File(File("").absolutePath + path).readText()
-  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
+  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64_tst.txt"
   val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
   val decoder = Base64.getDecoder()
   contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }

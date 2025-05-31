@@ -1,7 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
-import ai.hypergraph.kaliningraph.automata.FSA
-import ai.hypergraph.kaliningraph.automata.GRE
+import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
@@ -10,18 +9,12 @@ import edu.mcgill.cstk.utils.lastGitMessage
 import java.awt.Desktop
 import java.io.File
 import java.net.*
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
+import java.net.http.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.*
-import kotlin.collections.plusAssign
 import kotlin.math.absoluteValue
-import kotlin.sequences.forEach
-import kotlin.sequences.map
+import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
-import kotlin.time.measureTime
 
 /**
 cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
@@ -126,11 +119,16 @@ private fun evaluateWGPURepairOnStackOverflow() {
 //      val rankedResults = initiateSerialRepair()
       val query = brokeToks.dropLast(1).joinToString(" ")
 //      val cpuResults = sendCPU(brokeToks.dropLast(1).joinToString(" "))
-      val docs = sendGPU(query)
-      if (fixedStr !in docs) throw Exception("Fixed string not found in GPU results")
-      val rankedResults = rerankGPU(query, docs)
+      val docs = sendGPU(query)//parallelPythonRepair(brokeStr).joinToString("\n")
+      val lines = docs.lines().map { it.addNewLineIfMissing() }
+      println("Received ${lines.size} total docs in ${clock.elapsedNow()}")
+
+      val idx = lines.indexOf(fixedStr)//; println("Idx: $idx")
+      if (idx == -1 || idx > 1_000) throw Exception("Fixed string not found in GPU results")
+
+      val rankedResults = rerankGPU(query, lines.take(1_000).joinToString("\n"))
 //    val rankedResults  rerankGPU(brokeToks.dropLast(1).joinToString(" "))
-        .also { println("Received ${it.size} samples in ${clock.elapsedNow()}") }
+        .also { println("Received ${it.size} ranked samples in ${clock.elapsedNow()}") }
 
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
@@ -443,8 +441,9 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
 
   val query = query.charify()
   val docs = docs.lines().filter { it.isNotBlank() }
-    .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-    .sortedBy { it.second }.map { it.first }.take(1000)
+//    .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+//    .sortedBy { it.second }.map { it.first }.take(1000)
+    .map { it.addNewLineIfMissing() }
     .map { it.charify() }
   val reqBody = "$query\n${docs.joinToString("\n")}"
   val request = HttpRequest.newBuilder().uri(URI.create(url))
@@ -452,7 +451,7 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
 
   val scores = client.send(request, HttpResponse.BodyHandlers.ofString()).body()
     .drop(1).dropLast(1).split(", ").map { it.toFloat() }
-  return docs.zip(scores).sortedBy { -it.second }.map { it.first.uncharify().addNewLineIfMissing() }
+  return docs.zip(scores).sortedBy { -it.second }.map { it.first.uncharify() }
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit
