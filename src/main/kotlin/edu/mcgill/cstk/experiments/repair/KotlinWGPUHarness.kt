@@ -32,19 +32,19 @@ cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBa
 // Evaluate neural reranker
 scp breandan@narval.computecanada.ca:/home/breandan/projects/def-jinguo/breandan/cstk/scripts/num_reranker.pt scripts/
 cd scripts && export PYTORCH_ENABLE_MPS_FALLBACK=1 && python reranker_serve.py
-cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair 2>&1 | tee cbifi_eval.txt
+cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair 2>&1 | tee cbifi_eval1.txt
 */
 fun main() {
 //  writeTrainingSetWithGPU()
 
 //  writeCharBIFIToDisk()
-//  startWGPUServer()
-//
-//  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
-//
-//  stopWGPUServer()
+  startWGPUServer()
 
-  makeTSFromStackOverflow()
+  measureTime { evaluateWGPURepairOnStackOverflow() }.also { println("Finished evaluation in $it") }
+
+  stopWGPUServer()
+
+//  makeTSFromStackOverflow()
 }
 
 fun makeTSFromStackOverflow() {
@@ -108,25 +108,29 @@ private fun evaluateWGPURepairOnStackOverflow() {
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
 
     fun failed(msg: Σᐩ?, st: Σᐩ) {
-      println("Encountered error $msg ${allTime.elapsedNow()}):\n$humanRepairANSI\n$st")
-      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
-      println(allRate.toString())
-      negative.appendText("${brokeToks.size}, $levDist, 0\n")
-
-      println()
-      println("Precision@1\n===========")
-      println(P_1ByLevDist.summarizeLenAndDist())
-      println("Precision@All\n=============")
-      println(P_AllByLevDist.summarizeLenAndDist())
-      println()
+//      println("Encountered error $msg ${allTime.elapsedNow()}):\n$humanRepairANSI\n$st")
+//      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
+//      println(allRate.toString())
+//      negative.appendText("${brokeToks.size}, $levDist, 0\n")
+//
+//      println()
+//      println("Precision@1\n===========")
+//      println(P_1ByLevDist.summarizeLenAndDist())
+//      println("Precision@All\n=============")
+//      println(P_AllByLevDist.summarizeLenAndDist())
+//      println()
     }
 
     try {
       val clock = TimeSource.Monotonic.markNow()
-      val rankedResults = rerankGPU(brokeToks.dropLast(1).joinToString(" "))
+//      val rankedResults = initiateSerialRepair()
+      val query = brokeToks.dropLast(1).joinToString(" ")
+//      val cpuResults = sendCPU(brokeToks.dropLast(1).joinToString(" "))
+      val docs = sendGPU(query)
+      if (fixedStr !in docs) throw Exception("Fixed string not found in GPU results")
+      val rankedResults = rerankGPU(query, docs)
+//    val rankedResults  rerankGPU(brokeToks.dropLast(1).joinToString(" "))
         .also { println("Received ${it.size} samples in ${clock.elapsedNow()}") }
-        .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-        .sortedBy { it.second }.map { it.first }
 
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
@@ -144,7 +148,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
       } else {
         allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
         indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-        println("Found length-$levDist repair in $elapsed ms, $indexOfTarget rank")
+        println("Found length-$levDist repair in $elapsed ms, $indexOfTarget/${rankedResults.size} rank")
         allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
         sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
         println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / (levRates[it.key]?.recall ?: 0) }}")
@@ -230,7 +234,7 @@ fun startTrainingService() {
 fun sendCPU(query: String): String =
   initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toSet()
   .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-  .sortedBy { it.second }.map { it.first }.take(580).joinToString("\n")
+  .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
 
 fun initiateSerialRepair(brokenStr: List<Σᐩ>, cfg: CFG): Sequence<Σᐩ> {
   val upperBound = MAX_RADIUS * 3
@@ -438,14 +442,17 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
   val client = HttpClient.newBuilder().build()
 
   val query = query.charify()
-  val docs = docs.lines().filter { it.isNotBlank() }.map { it.charify() }
+  val docs = docs.lines().filter { it.isNotBlank() }
+    .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+    .sortedBy { it.second }.map { it.first }.take(1000)
+    .map { it.charify() }
   val reqBody = "$query\n${docs.joinToString("\n")}"
   val request = HttpRequest.newBuilder().uri(URI.create(url))
     .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build()
 
   val scores = client.send(request, HttpResponse.BodyHandlers.ofString()).body()
     .drop(1).dropLast(1).split(", ").map { it.toFloat() }
-  return docs.zip(scores).sortedBy { it.second }.map { it.first.uncharify() }
+  return docs.zip(scores).sortedBy { -it.second }.map { it.first.uncharify().addNewLineIfMissing() }
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit
