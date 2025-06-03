@@ -14,16 +14,16 @@ import torch, torch.nn as nn, torch.nn.functional as F
 DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
-MAX_NEG                = 1024
+MAX_NEG                = 1023
 TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 1              # optimiser batch
-INFERENCE_BATCH_SIZE   = 255            # <--- ADD THIS HYPER-PARAMETER
+INFERENCE_BATCH_SIZE   = 255
 LR                     = 2e-3           # AdamW
 SAVE_EVERY             = 200            # steps
 VAL_EVERY              = 100            # steps
 
 DEVICE = torch.device(
-    "mps"  if torch.backends.mps.is_available() else
+    # "mps"  if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available()         else "cpu"
 )
 
@@ -128,7 +128,7 @@ class InteractionRanker(nn.Module):
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:,0]).squeeze(1)
 
-def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
+def train(steps=20_000, out="num_reranker", val_data_global=None):
     mdl = InteractionRanker().to(DEVICE)
     total_params = sum(p.numel() for p in mdl.parameters())
     trainable_params = sum(p.numel() for p in mdl.parameters() if p.requires_grad)
@@ -236,7 +236,7 @@ def train(steps=20_000, out="num_reranker.pt", val_data_global=None):
                 print(f"└─ val metrics N/A")
 
         if step % SAVE_EVERY == 0:
-            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"{out}x{step}")
+            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"{out}x{step}.pt")
 
 if __name__ == "__main__":
     torch.manual_seed(0)
