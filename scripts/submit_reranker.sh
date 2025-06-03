@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=makemore
+#SBATCH --job-name=reranker
 #SBATCH --time=10:00:00
 #SBATCH --account=def-jinguo
 #SBATCH --nodes=1
