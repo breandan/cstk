@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH --job-name=makemore
+#SBATCH --time=10:00:00
+#SBATCH --account=def-jinguo
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=48
+#SBATCH --mem=64G
+#SBATCH --gres=gpu:a100:1
+#SBATCH --output=/scratch/breandan/slurm-%j.out
+#SBATCH --error=/scratch/breandan/slurm-%j.err
+#SBATCH --mail-user=bre@ndan.co
+#SBATCH --mail-type=ALL
+
+module load StdEnv/2020
+module load python/3.11
+source env/bin/activate
+
+#pip install --no-index --find-links /cvmfs/soft.computecanada.ca/custom/python/wheelhouse torch tensorboard
+
+commit_message=$(git log -1 --pretty=format:"%s" | sed 's/ /_/g')
+python reranker.py 2>&1 | tee /scratch/breandan/log_${commit_message}.txt
