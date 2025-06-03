@@ -14,7 +14,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
-MAX_NEG                = 2**16-1
+MAX_NEG                = 1024
 TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 1              # optimiser batch
 INFERENCE_BATCH_SIZE   = 255            # <--- ADD THIS HYPER-PARAMETER
@@ -28,20 +28,56 @@ DEVICE = torch.device(
 )
 
 _batch_gen = None
-def fetch_batch(path: str = "char_bifi_ts.txt"):
+
+def _create_generator(path: str = "so_ts.txt"):
+    """
+    Creates a generator that yields (query, [docs…]) from a file.
+    The first doc is positive. Subsequent docs are a random sample of negatives
+    obtained via reservoir sampling to avoid loading all negatives into memory.
+    """
+    with Path(path).open(encoding="utf-8") as f:
+        for gap, grp_iterator in itertools.groupby(f, key=lambda l: l.strip() == ""):
+            if gap:
+                continue
+
+            try:
+                query = next(grp_iterator).rstrip('\n')
+                positive_doc = next(grp_iterator).rstrip('\n')
+            except StopIteration:
+                continue
+
+            # --- Reservoir sampling for negative documents ---
+            reservoir = []
+            for i, line in enumerate(grp_iterator):
+                doc = line.rstrip('\n')
+                if not doc: continue # Skip empty lines within the block
+
+                if i < MAX_NEG:
+                    reservoir.append(doc)
+                else:
+                    j = random.randint(0, i)
+                    if j < MAX_NEG:
+                        reservoir[j] = doc
+
+            # The full list of docs for this query is the positive + sampled negatives
+            all_docs = [positive_doc] + reservoir
+            yield query, all_docs
+
+def fetch_batch(path: str = "so_ts.txt"):
     """Yield (query, [docs…]) from a file with blank-line delimited blocks."""
     global _batch_gen
     if _batch_gen is None:
-        def _reader():
-            with Path(path).open(encoding="utf-8") as f:
-                for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
-                    if not gap:
-                        lines = [l.rstrip("\n") for l in grp]
-                        if lines: yield lines[0], lines[1:]
-        _batch_gen = _reader()
-    try:               return next(_batch_gen)
+        _batch_gen = _create_generator(path)
+    try:
+        return next(_batch_gen)
     except StopIteration:
-        _batch_gen = None; return fetch_batch(path)
+        print("Data file exhausted. Restarting from the beginning.")
+        _batch_gen = _create_generator(path)
+        try:
+            return next(_batch_gen)
+        except StopIteration:
+            print("ERROR: Training file appears to be empty. Cannot fetch a batch.")
+            return "", []
 
 def load_validation(path="char_bifi_vs.txt", cap=1000):
     data = []
