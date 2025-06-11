@@ -78,7 +78,7 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.324")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.0.0-rc.7")
+  implementation("org.gitlab4j:gitlab4j-api:6.0.0")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.10.0")
@@ -88,7 +88,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.10.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.12.4544"
+  val ortoolsVersion = "9.13.4784"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -144,7 +144,7 @@ dependencies {
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
   implementation("org.apache.datasketches:datasketches-java:8.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.2.0")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
