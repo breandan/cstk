@@ -119,6 +119,9 @@ fun evaluateRegexRepairOnStackOverflow() {
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
 
+  val pcfgMap = readPCFG3()
+  val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
+
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
   dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
@@ -205,9 +208,7 @@ fun evaluateRegexRepairOnStackOverflow() {
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
       samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
-      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
-          "0, 0" +
-          "$indexOfTarget, ${levAlign.summarize()}\n")
+      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, 0, 0, $indexOfTarget, ${levAlign.summarize()}\n")
     }
 
     println()

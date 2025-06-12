@@ -19,7 +19,7 @@ TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 1              # optimiser batch
 INFERENCE_BATCH_SIZE   = 255
 LR                     = 2e-3           # AdamW
-SAVE_EVERY             = 200            # steps
+SAVE_EVERY             = 100            # steps
 VAL_EVERY              = 100            # steps
 
 DEVICE = torch.device(
@@ -128,7 +128,41 @@ class InteractionRanker(nn.Module):
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:,0]).squeeze(1)
 
-def train(steps=20_000, out="num_reranker", val_data_global=None):
+def modal_entrypt(ckpt_volume=None):
+    global _batch_gen
+    torch.manual_seed(0)
+    random.seed(0)
+
+    VAL_DATA = load_validation()
+
+    print("Testing fetch_batch with actual text (first few items):")
+    _fetch_batch_gen_orig = _batch_gen
+    _batch_gen = None
+    try:
+        for _i in range(min(3, BATCH_QUERIES if BATCH_QUERIES > 0 else 3)):
+            q_example, d_example_list = fetch_batch()
+            print(f"  Batch {_i+1}: Query='{q_example[:70]}...', Docs (first doc, {len(d_example_list)} total)='{d_example_list[0][:70]}...'")
+            if d_example_list:
+                print(f"    Expected Positive (d_example_list[0]): '{d_example_list[0][:70]}...' (should match query)")
+    except StopIteration:
+        print("  (Not enough data in char_bifi_ts.txt to fetch example batches for testing print)")
+    except Exception as e:
+        print(f"Error during fetch_batch test: {e}")
+    finally:
+        _batch_gen = _fetch_batch_gen_orig
+    print("-" * 20)
+
+    print(f"Validation data examples (first {min(3, len(VAL_DATA))} items loaded):")
+    for i in range(min(10, len(VAL_DATA))):
+        vq, vd = VAL_DATA[i]
+        print(f"  Val Ex {i+1}: Query='{vq[:70]}...', Docs (first doc, {len(vd)} total)='{vd[0][:70]}...'")
+        if vd:
+            print(f"    Expected Positive (vd[0]): '{vd[0][:70]}...' (should match query)")
+    print("-" * 20)
+
+    train(val_data_global=VAL_DATA, ckpt_volume=ckpt_volume)
+
+def train(steps=20_000, out="num_reranker", val_data_global=None, ckpt_volume=None):
     mdl = InteractionRanker().to(DEVICE)
     total_params = sum(p.numel() for p in mdl.parameters())
     trainable_params = sum(p.numel() for p in mdl.parameters() if p.requires_grad)
@@ -236,7 +270,9 @@ def train(steps=20_000, out="num_reranker", val_data_global=None):
                 print(f"└─ val metrics N/A")
 
         if step % SAVE_EVERY == 0:
-            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"{out}x{step}.pt")
+            torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"/ckpts/{out}x{step}.pt")
+            if ckpt_volume is not None:
+                ckpt_volume.commit()
 
 if __name__ == "__main__":
     torch.manual_seed(0)

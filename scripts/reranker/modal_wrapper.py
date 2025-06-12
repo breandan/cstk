@@ -1,0 +1,37 @@
+import modal, subprocess, os, sys, pathlib
+
+image = (
+    modal.Image.from_registry("pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime")
+    .pip_install("numpy")
+    .add_local_dir(".", "/workspace", ignore=["*.txt"])
+)
+
+data_vol = modal.Volume.from_name("ranker-data")
+ckpt_vol = modal.Volume.from_name("ranker-ckpts")
+
+app = modal.App("interaction-ranker")
+
+@app.function(
+    gpu="A10G",
+    image=image,
+    timeout=60 * 60 * 1,
+    volumes={"/data": data_vol,
+             "/ckpts": ckpt_vol},
+)
+def train_remote(steps: int = 20_000):
+    os.chdir("/workspace")
+    sys.path.insert(0, ".")
+
+    from reranker import modal_entrypt
+
+    for fn in ("so_ts.txt", "char_bifi_vs.txt"):
+        src = f"/data/{fn}"
+        dst = f"/workspace/{fn}"
+        if not os.path.exists(dst):
+            os.symlink(src, dst)
+
+    modal_entrypt(ckpt_vol)
+
+@app.local_entrypoint()
+def main(steps: int = 20_000):
+    train_remote.remote(steps)
