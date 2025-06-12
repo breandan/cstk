@@ -29,7 +29,8 @@ fun main() {
   MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateMatrixBarHillelRepairOnStackOverflow()
+  evaluateRegexRepairOnStackOverflow()
+//  evaluateMatrixBarHillelRepairOnStackOverflow()
 //  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
@@ -108,6 +109,118 @@ fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val rankedResults = dfa.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict)
 
   return rankedResults
+}
+
+fun evaluateRegexRepairOnStackOverflow() {
+  val dataset = sizeAndDistBalancedRepairsUnminimized
+  val allRate = LBHMetrics()
+  val levRates = mutableMapOf<Int, LBHMetrics>()
+  val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+  val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+  val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+
+  println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
+  println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
+  dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+
+  val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
+    .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
+//    .replace(" ", "_").replace("/", "_")
+  val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
+      "total_samples, lev_ball_arcs, productions, lang_size, dfa_states, dfa_transitions, rank, edit1, edit2, edit3\n"
+  val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, dfa_states, dfa_transitions, edit1, edit2, edit3\n"
+  val title = "matrix_bar_hillel"
+  val positive = try { File("data/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
+    .also { println("Writing positive CSV to: ${it.absolutePath}") }
+  val negative = try { File("data/${title}_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+  catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_negative_$latestCommitMessage.csv").also { it.appendText(negativeHeader) } }
+    .also { println("Writing negative CSV to: ${it.absolutePath}") }
+  println()
+
+  val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val P_10ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val P_100ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+  val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+
+  dataset.asStream().parallel().forEach { (brokeStr, fixedStr) ->
+    val allTime = TimeSource.Monotonic.markNow()
+    val brokeToks = brokeStr.tokenizeByWhitespace()
+    val fixedToks = fixedStr.tokenizeByWhitespace()
+    val levAlign = levenshteinAlign(brokeToks, fixedToks)
+    val levDist = levAlign.patchSize() // True distance, only used for logging purposes
+
+    val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
+    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+
+    val humanRepairANSI = levenshteinAlign(brokeToks, fixedToks).paintANSIColors()
+    println("Source: ${brokeToks.joinToString(" ")}")
+    println("Repair: $humanRepairANSI")
+
+    val clock = TimeSource.Monotonic.markNow()
+    var totalSamples = 0
+    var matchFound = false
+    val timeout = (TIMEOUT_MS / 1000).seconds
+    var elapsed = clock.elapsedNow().inWholeMilliseconds
+
+    val rankedResults = sendCPU(brokeStr).lines().map { it.addNewLineIfMissing() }.onEach {
+        totalSamples++
+        if (it == fixedStr) {
+          matchFound = true
+          println("Found human repair (${clock.elapsedNow()}): $humanRepairANSI")
+          elapsed = clock.elapsedNow().inWholeMilliseconds
+        }
+      }
+
+    val indexOfTarget = rankedResults.indexOf(fixedStr).also {
+      if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+      if (matchFound) P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+    }
+
+    rankedResults.firstOrNull()?.tokenizeByWhitespace()
+      ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
+
+    if (indexOfTarget < 0) {
+      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ? prods, " +
+//        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
+          "length-$levDist human repair not found")
+      negative.appendText("${brokeToks.size}, $levDist, $totalSamples, ?, ?, ?, ${levAlign.summarize()}\n")
+    } else {
+      val allElapsed = allTime.elapsedNow().inWholeMilliseconds
+
+      allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
+      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
+      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
+          " $totalSamples samples, ? prods, ? trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
+      allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
+//      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
+      sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
+      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
+      allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
+      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
+      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
+      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
+      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, " +
+          "0, 0" +
+          "$indexOfTarget, ${levAlign.summarize()}\n")
+    }
+
+    println()
+    println("Precision@1\n===========")
+    println(P_1ByLevDist.summarizeLenAndDist())
+    println("Precision@10\n===========")
+    println(P_10ByLevDist.summarizeLenAndDist())
+    println("Precision@100\n===========")
+    println(P_100ByLevDist.summarizeLenAndDist())
+    println("Precision@All\n=============")
+    println(P_AllByLevDist.summarizeLenAndDist())
+    println()
+  }
 }
 
 fun evaluateBarHillelRepairOnStackOverflow() {

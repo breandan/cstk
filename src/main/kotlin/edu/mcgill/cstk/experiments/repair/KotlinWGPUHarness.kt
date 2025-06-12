@@ -17,8 +17,7 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 
 /**
-cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair
-2>&1 | tee scripts/confounders.txt (optional)
+cd ../tidyparse && ./gradlew bundleHeadless && cd ../cstk && ./gradlew -q wgpuBarHillelRepair 2>&1 | tee scripts/confounders.txt (optional)
 
 ./gradlew -q wgpuBarHillelRepair 2>&1 | tee scripts/so_ts.txt
 
@@ -101,7 +100,7 @@ private fun evaluateWGPURepairOnStackOverflow() {
     allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
 
     fun failed(msg: Σᐩ?, st: Σᐩ) {
-//      println("Encountered error $msg ${allTime.elapsedNow()}):\n$humanRepairANSI\n$st")
+      println("Encountered error $msg ${allTime.elapsedNow()}):\n$humanRepairANSI\n$st")
 //      allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++
 //      println(allRate.toString())
 //      negative.appendText("${brokeToks.size}, $levDist, 0\n")
@@ -126,9 +125,10 @@ private fun evaluateWGPURepairOnStackOverflow() {
       val idx = lines.indexOf(fixedStr)//; println("Idx: $idx")
       if (idx == -1 || idx > 1_000) throw Exception("Fixed string not found in GPU results")
 
-      val rankedResults = rerankGPU(query, lines.take(1_000).joinToString("\n"))
+      val rankedResults = lines.map { it.addNewLineIfMissing() }
+//      val rankedResults = rerankGPU(query, lines.take(1_000).joinToString("\n"))
 //    val rankedResults  rerankGPU(brokeToks.dropLast(1).joinToString(" "))
-        .also { println("Received ${it.size} ranked samples in ${clock.elapsedNow()}") }
+//        .also { println("Received ${it.size} ranked samples in ${clock.elapsedNow()}") }
 
       val elapsed = clock.elapsedNow().inWholeMilliseconds
 
@@ -162,8 +162,8 @@ private fun evaluateWGPURepairOnStackOverflow() {
       println(P_AllByLevDist.summarizeLenAndDist())
       println()
     }
-    catch (e: Exception) { failed(e.message, e.stackTraceToString()) }
-    catch (e: Error) { failed(e.message, e.stackTraceToString()) }
+    catch (e: Exception) { e.printStackTrace(); failed(e.message, e.stackTraceToString()) }
+    catch (e: Error) { e.printStackTrace(); failed(e.message, e.stackTraceToString()) }
   }
 }
 
@@ -231,8 +231,8 @@ fun startTrainingService() {
 
 fun sendCPU(query: String): String =
   initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toSet()
-  .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-  .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
+    .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+    .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
 
 fun TimeSource.Monotonic.ValueTimeMark.hasTimeLeft() = elapsedNow().inWholeMilliseconds < TIMEOUT_MS
 
