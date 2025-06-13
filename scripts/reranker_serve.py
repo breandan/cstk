@@ -29,6 +29,8 @@ DIM, N_HEADS, N_LAYERS = 512, 8, 4
 MAX_LEN                = 100
 VOCAB                  = 128
 MAX_TOK = 1 + MAX_LEN + 1 + MAX_LEN
+TAU      = 0.1
+
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -53,38 +55,30 @@ def to_tensor(strings: List[str]):
             torch.tensor(lens, dtype=torch.float, device=DEVICE))
 
 class InteractionRanker(nn.Module):
-    """The reranker model class. Definition must match the trained model."""
     def __init__(self):
         super().__init__()
-        self.emb = nn.Embedding(VOCAB + 2, DIM) # +2 for CLS and SEP tokens
-        self.pos = nn.Embedding(MAX_TOK, DIM)
-        enc_layer = nn.TransformerEncoderLayer(DIM, N_HEADS, 4 * DIM, activation="gelu", dropout=0.1, batch_first=True)
-        self.tf = nn.TransformerEncoder(enc_layer, N_LAYERS)
+        self.emb  = nn.Embedding(VOCAB, DIM)
+        self.pos  = nn.Embedding(MAX_TOK, DIM)
+        enc_layer = nn.TransformerEncoderLayer(DIM, N_HEADS, 4*DIM, activation="gelu", dropout=0.1, batch_first=True)
+        self.tf   = nn.TransformerEncoder(enc_layer, N_LAYERS)
         self.head = nn.Linear(DIM, 1)
 
     def forward(self, q_ids, q_len, d_ids, d_lens):
-        N = d_ids.size(0)
+        N, Lq, Ld = d_ids.size(0), q_ids.size(1), d_ids.size(1)
         if N == 0:
             return torch.empty((0,), device=d_ids.device)
-
-        q_ids_expanded = q_ids.expand(N, -1)
-        q_len_expanded = q_len.expand(N)
-
-        cls_token_id = VOCAB
-        sep_token_id = VOCAB + 1
-
-        x = torch.cat([
-            torch.full((N, 1), cls_token_id, device=DEVICE, dtype=torch.long), q_ids_expanded,
-            torch.full((N, 1), sep_token_id, device=DEVICE, dtype=torch.long), d_ids
-        ], dim=1)
-
-        pos_indices = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
+        q_ids_expanded = q_ids.expand(N, -1); q_len_expanded = q_len.expand(N)
+        cls_token_id = VOCAB - 1
+        sep_token_id = VOCAB - 2
+        x = torch.cat([ torch.full((N,1), cls_token_id, device=DEVICE, dtype=torch.long), q_ids_expanded,
+                        torch.full((N,1), sep_token_id, device=DEVICE, dtype=torch.long), d_ids
+                        ], dim=1)
+        pos_indices  = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
         effective_lengths = (1 + q_len_expanded + 1 + d_lens).unsqueeze(1)
         mask = torch.arange(x.size(1), device=DEVICE).expand(N, -1) >= effective_lengths
-
         h = self.emb(x) + self.pos(pos_indices)
         h = self.tf(h, src_key_padding_mask=mask)
-        return self.head(h[:, 0]).squeeze(1)
+        return self.head(h[:,0]).squeeze(1)
 
 # --------------------------- Server Logic -------------------------- #
 
@@ -135,7 +129,7 @@ class RerankHandler(BaseHTTPRequestHandler):
                 batch_docs = doc_texts[i:i+BATCH_SIZE]
                 d_ids, d_lens = to_tensor(batch_docs)
                 if d_ids.size(0) > 0:
-                    scores = model(q_ids, q_len, d_ids, d_lens)
+                    scores = model(q_ids, q_len, d_ids, d_lens) / TAU
                     all_scores.extend(scores.cpu().tolist())
 
         return all_scores
@@ -148,18 +142,8 @@ def load_model():
         model = InteractionRanker().to(DEVICE)
         checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
 
-        # This handles a potential mismatch if the saved model was trained with
-        # a smaller embedding layer before special tokens were accounted for.
-        state_dict = checkpoint['model']
-        if 'emb.weight' in state_dict:
-            num_embeddings_saved = state_dict['emb.weight'].shape[0]
-            if model.emb.num_embeddings > num_embeddings_saved:
-                # Initialize new embedding layer and copy weights
-                new_emb_weight = model.emb.weight.data.clone()
-                new_emb_weight[:num_embeddings_saved] = state_dict['emb.weight']
-                state_dict['emb.weight'] = new_emb_weight
+        model.load_state_dict(checkpoint['model'], strict=True) # Or strict=False to be safe
 
-        model.load_state_dict(state_dict, strict=False)
         model.eval()
         print(f"Model loaded successfully from '{MODEL_PATH}' and is in eval mode.")
     except FileNotFoundError:

@@ -12,9 +12,9 @@ ckpt_vol = modal.Volume.from_name("ranker-ckpts")
 app = modal.App("interaction-ranker")
 
 @app.function(
-    gpu="A10G",
+    gpu="H100",
     image=image,
-    timeout=60 * 60 * 1,
+    timeout=60 * 60 * 3,
     volumes={"/data": data_vol,
              "/ckpts": ckpt_vol},
 )

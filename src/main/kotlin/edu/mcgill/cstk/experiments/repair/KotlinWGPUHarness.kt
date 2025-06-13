@@ -315,12 +315,16 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
     .map { it.addNewLineIfMissing() }
     .map { it.charify() }
   val reqBody = "$query\n${docs.joinToString("\n")}"
+//  println("REQ BODY\n\n $reqBody\n\n")
   val request = HttpRequest.newBuilder().uri(URI.create(url))
     .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build()
 
   val scores = client.send(request, HttpResponse.BodyHandlers.ofString()).body()
     .drop(1).dropLast(1).split(", ").map { it.toFloat() }
-  return docs.zip(scores).sortedBy { -it.second }.map { it.first.uncharify() }
+  println("Min score: ${scores.min()}, max score: ${scores.max()}, scores: ${scores.size}, docs: ${docs.size}")
+  return docs.zip(scores).sortedBy { -it.second }
+    .onEachIndexed { i, it -> if(i < 10) println("$i: ${it.first.take(10)}  ${it.second}") }
+    .map { it.first.uncharify() }
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit
