@@ -11,6 +11,7 @@ import java.io.File
 import java.net.*
 import java.net.http.*
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.util.concurrent.*
 import kotlin.math.absoluteValue
 import kotlin.time.*
@@ -197,9 +198,6 @@ fun startWGPUServer() {
   Desktop.getDesktop().browse(URI("http://localhost:$PORT/"))
 }
 
-fun String.charify() = "|${encodeToMakemore()}}"
-fun String.uncharify() = removePrefix("|").removeSuffix("}").decodeFromMakemore()
-
 fun startTrainingService() {
   val seq = iterBIFIContents().map {
     val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
@@ -304,25 +302,45 @@ fun sendGPU(query: String, timeoutSec: Long = 30) = try {
   resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
 } catch (e: Exception) { "" }
 
+fun String.charify() = "|${encodeToMakemore()}}"
+fun String.uncharify() = removePrefix("|").removeSuffix("}").decodeFromMakemore()
+
 fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http://localhost:8082/rerank"): List<String> {
   if (docs.isEmpty()) return emptyList()
   val client = HttpClient.newBuilder().build()
 
   val query = query.charify()
   val docs = docs.lines().filter { it.isNotBlank() }
-//    .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-//    .sortedBy { it.second }.map { it.first }.take(1000)
     .map { it.addNewLineIfMissing() }
     .map { it.charify() }
   val reqBody = "$query\n${docs.joinToString("\n")}"
-//  println("REQ BODY\n\n $reqBody\n\n")
+
   val request = HttpRequest.newBuilder().uri(URI.create(url))
+    // FIX: Add a reasonable timeout. For a model processing 1000 documents,
+    // a timeout of 1-2 minutes is a safe starting point.
+    .timeout(Duration.ofMinutes(2))
     .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build()
 
-  val scores = client.send(request, HttpResponse.BodyHandlers.ofString()).body()
-    .drop(1).dropLast(1).split(", ").map { it.toFloat() }
-  println("Min score: ${scores.min()}, max score: ${scores.max()}, scores: ${scores.size}, docs: ${docs.size}")
-  return docs.zip(scores).sortedBy { -it.second }
+  val responseBody = try {
+    client.send(request, HttpResponse.BodyHandlers.ofString()).body()
+  } catch (e: HttpTimeoutException) {
+    println("Error: Request to reranker timed out. ${e.message}")
+    return emptyList()
+  }
+
+  // Defensive parsing in case of an empty or malformed response
+  if (responseBody.length < 2) return emptyList()
+
+  val scores = responseBody
+    .drop(1).dropLast(1).split(", ").mapNotNull { it.toFloatOrNull() }
+
+  if (scores.size != docs.size) {
+    println("Warning: Mismatch between number of docs (${docs.size}) and scores received (${scores.size}).")
+    return emptyList()
+  }
+
+  println("Min score: ${scores.minOrNull()}, max score: ${scores.maxOrNull()}, scores: ${scores.size}, docs: ${docs.size}")
+  return docs.zip(scores).sortedBy { it.second }
     .onEachIndexed { i, it -> if(i < 10) println("$i: ${it.first.take(10)}  ${it.second}") }
     .map { it.first.uncharify() }
 }

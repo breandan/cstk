@@ -30,7 +30,7 @@ def train_remote(steps: int = 20_000):
         if not os.path.exists(dst):
             os.symlink(src, dst)
 
-    modal_entrypt(ckpt_vol)
+    modal_entrypt(steps, ckpt_vol)
 
 @app.local_entrypoint()
 def main(steps: int = 20_000):

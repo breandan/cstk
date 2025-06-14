@@ -9,6 +9,7 @@ which prevents the model's outputs from collapsing during evaluation.
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import List, Tuple
+from socketserver import ThreadingMixIn
 
 import torch
 import torch.nn as nn
@@ -20,7 +21,7 @@ HOST = "localhost"
 PORT = 8082
 
 # --- Model settings (MUST match the training script) ---
-MODEL_PATH             = "num_rerankerx15900.pt" # Path to your trained model
+MODEL_PATH             = "num_reranker_markovx5400.pt" # Path to your trained model
 BATCH_SIZE             = 32                     # Inference batch size for documents
 
 # Model hyper-parameters
@@ -156,11 +157,16 @@ class RerankHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(404, "Not Found")
 
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle requests in a separate thread."""
+    # This allows the server to handle multiple simultaneous connections
+    daemon_threads = True
+
 def run_server():
     """Initializes the model and starts the HTTP server."""
     load_model()
     server_address = (HOST, PORT)
-    httpd = HTTPServer(server_address, RerankHandler)
+    httpd = ThreadingHTTPServer(server_address, RerankHandler)
 
     print(f"\nServer starting on http://{HOST}:{PORT}")
     print("Send POST requests to /rerank to get scores.")

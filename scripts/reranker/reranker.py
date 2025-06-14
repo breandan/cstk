@@ -204,7 +204,7 @@ def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_vo
             if ckpt_volume is not None:
                 ckpt_volume.commit()
 
-def modal_entrypt(ckpt_volume=None):
+def modal_entrypt(steps=20_000, ckpt_volume=None):
     global _batch_gen
     torch.manual_seed(0)
     random.seed(0)
@@ -236,7 +236,7 @@ def modal_entrypt(ckpt_volume=None):
             print(f"    Expected Positive (vd[0]): '{vd[0][:70]}...' (should match query)")
     print("-" * 20)
 
-    train(val_data_global=VAL_DATA, ckpt_volume=ckpt_volume)
+    train(steps=steps, val_data_global=VAL_DATA, ckpt_volume=ckpt_volume)
 
 if __name__ == "__main__":
     modal_entrypt()
