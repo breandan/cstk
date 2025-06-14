@@ -14,11 +14,11 @@ import torch, torch.nn as nn, torch.nn.functional as F
 DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
-MAX_NEG                = 255            # 1 pos + 127 neg = 128-way softmax
+MAX_NEG                = 1000           # 1 pos + 127 neg = 128-way softmax
 TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 1              # optimiser batch
 LR                     = 2e-3           # AdamW
-SAVE_EVERY             = 100            # steps
+SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
 
 DEVICE = torch.device(
@@ -27,7 +27,7 @@ DEVICE = torch.device(
 )
 
 _batch_gen = None
-def fetch_batch(path: str = "so_ts.txt"):
+def fetch_batch(path: str = "so_ts_markov.txt"):
     """Yield (query, [docs…]) from a file with blank-line delimited blocks."""
     global _batch_gen
     if _batch_gen is None:
@@ -42,7 +42,7 @@ def fetch_batch(path: str = "so_ts.txt"):
     except StopIteration:
         _batch_gen = None; return fetch_batch(path)
 
-def load_validation(path="char_bifi_vs.txt", cap=1000):
+def load_validation(path="so_vs_markov.txt", cap=1000):
     data = []
     with Path(path).open(encoding="utf-8") as f:
         for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
@@ -91,8 +91,9 @@ class InteractionRanker(nn.Module):
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:,0]).squeeze(1)
 
-def train(steps=20_000, out="num_reranker", val_data_global=None, ckpt_volume=None):
+def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_volume=None):
     mdl = InteractionRanker().to(DEVICE)
+    # mdl = torch.compile(mdl, mode="reduce-overhead")
     total_params = sum(p.numel() for p in mdl.parameters())
     trainable_params = sum(p.numel() for p in mdl.parameters() if p.requires_grad)
 

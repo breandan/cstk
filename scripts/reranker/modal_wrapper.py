@@ -24,7 +24,7 @@ def train_remote(steps: int = 20_000):
 
     from reranker import modal_entrypt
 
-    for fn in ("so_ts.txt", "char_bifi_vs.txt"):
+    for fn in ("so_vs_markov.txt", "so_ts_markov.txt"):
         src = f"/data/{fn}"
         dst = f"/workspace/{fn}"
         if not os.path.exists(dst):
