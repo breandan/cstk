@@ -316,8 +316,6 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
   val reqBody = "$query\n${docs.joinToString("\n")}"
 
   val request = HttpRequest.newBuilder().uri(URI.create(url))
-    // FIX: Add a reasonable timeout. For a model processing 1000 documents,
-    // a timeout of 1-2 minutes is a safe starting point.
     .timeout(Duration.ofMinutes(2))
     .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build()
 
@@ -328,21 +326,7 @@ fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http:
     return emptyList()
   }
 
-  // Defensive parsing in case of an empty or malformed response
-  if (responseBody.length < 2) return emptyList()
-
-  val scores = responseBody
-    .drop(1).dropLast(1).split(", ").mapNotNull { it.toFloatOrNull() }
-
-  if (scores.size != docs.size) {
-    println("Warning: Mismatch between number of docs (${docs.size}) and scores received (${scores.size}).")
-    return emptyList()
-  }
-
-  println("Min score: ${scores.minOrNull()}, max score: ${scores.maxOrNull()}, scores: ${scores.size}, docs: ${docs.size}")
-  return docs.zip(scores).sortedBy { it.second }
-    .onEachIndexed { i, it -> if(i < 10) println("$i: ${it.first.take(10)}  ${it.second}") }
-    .map { it.first.uncharify() }
+  return responseBody.lines().map { it.uncharify() }
 }
 
 fun stopWGPUServer() = if (::server.isInitialized) server.stop(0) else Unit

@@ -14,10 +14,10 @@ import torch, torch.nn as nn, torch.nn.functional as F
 DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
-MAX_NEG                = 1000           # 1 pos + 127 neg = 128-way softmax
+MAX_NEG                = 1000           # 1 pos + 999 neg = 1000-way softmax
 TAU                    = 0.1            # temperature
 BATCH_QUERIES          = 1              # optimiser batch
-LR                     = 2e-3           # AdamW
+LR                     = 1e-3           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
 
@@ -131,8 +131,7 @@ def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_vo
             min_s   = scores_train.min().item()
             max_s   = scores_train.max().item()
             n_docs  = len(current_docs_texts)          # number of docs in this instance
-            print(f"[train] Min score: {min_s:.6f}, max score: {max_s:.6f}, "
-                  +          f"scores: {n_docs}, docs: {n_docs}")
+            print(f"[train] Min score: {min_s:.6f}, max score: {max_s:.6f}, scores: {n_docs}, docs: {n_docs}")
             loss = F.cross_entropy(scores_train.unsqueeze(0), torch.tensor([target_idx], device=DEVICE))
             loss.backward(); tot_loss += loss.item()
             with torch.no_grad():
@@ -156,36 +155,43 @@ def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_vo
                 printed_val_examples = 0
                 num_examples_to_print = 3
 
-                for vq_idx, (vq_text, vdocs_texts) in enumerate(val_data_global):
-                    if not vdocs_texts: continue
+                for vq_idx, (vq_text, vdocs_all) in enumerate(random.sample(val_data_global, len(val_data_global))):
+                    if not vdocs_all: continue
+
+                    pos_doc_text_val = vdocs_all[0]
+                    perm_val = torch.randperm(len(vdocs_all))
+                    shuffled_vdocs_texts = [vdocs_all[i] for i in perm_val]
+
+                    true_positive_idx_after_shuffle = (perm_val == 0).nonzero(as_tuple=False).item()
+
                     q_ids_val, q_len_val  = to_tensor([vq_text])
-                    d_ids_val, d_lens_val = to_tensor(vdocs_texts)
+                    d_ids_val, d_lens_val = to_tensor(shuffled_vdocs_texts)
+
                     if d_ids_val.size(0) == 0: continue
 
-                    # For inspecting raw scores vs scaled scores
                     raw_scores_val = mdl(q_ids_val, q_len_val, d_ids_val, d_lens_val)
                     if raw_scores_val.numel() == 0: continue
                     scores_val = raw_scores_val / TAU
 
-                    true_positive_idx_in_vdocs = 0
                     sorted_indices_val = scores_val.argsort(descending=True)
-                    rank_of_true_positive = (sorted_indices_val == true_positive_idx_in_vdocs).nonzero(as_tuple=True)[0].item() + 1
+
+                    rank_of_true_positive = (sorted_indices_val == true_positive_idx_after_shuffle).nonzero(as_tuple=True)[0].item() + 1
+
                     val_ranks.append(rank_of_true_positive)
                     val_reciprocal_ranks.append(1.0 / rank_of_true_positive)
 
                     if printed_val_examples < num_examples_to_print and val_data_global:
                         print(f"  --- Validation Example {vq_idx+1}/{len(val_data_global)} ---")
                         print(f"    Query: '{vq_text[:150]}{'...' if len(vq_text) > 150 else ''}'")
-                        positive_doc_text_val = vdocs_texts[true_positive_idx_in_vdocs]
-                        print(f"    True Positive (Rank {rank_of_true_positive}): '{positive_doc_text_val[:150]}{'...' if len(positive_doc_text_val) > 150 else ''}'")
+                        print(f"    True Positive (Rank {rank_of_true_positive}): '{pos_doc_text_val[:150]}{'...' if len(pos_doc_text_val) > 150 else ''}'")
                         print(f"    Top 5 Ranked Documents by Model:")
-                        top_k_val = min(5, len(vdocs_texts))
+                        top_k_val = min(5, len(shuffled_vdocs_texts))
                         for i in range(top_k_val):
-                            doc_idx_in_vdocs = sorted_indices_val[i].item()
-                            retrieved_doc_text = vdocs_texts[doc_idx_in_vdocs]
-                            retrieved_raw_score = raw_scores_val[doc_idx_in_vdocs].item() # Raw score
-                            retrieved_scaled_score = scores_val[doc_idx_in_vdocs].item() # Scaled score
-                            is_true_positive_marker = " (*True Positive*)" if doc_idx_in_vdocs == true_positive_idx_in_vdocs else ""
+                            doc_idx_in_shuffled_list = sorted_indices_val[i].item()
+                            retrieved_doc_text = shuffled_vdocs_texts[doc_idx_in_shuffled_list]
+                            retrieved_raw_score = raw_scores_val[doc_idx_in_shuffled_list].item()
+                            retrieved_scaled_score = scores_val[doc_idx_in_shuffled_list].item()
+                            is_true_positive_marker = " (*True Positive*)" if doc_idx_in_shuffled_list == true_positive_idx_after_shuffle else ""
                             print(f"      {i+1}. (Raw: {retrieved_raw_score:.3f}, Scaled: {retrieved_scaled_score:.3f}) '{retrieved_doc_text[:100]}{'...' if len(retrieved_doc_text) > 100 else ''}'{is_true_positive_marker}")
                         printed_val_examples += 1
                         if printed_val_examples == num_examples_to_print and vq_idx < len(val_data_global) -1 : print("    ---")

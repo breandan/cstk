@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-A simple, robust HTTP server for the InteractionRanker model.
-Final Fix: The model is set to .train() mode to re-enable dropout,
-which prevents the model's outputs from collapsing during evaluation.
+A simple, threaded HTTP server to host the InteractionRanker model for reranking documents.
+Receives a query and a list of documents, and returns the documents in ranked order.
 """
-
 import json
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import List, Tuple
 from socketserver import ThreadingMixIn
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -21,15 +20,14 @@ HOST = "localhost"
 PORT = 8082
 
 # --- Model settings (MUST match the training script) ---
-MODEL_PATH             = "num_reranker_markovx5400.pt" # Path to your trained model
-BATCH_SIZE             = 32                     # Inference batch size for documents
+MODEL_PATH = "num_reranker_markovx5400.pt"
+BATCH_SIZE = 32  # Inference batch size for documents
 
 # Model hyper-parameters
 DIM, N_HEADS, N_LAYERS = 512, 8, 4
-MAX_LEN                = 100
-VOCAB                  = 128
-MAX_TOK                = 1 + MAX_LEN + 1 + MAX_LEN
-TAU                    = 0.1 # Temperature for score scaling
+MAX_LEN = 100
+VOCAB = 128
+MAX_TOK = 1 + MAX_LEN + 1 + MAX_LEN
 
 # Global variable to hold the loaded model
 model = None
@@ -37,13 +35,12 @@ model = None
 # Set device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ------------------- Model & Data Utilities (Known Good) ------------------- #
-# These are copied directly from the verified training script.
+# ------------------- Model & Data Utilities (from training script) ------------------- #
 
 def encode(txt: str) -> Tuple[List[int], int]:
     """Encodes a string into token IDs and its length."""
     ids = [ord(c) % VOCAB for c in txt[:MAX_LEN]]
-    return ids + [0]*(MAX_LEN-len(ids)), len(ids)
+    return ids + [0] * (MAX_LEN - len(ids)), len(ids)
 
 def to_tensor(strings: List[str]):
     """Converts a list of strings to padded ID and length tensors."""
@@ -52,7 +49,7 @@ def to_tensor(strings: List[str]):
         empty_lens = torch.empty((0,), dtype=torch.float, device=DEVICE)
         return empty_ids, empty_lens
     ids, lens = zip(*(encode(s) for s in strings))
-    return (torch.tensor(ids,  dtype=torch.long,  device=DEVICE),
+    return (torch.tensor(ids, dtype=torch.long, device=DEVICE),
             torch.tensor(lens, dtype=torch.float, device=DEVICE))
 
 class InteractionRanker(nn.Module):
@@ -89,96 +86,137 @@ class InteractionRanker(nn.Module):
         h = self.tf(h, src_key_padding_mask=mask)
         return self.head(h[:, 0]).squeeze(1)
 
-
-# --------------------------- Server Implementation -------------------------- #
-
-def load_model():
-    """Loads the model into the global variable and sets the correct mode."""
-    global model
-    print(f"Loading model from {MODEL_PATH} onto {DEVICE}...")
+def load_model(path: str) -> nn.Module:
+    """Loads the trained model from a checkpoint file."""
+    print(f"Loading model from {path} onto {DEVICE}...")
     try:
-        model = InteractionRanker().to(DEVICE)
-        checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
-        model.load_state_dict(checkpoint['model'], strict=True)
-
-        # --- THE FIX IS HERE ---
-        # For this specific model, we must use .train() mode to keep dropout
-        # active, which prevents the scores from collapsing.
-        model.train()
-
-        print("Model loaded successfully and is in TRAIN mode.")
+        checkpoint = torch.load(path, map_location=DEVICE)
+        m = InteractionRanker().to(DEVICE)
+        m.load_state_dict(checkpoint['model'])
+        m.eval()  # Set model to evaluation mode
+        print("Model loaded successfully.")
+        return m
+    except FileNotFoundError:
+        print(f"ERROR: Model file not found at '{path}'. Please check the MODEL_PATH.")
+        exit(1)
     except Exception as e:
-        print(f"FATAL: Could not load model. Error: {e}")
+        print(f"An error occurred while loading the model: {e}")
         exit(1)
 
-def get_scores(query_text: str, doc_texts: List[str]) -> List[float]:
-    """Reranks a list of documents against a single query."""
-    all_scores = []
-    # Gradients are not needed, even in train() mode for inference.
-    with torch.no_grad():
-        q_ids, q_len = to_tensor([query_text])
+def rerank_documents(query_text: str, doc_texts: List[str]) -> List[str]:
+    """Reranks documents for a given query using the loaded model."""
+    if not doc_texts:
+        return []
 
+    q_ids, q_len = to_tensor([query_text])
+    all_scores = []
+
+    with torch.no_grad():
         for i in range(0, len(doc_texts), BATCH_SIZE):
             batch_docs = doc_texts[i:i + BATCH_SIZE]
-            d_ids, d_lens = to_tensor(batch_docs)
-            if d_ids.size(0) == 0:
+            if not batch_docs:
                 continue
 
-            raw_scores = model(q_ids, q_len, d_ids, d_lens)
-            scaled_scores = raw_scores / TAU
-            all_scores.extend(scaled_scores.cpu().tolist())
+            d_ids, d_lens = to_tensor(batch_docs)
+            scores = model(q_ids, q_len, d_ids, d_lens)
+            all_scores.append(scores)
 
-    return all_scores
+    if not all_scores:
+        return doc_texts # Return original if no scores were generated
 
-class RerankHandler(BaseHTTPRequestHandler):
-    """A custom HTTP handler for reranking requests."""
-    def do_POST(self):
-        if self.path == '/rerank':
-            try:
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length).decode('utf-8')
-                lines = [line for line in post_data.split('\n') if line.strip()]
+    # Combine scores and get the final ranking
+    all_scores_tensor = torch.cat(all_scores)
+    sorted_indices = torch.argsort(all_scores_tensor, descending=True)
 
-                if len(lines) < 2:
-                    self.send_error(400, "Bad Request: Input must contain a query on the first line and at least one document on subsequent lines.")
-                    return
-
-                query_text = lines[0]
-                doc_texts = lines[1:]
-                scores = get_scores(query_text, doc_texts)
-                self.send_response(200)
-                self.send_header('Content-type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(scores).encode('utf-8'))
-
-            except Exception as e:
-                print(f"Error processing request: {e}")
-                self.send_error(500, "Internal Server Error")
-        else:
-            self.send_error(404, "Not Found")
+    # Reorder the original documents based on the sorted indices
+    ranked_docs = [doc_texts[i] for i in sorted_indices.cpu().tolist()]
+    return ranked_docs
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
-    # This allows the server to handle multiple simultaneous connections
     daemon_threads = True
 
-def run_server():
-    """Initializes the model and starts the HTTP server."""
-    load_model()
-    server_address = (HOST, PORT)
-    httpd = ThreadingHTTPServer(server_address, RerankHandler)
 
-    print(f"\nServer starting on http://{HOST}:{PORT}")
-    print("Send POST requests to /rerank to get scores.")
-    print("Press Ctrl+C to shut down.")
+class RerankerHandler(BaseHTTPRequestHandler):
+    """
+    Request handler for the reranking service.
+    Only handles POST requests to /rerank.
+    """
+    def do_POST(self):
+        if self.path != '/rerank':
+            self.send_error(404, "Not Found: Please post to /rerank")
+            return
+
+        try:
+            # Read and parse the request body
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            lines = post_data.strip().split('\n')
+
+            if not lines or len(lines) < 2:
+                self.send_error(400, "Bad Request: Expected format is a query on the first line and documents on subsequent lines.")
+                return
+
+            query = lines[0]
+            documents = lines[1:]
+
+            # Perform the reranking
+            start_time = time.time()
+            ranked_documents = rerank_documents(query, documents)
+            end_time = time.time()
+
+            print(f"Reranked {len(documents)} documents for query '{query[:50]}...' in {end_time - start_time:.4f} seconds.")
+
+            # Send the response as raw text, one document per line
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write('\n'.join(ranked_documents).encode('utf-8'))
+
+        except Exception as e:
+            self.send_error(500, f"Internal Server Error: {e}")
+            print(f"Error processing request: {e}")
+
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html')
+            self.end_headers()
+            message = """
+            <html>
+                <head><title>Reranker Service</title></head>
+                <body>
+                    <h1>Reranker Model Service is Running</h1>
+                    <p>This server provides a reranking service for a trained transformer model.</p>
+                    <p>To use it, send a <strong>POST</strong> request to the <code>/rerank</code> endpoint.</p>
+                    <p>The request body should be plain text with the query on the first line and each candidate document on a new line.</p>
+                    <p>The response will be the documents in ranked order, separated by newlines.</p>
+                    <p>Example using <code>curl</code>:</p>
+                    <pre><code>curl -s -X POST -H 'Content-Type: text/plain' --data-binary @/tmp/foo.txt http://localhost:8082/rerank</code></pre>
+                </body>
+            </html>
+            """
+            self.wfile.write(message.encode('utf-8'))
+        else:
+            self.send_error(404, "Not Found")
+
+def main():
+    """Main function to load the model and start the server."""
+    global model
+    model = load_model(MODEL_PATH)
+
+    server_address = (HOST, PORT)
+    httpd = ThreadingHTTPServer(server_address, RerankerHandler)
+
+    print(f"Starting server on http://{HOST}:{PORT}")
+    print("Send POST requests to /rerank to get document rankings.")
+    print("Press Ctrl+C to stop the server.")
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        pass
-
-    httpd.server_close()
-    print("\nServer shut down.")
+        print("\nStopping server...")
+        httpd.socket.close()
 
 if __name__ == "__main__":
-    run_server()
+    main()
