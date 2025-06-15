@@ -186,8 +186,8 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val unrankedResults = sendCPU(brokeStr).lines()
     val rankedResults =
-      unrankedResults
-//      rerankGPU(brokeStr, unrankedResults.take(100).joinToString("\n"))
+//      unrankedResults
+      rerankGPU(brokeStr, unrankedResults.take(1000).joinToString("\n"))
         .map { it.addNewLineIfMissing() }.onEachIndexed { i, it ->
           totalSamples++
           if (it == fixedStr) {

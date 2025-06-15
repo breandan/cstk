@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Char-level reranker with cross-attention, negative sub-sampling, temperature-scaled list-wise CE.
+Char-level reranker with cross-attention, negative sub-sampling, trained on next-token prediction.
 """
 
 import time, random, itertools, os
@@ -14,9 +14,9 @@ import torch, torch.nn as nn, torch.nn.functional as F
 DIM, N_HEADS, N_LAYERS = 512, 8, 4      # model size
 MAX_LEN                = 100            # truncate / pad length
 VOCAB                  = 128            # ASCII
-MAX_NEG                = 1000           # 1 pos + 999 neg = 1000-way softmax
-TAU                    = 0.1            # temperature
-BATCH_QUERIES          = 1              # optimiser batch
+MAX_NEG                = 100            # 1 pos + 999 neg = 1000-way softmax
+BATCH_QUERIES          = 32             # optimiser batch
+TRUNCATE               = 100
 LR                     = 1e-3           # AdamW
 SAVE_EVERY             = 500            # steps
 VAL_EVERY              = 100            # steps
@@ -72,32 +72,35 @@ class InteractionRanker(nn.Module):
         self.pos  = nn.Embedding(MAX_TOK, DIM)
         enc_layer = nn.TransformerEncoderLayer(DIM, N_HEADS, 4*DIM, activation="gelu", dropout=0.1, batch_first=True)
         self.tf   = nn.TransformerEncoder(enc_layer, N_LAYERS)
-        self.head = nn.Linear(DIM, 1)
+        self.head = nn.Linear(DIM, VOCAB)
 
     def forward(self, q_ids, q_len, d_ids, d_lens):
         N, Lq, Ld = d_ids.size(0), q_ids.size(1), d_ids.size(1)
         if N == 0:
-            return torch.empty((0,), device=d_ids.device)
-        q_ids_expanded = q_ids.expand(N, -1); q_len_expanded = q_len.expand(N)
-        cls_token_id = VOCAB - 1
+            return torch.empty((0, Ld, VOCAB), device=d_ids.device)
+
+        q_ids_expanded = q_ids.expand(N, -1)
         sep_token_id = VOCAB - 2
-        x = torch.cat([ torch.full((N,1), cls_token_id, device=DEVICE, dtype=torch.long), q_ids_expanded,
-                        torch.full((N,1), sep_token_id, device=DEVICE, dtype=torch.long), d_ids
-                        ], dim=1)
-        pos_indices  = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
-        effective_lengths = (1 + q_len_expanded + 1 + d_lens).unsqueeze(1)
-        mask = torch.arange(x.size(1), device=DEVICE).expand(N, -1) >= effective_lengths
+
+        # Concatenate query and documents for transformer input
+        x = torch.cat([q_ids_expanded,
+                       torch.full((N, 1), sep_token_id, device=DEVICE, dtype=torch.long),
+                       d_ids], dim=1)
+
+        pos_indices = torch.arange(x.size(1), device=DEVICE).expand(N, -1)
         h = self.emb(x) + self.pos(pos_indices)
-        h = self.tf(h, src_key_padding_mask=mask)
-        return self.head(h[:,0]).squeeze(1)
+        h = self.tf(h)
+
+        # We only care about the logits for the document part
+        doc_logits = self.head(h[:, Lq + 1:])
+        return doc_logits
 
 def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_volume=None):
     mdl = InteractionRanker().to(DEVICE)
-    # mdl = torch.compile(mdl, mode="reduce-overhead")
     total_params = sum(p.numel() for p in mdl.parameters())
     trainable_params = sum(p.numel() for p in mdl.parameters() if p.requires_grad)
 
-    print(f"Model: InteractionRanker")
+    print(f"Model: InteractionRanker (Next-Token Prediction)")
     print(f"Total parameters: {total_params:,}")
     print(f"Trainable parameters: {trainable_params:,}")
 
@@ -112,100 +115,75 @@ def train(steps=20_000, out="num_reranker_markov", val_data_global=None, ckpt_vo
         opt.zero_grad(); tot_loss = 0.0
         current_batch_reciprocal_ranks = []
 
-        for _ in range(BATCH_QUERIES):
+        for i in range(BATCH_QUERIES):
             q_txt, docs_all = fetch_batch()
             if not docs_all: continue
+            docs_all = docs_all[:TRUNCATE]
             pos_doc_text = docs_all[0]
-            neg_all_texts = docs_all[1:]
-            neg_sampled_texts = random.sample(neg_all_texts, min(len(neg_all_texts), MAX_NEG)) \
-                if neg_all_texts else []
-            current_docs_texts = [pos_doc_text] + neg_sampled_texts
-            perm = torch.randperm(len(current_docs_texts))
-            shuffled_docs_texts = [current_docs_texts[i] for i in perm]
-            target_idx = (perm == 0).nonzero(as_tuple=False).item()
-            q_ids_train, q_len_train  = to_tensor([q_txt])
-            d_ids_train, d_lens_train = to_tensor(shuffled_docs_texts)
-            if d_ids_train.size(0) == 0: continue
-            scores_train = mdl(q_ids_train, q_len_train, d_ids_train, d_lens_train) / TAU
-            if scores_train.numel() == 0: continue
-            min_s   = scores_train.min().item()
-            max_s   = scores_train.max().item()
-            n_docs  = len(current_docs_texts)          # number of docs in this instance
-            print(f"[train] Min score: {min_s:.6f}, max score: {max_s:.6f}, scores: {n_docs}, docs: {n_docs}")
-            loss = F.cross_entropy(scores_train.unsqueeze(0), torch.tensor([target_idx], device=DEVICE))
-            loss.backward(); tot_loss += loss.item()
-            with torch.no_grad():
-                rank_of_positive_train = (scores_train.argsort(descending=True) == target_idx).nonzero(as_tuple=True)[0].item() + 1
-                current_batch_reciprocal_ranks.append(1.0 / rank_of_positive_train)
 
-        if current_batch_reciprocal_ranks: # Check if any ranks were recorded (batches processed)
-            torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
-            opt.step()
-            if step % 10 == 0:
-                mrr_train_batch = sum(current_batch_reciprocal_ranks) / len(current_batch_reciprocal_ranks)
-                print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr {mrr_train_batch:.3f}")
-        elif step % 10 == 0:
-            print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f} | mrr N/A (no ranks recorded this batch acc)")
+            q_ids_train, q_len_train = to_tensor([q_txt])
+            d_ids_train, d_lens_train = to_tensor([pos_doc_text])
+
+            if d_ids_train.size(0) == 0: continue
+
+            # Predict logits for each token in the document
+            logits = mdl(q_ids_train, q_len_train, d_ids_train, d_lens_train)
+            logits = logits.view(-1, VOCAB)
+
+            # The target is the document itself, shifted by one token
+            targets = d_ids_train.view(-1)
+
+            loss = F.cross_entropy(logits, targets)
+            loss.backward()
+            tot_loss += loss.item()
+
+        torch.nn.utils.clip_grad_norm_(mdl.parameters(), 5.0)
+        opt.step()
+
+        if step % 10 == 0:
+            print(f"{step:>6} | loss {tot_loss/BATCH_QUERIES:.3f}")
 
         if step % VAL_EVERY == 1:
             mdl.eval()
             with torch.no_grad():
-                val_ranks = [] # For Acc@N
-                val_reciprocal_ranks = [] # For MRR
-                printed_val_examples = 0
-                num_examples_to_print = 3
-
+                val_reciprocal_ranks = []
                 for vq_idx, (vq_text, vdocs_all) in enumerate(random.sample(val_data_global, len(val_data_global))):
                     if not vdocs_all: continue
+                    vdocs_all = vdocs_all[:TRUNCATE]
 
-                    pos_doc_text_val = vdocs_all[0]
-                    perm_val = torch.randperm(len(vdocs_all))
-                    shuffled_vdocs_texts = [vdocs_all[i] for i in perm_val]
-
-                    true_positive_idx_after_shuffle = (perm_val == 0).nonzero(as_tuple=False).item()
-
-                    q_ids_val, q_len_val  = to_tensor([vq_text])
-                    d_ids_val, d_lens_val = to_tensor(shuffled_vdocs_texts)
+                    q_ids_val, q_len_val = to_tensor([vq_text])
+                    d_ids_val, d_lens_val = to_tensor(vdocs_all)
 
                     if d_ids_val.size(0) == 0: continue
 
-                    raw_scores_val = mdl(q_ids_val, q_len_val, d_ids_val, d_lens_val)
-                    if raw_scores_val.numel() == 0: continue
-                    scores_val = raw_scores_val / TAU
+                    doc_probs = []
+                    for i in range(d_ids_val.size(0)):
+                        doc_id = d_ids_val[i:i+1]
+                        doc_len = d_lens_val[i:i+1]
+                        logits = mdl(q_ids_val, q_len_val, doc_id, doc_len)
+                        log_probs = F.log_softmax(logits, dim=-1)
 
-                    sorted_indices_val = scores_val.argsort(descending=True)
+                        # Gather the log probabilities of the true tokens
+                        true_log_probs = log_probs.gather(2, doc_id.unsqueeze(2)).squeeze(2)
 
-                    rank_of_true_positive = (sorted_indices_val == true_positive_idx_after_shuffle).nonzero(as_tuple=True)[0].item() + 1
+                        # Sum the log probabilities to get the document's log probability
+                        doc_log_prob = true_log_probs.sum()
+                        doc_probs.append(doc_log_prob.item())
 
-                    val_ranks.append(rank_of_true_positive)
+                    # The first document is the positive one
+                    true_positive_prob = doc_probs[0]
+                    rank_of_true_positive = sorted(doc_probs, reverse=True).index(true_positive_prob) + 1
                     val_reciprocal_ranks.append(1.0 / rank_of_true_positive)
 
-                    if printed_val_examples < num_examples_to_print and val_data_global:
-                        print(f"  --- Validation Example {vq_idx+1}/{len(val_data_global)} ---")
-                        print(f"    Query: '{vq_text[:150]}{'...' if len(vq_text) > 150 else ''}'")
-                        print(f"    True Positive (Rank {rank_of_true_positive}): '{pos_doc_text_val[:150]}{'...' if len(pos_doc_text_val) > 150 else ''}'")
-                        print(f"    Top 5 Ranked Documents by Model:")
-                        top_k_val = min(5, len(shuffled_vdocs_texts))
-                        for i in range(top_k_val):
-                            doc_idx_in_shuffled_list = sorted_indices_val[i].item()
-                            retrieved_doc_text = shuffled_vdocs_texts[doc_idx_in_shuffled_list]
-                            retrieved_raw_score = raw_scores_val[doc_idx_in_shuffled_list].item()
-                            retrieved_scaled_score = scores_val[doc_idx_in_shuffled_list].item()
-                            is_true_positive_marker = " (*True Positive*)" if doc_idx_in_shuffled_list == true_positive_idx_after_shuffle else ""
-                            print(f"      {i+1}. (Raw: {retrieved_raw_score:.3f}, Scaled: {retrieved_scaled_score:.3f}) '{retrieved_doc_text[:100]}{'...' if len(retrieved_doc_text) > 100 else ''}'{is_true_positive_marker}")
-                        printed_val_examples += 1
-                        if printed_val_examples == num_examples_to_print and vq_idx < len(val_data_global) -1 : print("    ---")
-
-            if val_ranks:
-                acc1   = sum(r == 1 for r in val_ranks) / len(val_ranks)
-                acc10  = sum(r <= 10 for r in val_ranks) / len(val_ranks)
-                acc100 = sum(r <= 100 for r in val_ranks) / len(val_ranks)
-                mrr_val = sum(val_reciprocal_ranks) / len(val_reciprocal_ranks)
-                print(f"└─ val@1 {acc1:.3f} | val@10 {acc10:.3f} | val@100 {acc100:.3f} | val_mrr {mrr_val:.3f} | total {len(val_ranks)}")
-            else:
-                print(f"└─ val metrics N/A (no validation data processed or VAL_DATA empty)")
+                if val_reciprocal_ranks:
+                    mrr_val = sum(val_reciprocal_ranks) / len(val_reciprocal_ranks)
+                    print(f"└─ val_mrr {mrr_val:.3f} | total {len(val_reciprocal_ranks)}")
+                else:
+                    print(f"└─ val metrics N/A (no validation data processed or VAL_DATA empty)")
 
         if step % SAVE_EVERY == 0:
+            if not os.path.exists("/ckpts"):
+                os.makedirs("/ckpts")
             torch.save({'step':step, 'model':mdl.state_dict(), 'opt':opt.state_dict()}, f"/ckpts/{out}x{step}.pt")
             if ckpt_volume is not None:
                 ckpt_volume.commit()
@@ -227,7 +205,7 @@ def modal_entrypt(steps=20_000, ckpt_volume=None):
             if d_example_list:
                 print(f"    Expected Positive (d_example_list[0]): '{d_example_list[0][:70]}...' (should match query)")
     except StopIteration:
-        print("  (Not enough data in char_bifi_ts.txt to fetch example batches for testing print)")
+        print("  (Not enough data in so_ts_markov.txt to fetch example batches for testing print)")
     except Exception as e:
         print(f"Error during fetch_batch test: {e}")
     finally:
