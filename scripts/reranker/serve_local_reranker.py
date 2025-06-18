@@ -25,8 +25,8 @@ PORT = 8082
 
 # --- Model Paths ---
 # Make sure these files are in the same directory as the script, or provide full paths.
-ENCODER_PATH = "encoder_finetuned_step_500.pt"
-RERANKER_PATH = "reranker_finetuned_step_500.pt"
+ENCODER_PATH = "encoder_enhanced_step_3000.pt"
+RERANKER_PATH = "reranker_enhanced_step_3000.pt"
 
 # --- Inference Settings ---
 INFERENCE_BATCH_SIZE = 32  # Batch size for generating document embeddings
@@ -73,19 +73,39 @@ class TransformerForNextTokenPrediction(nn.Module):
         return hidden_state
 
 class Reranker(nn.Module):
-    """The Supervised Reranker Model Class."""
-    def __init__(self, input_dim=DIM*2):
+    """
+    An enhanced Reranker model that creates explicit interaction features
+    (concatenation, difference, and product) from the query and document
+    embeddings before passing them to a deeper MLP.
+    """
+    def __init__(self, input_dim=DIM):
         super().__init__()
+        # The input to the network will be 4 times the embedding dimension:
+        # [u, v, |u-v|, u*v]
+        concat_dim = input_dim * 4
+
         self.net = nn.Sequential(
-            nn.Linear(input_dim, input_dim // 2),
+            nn.Linear(concat_dim, concat_dim // 2),
             nn.GELU(),
-            nn.Linear(input_dim // 2, 1)
+            nn.Dropout(0.1),
+            nn.Linear(concat_dim // 2, concat_dim // 4),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(concat_dim // 4, 1)
         )
 
     def forward(self, q_emb, d_emb):
+        # q_emb is [1, DIM], d_emb is [N, DIM]
         q_emb_expanded = q_emb.expand(d_emb.size(0), -1)
-        combined_emb = torch.cat([q_emb_expanded, d_emb], dim=1)
-        return self.net(combined_emb).squeeze(-1)
+
+        # Create interaction features
+        diff = torch.abs(q_emb_expanded - d_emb)
+        prod = q_emb_expanded * d_emb
+
+        # Concatenate all features
+        combined_features = torch.cat([q_emb_expanded, d_emb, diff, prod], dim=1)
+
+        return self.net(combined_features).squeeze(-1)
 
 @torch.no_grad()
 def get_embedding(text: str, max_len: int, encoder: nn.Module) -> torch.Tensor:

@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 STEP 2: Supervised Reranking with End-to-End Fine-tuning.
-(Modified for Modal remote execution and joint training)
-
-This script loads the pre-trained transformer and a reranker, then trains
-them *together*. Gradients from the ranking loss are used to fine-tune
-the encoder, specializing it for the ranking task.
+(Now with an enhanced Reranker model for better interaction modeling)
 """
 
 import time, random, itertools
@@ -27,18 +23,17 @@ MAX_NEG                = 100
 TRUNCATE               = 100
 PRETRAINED_MODEL_PATH  = "/data/unsupervised_encoder.pt"
 
-# --- CHANGED: Differential Learning Rates ---
-RERANKER_LR            = 1e-3 # Higher LR for the new reranker head
-ENCODER_LR             = 1e-5 # Lower LR for fine-tuning the large encoder
+# Differential Learning Rates
+RERANKER_LR            = 1e-4
+ENCODER_LR             = 1e-5
 TAU                    = 0.1
-BATCH_QUERIES          = 32
+BATCH_QUERIES          = 16
 VAL_EVERY              = 100
 SAVE_EVERY             = 100
 CKPT_DIR               = "/ckpts"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# --- Data Loading (identical logic) ---
 _batch_gen = None
 def fetch_batch(path: str = "so_ts_markov.txt"):
     global _batch_gen
@@ -64,21 +59,40 @@ def load_validation(path="so_vs_markov.txt", cap=1000):
     return data
 
 class Reranker(nn.Module):
-    def __init__(self, input_dim=DIM*2):
+    """
+    An enhanced Reranker model that creates explicit interaction features
+    (concatenation, difference, and product) from the query and document
+    embeddings before passing them to a deeper MLP.
+    """
+    def __init__(self, input_dim=DIM):
         super().__init__()
+        # The input to the network will be 4 times the embedding dimension:
+        # [u, v, |u-v|, u*v]
+        concat_dim = input_dim * 4
+
         self.net = nn.Sequential(
-            nn.Linear(input_dim, input_dim // 2),
+            nn.Linear(concat_dim, concat_dim // 2),
             nn.GELU(),
-            nn.Linear(input_dim // 2, 1)
+            nn.Dropout(0.1),
+            nn.Linear(concat_dim // 2, concat_dim // 4),
+            nn.GELU(),
+            nn.Dropout(0.1),
+            nn.Linear(concat_dim // 4, 1)
         )
 
     def forward(self, q_emb, d_emb):
+        # q_emb is [1, DIM], d_emb is [N, DIM]
         q_emb_expanded = q_emb.expand(d_emb.size(0), -1)
-        combined_emb = torch.cat([q_emb_expanded, d_emb], dim=1)
-        return self.net(combined_emb).squeeze(-1)
 
-# --- CHANGED: Removed @torch.no_grad() to allow gradient flow ---
-# The function will now respect the context (train() or no_grad()) where it's called.
+        # Create interaction features
+        diff = torch.abs(q_emb_expanded - d_emb)
+        prod = q_emb_expanded * d_emb
+
+        # Concatenate all features
+        combined_features = torch.cat([q_emb_expanded, d_emb, diff, prod], dim=1)
+
+        return self.net(combined_features).squeeze(-1)
+
 def get_embedding(text: str, max_len: int, encoder: TransformerForNextTokenPrediction) -> torch.Tensor:
     """Generates a fixed-size embedding for a text using the encoder."""
     encoded_text = encode(text, max_len)
@@ -88,20 +102,16 @@ def get_embedding(text: str, max_len: int, encoder: TransformerForNextTokenPredi
     return embedding
 
 def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List = None):
-    print("--- Starting Reranker Training with End-to-End Fine-tuning ---")
-
-    print(f"Loading pre-trained encoder from: {PRETRAINED_MODEL_PATH}")
-    if not Path(PRETRAINED_MODEL_PATH).exists():
-        raise FileNotFoundError(f"Fatal: Pre-trained model not found at '{PRETRAINED_MODEL_PATH}'.")
+    print("--- Starting Reranker Training with End-to-End Fine-tuning and Enhanced Reranker ---")
 
     encoder = TransformerForNextTokenPrediction().to(DEVICE)
     encoder.load_state_dict(torch.load(PRETRAINED_MODEL_PATH, map_location=DEVICE))
-    reranker = Reranker().to(DEVICE)
 
-    print("Encoder and reranker loaded.")
+    # Initialize the new, more powerful reranker
+    reranker = Reranker(input_dim=DIM).to(DEVICE)
 
-    # --- CHANGED: Optimizer with differential learning rates ---
-    # We create two parameter groups to train the models at different speeds.
+    print("Encoder and enhanced reranker loaded.")
+
     optimizer = torch.optim.AdamW([
         {'params': encoder.parameters(), 'lr': ENCODER_LR},
         {'params': reranker.parameters(), 'lr': RERANKER_LR}
@@ -110,7 +120,6 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
     if val_data_global is None: val_data_global = []
 
     for step in range(1, steps + 1):
-        # --- CHANGED: Set both models to training mode ---
         encoder.train()
         reranker.train()
 
@@ -129,7 +138,6 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
             shuffled_docs = [current_docs[i] for i in perm]
             target_idx = (perm == 0).nonzero(as_tuple=True)[0].item()
 
-            # get_embedding is now called in a gradient-enabled context
             q_emb = get_embedding(q_txt, MAX_LEN_QUERY, encoder)
             d_embs = torch.cat([get_embedding(d, MAX_LEN_DOC, encoder) for d in shuffled_docs], dim=0)
 
@@ -137,7 +145,6 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
             scores = reranker(q_emb, d_embs) / TAU
             loss = F.cross_entropy(scores.unsqueeze(0), torch.tensor([target_idx], device=DEVICE))
 
-            # This will calculate gradients for both the reranker and the encoder
             loss.backward()
             tot_loss += loss.item()
 
@@ -149,12 +156,10 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
             print(f"Step {step:>6} | Avg Loss: {tot_loss / BATCH_QUERIES:.4f}")
 
         if step % VAL_EVERY == 0:
-            # --- CHANGED: Set both models to evaluation mode for validation ---
             encoder.eval()
             reranker.eval()
             val_reciprocal_ranks = []
 
-            # Gradients are disabled here by the context manager
             with torch.no_grad():
                 for vq_text, vdocs_all in val_data_global:
                     if not vdocs_all: continue
@@ -172,10 +177,8 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
 
         if step % SAVE_EVERY == 0:
             print(f"--- Saving models to checkpoint volume ---")
-            # --- CHANGED: Save both models in the checkpoint ---
-            # It's good practice to save the fine-tuned encoder as well
-            torch.save(reranker.state_dict(), f"{CKPT_DIR}/reranker_finetuned_step_{step}.pt")
-            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_finetuned_step_{step}.pt")
+            torch.save(reranker.state_dict(), f"{CKPT_DIR}/reranker_b200_step_{step}.pt")
+            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_b200_step_{step}.pt")
             ckpt_volume.commit()
 
 def reranker_modal_entrypoint(steps: int, ckpt_volume: modal.Volume):

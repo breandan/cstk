@@ -32,14 +32,20 @@ Learning rates: 2e-3, 1e-4
 
 TAU controls the temperature of cross-entropy score.
 
-## Commands
+## Training
+
+```
+python train_unsupervised.py
+```
+
+Saves `unsupervised_encoder.pt` to same directory.
 
 ```
 modal run train_modal_reranker.py --upload-path ./unsupervised_encoder.pt
-```
 
-```
 modal run train_modal_reranker.py --steps 20000 2>&1 | tee modal_train.txt
+
+python plot_loss.py plot_loss.txt
 ```
 
 ## Local serving
@@ -47,6 +53,9 @@ modal run train_modal_reranker.py --steps 20000 2>&1 | tee modal_train.txt
 Start this service before evaluation.
 
 ```
+modal volume get ranker-ckpts encoder_finetuned_step_500.pt
+modal volume get ranker-ckpts reranker_finetuned_step_500.pt
+# Update model in serve_local_reranker.py
 python serve_local_reranker.py
 ```
 

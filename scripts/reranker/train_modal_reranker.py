@@ -8,7 +8,7 @@ app = modal.App("reranker-training-app")
 
 # Define the image for the remote environment.
 image = (
-    modal.Image.from_registry("pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime")
+    modal.Image.from_registry("pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime")
     .add_local_file("train_unsupervised.py", "/workspace/train_unsupervised.py")
     .add_local_file("train_reranker.py", "/workspace/train_reranker.py")
 )
@@ -38,7 +38,7 @@ def upload_encoder(encoder_data: bytes):
 @app.function(
     gpu="H100",
     image=image,
-    timeout=60 * 60 * 8,
+    timeout=60 * 60 * 24,
     volumes={"/data": data_vol, "/ckpts": ckpt_vol},
 )
 def train_remote(steps: int = 20_000):

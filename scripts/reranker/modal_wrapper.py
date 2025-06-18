@@ -1,7 +1,7 @@
 import modal, subprocess, os, sys, pathlib
 
 image = (
-    modal.Image.from_registry("pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime")
+    modal.Image.from_registry("pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime")
     .pip_install("numpy")
     .add_local_dir(".", "/workspace", ignore=["*.txt"])
 )
@@ -15,8 +15,7 @@ app = modal.App("interaction-ranker")
     gpu="H100",
     image=image,
     timeout=60 * 60 * 3,
-    volumes={"/data": data_vol,
-             "/ckpts": ckpt_vol},
+    volumes={"/data": data_vol, "/ckpts": ckpt_vol},
 )
 def train_remote(steps: int = 20_000):
     os.chdir("/workspace")
