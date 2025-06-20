@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-STEP 2: Supervised Reranking with End-to-End Fine-tuning.
+STEP 2: Supervised Reranking with End-to-End Fine-tuning using a Transformer-based Reranker.
 """
 
 import time, random, itertools
@@ -59,57 +59,86 @@ def load_validation(path="so_vs_markov.txt", cap=1000):
 
 class Reranker(nn.Module):
     """
-    An enhanced Reranker model that creates explicit interaction features
-    (concatenation, difference, and product) from the query and document
-    embeddings before passing them to a deeper MLP.
+    A transformer-based reranker that models interactions between query and document embeddings
+    using a transformer encoder with a [CLS] token for scoring.
     """
-    def __init__(self, input_dim=DIM):
+    def __init__(self, input_dim=512, num_layers=2, nhead=8):
         super().__init__()
-        # The input to the network will be 4 times the embedding dimension:
-        # [u, v, |u-v|, u*v]
-        concat_dim = input_dim * 4
+        # Learnable [CLS] token and positional embeddings
+        self.cls_token = nn.Parameter(torch.randn(1, 1, input_dim))
+        self.pos_emb = nn.Parameter(torch.randn(3, input_dim))
 
-        self.net = nn.Sequential(
-            nn.Linear(concat_dim, concat_dim // 2),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(concat_dim // 2, concat_dim // 4),
-            nn.GELU(),
-            nn.Dropout(0.1),
-            nn.Linear(concat_dim // 4, 1)
+        # Transformer encoder configuration
+        transformer_layer = nn.TransformerEncoderLayer(
+            d_model=input_dim,
+            nhead=nhead,
+            dim_feedforward=input_dim * 4,
+            dropout=0.1,
+            activation=nn.GELU()
         )
+        self.transformer_encoder = nn.TransformerEncoder(transformer_layer, num_layers=num_layers)
 
-    def forward(self, q_emb, d_emb):
-        # q_emb is [1, DIM], d_emb is [N, DIM]
-        q_emb_expanded = q_emb.expand(d_emb.size(0), -1)
+        # Linear layer for scoring
+        self.scorer = nn.Linear(input_dim, 1)
 
-        # Create interaction features
-        diff = torch.abs(q_emb_expanded - d_emb)
-        prod = q_emb_expanded * d_emb
+    def forward(self, q_emb, d_embs):
+        """
+        Forward pass to compute relevance scores for documents given a query.
 
-        # Concatenate all features
-        combined_features = torch.cat([q_emb_expanded, d_emb, diff, prod], dim=1)
+        Args:
+            q_emb (torch.Tensor): Query embedding of shape [1, DIM]
+            d_embs (torch.Tensor): Document embeddings of shape [N, DIM]
 
-        return self.net(combined_features).squeeze(-1)
+        Returns:
+            torch.Tensor: Scores for each document of shape [N]
+        """
+        N = d_embs.size(0)
 
-def get_embedding(text: str, max_len: int, encoder: TransformerForNextTokenPrediction) -> torch.Tensor:
-    """Generates a fixed-size embedding for a text using the encoder."""
-    encoded_text = encode(text, max_len)
-    input_tensor = torch.tensor([encoded_text], dtype=torch.long, device=DEVICE)
-    _, hidden_state = encoder(input_tensor)
-    embedding = hidden_state[:, 0, :]
-    return embedding
+        # Expand [CLS] token and query embedding to match batch size N
+        cls_token = self.cls_token.expand(N, 1, -1)  # [N, 1, DIM]
+        q_emb_expanded = q_emb.expand(N, 1, -1)      # [N, 1, DIM]
+        d_embs_expanded = d_embs.unsqueeze(1)        # [N, 1, DIM]
+
+        # Construct sequences: [CLS, query_emb, doc_emb]
+        sequences = torch.cat([cls_token, q_emb_expanded, d_embs_expanded], dim=1)  # [N, 3, DIM]
+
+        # Add positional embeddings
+        sequences = sequences + self.pos_emb  # [N, 3, DIM]
+
+        # Transpose for transformer input: [seq_len, batch, dim]
+        sequences = sequences.permute(1, 0, 2)  # [3, N, DIM]
+
+        # Pass through transformer encoder
+        output = self.transformer_encoder(sequences)  # [3, N, DIM]
+
+        # Extract [CLS] token output
+        cls_output = output[0, :, :]  # [N, DIM]
+
+        # Compute scores
+        scores = self.scorer(cls_output).squeeze(-1)  # [N]
+
+        return scores
+
+def get_embeddings(texts: List[str], max_len: int, encoder: TransformerForNextTokenPrediction) -> torch.Tensor:
+    """Generates embeddings for a list of texts in a single batch without attention masks."""
+    encoded_texts = [encode(text, max_len) for text in texts]
+    max_seq_len = max(len(enc) for enc in encoded_texts)
+    padded_texts = [enc + [0] * (max_seq_len - len(enc)) for enc in encoded_texts]  # Pad with 0s
+    input_tensor = torch.tensor(padded_texts, dtype=torch.long, device=DEVICE)
+    _, hidden_states = encoder(input_tensor)
+    embeddings = hidden_states[:, 0, :]  # Assuming [CLS] token is at position 0
+    return embeddings
 
 def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List = None):
-    print("--- Starting Reranker Training with End-to-End Fine-tuning and Enhanced Reranker ---")
+    print("--- Starting Reranker Training with End-to-End Fine-tuning and Transformer-based Reranker ---")
 
     encoder = TransformerForNextTokenPrediction().to(DEVICE)
     encoder.load_state_dict(torch.load(PRETRAINED_MODEL_PATH, map_location=DEVICE))
 
-    # Initialize the new, more powerful reranker
+    # Initialize the new transformer-based reranker
     reranker = Reranker(input_dim=DIM).to(DEVICE)
 
-    print("Encoder and enhanced reranker loaded.")
+    print("Encoder and transformer-based reranker loaded.")
 
     optimizer = torch.optim.AdamW([
         {'params': encoder.parameters(), 'lr': ENCODER_LR},
@@ -137,8 +166,8 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
             shuffled_docs = [current_docs[i] for i in perm]
             target_idx = (perm == 0).nonzero(as_tuple=True)[0].item()
 
-            q_emb = get_embedding(q_txt, MAX_LEN_QUERY, encoder)
-            d_embs = torch.cat([get_embedding(d, MAX_LEN_DOC, encoder) for d in shuffled_docs], dim=0)
+            q_emb = get_embeddings([q_txt], MAX_LEN_QUERY, encoder)
+            d_embs = get_embeddings(shuffled_docs, MAX_LEN_DOC, encoder)
 
             if d_embs.size(0) == 0: continue
             scores = reranker(q_emb, d_embs) / TAU
@@ -164,8 +193,8 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
                     if not vdocs_all: continue
                     vdocs_all = vdocs_all[:TRUNCATE]
 
-                    vq_emb = get_embedding(vq_text, MAX_LEN_QUERY, encoder)
-                    vd_embs = torch.cat([get_embedding(d, MAX_LEN_DOC, encoder) for d in vdocs_all], dim=0)
+                    vq_emb = get_embeddings([vq_text], MAX_LEN_QUERY, encoder)
+                    vd_embs = get_embeddings(vdocs_all, MAX_LEN_DOC, encoder)
                     v_scores = reranker(vq_emb, vd_embs)
                     rank = (v_scores.argsort(descending=True) == 0).nonzero(as_tuple=True)[0].item() + 1
                     val_reciprocal_ranks.append(1.0 / rank)
@@ -176,8 +205,8 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
 
         if step % SAVE_EVERY == 0:
             print(f"--- Saving models to checkpoint volume ---")
-            torch.save(reranker.state_dict(), f"{CKPT_DIR}/reranker_b200_step_{step}.pt")
-            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_b200_step_{step}.pt")
+            torch.save(reranker.state_dict(), f"{CKPT_DIR}/reranker_tx_step_{step}.pt")
+            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_tx_step_{step}.pt")
             ckpt_volume.commit()
 
 def reranker_modal_entrypoint(steps: int, ckpt_volume: modal.Volume):
