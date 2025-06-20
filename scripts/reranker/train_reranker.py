@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 STEP 2: Supervised Reranking with End-to-End Fine-tuning.
-(Now with an enhanced Reranker model for better interaction modeling)
 """
 
 import time, random, itertools

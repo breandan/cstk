@@ -55,6 +55,7 @@ Start this service before evaluation.
 ```
 modal volume get ranker-ckpts encoder_finetuned_step_500.pt
 modal volume get ranker-ckpts reranker_finetuned_step_500.pt
+
 # Update model in serve_local_reranker.py
 python serve_local_reranker.py
 ```

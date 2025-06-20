@@ -33,9 +33,9 @@ fun main() {
   MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
-  evaluateRegexRepairOnStackOverflow()
+//  evaluateRegexRepairOnStackOverflow()
 //  evaluateMatrixBarHillelRepairOnStackOverflow()
-//  evaluateBarHillelRepairOnStackOverflow()
+  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
@@ -158,12 +158,12 @@ fun evaluateRegexRepairOnStackOverflow() {
   val P_1000ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
 
-  dataset.asStream().parallel().forEach { (brokeStr, fixedStr) ->
+  dataset.asStream().forEach { (brokeStr, fixedStr) ->
     val allTime = TimeSource.Monotonic.markNow()
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
-    val levDist = levAlign.patchSize() // True distance, only used for logging purposes
+    val levDist = levAlign.patchSize()
 
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -312,7 +312,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
           s2pg.jvmIntersectLevFSAP(fsa = fsa, parikhMap = parikhMap).isNotEmpty()
         } catch (_: Exception) { println("Failed $it, increasing..."); false }
       } ?: MAX_RADIUS
-    val levGuess = levAlign.patchSize() //min(predDist, langEditDist)
+    val levGuess = langEditDist + 1// levAlign.patchSize() //min(predDist, langEditDist)
 
     val levDist = levAlign.patchSize() // True distance, only used for logging purposes
     println("Predicted edit dist: $predDist (true dist: $levDist, LED: $langEditDist)")
@@ -399,7 +399,18 @@ fun evaluateBarHillelRepairOnStackOverflow() {
           elapsed = clock.elapsedNow().inWholeMilliseconds
         }
       }
-    )
+    ).let { unrankedResults ->
+      rerankGPU(brokeStr, unrankedResults.take(10_000).joinToString("\n"))
+        .map { it.addNewLineIfMissing() }.onEachIndexed { i, it ->
+          totalSamples++
+          if (it == fixedStr) {
+            matchFound = true
+            val origRank = unrankedResults.indexOf(it)
+            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
+            elapsed = clock.elapsedNow().inWholeMilliseconds
+          }
+        }
+    }
 
 //    val rankedResults = MakeMore.decodeDFA(
 //      origStr = "$encString$levGuess ",
@@ -908,6 +919,92 @@ fun profileRecognizer() {
 }
 
 /*
+
+w/ Listwise reranker + LED+1 + NGRAM-1000 reranking
+
+Lev(*): Top-1/rec/pos/total: 162 / 927 / 1637 / 1753, errors: 116, P@1: 0.09241300627495722, P@All: 0.5288077581289219
+Lev(1): Top-1/rec/pos/total: 112 / 709 / 1031 / 1031, errors: 0, P@1: 0.10863239573229874, P@All: 0.6876818622696411
+Lev(2): Top-1/rec/pos/total: 43 / 190 / 554 / 554, errors: 0, P@1: 0.0776173285198556, P@All: 0.34296028880866425
+Lev(3): Top-1/rec/pos/total: 7 / 28 / 52 / 168, errors: 116, P@1: 0.041666666666666664, P@All: 0.16666666666666666
+Draw timings (ms): {1=2153.6666666666665, 2=699.168284789644, 3=200.02481121898597}
+Full timings (ms): {1=3599.235167206041, 2=1296.7486515641856, 3=346.0053937432578}
+Avg samples drawn: {1=7283.741100323625, 2=11884.895361380799, 3=7259.135922330097}
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 23 / 64 ≈ 0.359375
+|σ|∈[10, 20): Top-1/total: 55 / 309 ≈ 0.1779935275080906
+|σ|∈[20, 30): Top-1/total: 39 / 391 ≈ 0.09974424552429667
+|σ|∈[30, 40): Top-1/total: 27 / 353 ≈ 0.0764872521246459
+|σ|∈[40, 50): Top-1/total: 10 / 224 ≈ 0.044642857142857144
+|σ|∈[50, 60): Top-1/total: 6 / 171 ≈ 0.03508771929824561
+|σ|∈[60, 70): Top-1/total: 0 / 125 ≈ 0.0
+|σ|∈[70, 80): Top-1/total: 2 / 118 ≈ 0.01694915254237288
+Δ(1)= Top-1/total: 112 / 1031 ≈ 0.10863239573229874
+Δ(2)= Top-1/total: 43 / 556 ≈ 0.07733812949640288
+Δ(3)= Top-1/total: 7 / 168 ≈ 0.041666666666666664
+(|σ|∈[0, 10), Δ=1): Top-1/total: 14 / 32 ≈ 0.4375
+(|σ|∈[0, 10), Δ=2): Top-1/total: 9 / 28 ≈ 0.32142857142857145
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 4 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 38 / 186 ≈ 0.20430107526881722
+(|σ|∈[10, 20), Δ=2): Top-1/total: 17 / 95 ≈ 0.17894736842105263
+(|σ|∈[10, 20), Δ=3): Top-1/total: 0 / 28 ≈ 0.0
+(|σ|∈[20, 30), Δ=1): Top-1/total: 29 / 251 ≈ 0.11553784860557768
+(|σ|∈[20, 30), Δ=2): Top-1/total: 6 / 108 ≈ 0.05555555555555555
+(|σ|∈[20, 30), Δ=3): Top-1/total: 4 / 32 ≈ 0.125
+(|σ|∈[30, 40), Δ=1): Top-1/total: 20 / 213 ≈ 0.09389671361502347
+(|σ|∈[30, 40), Δ=2): Top-1/total: 6 / 102 ≈ 0.058823529411764705
+(|σ|∈[30, 40), Δ=3): Top-1/total: 1 / 38 ≈ 0.02631578947368421
+(|σ|∈[40, 50), Δ=1): Top-1/total: 6 / 125 ≈ 0.048
+(|σ|∈[40, 50), Δ=2): Top-1/total: 2 / 75 ≈ 0.02666666666666667
+(|σ|∈[40, 50), Δ=3): Top-1/total: 2 / 24 ≈ 0.08333333333333333
+(|σ|∈[50, 60), Δ=1): Top-1/total: 3 / 96 ≈ 0.03125
+(|σ|∈[50, 60), Δ=2): Top-1/total: 3 / 63 ≈ 0.047619047619047616
+(|σ|∈[50, 60), Δ=3): Top-1/total: 0 / 12 ≈ 0.0
+(|σ|∈[60, 70), Δ=1): Top-1/total: 0 / 60 ≈ 0.0
+(|σ|∈[60, 70), Δ=2): Top-1/total: 0 / 50 ≈ 0.0
+(|σ|∈[60, 70), Δ=3): Top-1/total: 0 / 15 ≈ 0.0
+(|σ|∈[70, 80), Δ=1): Top-1/total: 2 / 68 ≈ 0.029411764705882353
+(|σ|∈[70, 80), Δ=2): Top-1/total: 0 / 35 ≈ 0.0
+(|σ|∈[70, 80), Δ=3): Top-1/total: 0 / 15 ≈ 0.0
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 60 / 64 ≈ 0.9375
+|σ|∈[10, 20): Top-1/total: 284 / 309 ≈ 0.919093851132686
+|σ|∈[20, 30): Top-1/total: 368 / 391 ≈ 0.9411764705882353
+|σ|∈[30, 40): Top-1/total: 329 / 353 ≈ 0.9320113314447592
+|σ|∈[40, 50): Top-1/total: 208 / 224 ≈ 0.9285714285714286
+|σ|∈[50, 60): Top-1/total: 162 / 171 ≈ 0.9473684210526315
+|σ|∈[60, 70): Top-1/total: 116 / 125 ≈ 0.928
+|σ|∈[70, 80): Top-1/total: 108 / 118 ≈ 0.9152542372881356
+Δ(1)= Top-1/total: 1031 / 1031 ≈ 1.0
+Δ(2)= Top-1/total: 555 / 556 ≈ 0.9982014388489209
+Δ(3)= Top-1/total: 49 / 168 ≈ 0.2916666666666667
+(|σ|∈[0, 10), Δ=1): Top-1/total: 32 / 32 ≈ 1.0
+(|σ|∈[0, 10), Δ=2): Top-1/total: 28 / 28 ≈ 1.0
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 4 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 186 / 186 ≈ 1.0
+(|σ|∈[10, 20), Δ=2): Top-1/total: 95 / 95 ≈ 1.0
+(|σ|∈[10, 20), Δ=3): Top-1/total: 3 / 28 ≈ 0.10714285714285714
+(|σ|∈[20, 30), Δ=1): Top-1/total: 251 / 251 ≈ 1.0
+(|σ|∈[20, 30), Δ=2): Top-1/total: 108 / 108 ≈ 1.0
+(|σ|∈[20, 30), Δ=3): Top-1/total: 9 / 32 ≈ 0.28125
+(|σ|∈[30, 40), Δ=1): Top-1/total: 213 / 213 ≈ 1.0
+(|σ|∈[30, 40), Δ=2): Top-1/total: 101 / 102 ≈ 0.9901960784313726
+(|σ|∈[30, 40), Δ=3): Top-1/total: 15 / 38 ≈ 0.39473684210526316
+(|σ|∈[40, 50), Δ=1): Top-1/total: 125 / 125 ≈ 1.0
+(|σ|∈[40, 50), Δ=2): Top-1/total: 75 / 75 ≈ 1.0
+(|σ|∈[40, 50), Δ=3): Top-1/total: 8 / 24 ≈ 0.3333333333333333
+(|σ|∈[50, 60), Δ=1): Top-1/total: 96 / 96 ≈ 1.0
+(|σ|∈[50, 60), Δ=2): Top-1/total: 63 / 63 ≈ 1.0
+(|σ|∈[50, 60), Δ=3): Top-1/total: 3 / 12 ≈ 0.25
+(|σ|∈[60, 70), Δ=1): Top-1/total: 60 / 60 ≈ 1.0
+(|σ|∈[60, 70), Δ=2): Top-1/total: 50 / 50 ≈ 1.0
+(|σ|∈[60, 70), Δ=3): Top-1/total: 6 / 15 ≈ 0.4
+(|σ|∈[70, 80), Δ=1): Top-1/total: 68 / 68 ≈ 1.0
+(|σ|∈[70, 80), Δ=2): Top-1/total: 35 / 35 ≈ 1.0
+(|σ|∈[70, 80), Δ=3): Top-1/total: 5 / 15 ≈ 0.3333333333333333
 
 w/ Regex LBH + Markov chain
 

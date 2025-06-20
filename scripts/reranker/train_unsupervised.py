@@ -5,7 +5,8 @@ STEP 1: Unsupervised Pre-training on Next-Token Prediction.
 
 This script trains a transformer encoder on the self-supervised task of
 predicting the next token in a sequence. The training data consists of
-concatenated (query, positive_document) pairs from the dataset.
+concatenated (query, positive_document) pairs from the dataset. A validation
+loss is computed periodically using a separate validation set.
 
 The goal is to produce a model that understands the structure and semantics
 of the text, which can then be used to generate high-quality embeddings.
@@ -24,40 +25,49 @@ MAX_LEN_DOC            = 110            # Max length for documents
 VOCAB                  = 128            # ASCII
 BATCH_SIZE             = 32             # Number of (q, d) pairs per batch
 LR                     = 1e-4           # AdamW Learning Rate
-SAVE_EVERY             = 100            # Save checkpoint every N steps
+SAVE_EVERY             = 100            # Save checkpoint and validate every N steps
 LOG_EVERY              = 10             # Log loss every N steps
 
 DEVICE = torch.device(
     "mps"  if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available() else "cpu")
-MODEL_SAVE_PATH = Path("unsupervised_encoder.pt")
 
-_batch_gen = None
+MODEL_SAVE_PATH = Path("unsupervised_encoder_new.pt")
+
 def fetch_positive_pairs(path: str = "so_ts_markov.txt"):
-    """Yields (query, positive_document) pairs from the training file."""
-    global _batch_gen
-    if _batch_gen is None:
-        def _reader():
-            with Path(path).open(encoding="utf-8") as f:
-                for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
-                    if not gap:
-                        lines = [l.rstrip("\n") for l in grp]
-                        if lines and len(lines) > 1:
-                            yield lines[0], lines[1] # query, first document
-        _batch_gen = _reader()
+    """Yields (query, positive_document) pairs from the specified file."""
+    def _reader():
+        with Path(path).open(encoding="utf-8") as f:
+            for gap, grp in itertools.groupby(f, key=lambda l: l.strip() == ""):
+                if not gap:
+                    lines = [l.rstrip("\n") for l in grp]
+                    if lines and len(lines) > 1:
+                        yield lines[0], lines[1] # query, first document
+    batch_gen = _reader()
     while True:
         try:
-            yield next(_batch_gen)
+            yield next(batch_gen)
         except StopIteration:
-            _batch_gen = None
-            _batch_gen = _reader()
-            yield next(_batch_gen)
-
+            batch_gen = _reader()
+            yield next(batch_gen)
 
 def encode(txt: str, max_len: int) -> List[int]:
     """Encodes a string into a list of token IDs, padded to max_len."""
     ids = [ord(c) % VOCAB for c in txt[:max_len]]
     return ids + [0] * (max_len - len(ids))
+
+def get_batch(generator, batch_size: int, max_len_query: int, max_len_doc: int) -> torch.Tensor:
+    """Fetches and encodes a batch of pairs from the generator."""
+    batch_q_txt = []
+    batch_d_txt = []
+    for _ in range(batch_size):
+        q, d = next(generator)
+        batch_q_txt.append(q)
+        batch_d_txt.append(d)
+    q_encoded = [encode(q, max_len_query) for q in batch_q_txt]
+    d_encoded = [encode(d, max_len_doc) for d in batch_d_txt]
+    combined_ids = [q + d for q, d in zip(q_encoded, d_encoded)]
+    return torch.tensor(combined_ids, dtype=torch.long, device=DEVICE)
 
 class TransformerForNextTokenPrediction(nn.Module):
     """Transformer Encoder model for next-token prediction."""
@@ -90,52 +100,40 @@ def train(steps=40_000):
     opt = torch.optim.AdamW(model.parameters(), lr=LR)
     loss_fn = nn.CrossEntropyLoss()
 
-    pair_generator = fetch_positive_pairs()
+    # Create separate generators for training and validation
+    train_gen = fetch_positive_pairs("so_ts_markov.txt")
+    val_gen = fetch_positive_pairs("so_vs_markov.txt")
     start_time = time.time()
 
     for step in range(1, steps + 1):
+        # Training phase
         model.train()
         opt.zero_grad()
-
-        # 1. Fetch a batch of (query, positive_doc) pairs
-        batch_q_txt = []
-        batch_d_txt = []
-        for _ in range(BATCH_SIZE):
-            q, d = next(pair_generator)
-            batch_q_txt.append(q)
-            batch_d_txt.append(d)
-
-        # 2. Encode and create concatenated input tensor
-        q_encoded = [encode(q, MAX_LEN_QUERY) for q in batch_q_txt]
-        d_encoded = [encode(d, MAX_LEN_DOC) for d in batch_d_txt]
-
-        # Combine query and document for each pair
-        combined_ids = [q + d for q, d in zip(q_encoded, d_encoded)]
-        input_tensor = torch.tensor(combined_ids, dtype=torch.long, device=DEVICE)
-
-        # 3. Define targets (the next token)
-        # The target for input token at position `i` is the token at position `i+1`
+        input_tensor = get_batch(train_gen, BATCH_SIZE, MAX_LEN_QUERY, MAX_LEN_DOC)
         targets = input_tensor[:, 1:].contiguous()
-
-        # 4. Forward pass
-        # We only need to predict up to the second-to-last token
         logits, _ = model(input_tensor[:, :-1])
-
-        # 5. Calculate loss
-        # Reshape for CrossEntropyLoss: (Batch * SeqLen, VocabSize) vs (Batch * SeqLen)
         loss = loss_fn(logits.view(-1, VOCAB), targets.view(-1))
-
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
 
+        # Log training loss
         if step % LOG_EVERY == 0:
             elapsed = time.time() - start_time
-            print(f"Step {step:>6} | Loss: {loss.item():.4f} | Time: {elapsed:.2f}s")
+            print(f"Step {step:>6} | Training Loss: {loss.item():.4f} | Time: {elapsed:.2f}s")
 
+        # Save model and compute validation loss
         if step % SAVE_EVERY == 0:
             print(f"--- Saving model checkpoint at step {step} to {MODEL_SAVE_PATH} ---")
             torch.save(model.state_dict(), MODEL_SAVE_PATH)
+            # Validation phase
+            model.eval()
+            with torch.no_grad():
+                val_input = get_batch(val_gen, BATCH_SIZE, MAX_LEN_QUERY, MAX_LEN_DOC)
+                val_targets = val_input[:, 1:].contiguous()
+                val_logits, _ = model(val_input[:, :-1])
+                val_loss = loss_fn(val_logits.view(-1, VOCAB), val_targets.view(-1))
+            print(f"Step {step:>6} | Validation Loss: {val_loss.item():.4f}")
 
     print("Unsupervised training complete.")
     torch.save(model.state_dict(), MODEL_SAVE_PATH)
