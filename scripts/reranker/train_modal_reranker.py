@@ -1,6 +1,6 @@
 import modal
 import os
-import sys  # <-- Import the 'sys' module
+import sys
 import pathlib
 
 # Define the Modal application and name it.
@@ -16,7 +16,6 @@ image = (
 # Define two persistent storage volumes.
 data_vol = modal.Volume.from_name("ranker-data", create_if_missing=True)
 ckpt_vol = modal.Volume.from_name("ranker-ckpts", create_if_missing=True)
-
 
 @app.function(
     image=image,
@@ -34,21 +33,19 @@ def upload_encoder(encoder_data: bytes):
     data_vol.commit()
     print("✅ Upload complete.")
 
-
 @app.function(
     gpu="H100",
     image=image,
     timeout=60 * 60 * 24,
     volumes={"/data": data_vol, "/ckpts": ckpt_vol},
 )
-def train_remote(steps: int = 20_000):
+def train_remote(steps: int = 20_000, resume: bool = False):
     """
     The main remote function that runs the reranker training on a GPU.
     """
     os.chdir("/workspace")
 
-    # CORRECTED SECTION: Add the current directory to Python's path
-    # This ensures that 'import train_reranker' works correctly.
+    # Add the current directory to Python's path
     sys.path.insert(0, ".")
 
     # Symlink the dataset files from the volume to the workspace.
@@ -61,14 +58,13 @@ def train_remote(steps: int = 20_000):
         elif not os.path.exists(src):
             print(f"⚠️ Warning: Data file {src} not found in volume 'ranker-data'.")
 
-    # Now this import will succeed.
+    # Import and run the reranker training
     from train_reranker import reranker_modal_entrypoint
 
-    reranker_modal_entrypoint(steps, ckpt_vol)
-
+    reranker_modal_entrypoint(steps, ckpt_vol, resume)
 
 @app.local_entrypoint()
-def main(steps: int = 20_000, upload_path: str = None):
+def main(steps: int = 20_000, resume: bool = False, upload_path: str = None):
     """
     The local entrypoint for controlling the Modal app from your command line.
     """
@@ -86,4 +82,4 @@ def main(steps: int = 20_000, upload_path: str = None):
 
     else:
         print("🚀 Starting remote training job...")
-        train_remote.remote(steps)
+        train_remote.remote(steps, resume)

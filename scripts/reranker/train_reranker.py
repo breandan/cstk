@@ -15,11 +15,12 @@ from train_unsupervised import TransformerForNextTokenPrediction, encode
 
 # --------------------------- Hyper-parameters -------------------------- #
 # Model and Data
+MODEL_NAME             = "tx100"
 DIM                    = 512
 MAX_LEN_QUERY          = 100
 MAX_LEN_DOC            = 110
-MAX_NEG                = 100
-TRUNCATE               = 100
+MAX_NEG                = 200
+TRUNCATE               = 200
 PRETRAINED_MODEL_PATH  = "/data/unsupervised_encoder.pt"
 
 # Differential Learning Rates
@@ -28,7 +29,7 @@ ENCODER_LR             = 1e-5
 TAU                    = 0.1
 BATCH_QUERIES          = 16
 VAL_EVERY              = 100
-SAVE_EVERY             = 100
+SAVE_EVERY             = 1000
 CKPT_DIR               = "/ckpts"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -62,7 +63,7 @@ class Reranker(nn.Module):
     A transformer-based reranker that models interactions between query and document embeddings
     using a transformer encoder with a [CLS] token for scoring.
     """
-    def __init__(self, input_dim=512, num_layers=2, nhead=8):
+    def __init__(self, input_dim=512, num_layers=4, nhead=8):
         super().__init__()
         # Learnable [CLS] token and positional embeddings
         self.cls_token = nn.Parameter(torch.randn(1, 1, input_dim))
@@ -129,14 +130,44 @@ def get_embeddings(texts: List[str], max_len: int, encoder: TransformerForNextTo
     embeddings = hidden_states[:, 0, :]  # Assuming [CLS] token is at position 0
     return embeddings
 
-def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List = None):
+def find_latest_checkpoint(ckpt_dir: str) -> Tuple[int, str, str]:
+    """Find the latest checkpoint files for reranker and encoder."""
+    reranker_pattern = f"reranker_{MODEL_NAME}_step_*.pt"
+    encoder_pattern = f"encoder_{MODEL_NAME}_step_*.pt"
+
+    reranker_files = list(Path(ckpt_dir).glob(reranker_pattern))
+    encoder_files = list(Path(ckpt_dir).glob(encoder_pattern))
+
+    if not reranker_files or not encoder_files:
+        return 0, None, None
+
+    # Extract step numbers and find the maximum
+    steps = [int(f.stem.split('_')[-1]) for f in reranker_files]
+    latest_step = max(steps)
+
+    reranker_file = next(f for f in reranker_files if f.stem.endswith(str(latest_step)))
+    encoder_file = next(f for f in encoder_files if f.stem.endswith(str(latest_step)))
+
+    return latest_step, str(reranker_file), str(encoder_file)
+
+def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List = None, resume: bool = False):
     print("--- Starting Reranker Training with End-to-End Fine-tuning and Transformer-based Reranker ---")
 
     encoder = TransformerForNextTokenPrediction().to(DEVICE)
-    encoder.load_state_dict(torch.load(PRETRAINED_MODEL_PATH, map_location=DEVICE))
-
-    # Initialize the new transformer-based reranker
     reranker = Reranker(input_dim=DIM).to(DEVICE)
+
+    start_step = 0
+    if resume:
+        latest_step, reranker_path, encoder_path = find_latest_checkpoint(CKPT_DIR)
+        if reranker_path and encoder_path:
+            print(f"Resuming from step {latest_step}")
+            reranker.load_state_dict(torch.load(reranker_path, map_location=DEVICE))
+            encoder.load_state_dict(torch.load(encoder_path, map_location=DEVICE))
+            start_step = latest_step
+        else:
+            print("No checkpoints found, starting from scratch")
+    else:
+        encoder.load_state_dict(torch.load(PRETRAINED_MODEL_PATH, map_location=DEVICE))
 
     print("Encoder and transformer-based reranker loaded.")
 
@@ -147,7 +178,7 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
 
     if val_data_global is None: val_data_global = []
 
-    for step in range(1, steps + 1):
+    for step in range(start_step + 1, steps + 1):
         encoder.train()
         reranker.train()
 
@@ -205,11 +236,11 @@ def train_reranker(steps: int, ckpt_volume: modal.Volume, val_data_global: List 
 
         if step % SAVE_EVERY == 0:
             print(f"--- Saving models to checkpoint volume ---")
-            torch.save(reranker.state_dict(), f"{CKPT_DIR}/reranker_tx_step_{step}.pt")
-            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_tx_step_{step}.pt")
+            torch.save(reranker.state_dict(), f"{CKPT_DIR}/{MODEL_NAME}_step_{step}.pt")
+            torch.save(encoder.state_dict(), f"{CKPT_DIR}/encoder_{MODEL_NAME}_step_{step}.pt")
             ckpt_volume.commit()
 
-def reranker_modal_entrypoint(steps: int, ckpt_volume: modal.Volume):
+def reranker_modal_entrypoint(steps: int, ckpt_volume: modal.Volume, resume: bool = False):
     """The main entrypoint for the Modal remote training job."""
     validation_data = load_validation()
-    train_reranker(steps=steps, ckpt_volume=ckpt_volume, val_data_global=validation_data)
+    train_reranker(steps=steps, ckpt_volume=ckpt_volume, val_data_global=validation_data, resume=resume)
