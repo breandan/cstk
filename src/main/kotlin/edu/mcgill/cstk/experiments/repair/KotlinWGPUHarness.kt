@@ -232,6 +232,11 @@ fun sendCPU(query: String): String =
     .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
     .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
 
+fun measureCPU(query: String, rad: Int): Pair<Int, Long> {
+  val repair = repairWithGREAtDist(query.tokenizeByWhitespace(), vanillaS2PCFG, rad)
+  return ((repair?.second ?: -1) to (repair?.first?.toDFA()?.apply { determinize() }?.toDFSM()?.countWords() ?: -1L))
+}
+
 fun TimeSource.Monotonic.ValueTimeMark.hasTimeLeft() = elapsedNow().inWholeMilliseconds < TIMEOUT_MS
 
 fun writeValidationSet() {

@@ -62,9 +62,22 @@ fun main() {
 //  MakeMore.measureRankOfTrueNextTokenWithLBHConstraints()
 //  MakeMore.previewSamples()
 //  prepareFixerDataset()
-  collectSingleLineExamples()
+//  collectSingleLineExamples()
+  measureIntersection()
 //  correctNames()
 //  errorPredDiscrepancy()
+}
+
+fun measureIntersection() {
+  sizeAndDistBalancedRepairsUnminimized.asStream().parallel().forEach { (brokeStr, fixedStr) ->
+    val brokeToks = brokeStr.tokenizeByWhitespace()
+    val fixedToks = fixedStr.tokenizeByWhitespace()
+    val levAlign = levenshteinAlign(brokeToks, fixedToks)
+    val levDist = levAlign.patchSize()
+    val sts = TimeSource.Monotonic.markNow()
+    val (margin, size) = measureCPU(brokeStr, levDist)
+    println("${brokeToks.size}, $levDist, $margin, $size, ${sts.elapsedNow()}")
+  }
 }
 
 fun filterNgramsByGrammar() {
@@ -80,9 +93,9 @@ fun filterNgramsByGrammar() {
 fun collectSingleLineExamples() {
   sizeAndDistBalancedRepairsUnminimized.filter {
     "NEWLINE" !in it.π1.tokenizeByWhitespace().dropLast(1) &&
-        "NEWLINE" !in it.π2.tokenizeByWhitespace().dropLast(1) &&
-        "\n" !in it.π4 &&
-        it.π3.tokenizeByWhitespace().size in 10..15
+    "NEWLINE" !in it.π2.tokenizeByWhitespace().dropLast(1) &&
+    "\n" !in it.π4 &&
+    it.π3.tokenizeByWhitespace().size in 10..15
 //        it.π4.length in 50..80
   }.take(100)
     .forEach {
