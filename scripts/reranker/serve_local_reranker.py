@@ -25,8 +25,8 @@ PORT = 8082
 
 # --- Model Paths ---
 # Make sure these files are in the same directory as the script, or provide full paths.
-ENCODER_PATH = "encoder_b200_step_11200.pt"
-RERANKER_PATH = "reranker_b200_step_11200.pt"
+ENCODER_PATH = "encoder_tx100_step_44000.pt"
+RERANKER_PATH = "reranker_tx100_step_44000.pt"
 
 # --- Inference Settings ---
 INFERENCE_BATCH_SIZE = 32  # Batch size for generating document embeddings
