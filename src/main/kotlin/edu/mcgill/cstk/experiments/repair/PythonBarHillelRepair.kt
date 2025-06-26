@@ -134,8 +134,8 @@ fun evaluateRegexRepairOnStackOverflow() {
   val s2pg = vanillaS2PCFG
   val termDict = TermDict(s2pg.terminals)
 
-  val pcfgMap = readPCFG3()
-  val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
+//  val pcfgMap = readPCFG3()
+//  val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
 
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
@@ -144,7 +144,7 @@ fun evaluateRegexRepairOnStackOverflow() {
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
     .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
 //    .replace(" ", "_").replace("/", "_")
-  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lang_size, rank, ngram_rank\n"
+  val positiveHeader = "length, lev_dist, sample_ms, sample_rerank_ms, total_samples, lang_size, rank, ngram_rank\n"
   val negativeHeader = "length, lev_dist, samples, lang_size\n"
   val title = "matrix_bar_hillel"
   val positive = try { File("data/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
@@ -187,17 +187,14 @@ fun evaluateRegexRepairOnStackOverflow() {
     val (langSize, dfa) = sendCPUAndMeasureLang(brokeStr)
     val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
       .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-      .sortedBy { it.second }.map { it.first }
-      .also { totalSamples = it.size }
-      .take(1000)
+      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-    println("Repairs fetched in $elapsed ms")
     val origRank = unrankedResults.indexOf(fixedStr)
     val rankedResults = if (unrankedResults.isEmpty()) emptyList()
-//      unrankedResults
-      else rerankGPU(brokeStr, unrankedResults.joinToString("\n"))
-        .map { it.addNewLineIfMissing() }.onEachIndexed { i, it ->
+      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+        .onEachIndexed { i, it ->
+          totalSamples++
           if (it == fixedStr) {
             matchFound = true
             println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
@@ -205,18 +202,17 @@ fun evaluateRegexRepairOnStackOverflow() {
         }
 
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
-    println("Reranking completed in $allElapsed ms")
+    println("Repairs fetched in $elapsed ms, reranking completed in $allElapsed ms")
 
     val indexOfTarget = rankedResults.indexOf(fixedStr).also {
       if (matchFound) {
-        P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it <= 1000) {
           P_1000ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
 
-//          writeToFileWithThreadLock("so_vs_markov.txt", unrankedResults.take(1000)
+//          writeToFileWithThreadLock("so_vs_markov.txt", unrankedResults.take(RERANK_THR)
 //            .filter { it != fixedStr.addNewLineIfMissing() }
 //            .joinToString("\n", brokeStr.addNewLineIfMissing().charify() + "\n" + fixedStr.addNewLineIfMissing().charify() + "\n") { it.addNewLineIfMissing().charify() } + "\n\n")
         }
@@ -227,14 +223,12 @@ fun evaluateRegexRepairOnStackOverflow() {
       ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
-      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ? prods, " +
-//        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
-          "length-$levDist human repair not found")
+      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout, Δ=$levDist human repair not found")
       negative.appendText("${brokeToks.size}, $levDist, $totalSamples, $langSize\n")
     } else {
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
+      println("Found Δ=$levDist repair in $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
 //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
@@ -262,6 +256,19 @@ fun evaluateRegexRepairOnStackOverflow() {
     }
     println()
   }
+
+    println()
+    println("Precision@1\n===========")
+    println(P_1ByLevDist.summarizeLenAndDist())
+    println("Precision@10\n===========")
+    println(P_10ByLevDist.summarizeLenAndDist())
+    println("Precision@100\n===========")
+    println(P_100ByLevDist.summarizeLenAndDist())
+    println("Precision@1000\n=============")
+    println(P_1000ByLevDist.summarizeLenAndDist())
+    println("Precision@All\n=============")
+    println(P_AllByLevDist.summarizeLenAndDist())
+    println()
 }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
@@ -450,7 +457,7 @@ fun evaluateBarHillelRepairOnStackOverflow() {
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ${intGram.size} prods, " +
 //        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
-          "length-$levDist human repair not found")
+          "Δ=levDist human repair not found")
       negative.appendText(
         "${brokeToks.size}, $levDist, $totalSamples, ${levBallSize}, " +
           "${intGram.size}, $langSize, " +
@@ -507,7 +514,7 @@ fun Map<Int, LBHMetrics>.summarize() =
 
 data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0, var error: Int = 0) {
   override fun toString() =
-    "Top-1/rec/pos/total: $top1 / $recall / ${total-error} / ${total}, " +
+    "Top-1/rec/pos/total: $top1 / $recall / ${total-error} / $total, " +
       "errors: $error, P@1: ${top1.toDouble() / total}, P@All: ${recall.toDouble() / total}"
 }
 
@@ -926,8 +933,207 @@ fun profileRecognizer() {
 }
 
 /*
+w/ Listwise reranker + LED+1 + DFA-NGRAM-1000
 
-w/ Listwise reranker + LED+1 + NGRAM-1000 reranking
+Lev(*): Top-1/rec/pos/total: 230 / 1288 / 1700 / 1700, errors: 0, P@1: 0.13529411764705881, P@All: 0.7576470588235295
+Lev(1): Top-1/rec/pos/total: 120 / 881 / 997 / 997, errors: 0, P@1: 0.12036108324974924, P@All: 0.8836509528585758
+Lev(2): Top-1/rec/pos/total: 102 / 374 / 542 / 542, errors: 0, P@1: 0.1881918819188192, P@All: 0.6900369003690037
+Lev(3): Top-1/rec/pos/total: 8 / 33 / 161 / 161, errors: 0, P@1: 0.049689440993788817, P@All: 0.20496894409937888
+Draw timings (ms): {1=1092.8610248447205, 2=504.2608695652174, 3=146.07375776397515}
+Full timings (ms): {1=2705.88198757764, 2=1226.3982919254659, 3=212.40683229813664}
+Avg samples drawn: {1=624.3315217391304, 2=280.4425465838509, 3=25.62111801242236}
+
+Precision@1
+===========
+|σ|∈[0, 10): Top-1/total: 27 / 62 ≈ 0.43548387096774194
+|σ|∈[10, 20): Top-1/total: 71 / 298 ≈ 0.23825503355704697
+|σ|∈[20, 30): Top-1/total: 55 / 381 ≈ 0.14435695538057744
+|σ|∈[30, 40): Top-1/total: 41 / 341 ≈ 0.12023460410557185
+|σ|∈[40, 50): Top-1/total: 17 / 217 ≈ 0.07834101382488479
+|σ|∈[50, 60): Top-1/total: 11 / 164 ≈ 0.06707317073170732
+|σ|∈[60, 70): Top-1/total: 2 / 123 ≈ 0.016260162601626018
+|σ|∈[70, 80): Top-1/total: 6 / 114 ≈ 0.05263157894736842
+Δ(1)= Top-1/total: 120 / 997 ≈ 0.12036108324974924
+Δ(2)= Top-1/total: 102 / 542 ≈ 0.1881918819188192
+Δ(3)= Top-1/total: 8 / 161 ≈ 0.049689440993788817
+(|σ|∈[0, 10), Δ=1): Top-1/total: 17 / 32 ≈ 0.53125
+(|σ|∈[0, 10), Δ=2): Top-1/total: 10 / 27 ≈ 0.37037037037037035
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 3 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 39 / 179 ≈ 0.21787709497206703
+(|σ|∈[10, 20), Δ=2): Top-1/total: 32 / 91 ≈ 0.3516483516483517
+(|σ|∈[10, 20), Δ=3): Top-1/total: 0 / 28 ≈ 0.0
+(|σ|∈[20, 30), Δ=1): Top-1/total: 35 / 242 ≈ 0.1446280991735537
+(|σ|∈[20, 30), Δ=2): Top-1/total: 19 / 108 ≈ 0.17592592592592593
+(|σ|∈[20, 30), Δ=3): Top-1/total: 1 / 31 ≈ 0.03225806451612903
+(|σ|∈[30, 40), Δ=1): Top-1/total: 18 / 204 ≈ 0.08823529411764706
+(|σ|∈[30, 40), Δ=2): Top-1/total: 19 / 101 ≈ 0.18811881188118812
+(|σ|∈[30, 40), Δ=3): Top-1/total: 4 / 36 ≈ 0.1111111111111111
+(|σ|∈[40, 50), Δ=1): Top-1/total: 6 / 123 ≈ 0.04878048780487805
+(|σ|∈[40, 50), Δ=2): Top-1/total: 11 / 71 ≈ 0.15492957746478872
+(|σ|∈[40, 50), Δ=3): Top-1/total: 0 / 23 ≈ 0.0
+(|σ|∈[50, 60), Δ=1): Top-1/total: 3 / 92 ≈ 0.03260869565217391
+(|σ|∈[50, 60), Δ=2): Top-1/total: 6 / 61 ≈ 0.09836065573770492
+(|σ|∈[50, 60), Δ=3): Top-1/total: 2 / 11 ≈ 0.18181818181818182
+(|σ|∈[60, 70), Δ=1): Top-1/total: 0 / 60 ≈ 0.0
+(|σ|∈[60, 70), Δ=2): Top-1/total: 1 / 48 ≈ 0.020833333333333332
+(|σ|∈[60, 70), Δ=3): Top-1/total: 1 / 15 ≈ 0.06666666666666667
+(|σ|∈[70, 80), Δ=1): Top-1/total: 2 / 65 ≈ 0.03076923076923077
+(|σ|∈[70, 80), Δ=2): Top-1/total: 4 / 35 ≈ 0.11428571428571428
+(|σ|∈[70, 80), Δ=3): Top-1/total: 0 / 14 ≈ 0.0
+
+Precision@10
+===========
+|σ|∈[0, 10): Top-1/total: 43 / 62 ≈ 0.6935483870967742
+|σ|∈[10, 20): Top-1/total: 170 / 298 ≈ 0.5704697986577181
+|σ|∈[20, 30): Top-1/total: 188 / 381 ≈ 0.49343832020997375
+|σ|∈[30, 40): Top-1/total: 147 / 341 ≈ 0.4310850439882698
+|σ|∈[40, 50): Top-1/total: 81 / 217 ≈ 0.37327188940092165
+|σ|∈[50, 60): Top-1/total: 49 / 164 ≈ 0.29878048780487804
+|σ|∈[60, 70): Top-1/total: 22 / 123 ≈ 0.17886178861788618
+|σ|∈[70, 80): Top-1/total: 25 / 114 ≈ 0.21929824561403508
+Δ(1)= Top-1/total: 448 / 997 ≈ 0.4493480441323972
+Δ(2)= Top-1/total: 257 / 542 ≈ 0.474169741697417
+Δ(3)= Top-1/total: 20 / 161 ≈ 0.12422360248447205
+(|σ|∈[0, 10), Δ=1): Top-1/total: 24 / 32 ≈ 0.75
+(|σ|∈[0, 10), Δ=2): Top-1/total: 19 / 27 ≈ 0.7037037037037037
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 3 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 110 / 179 ≈ 0.6145251396648045
+(|σ|∈[10, 20), Δ=2): Top-1/total: 59 / 91 ≈ 0.6483516483516484
+(|σ|∈[10, 20), Δ=3): Top-1/total: 1 / 28 ≈ 0.03571428571428571
+(|σ|∈[20, 30), Δ=1): Top-1/total: 126 / 242 ≈ 0.5206611570247934
+(|σ|∈[20, 30), Δ=2): Top-1/total: 56 / 108 ≈ 0.5185185185185185
+(|σ|∈[20, 30), Δ=3): Top-1/total: 6 / 31 ≈ 0.1935483870967742
+(|σ|∈[30, 40), Δ=1): Top-1/total: 93 / 204 ≈ 0.45588235294117646
+(|σ|∈[30, 40), Δ=2): Top-1/total: 48 / 101 ≈ 0.4752475247524752
+(|σ|∈[30, 40), Δ=3): Top-1/total: 6 / 36 ≈ 0.16666666666666666
+(|σ|∈[40, 50), Δ=1): Top-1/total: 47 / 123 ≈ 0.3821138211382114
+(|σ|∈[40, 50), Δ=2): Top-1/total: 32 / 71 ≈ 0.4507042253521127
+(|σ|∈[40, 50), Δ=3): Top-1/total: 2 / 23 ≈ 0.08695652173913043
+(|σ|∈[50, 60), Δ=1): Top-1/total: 25 / 92 ≈ 0.2717391304347826
+(|σ|∈[50, 60), Δ=2): Top-1/total: 22 / 61 ≈ 0.36065573770491804
+(|σ|∈[50, 60), Δ=3): Top-1/total: 2 / 11 ≈ 0.18181818181818182
+(|σ|∈[60, 70), Δ=1): Top-1/total: 9 / 60 ≈ 0.15
+(|σ|∈[60, 70), Δ=2): Top-1/total: 10 / 48 ≈ 0.20833333333333334
+(|σ|∈[60, 70), Δ=3): Top-1/total: 3 / 15 ≈ 0.2
+(|σ|∈[70, 80), Δ=1): Top-1/total: 14 / 65 ≈ 0.2153846153846154
+(|σ|∈[70, 80), Δ=2): Top-1/total: 11 / 35 ≈ 0.3142857142857143
+(|σ|∈[70, 80), Δ=3): Top-1/total: 0 / 14 ≈ 0.0
+
+Precision@100
+===========
+|σ|∈[0, 10): Top-1/total: 52 / 62 ≈ 0.8387096774193549
+|σ|∈[10, 20): Top-1/total: 207 / 298 ≈ 0.6946308724832215
+|σ|∈[20, 30): Top-1/total: 281 / 381 ≈ 0.7375328083989501
+|σ|∈[30, 40): Top-1/total: 241 / 341 ≈ 0.7067448680351907
+|σ|∈[40, 50): Top-1/total: 139 / 217 ≈ 0.6405529953917051
+|σ|∈[50, 60): Top-1/total: 104 / 164 ≈ 0.6341463414634146
+|σ|∈[60, 70): Top-1/total: 56 / 123 ≈ 0.45528455284552843
+|σ|∈[70, 80): Top-1/total: 68 / 114 ≈ 0.5964912280701754
+Δ(1)= Top-1/total: 779 / 997 ≈ 0.7813440320962889
+Δ(2)= Top-1/total: 339 / 542 ≈ 0.6254612546125461
+Δ(3)= Top-1/total: 30 / 161 ≈ 0.18633540372670807
+(|σ|∈[0, 10), Δ=1): Top-1/total: 31 / 32 ≈ 0.96875
+(|σ|∈[0, 10), Δ=2): Top-1/total: 21 / 27 ≈ 0.7777777777777778
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 3 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 142 / 179 ≈ 0.7932960893854749
+(|σ|∈[10, 20), Δ=2): Top-1/total: 64 / 91 ≈ 0.7032967032967034
+(|σ|∈[10, 20), Δ=3): Top-1/total: 1 / 28 ≈ 0.03571428571428571
+(|σ|∈[20, 30), Δ=1): Top-1/total: 202 / 242 ≈ 0.8347107438016529
+(|σ|∈[20, 30), Δ=2): Top-1/total: 72 / 108 ≈ 0.6666666666666666
+(|σ|∈[20, 30), Δ=3): Top-1/total: 7 / 31 ≈ 0.22580645161290322
+(|σ|∈[30, 40), Δ=1): Top-1/total: 168 / 204 ≈ 0.8235294117647058
+(|σ|∈[30, 40), Δ=2): Top-1/total: 65 / 101 ≈ 0.6435643564356436
+(|σ|∈[30, 40), Δ=3): Top-1/total: 8 / 36 ≈ 0.2222222222222222
+(|σ|∈[40, 50), Δ=1): Top-1/total: 91 / 123 ≈ 0.7398373983739838
+(|σ|∈[40, 50), Δ=2): Top-1/total: 42 / 71 ≈ 0.5915492957746479
+(|σ|∈[40, 50), Δ=3): Top-1/total: 6 / 23 ≈ 0.2608695652173913
+(|σ|∈[50, 60), Δ=1): Top-1/total: 64 / 92 ≈ 0.6956521739130435
+(|σ|∈[50, 60), Δ=2): Top-1/total: 38 / 61 ≈ 0.6229508196721312
+(|σ|∈[50, 60), Δ=3): Top-1/total: 2 / 11 ≈ 0.18181818181818182
+(|σ|∈[60, 70), Δ=1): Top-1/total: 34 / 60 ≈ 0.5666666666666667
+(|σ|∈[60, 70), Δ=2): Top-1/total: 18 / 48 ≈ 0.375
+(|σ|∈[60, 70), Δ=3): Top-1/total: 4 / 15 ≈ 0.26666666666666666
+(|σ|∈[70, 80), Δ=1): Top-1/total: 47 / 65 ≈ 0.7230769230769231
+(|σ|∈[70, 80), Δ=2): Top-1/total: 19 / 35 ≈ 0.5428571428571428
+(|σ|∈[70, 80), Δ=3): Top-1/total: 2 / 14 ≈ 0.14285714285714285
+
+Precision@1000
+=============
+|σ|∈[0, 10): Top-1/total: 57 / 62 ≈ 0.9193548387096774
+|σ|∈[10, 20): Top-1/total: 223 / 298 ≈ 0.7483221476510067
+|σ|∈[20, 30): Top-1/total: 306 / 381 ≈ 0.8031496062992126
+|σ|∈[30, 40): Top-1/total: 260 / 341 ≈ 0.7624633431085044
+|σ|∈[40, 50): Top-1/total: 158 / 217 ≈ 0.728110599078341
+|σ|∈[50, 60): Top-1/total: 126 / 164 ≈ 0.7682926829268293
+|σ|∈[60, 70): Top-1/total: 75 / 123 ≈ 0.6097560975609756
+|σ|∈[70, 80): Top-1/total: 83 / 114 ≈ 0.7280701754385965
+Δ(1)= Top-1/total: 881 / 997 ≈ 0.8836509528585758
+Δ(2)= Top-1/total: 374 / 542 ≈ 0.6900369003690037
+Δ(3)= Top-1/total: 33 / 161 ≈ 0.20496894409937888
+(|σ|∈[0, 10), Δ=1): Top-1/total: 32 / 32 ≈ 1.0
+(|σ|∈[0, 10), Δ=2): Top-1/total: 25 / 27 ≈ 0.9259259259259259
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 3 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 156 / 179 ≈ 0.8715083798882681
+(|σ|∈[10, 20), Δ=2): Top-1/total: 66 / 91 ≈ 0.7252747252747253
+(|σ|∈[10, 20), Δ=3): Top-1/total: 1 / 28 ≈ 0.03571428571428571
+(|σ|∈[20, 30), Δ=1): Top-1/total: 218 / 242 ≈ 0.9008264462809917
+(|σ|∈[20, 30), Δ=2): Top-1/total: 81 / 108 ≈ 0.75
+(|σ|∈[20, 30), Δ=3): Top-1/total: 7 / 31 ≈ 0.22580645161290322
+(|σ|∈[30, 40), Δ=1): Top-1/total: 181 / 204 ≈ 0.8872549019607843
+(|σ|∈[30, 40), Δ=2): Top-1/total: 69 / 101 ≈ 0.6831683168316832
+(|σ|∈[30, 40), Δ=3): Top-1/total: 10 / 36 ≈ 0.2777777777777778
+(|σ|∈[40, 50), Δ=1): Top-1/total: 106 / 123 ≈ 0.8617886178861789
+(|σ|∈[40, 50), Δ=2): Top-1/total: 46 / 71 ≈ 0.647887323943662
+(|σ|∈[40, 50), Δ=3): Top-1/total: 6 / 23 ≈ 0.2608695652173913
+(|σ|∈[50, 60), Δ=1): Top-1/total: 81 / 92 ≈ 0.8804347826086957
+(|σ|∈[50, 60), Δ=2): Top-1/total: 43 / 61 ≈ 0.7049180327868853
+(|σ|∈[50, 60), Δ=3): Top-1/total: 2 / 11 ≈ 0.18181818181818182
+(|σ|∈[60, 70), Δ=1): Top-1/total: 50 / 60 ≈ 0.8333333333333334
+(|σ|∈[60, 70), Δ=2): Top-1/total: 21 / 48 ≈ 0.4375
+(|σ|∈[60, 70), Δ=3): Top-1/total: 4 / 15 ≈ 0.26666666666666666
+(|σ|∈[70, 80), Δ=1): Top-1/total: 57 / 65 ≈ 0.8769230769230769
+(|σ|∈[70, 80), Δ=2): Top-1/total: 23 / 35 ≈ 0.6571428571428571
+(|σ|∈[70, 80), Δ=3): Top-1/total: 3 / 14 ≈ 0.21428571428571427
+
+Precision@All
+=============
+|σ|∈[0, 10): Top-1/total: 57 / 62 ≈ 0.9193548387096774
+|σ|∈[10, 20): Top-1/total: 223 / 298 ≈ 0.7483221476510067
+|σ|∈[20, 30): Top-1/total: 306 / 381 ≈ 0.8031496062992126
+|σ|∈[30, 40): Top-1/total: 260 / 341 ≈ 0.7624633431085044
+|σ|∈[40, 50): Top-1/total: 158 / 217 ≈ 0.728110599078341
+|σ|∈[50, 60): Top-1/total: 126 / 164 ≈ 0.7682926829268293
+|σ|∈[60, 70): Top-1/total: 75 / 123 ≈ 0.6097560975609756
+|σ|∈[70, 80): Top-1/total: 83 / 114 ≈ 0.7280701754385965
+Δ(1)= Top-1/total: 881 / 997 ≈ 0.8836509528585758
+Δ(2)= Top-1/total: 374 / 542 ≈ 0.6900369003690037
+Δ(3)= Top-1/total: 33 / 161 ≈ 0.20496894409937888
+(|σ|∈[0, 10), Δ=1): Top-1/total: 32 / 32 ≈ 1.0
+(|σ|∈[0, 10), Δ=2): Top-1/total: 25 / 27 ≈ 0.9259259259259259
+(|σ|∈[0, 10), Δ=3): Top-1/total: 0 / 3 ≈ 0.0
+(|σ|∈[10, 20), Δ=1): Top-1/total: 156 / 179 ≈ 0.8715083798882681
+(|σ|∈[10, 20), Δ=2): Top-1/total: 66 / 91 ≈ 0.7252747252747253
+(|σ|∈[10, 20), Δ=3): Top-1/total: 1 / 28 ≈ 0.03571428571428571
+(|σ|∈[20, 30), Δ=1): Top-1/total: 218 / 242 ≈ 0.9008264462809917
+(|σ|∈[20, 30), Δ=2): Top-1/total: 81 / 108 ≈ 0.75
+(|σ|∈[20, 30), Δ=3): Top-1/total: 7 / 31 ≈ 0.22580645161290322
+(|σ|∈[30, 40), Δ=1): Top-1/total: 181 / 204 ≈ 0.8872549019607843
+(|σ|∈[30, 40), Δ=2): Top-1/total: 69 / 101 ≈ 0.6831683168316832
+(|σ|∈[30, 40), Δ=3): Top-1/total: 10 / 36 ≈ 0.2777777777777778
+(|σ|∈[40, 50), Δ=1): Top-1/total: 106 / 123 ≈ 0.8617886178861789
+(|σ|∈[40, 50), Δ=2): Top-1/total: 46 / 71 ≈ 0.647887323943662
+(|σ|∈[40, 50), Δ=3): Top-1/total: 6 / 23 ≈ 0.2608695652173913
+(|σ|∈[50, 60), Δ=1): Top-1/total: 81 / 92 ≈ 0.8804347826086957
+(|σ|∈[50, 60), Δ=2): Top-1/total: 43 / 61 ≈ 0.7049180327868853
+(|σ|∈[50, 60), Δ=3): Top-1/total: 2 / 11 ≈ 0.18181818181818182
+(|σ|∈[60, 70), Δ=1): Top-1/total: 50 / 60 ≈ 0.8333333333333334
+(|σ|∈[60, 70), Δ=2): Top-1/total: 21 / 48 ≈ 0.4375
+(|σ|∈[60, 70), Δ=3): Top-1/total: 4 / 15 ≈ 0.26666666666666666
+(|σ|∈[70, 80), Δ=1): Top-1/total: 57 / 65 ≈ 0.8769230769230769
+(|σ|∈[70, 80), Δ=2): Top-1/total: 23 / 35 ≈ 0.6571428571428571
+(|σ|∈[70, 80), Δ=3): Top-1/total: 3 / 14 ≈ 0.21428571428571427
+
+w/ Listwise reranker + LED+1 + GRE-NGRAM-1000 reranking
 
 Lev(*): Top-1/rec/pos/total: 162 / 927 / 1637 / 1753, errors: 116, P@1: 0.09241300627495722, P@All: 0.5288077581289219
 Lev(1): Top-1/rec/pos/total: 112 / 709 / 1031 / 1031, errors: 0, P@1: 0.10863239573229874, P@All: 0.6876818622696411
