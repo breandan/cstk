@@ -33,9 +33,9 @@ fun main() {
   MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
-//  evaluateRegexRepairOnStackOverflow()
+  evaluateRegexRepairOnStackOverflow()
 //  evaluateMatrixBarHillelRepairOnStackOverflow()
-  evaluateBarHillelRepairOnStackOverflow()
+//  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
 //  evaluateBIFIRepair()
 //  measureLevenshteinBlanketSize()
@@ -131,6 +131,8 @@ fun evaluateRegexRepairOnStackOverflow() {
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
+  val s2pg = vanillaS2PCFG
+  val termDict = TermDict(s2pg.terminals)
 
   val pcfgMap = readPCFG3()
   val pcfgNorm = s2pg.nonterminals.associateWith { nt -> pcfgMap.filterKeys { it.first == nt }.values.sum() }
@@ -142,9 +144,8 @@ fun evaluateRegexRepairOnStackOverflow() {
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
     .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
 //    .replace(" ", "_").replace("/", "_")
-  val positiveHeader = "length, lev_dist, sample_ms, total_ms, " +
-      "total_samples, lev_ball_arcs, productions, lang_size, dfa_states, dfa_transitions, rank, edit1, edit2, edit3\n"
-  val negativeHeader = "length, lev_dist, samples, lev_states, productions, lang_size, dfa_states, dfa_transitions, edit1, edit2, edit3\n"
+  val positiveHeader = "length, lev_dist, sample_ms, total_ms, total_samples, lang_size, rank, ngram_rank\n"
+  val negativeHeader = "length, lev_dist, samples, lang_size\n"
   val title = "matrix_bar_hillel"
   val positive = try { File("data/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }.also { println("Writing positive CSV to: ${it.absolutePath}") }
@@ -163,7 +164,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
-    val levDist = levAlign.patchSize()
+    val levDist = levAlign.patchSize() // True distance, only used for logging purposes
 
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
     P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
@@ -182,21 +183,29 @@ fun evaluateRegexRepairOnStackOverflow() {
     var totalSamples = 0
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
-    var elapsed = clock.elapsedNow().inWholeMilliseconds
 
-    val unrankedResults = sendCPU(brokeStr).lines()
-    val rankedResults =
+    val (langSize, dfa) = sendCPUAndMeasureLang(brokeStr)
+    val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
+      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+      .sortedBy { it.second }.map { it.first }
+      .also { totalSamples = it.size }
+      .take(1000)
+
+    val elapsed = clock.elapsedNow().inWholeMilliseconds
+    println("Repairs fetched in $elapsed ms")
+    val origRank = unrankedResults.indexOf(fixedStr)
+    val rankedResults = if (unrankedResults.isEmpty()) emptyList()
 //      unrankedResults
-      rerankGPU(brokeStr, unrankedResults.take(1000).joinToString("\n"))
+      else rerankGPU(brokeStr, unrankedResults.joinToString("\n"))
         .map { it.addNewLineIfMissing() }.onEachIndexed { i, it ->
-          totalSamples++
           if (it == fixedStr) {
             matchFound = true
-            val origRank = unrankedResults.indexOf(it)
             println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
-            elapsed = clock.elapsedNow().inWholeMilliseconds
           }
         }
+
+    val allElapsed = clock.elapsedNow().inWholeMilliseconds
+    println("Reranking completed in $allElapsed ms")
 
     val indexOfTarget = rankedResults.indexOf(fixedStr).also {
       if (matchFound) {
@@ -221,14 +230,11 @@ fun evaluateRegexRepairOnStackOverflow() {
       println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout with ? prods, " +
 //        "${dfa.numStates} states, ${dfa.numberOfTransitions} transitions, " +
           "length-$levDist human repair not found")
-      negative.appendText("${brokeToks.size}, $levDist, $totalSamples, ?, ?, ?, ${levAlign.summarize()}\n")
+      negative.appendText("${brokeToks.size}, $levDist, $totalSamples, $langSize\n")
     } else {
-      val allElapsed = allTime.elapsedNow().inWholeMilliseconds
-
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
-      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms," +
-          " $totalSamples samples, ? prods, ? trees, $indexOfTarget rank")//, rank: ${rankedResults.indexOf(fixedTks) + 1} / ${rankedResults.size}")
+      println("Found length-$levDist repair in $elapsed ms, $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
 //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
@@ -237,7 +243,7 @@ fun evaluateRegexRepairOnStackOverflow() {
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
       samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
-      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, 0, 0, $indexOfTarget, ${levAlign.summarize()}\n")
+      positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, $totalSamples, $langSize, $indexOfTarget, $origRank\n")
     }
 
     if (allRate.total % 100 == 0) {
@@ -254,6 +260,7 @@ fun evaluateRegexRepairOnStackOverflow() {
       println(P_AllByLevDist.summarizeLenAndDist())
       println()
     }
+    println()
   }
 }
 
