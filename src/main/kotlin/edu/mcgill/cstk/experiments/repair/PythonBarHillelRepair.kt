@@ -9,8 +9,6 @@ import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.experiments.probing.MakeMore
 import edu.mcgill.cstk.utils.*
 import java.io.File
-import java.io.RandomAccessFile
-import java.nio.channels.FileLock
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -33,7 +31,10 @@ fun main() {
   MAX_TOKENS = 80
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
+
+//  startWGPUServer()
   evaluateRegexRepairOnStackOverflow()
+//  stopWGPUServer()
 //  evaluateMatrixBarHillelRepairOnStackOverflow()
 //  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -145,7 +146,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
 //    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, sample_ms, sample_rerank_ms, total_samples, lang_size, rank, ngram_rank\n"
-  val negativeHeader = "length, lev_dist, samples, lang_size\n"
+  val negativeHeader = "length, lev_dist, sample_ms, sample_rerank_ms, samples, lang_size\n"
   val title = "matrix_bar_hillel"
   val positive = try { File("data/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_positive_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }.also { println("Writing positive CSV to: ${it.absolutePath}") }
@@ -158,6 +159,21 @@ fun evaluateRegexRepairOnStackOverflow() {
   val P_100ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val P_1000ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
   val P_AllByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
+
+  fun summarizeRunningStats() {
+    println()
+    println("Precision@1\n===========")
+    println(P_1ByLevDist.summarizeLenAndDist())
+    println("Precision@10\n===========")
+    println(P_10ByLevDist.summarizeLenAndDist())
+    println("Precision@100\n===========")
+    println(P_100ByLevDist.summarizeLenAndDist())
+    println("Precision@1000\n=============")
+    println(P_1000ByLevDist.summarizeLenAndDist())
+    println("Precision@All\n=============")
+    println(P_AllByLevDist.summarizeLenAndDist())
+    println()
+  }
 
   dataset.asStream().forEach { (brokeStr, fixedStr) ->
     val allTime = TimeSource.Monotonic.markNow()
@@ -184,6 +200,11 @@ fun evaluateRegexRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
 
+//    val unrankedResults = sendGPU(brokeStr).lines()
+//      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+//      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
+//    val langSize = 0
+
     val (langSize, dfa) = sendCPUAndMeasureLang(brokeStr)
     val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
       .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
@@ -191,9 +212,9 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
     val origRank = unrankedResults.indexOf(fixedStr)
-    val rankedResults = unrankedResults
-//      if (unrankedResults.isEmpty()) emptyList()
-//      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+    val rankedResults = //unrankedResults
+      if (unrankedResults.isEmpty()) emptyList()
+      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
         .onEachIndexed { i, it ->
           totalSamples++
           if (it == fixedStr) {
@@ -226,7 +247,7 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     if (indexOfTarget < 0) {
       println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout, Δ=$levDist human repair not found")
-      negative.appendText("${brokeToks.size}, $levDist, $totalSamples, $langSize\n")
+      negative.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, $totalSamples, $langSize\n")
     } else {
       allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
       indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
@@ -242,35 +263,11 @@ fun evaluateRegexRepairOnStackOverflow() {
       positive.appendText("${brokeToks.size}, $levDist, $elapsed, $allElapsed, $totalSamples, $langSize, $indexOfTarget, $origRank\n")
     }
 
-    if (allRate.total % 100 == 0) {
-      println()
-      println("Precision@1\n===========")
-      println(P_1ByLevDist.summarizeLenAndDist())
-      println("Precision@10\n===========")
-      println(P_10ByLevDist.summarizeLenAndDist())
-      println("Precision@100\n===========")
-      println(P_100ByLevDist.summarizeLenAndDist())
-      println("Precision@1000\n=============")
-      println(P_1000ByLevDist.summarizeLenAndDist())
-      println("Precision@All\n=============")
-      println(P_AllByLevDist.summarizeLenAndDist())
-      println()
-    }
+    if (allRate.total % 100 == 0) summarizeRunningStats()
     println()
   }
 
-    println()
-    println("Precision@1\n===========")
-    println(P_1ByLevDist.summarizeLenAndDist())
-    println("Precision@10\n===========")
-    println(P_10ByLevDist.summarizeLenAndDist())
-    println("Precision@100\n===========")
-    println(P_100ByLevDist.summarizeLenAndDist())
-    println("Precision@1000\n=============")
-    println(P_1000ByLevDist.summarizeLenAndDist())
-    println("Precision@All\n=============")
-    println(P_AllByLevDist.summarizeLenAndDist())
-    println()
+  summarizeRunningStats()
 }
 
 fun evaluateBarHillelRepairOnStackOverflow() {
@@ -629,7 +626,7 @@ val shortcutTestcases: List<Pair<String, String>> = listOf(
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
 //  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
 //  val file = File(File("").absolutePath + path).readText()
-  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64_tst.txt"
+  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
   val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
   val decoder = Base64.getDecoder()
   contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
