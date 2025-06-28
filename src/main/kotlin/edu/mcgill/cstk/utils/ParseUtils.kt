@@ -7,7 +7,10 @@ import me.vovak.antlr.parser.*
 import org.antlr.v4.runtime.*
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.spec.grammar.tools.*
-
+import java.util.Base64
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import kotlin.text.replace
 
 val errorListener =
   object: BaseErrorListener() {
@@ -204,11 +207,75 @@ fun Σᐩ.isValidPython(onErrorAction: (Σᐩ?) -> Unit = {}): Boolean =
     false
   }
 
+fun String.mapToPythonCode(): String {
+  val tokens = this.split(" ")
+  val output = StringBuilder()
+  var indentLevel = 0
+  var lineStart = true
+  var freshName = 0
+
+  for (token in tokens) {
+    when (token) {
+      "INDENT" -> indentLevel++ // Increase indentation
+      "DEDENT" -> indentLevel-- // Decrease indentation
+      "NEWLINE" -> { output.append("\n"); lineStart = true }
+      else -> {
+        if (lineStart) {
+          output.append("\t".repeat(indentLevel.coerceAtLeast(0)))
+          lineStart = false
+        } else { output.append(" ") }
+        val mappedToken = when (token) {
+          "NAME" -> "NAME_${freshName++}"
+          "NUMBER" -> "1"
+          "STRING" -> "\"\""
+          else -> token
+        }
+        output.append(mappedToken)
+      }
+    }
+  }
+  return output.toString()
+}
+
+fun getOutput(code: String): String = try {
+    val src = code.mapToPythonCode()
+//  println("Checking:\n$src")
+    val encoded = Base64.getEncoder().encodeToString(src.toByteArray(Charsets.UTF_8))
+
+    val pythonCode = """
+            import sys, base64, textwrap
+            encoded = sys.argv[1]
+            _src = base64.b64decode(encoded).decode('utf-8')
+            _src = textwrap.dedent(_src)
+            compile(_src, 'test_compile.py', 'exec')
+        """.trimIndent()
+
+    val processBuilder = ProcessBuilder("python", "-c", pythonCode, encoded)
+    .redirectErrorStream(true)
+    val process = processBuilder.start()
+    val output = StringBuilder()
+    BufferedReader(InputStreamReader(process.inputStream))
+      .use { reader -> reader.forEachLine { output.append(it).append("\n") } }
+    if (process.waitFor() == 0) "" else output.toString().trim()
+  } catch (e: Exception) { e.message ?: e.localizedMessage }
+
 fun Σᐩ.isInterpretablePython(): Boolean =
 // Checks whether IO contains the string "SyntaxError"
   !ProcessBuilder("pylyzer", "-c", this).start()
-    .apply { waitFor() }
-    .errorStream.bufferedReader().readText().contains("SyntaxError")
+    .apply { waitFor() }.errorStream.bufferedReader().readText()
+    .contains("SyntaxError")
+
+fun Σᐩ.isTypesafePython(): Boolean =
+// Checks whether IO contains the string "SyntaxError"
+  !ProcessBuilder("python", "-c",
+       replace("NUMBER", "1")
+       .replace("STRING", "\"\"")
+       .replace("NEWLINE", "\n")
+       .replace("INDENT", "\t")
+    ).start()
+    .apply { waitFor() }.errorStream.bufferedReader().readText()
+    .also {println(it); println()}
+    .contains("Error")
 
 fun Σᐩ.getPythonErrorMessage(): Σᐩ =
   try {
