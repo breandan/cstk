@@ -5,11 +5,14 @@
   --------
   • --mode pretrain : next-token + contrastive objective (unsupervised)
   • --mode rerank   : end-to-end fine-tuning with hard-negative reranking
-  Both modes share the same encoder, tokenizer and Levenshtein utilities.
+  • --mode serve    : serve the reranker via HTTP API
+  All modes share the same encoder, tokenizer, and Levenshtein utilities.
 """
 import argparse, random, itertools, time
 from pathlib import Path
 from typing import List, Tuple
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
 
 import torch, torch.nn as nn, torch.nn.functional as F
 
@@ -301,15 +304,114 @@ def color_alignment(q: str, d: str, la: List[int]) -> str:
     return "".join(out)
 
 # -------------------------------------------------------------------- #
+#  Mode 3 – serving the reranker
+# -------------------------------------------------------------------- #
+# Global models for serving
+enc = None
+rer = None
+
+def rerank_documents(query: str, documents: List[str]) -> List[str]:
+    """Rerank documents based on query using pre-trained encoder and reranker."""
+    global enc, rer
+    if not documents:
+        return []
+    x_lst, la_lst = zip(*(build_pair(query, d) for d in documents))
+    x = torch.tensor(x_lst, device=DEVICE)
+    la = torch.tensor(la_lst, device=DEVICE)
+    _, e_q, e_d = enc(x, la)
+    q_emb = e_q[0:1]  # [1, D], using the first query embedding (all are same)
+    d_embs = e_d      # [N, D]
+    scores = rer(q_emb, d_embs.unsqueeze(0))[0]  # [N]
+    sorted_indices = scores.argsort(descending=True).tolist()
+    ranked_docs = [documents[i] for i in sorted_indices]
+    return ranked_docs
+
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle requests in a separate thread."""
+    daemon_threads = True
+
+class RerankerHandler(BaseHTTPRequestHandler):
+    """Request handler for the reranking service."""
+    def do_POST(self):
+        if self.path != '/rerank':
+            self.send_error(404, "Not Found: Please POST to /rerank")
+            return
+
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length).decode('utf-8')
+            lines = post_data.strip().split('\n')
+
+            if len(lines) < 2:
+                self.send_error(400, "Bad Request: Expected query on the first line and documents on subsequent lines.")
+                return
+
+            query = lines[0]
+            documents = lines[1:]
+
+            start_time = time.time()
+            ranked_documents = rerank_documents(query, documents)
+            end_time = time.time()
+
+            print(f"Reranked {len(documents)} docs for query '{query[:50]}...' in {end_time - start_time:.4f}s.")
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write('\n'.join(ranked_documents).encode('utf-8'))
+
+        except Exception as e:
+            self.send_error(500, f"Internal Server Error: {e}")
+            print(f"Error processing request: {e}")
+
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.end_headers()
+            message = """
+            <html><head><title>Two-Stage Reranker Service</title></head><body>
+                <h1>Two-Stage Reranker Service is Running</h1>
+                <p>To use, send a <strong>POST</strong> request to <code>/rerank</code>.</p>
+                <p>The request body must be plain text with the query on the first line and documents on subsequent lines.</p>
+                <p><b>Example using curl:</b></p>
+                <pre><code>QUERY="how to parse json in python"
+DOC_1="Parsing JSON is a common task."
+DOC_2="Python's json module is standard."
+DOC_3="XML is a different data format."
+
+printf "%s\\n%s\\n%s\\n%s" "$QUERY" "$DOC_1" "$DOC_2" "$DOC_3" | curl -X POST --data-binary @- http://localhost:8082/rerank</code></pre>
+            </body></html>
+            """
+            self.wfile.write(message.encode('utf-8'))
+        else:
+            self.send_error(404, "Not Found")
+
+def serve():
+    """Start the HTTP server to serve the reranker."""
+    global enc, rer
+    enc = TxEncoder().to(DEVICE)
+    enc.load_state_dict(torch.load("encoder_finetuned.pt", map_location=DEVICE, weights_only=True))
+    rer = Reranker().to(DEVICE)
+    rer.load_state_dict(torch.load("reranker.pt", map_location=DEVICE, weights_only=True))
+
+    server_address = ('', 8082)
+    httpd = ThreadingHTTPServer(server_address, RerankerHandler)
+    print(f"Serving on port 8082...")
+    httpd.serve_forever()
+
+# -------------------------------------------------------------------- #
 #  Entrypoint
 # -------------------------------------------------------------------- #
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--mode", choices=["pretrain","rerank"], required=True)
-    p.add_argument("--steps", type=int, default=40000)
+    p = argparse.ArgumentParser(description="Train or serve a two-stage reranker.")
+    p.add_argument("--mode", choices=["pretrain", "rerank", "serve"], required=True, help="Mode: pretrain, rerank, or serve")
+    p.add_argument("--steps", type=int, default=40000, help="Number of training steps")
     args = p.parse_args()
     torch.manual_seed(0)
     if args.mode == "pretrain":
         pretrain(steps=args.steps)
-    else:
+    elif args.mode == "rerank":
         rerank(steps=args.steps)
+    elif args.mode == "serve":
+        serve()

@@ -247,14 +247,13 @@ fun evaluateRegexRepairOnStackOverflow() {
         if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
         if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-        if (it <= 1000) {
-          P_1000ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-
-//          writeToFileWithThreadLock("so_vs_markov.txt", unrankedResults.take(RERANK_THR)
-//            .filter { it != fixedStr.addNewLineIfMissing() }
-//            .joinToString("\n", brokeStr.addNewLineIfMissing().charify() + "\n" + fixedStr.addNewLineIfMissing().charify() + "\n") { it.addNewLineIfMissing().charify() } + "\n\n")
-        }
+        if (it <= 1000) P_1000ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
       }
+
+//      writeToFileWithThreadLock("so_ts_markov.txt",
+//        unrankedResults.take(RERANK_THR - 1).filter { it != fixedStr.addNewLineIfMissing() }
+//        .joinToString("\n", brokeStr.addNewLineIfMissing().charify() + "\n" + fixedStr.addNewLineIfMissing().charify() + "\n") { it.addNewLineIfMissing().charify() } + "\n\n"
+//      )
     }
 
     rankedResults.firstOrNull()?.tokenizeByWhitespace()
