@@ -265,18 +265,6 @@ fun Σᐩ.isInterpretablePython(): Boolean =
     .apply { waitFor() }.errorStream.bufferedReader().readText()
     .contains("SyntaxError")
 
-fun Σᐩ.isTypesafePython(): Boolean =
-// Checks whether IO contains the string "SyntaxError"
-  !ProcessBuilder("python", "-c",
-       replace("NUMBER", "1")
-       .replace("STRING", "\"\"")
-       .replace("NEWLINE", "\n")
-       .replace("INDENT", "\t")
-    ).start()
-    .apply { waitFor() }.errorStream.bufferedReader().readText()
-    .also {println(it); println()}
-    .contains("Error")
-
 fun Σᐩ.getPythonErrorMessage(): Σᐩ =
   try {
     Python3Parser(

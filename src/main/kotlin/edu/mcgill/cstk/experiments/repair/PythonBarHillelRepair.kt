@@ -211,11 +211,17 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
+    if (!dfaRecognized) return@forEach
+
     val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
       .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
       .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
-      .asSequence().asStream().parallel().filter { ("Error" !in getOutput(it)).also { if(!it) filtered++ } }
-      .limit(1_000).toList()
+      .let {
+        if ("Error" in getOutput(fixedStr)) it
+        else it.asSequence().asStream().parallel()
+          .filter { ("Error" !in getOutput(it)).also { if(!it) filtered++ } }
+          .limit(1_000).toList()
+      }
 
     println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})")
 
