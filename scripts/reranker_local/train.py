@@ -36,8 +36,7 @@ def encode(txt: str, max_len: int) -> List[int]:
     ids = [CHAR_TO_ID.get(c, 0) for c in txt[:max_len]]
     return ids + [0] * (max_len - len(ids))
 
-def levenshtein_align(a: List[str], b: List[str]) -> List[int]:
-    """0=match, 1=ins, 2=sub, 3=del (same coding as your LaTeX table)."""
+def lev_align(a: List[str], b: List[str]) -> List[int]:
     m, n = len(a), len(b)
     dp = [[0]*(n+1) for _ in range(m+1)]
     for i in range(m+1): dp[i][0] = i
@@ -52,14 +51,14 @@ def levenshtein_align(a: List[str], b: List[str]) -> List[int]:
             la[j-1] = 0 if a[i-1]==b[j-1] else 2; i, j = i-1, j-1
         elif j and (i==0 or dp[i][j] == dp[i][j-1]+1):
             la[j-1] = 1; j -= 1
-        else:                                           # deletion in doc
-            i -= 1                                     # (=skip in b)
-    return la                                          # len = |b|
+        else:
+            i -= 1
+    return la
 
 def build_pair(q: str, d: str) -> Tuple[List[int], List[int]]:
     """Return input_ids & LA ids aligned to same length (MAX_LEN)."""
     q_ids, d_ids = encode(q, MAX_LEN_Q), encode(d, MAX_LEN_D)
-    la = levenshtein_align(list(q[:MAX_LEN_Q]), list(d[:MAX_LEN_D]))
+    la = lev_align(list(q[:MAX_LEN_Q]), list(d[:MAX_LEN_D]))
     la_full = [0]*(MAX_LEN_Q+2) + la + [0]*(MAX_LEN_D - len(la))
     return [CLS_Q]+q_ids+[CLS_D]+d_ids, la_full
 
