@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List, Tuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
+import modal
 
 import torch, torch.nn as nn, torch.nn.functional as F
 
@@ -31,6 +32,10 @@ DEVICE                 = torch.device(
     "mps" if torch.backends.mps.is_available() else
     "cuda" if torch.cuda.is_available() else "cpu"
 )
+CKPT_DIR               = "/ckpts"
+MODEL_NAME = "lev_rerank"
+BATCH_SIZE = 8
+NEG_SAMP = 99
 
 # -------------------------------------------------------------------- #
 #  Helpers
@@ -153,8 +158,7 @@ def pretrain(steps=40_000, tr="so_ts_markov.txt", vs="so_vs_markov.txt", VAL_EVE
                 for _ in range(VAL_BATCHES):
                     x, la, tgt = get_batch(vs_gen)
                     logits, e_q, e_d = model(x, la)
-                    lm_val_tot  += loss_fn(logits.view(-1, VOCAB),
-                                           tgt.view(-1)).item()
+                    lm_val_tot  += loss_fn(logits.view(-1, VOCAB), tgt.view(-1)).item()
                     sim          = (e_q * e_d).sum(1).view(-1, 4)
                     ctr_val_tot += F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE)).item()
                     n += 1
@@ -175,8 +179,11 @@ class Reranker(nn.Module):
         enc = nn.TransformerEncoderLayer(DIM,8,4*DIM,dropout=0.1,activation="gelu", batch_first=True)
         self.tx  = nn.TransformerEncoder(enc, 4)
         self.sc  = nn.Linear(DIM,1)
+        # self.tau = nn.Parameter(torch.tensor(0.05))
 
     def forward(self, q_embs, d_embs):
+        # q_embs = F.normalize(q_embs, dim=-1)
+        # d_embs = F.normalize(d_embs, dim=-1)
         B, N, D = d_embs.size()
         cls = self.cls.expand(B, N, 1, D)
         q = q_embs.unsqueeze(1).unsqueeze(1).expand(B, N, 1, D)
@@ -189,7 +196,7 @@ class Reranker(nn.Module):
         scores = self.sc(out).squeeze(-1)  # [B, N]
         return scores
 
-def rerank(steps=10_000, ckpt="unsupervised_encoder.pt", tr="so_ts_markov.txt", vs="so_vs_markov.txt", B=4, K=99):
+def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervised_encoder.pt", tr="so_ts_markov.txt", vs="so_vs_markov.txt"):
     enc = TxEncoder().to(DEVICE)
     enc.load_state_dict(torch.load(ckpt, map_location=DEVICE, weights_only=True))
     rer = Reranker().to(DEVICE)
@@ -203,13 +210,13 @@ def rerank(steps=10_000, ckpt="unsupervised_encoder.pt", tr="so_ts_markov.txt", 
         x_lst, la_lst = zip(*(build_pair(q,d) for d in docs))
         x = torch.tensor(x_lst, device=DEVICE)
         la= torch.tensor(la_lst, device=DEVICE)
-        _, e_q, e_d = enc(x, la)                    # shared q across batch
+        _, e_q, e_d = enc(x, la)                   # shared q across batch
         return e_q[0:1], e_d                       # [1,D], [N,D]
 
     tr_gen = stream_qd(tr)
     vs_full = list(itertools.islice(stream_qd(vs),1000))
     vs_data = random.sample(vs_full, 100)
-    N = K + 1  # 1 positive + K negatives
+    N = NEG_SAMP + 1  # 1 positive + K negatives
 
     # --------------------  debug helper ------------------------------ #
     def debug_show_examples(top_k: int = 5):
@@ -239,16 +246,16 @@ def rerank(steps=10_000, ckpt="unsupervised_encoder.pt", tr="so_ts_markov.txt", 
     for step in range(1, steps+1):
         enc.train(); rer.train(); opt.zero_grad()
 
-        queries = [next(tr_gen) for _ in range(B)]
+        queries = [next(tr_gen) for _ in range(BATCH_SIZE)]
         all_pairs = []
         for q, docs in queries:
             if len(docs) <= 1:
                 # Skip queries with no negatives
                 continue
-            neg = random.sample(docs[1:], min(K, len(docs)-1))
-            if len(neg) < K:
+            neg = random.sample(docs[1:], min(NEG_SAMP, len(docs) - 1))
+            if len(neg) < NEG_SAMP:
                 # Sample with replacement if fewer than K negatives
-                neg += random.choices(docs[1:], k=K-len(neg))
+                neg += random.choices(docs[1:], k=NEG_SAMP - len(neg))
             docs_batch = [docs[0]] + neg
             pairs = [build_pair(q, d) for d in docs_batch]
             all_pairs.extend(pairs)
@@ -261,11 +268,16 @@ def rerank(steps=10_000, ckpt="unsupervised_encoder.pt", tr="so_ts_markov.txt", 
         _, e_q, e_d = enc(x, la)
 
         # Reshape embeddings for batch processing
-        B_actual = len(queries)
-        q_embs = e_q[0::N][:B_actual]  # [B, D]
-        d_embs = e_d.view(B_actual, N, -1)  # [B, N, D]
+        valid_q = [qd for qd in queries if len(qd[1]) > 1]   # keep only used
+        B_actual = len(valid_q)
 
-        scores = rer(q_embs, d_embs) / 0.1  # Apply temperature scaling
+        e_q = e_q.contiguous()
+        e_d = e_d.contiguous()
+
+        q_embs = e_q[::N][:B_actual]                # [B_actual, D]
+        d_embs = e_d.reshape(B_actual, N, -1)       # [B_actual, N, D]
+
+        scores = rer(q_embs, d_embs) / 0.1
         tgt = torch.zeros(B_actual, dtype=torch.long, device=DEVICE)  # Positive at index 0
         loss = F.cross_entropy(scores, tgt)
         loss.backward()
@@ -287,8 +299,14 @@ def rerank(steps=10_000, ckpt="unsupervised_encoder.pt", tr="so_ts_markov.txt", 
                     rr.append(1.0 / rank)
             print(f"MRR@{len(vs_data)} = {sum(rr)/len(rr):.4f}")
             debug_show_examples()
-            torch.save(enc.state_dict(), "encoder_finetuned.pt")
-            torch.save(rer.state_dict(), "reranker.pt")
+            if ckpt_volume is not None:
+                print(f"--- Saving models to checkpoint volume ---")
+                torch.save(enc.state_dict(), f"{CKPT_DIR}/{MODEL_NAME}_step_{step}.pt")
+                torch.save(rer.state_dict(), f"{CKPT_DIR}/encoder_{MODEL_NAME}_step_{step}.pt")
+                ckpt_volume.commit()
+            else:
+                torch.save(enc.state_dict(), "encoder_finetuned.pt")
+                torch.save(rer.state_dict(), "reranker.pt")
 
 ANSI  = {0:"\033[0m",         # reset / match
          1:"\033[32m",        # green  (insertion)
