@@ -25,17 +25,17 @@ MAX_LEN_Q, MAX_LEN_D   = 100, 110
 VOCAB                  = 94                # ASCII 33–126
 CHAR_TO_ID             = {chr(i): i - 33 for i in range(33, 127)}
 ID_TO_CHAR             = {v: k for k, v in CHAR_TO_ID.items()}
-CLS_Q, CLS_D           = CHAR_TO_ID['{'], CHAR_TO_ID['|']           # 90, 91
-MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 2                  # { q | d
+MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 4                  # { q |{ d |
 NUM_LA_TYPES           = 4                                          # 0=match,
 DEVICE                 = torch.device(
-    "mps" if torch.backends.mps.is_available() else
-    "cuda" if torch.cuda.is_available() else "cpu"
+  "mps" if torch.backends.mps.is_available() else
+  "cuda" if torch.cuda.is_available() else "cpu"
 )
 CKPT_DIR               = "/ckpts"
-MODEL_NAME = "lev_rerank"
-BATCH_SIZE = 8
-NEG_SAMP = 99
+MODEL_NAME             = "lev_rerank_200l"
+BATCH_SIZE             = 8
+NEG_SAMP               = 199
+GRAD_NORM_CLIP         = 5.
 
 # -------------------------------------------------------------------- #
 #  Helpers
@@ -68,7 +68,7 @@ def build_pair(q: str, d: str) -> Tuple[List[int], List[int]]:
     q_ids, d_ids = encode(q, MAX_LEN_Q), encode(d, MAX_LEN_D)
     la = lev_align(list(q[:MAX_LEN_Q]), list(d[:MAX_LEN_D]))
     la_full = [0]*(MAX_LEN_Q+2) + la + [0]*(MAX_LEN_D - len(la))
-    return [CLS_Q]+q_ids+[CLS_D]+d_ids, la_full
+    return q_ids+d_ids, la_full
 
 # -------------------------------------------------------------------- #
 #  Encoder (unchanged logic, now the project’s single source-of-truth)
@@ -107,6 +107,14 @@ def stream_qd(path: str):
                     if lines:
                         yield lines[0], lines[1:]
 
+def setupScaler():
+    scaler = torch.cuda.amp.GradScaler() if DEVICE.type == 'cuda' else None
+    if scaler:
+        print("Using mixed precision training")
+    else:
+        print("Using full precision training")
+    return scaler
+
 # -------------------------------------------------------------------- #
 #  Mode 1 – unsupervised pre-training (next-token + contrastive)
 # -------------------------------------------------------------------- #
@@ -116,6 +124,7 @@ def pretrain(steps=40_000, tr="so_ts_markov.txt", vs="so_vs_markov.txt", VAL_EVE
     model = TxEncoder().to(DEVICE)
     opt   = torch.optim.AdamW(model.parameters(), lr=1e-4)
     loss_fn = nn.CrossEntropyLoss()
+    scaler = setupScaler()
 
     tr_gen, vs_gen = stream_qd(tr), stream_qd(vs)
 
@@ -137,13 +146,23 @@ def pretrain(steps=40_000, tr="so_ts_markov.txt", vs="so_vs_markov.txt", VAL_EVE
         # ---------------- Training step ---------------- #
         model.train(); opt.zero_grad()
         x, la, tgt = get_batch(tr_gen)
-        logits, e_q, e_d = model(x, la)
-        lm_loss  = loss_fn(logits.view(-1, VOCAB), tgt.view(-1))
-        sim      = (e_q * e_d).sum(1).view(-1, 4)          # 1 pos + 3 neg
-        ctr_loss = F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE))
-        (lm_loss + ctr_loss).backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        opt.step()
+        with torch.cuda.amp.autocast(enabled=(scaler is not None)):
+            logits, e_q, e_d = model(x, la)
+            lm_loss  = loss_fn(logits.view(-1, VOCAB), tgt.view(-1))
+            sim      = (e_q * e_d).sum(1).view(-1, 4)          # 1 pos + 3 neg
+            ctr_loss = F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE))
+            loss = lm_loss + ctr_loss
+
+        if scaler:
+            scaler.scale(loss).backward()
+            scaler.unscale_(opt)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_NORM_CLIP)
+            scaler.step(opt)
+            scaler.update()
+        else:
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_NORM_CLIP)
+            opt.step()
 
         if step % 100 == 0:
             dt = time.time() - timer; timer = time.time()
@@ -157,10 +176,11 @@ def pretrain(steps=40_000, tr="so_ts_markov.txt", vs="so_vs_markov.txt", VAL_EVE
             with torch.no_grad():
                 for _ in range(VAL_BATCHES):
                     x, la, tgt = get_batch(vs_gen)
-                    logits, e_q, e_d = model(x, la)
-                    lm_val_tot  += loss_fn(logits.view(-1, VOCAB), tgt.view(-1)).item()
-                    sim          = (e_q * e_d).sum(1).view(-1, 4)
-                    ctr_val_tot += F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE)).item()
+                    with torch.cuda.amp.autocast(enabled=(DEVICE.type == 'cuda')):
+                        logits, e_q, e_d = model(x, la)
+                        lm_val_tot  += loss_fn(logits.view(-1, VOCAB), tgt.view(-1)).item()
+                        sim          = (e_q * e_d).sum(1).view(-1, 4)
+                        ctr_val_tot += F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE)).item()
                     n += 1
             print(f"🧪  val @ {step} | lm {lm_val_tot/n:.3f} "
                   f"| ctr {ctr_val_tot/n:.3f}")
@@ -179,7 +199,6 @@ class Reranker(nn.Module):
         enc = nn.TransformerEncoderLayer(DIM,8,4*DIM,dropout=0.1,activation="gelu", batch_first=True)
         self.tx  = nn.TransformerEncoder(enc, 4)
         self.sc  = nn.Linear(DIM,1)
-        # self.tau = nn.Parameter(torch.tensor(0.05))
 
     def forward(self, q_embs, d_embs):
         # q_embs = F.normalize(q_embs, dim=-1)
@@ -205,6 +224,7 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
         {'params': enc.parameters(), 'lr':1e-5},
         {'params': rer.parameters(), 'lr':1e-4}
     ])
+    scaler = setupScaler()
 
     def embed_pair_batch(q: str, docs: List[str]):
         x_lst, la_lst = zip(*(build_pair(q,d) for d in docs))
@@ -242,7 +262,7 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
                 print(f"{rank:2}. {coloured}{star}")
         print("\033[1m========================================================\033[0m\n")
 
-
+    timer = time.time()
     for step in range(1, steps+1):
         enc.train(); rer.train(); opt.zero_grad()
 
@@ -265,44 +285,51 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
 
         x = torch.tensor([p[0] for p in all_pairs], device=DEVICE)
         la = torch.tensor([p[1] for p in all_pairs], device=DEVICE)
-        _, e_q, e_d = enc(x, la)
+        with torch.cuda.amp.autocast(enabled=(scaler is not None)):
+            _, e_q, e_d = enc(x, la)
+            valid_q = [qd for qd in queries if len(qd[1]) > 1]   # keep only used
+            B_actual = len(valid_q)
+            e_q = e_q.contiguous()
+            e_d = e_d.contiguous()
+            q_embs = e_q[::N][:B_actual]                # [B_actual, D]
+            d_embs = e_d.reshape(B_actual, N, -1)       # [B_actual, N, D]
+            scores = rer(q_embs, d_embs) / 0.1
+            tgt = torch.zeros(B_actual, dtype=torch.long, device=DEVICE)  # Positive at index 0
+            loss = F.cross_entropy(scores, tgt)
 
-        # Reshape embeddings for batch processing
-        valid_q = [qd for qd in queries if len(qd[1]) > 1]   # keep only used
-        B_actual = len(valid_q)
-
-        e_q = e_q.contiguous()
-        e_d = e_d.contiguous()
-
-        q_embs = e_q[::N][:B_actual]                # [B_actual, D]
-        d_embs = e_d.reshape(B_actual, N, -1)       # [B_actual, N, D]
-
-        scores = rer(q_embs, d_embs) / 0.1
-        tgt = torch.zeros(B_actual, dtype=torch.long, device=DEVICE)  # Positive at index 0
-        loss = F.cross_entropy(scores, tgt)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(enc.parameters(),1.)
-        torch.nn.utils.clip_grad_norm_(rer.parameters(),1.)
-        opt.step()
+        if scaler:
+            scaler.scale(loss).backward()
+            scaler.unscale_(opt)
+            torch.nn.utils.clip_grad_norm_(enc.parameters(), GRAD_NORM_CLIP)
+            torch.nn.utils.clip_grad_norm_(rer.parameters(), GRAD_NORM_CLIP)
+            scaler.step(opt)
+            scaler.update()
+        else:
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(enc.parameters(), GRAD_NORM_CLIP)
+            torch.nn.utils.clip_grad_norm_(rer.parameters(), GRAD_NORM_CLIP)
+            opt.step()
 
         if step % 50 == 0:
-            print(f"step {step:>5} | loss {loss.item():.3f}")
+            dt = time.time() - timer; timer = time.time()
+            print(f"step {step:>5} | loss {loss.item():.3f} | Δt {dt:.1f}s")
 
         if step % 500 == 0:
             enc.eval(); rer.eval()
             rr = []
             with torch.no_grad():
                 for vq, vdocs in vs_data:
-                    q_emb, d_embs = embed_pair_batch(vq, vdocs)
-                    scores = rer(q_emb, d_embs.unsqueeze(0))[0]
+                    with torch.cuda.amp.autocast(enabled=(DEVICE.type == 'cuda')):
+                        q_emb, d_embs = embed_pair_batch(vq, vdocs)
+                        scores = rer(q_emb, d_embs.unsqueeze(0))[0]
                     rank   = scores.argsort(descending=True).tolist().index(0) + 1
                     rr.append(1.0 / rank)
             print(f"MRR@{len(vs_data)} = {sum(rr)/len(rr):.4f}")
             debug_show_examples()
             if ckpt_volume is not None:
                 print(f"--- Saving models to checkpoint volume ---")
-                torch.save(enc.state_dict(), f"{CKPT_DIR}/{MODEL_NAME}_step_{step}.pt")
-                torch.save(rer.state_dict(), f"{CKPT_DIR}/encoder_{MODEL_NAME}_step_{step}.pt")
+                torch.save(rer.state_dict(), f"{CKPT_DIR}/{MODEL_NAME}_step_{step}.pt")
+                torch.save(enc.state_dict(), f"{CKPT_DIR}/encoder_{MODEL_NAME}_step_{step}.pt")
                 ckpt_volume.commit()
             else:
                 torch.save(enc.state_dict(), "encoder_finetuned.pt")
@@ -333,13 +360,14 @@ def rerank_documents(query: str, documents: List[str]) -> List[str]:
     global enc, rer
     if not documents:
         return []
-    x_lst, la_lst = zip(*(build_pair(query, d) for d in documents))
-    x = torch.tensor(x_lst, device=DEVICE)
-    la = torch.tensor(la_lst, device=DEVICE)
-    _, e_q, e_d = enc(x, la)
-    q_emb = e_q[0:1]  # [1, D], using the first query embedding (all are same)
-    d_embs = e_d      # [N, D]
-    scores = rer(q_emb, d_embs.unsqueeze(0))[0]  # [N]
+    with torch.no_grad(), torch.cuda.amp.autocast(enabled=(DEVICE.type == 'cuda')):
+        x_lst, la_lst = zip(*(build_pair(query, d) for d in documents))
+        x = torch.tensor(x_lst, device=DEVICE)
+        la = torch.tensor(la_lst, device=DEVICE)
+        _, e_q, e_d = enc(x, la)
+        q_emb = e_q[0:1]  # [1, D], using the first query embedding (all are same)
+        d_embs = e_d      # [N, D]
+        scores = rer(q_emb, d_embs.unsqueeze(0))[0]  # [N]
     sorted_indices = scores.argsort(descending=True).tolist()
     ranked_docs = [documents[i] for i in sorted_indices]
     return ranked_docs
@@ -412,6 +440,7 @@ def serve():
     enc.load_state_dict(torch.load("encoder_finetuned.pt", map_location=DEVICE, weights_only=True))
     rer = Reranker().to(DEVICE)
     rer.load_state_dict(torch.load("reranker.pt", map_location=DEVICE, weights_only=True))
+    enc.eval(); rer.eval()
 
     server_address = ('', 8082)
     httpd = ThreadingHTTPServer(server_address, RerankerHandler)
