@@ -66,6 +66,65 @@ fun main() {
   measureIntersection()
 //  correctNames()
 //  errorPredDiscrepancy()
+//  reconstructAndRebalance()
+}
+
+fun reconstructAndRebalance() {
+  val markovRepairs = "datasets/python/stack_overflow/so_ds_markov.txt"
+  val errRepFile = "datasets/python/stack_overflow/so_err_rep.txt"
+
+  // Step 1: Read and map the error-repair tuples from so_err_rep.txt
+  val errRepMap = object {}.javaClass.classLoader.getResource(errRepFile)!!.readText().lines().windowed(4, 4)
+    .associate { lines -> Pair((lines[0].addNewLineIfMissing() to lines[1].addNewLineIfMissing()), lines.joinToString("\n")) }
+
+  // Step 2: Process so_ds_markov.txt and split into training/validation sets
+  object {}.javaClass.classLoader.getResource(markovRepairs)!!.readText()
+    .split("\n\n").shuffled()
+    .map { it.lines().let { it.first().uncharify() to it.drop(1).map { it.uncharify() } } }
+    .filter { it.first.isNotBlank() && it.second.isNotEmpty() }
+    .map { (error, repairs) ->
+      val errWrds = error.tokenizeByWhitespace()
+      val levDist = levenshtein(errWrds, repairs.first().tokenizeByWhitespace())
+      val length = errWrds.size
+      (floor(length / 10.0) to levDist) to (error to repairs)
+    }
+    .groupBy { it.first }.mapValues { it.value.map { it.second } }
+    .let { bucketedData ->
+      val validationSet = mutableListOf<Pair<String, List<String>>>()
+      val trainingSet = mutableListOf<Pair<String, List<String>>>()
+      for ((_, instances) in bucketedData) {
+        validationSet.addAll(instances.take(50))
+        trainingSet.addAll(instances.drop(50))
+      }
+
+      // Step 3: Map instances to their corresponding 4-tuples
+      val validationTuples = validationSet.map { (error, repairs) ->
+//        println("Error: $error")
+//        println("Repair: ${repairs.first()}")
+        val key = error to repairs.first()
+        errRepMap[key] ?: error("No matching tuple for:\n${key.first}\n${key.second}\n in validation set")
+      }
+      val trainingTuples = trainingSet.map { (error, repairs) ->
+        val key = error to repairs.first()
+        errRepMap[key] ?: error("No matching tuple for:\n${key.first}\n${key.second}\n in training set")
+      }
+
+      // Step 4: Write all four output files
+      fun formatInstances(instances: List<Pair<String, List<String>>>): String =
+        instances.joinToString("\n\n") { (error, repairs) ->
+          error.charify() + "\n" + repairs.joinToString("\n") { it.charify() }
+        }
+
+      // Write Markov training and validation files
+      val validationString = formatInstances(validationSet)
+      val trainingString = formatInstances(trainingSet)
+      File("src/main/resources/datasets/python/stack_overflow/so_vs_markov.txt").apply { createNewFile() }.writeText(validationString)
+      File("src/main/resources/datasets/python/stack_overflow/so_ts_markov.txt").apply { createNewFile() }.writeText(trainingString)
+
+      // Write error-repair tuple training and validation files
+      File("src/main/resources/datasets/python/stack_overflow/so_vs_err_rep.txt").apply { createNewFile() }.writeText(validationTuples.joinToString("\n"))
+      File("src/main/resources/datasets/python/stack_overflow/so_ts_err_rep.txt").apply { createNewFile() }.writeText(trainingTuples.joinToString("\n"))
+    }
 }
 
 fun measureIntersection() {

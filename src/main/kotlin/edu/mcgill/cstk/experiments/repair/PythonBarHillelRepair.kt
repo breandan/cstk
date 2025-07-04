@@ -640,7 +640,7 @@ val shortcutTestcases: List<Pair<String, String>> = listOf(
 val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
 //  val path = "/src/main/resources/datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
 //  val file = File(File("").absolutePath + path).readText()
-  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64_tst.txt"
+  val filename = "datasets/python/stack_overflow/so_vs_err_rep.txt"
   val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
   val decoder = Base64.getDecoder()
   contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }

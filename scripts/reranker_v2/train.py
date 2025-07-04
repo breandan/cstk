@@ -22,17 +22,18 @@ import torch, torch.nn as nn, torch.nn.functional as F
 # -------------------------------------------------------------------- #
 DIM, N_HEADS, N_LAYERS = 512, 8, 4
 MAX_LEN_Q, MAX_LEN_D   = 100, 110
-VOCAB                  = 94                # ASCII 33–126
+VOCAB                  = 94                                         # ASCII 33–126
 CHAR_TO_ID             = {chr(i): i - 33 for i in range(33, 127)}
 ID_TO_CHAR             = {v: k for k, v in CHAR_TO_ID.items()}
-MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 4                  # { q |{ d |
+CLS_Q, CLS_D           = CHAR_TO_ID['{'], CHAR_TO_ID['|']           # 90, 91
+MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 2                  # { q |{ d |
 NUM_LA_TYPES           = 4                                          # 0=match,
 DEVICE                 = torch.device(
   "mps" if torch.backends.mps.is_available() else
   "cuda" if torch.cuda.is_available() else "cpu"
 )
 CKPT_DIR               = "/ckpts"
-MODEL_NAME             = "lev_rerank_200l"
+MODEL_NAME             = "lev_rerank_200"
 BATCH_SIZE             = 8
 NEG_SAMP               = 199
 GRAD_NORM_CLIP         = 5.
@@ -68,7 +69,15 @@ def build_pair(q: str, d: str) -> Tuple[List[int], List[int]]:
     q_ids, d_ids = encode(q, MAX_LEN_Q), encode(d, MAX_LEN_D)
     la = lev_align(list(q[:MAX_LEN_Q]), list(d[:MAX_LEN_D]))
     la_full = [0]*(MAX_LEN_Q+2) + la + [0]*(MAX_LEN_D - len(la))
-    return q_ids+d_ids, la_full
+    return [CLS_Q]+q_ids+[CLS_D]+d_ids, la_full
+
+def embed_query(enc: nn.Module, q: str) -> torch.Tensor:          # [1, D]
+    x_ids = [CLS_Q] + encode(q, MAX_LEN_Q) + [CLS_D] + [0] * MAX_LEN_D
+    la_ids = [0] * MAX_LEN
+    x  = torch.tensor([x_ids], device=DEVICE)
+    la = torch.tensor([la_ids], device=DEVICE)
+    _, e_q, _ = enc(x, la)                                        # discard doc-emb
+    return e_q                    # shape [1, DIM]
 
 # -------------------------------------------------------------------- #
 #  Encoder (unchanged logic, now the project’s single source-of-truth)
@@ -182,8 +191,7 @@ def pretrain(steps=40_000, tr="so_ts_markov.txt", vs="so_vs_markov.txt", VAL_EVE
                         sim          = (e_q * e_d).sum(1).view(-1, 4)
                         ctr_val_tot += F.cross_entropy(sim, torch.zeros(sim.size(0), dtype=torch.long, device=DEVICE)).item()
                     n += 1
-            print(f"🧪  val @ {step} | lm {lm_val_tot/n:.3f} "
-                  f"| ctr {ctr_val_tot/n:.3f}")
+            print(f"🧪  val @ {step} | lm {lm_val_tot/n:.3f} | ctr {ctr_val_tot/n:.3f}")
 
             # optional: save checkpoint at every validation
             torch.save(model.state_dict(), "unsupervised_encoder.pt")
@@ -227,19 +235,18 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
     scaler = setupScaler()
 
     def embed_pair_batch(q: str, docs: List[str]):
-        x_lst, la_lst = zip(*(build_pair(q,d) for d in docs))
-        x = torch.tensor(x_lst, device=DEVICE)
-        la= torch.tensor(la_lst, device=DEVICE)
-        _, e_q, e_d = enc(x, la)                   # shared q across batch
-        return e_q[0:1], e_d                       # [1,D], [N,D]
+        q_emb = embed_query(enc, q)
+        x_lst, la_lst = zip(*(build_pair(q, d) for d in docs))
+        x  = torch.tensor(x_lst, device=DEVICE)
+        la = torch.tensor(la_lst, device=DEVICE)
+        _, _, e_d = enc(x, la)                                        # ignore e_q
+        return q_emb, e_d                                             # [1,D], [N,D]
 
     tr_gen = stream_qd(tr)
-    vs_full = list(itertools.islice(stream_qd(vs),1000))
-    vs_data = random.sample(vs_full, 100)
     N = NEG_SAMP + 1  # 1 positive + K negatives
 
     # --------------------  debug helper ------------------------------ #
-    def debug_show_examples(top_k: int = 5):
+    def debug_show_examples(vs_data, top_k: int = 5):
         print("\n\033[1m=== DEBUG EXAMPLES ===================================\033[0m")
         for q, docs in random.sample(vs_data, 3):
             # forward pass
@@ -289,9 +296,8 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
             _, e_q, e_d = enc(x, la)
             valid_q = [qd for qd in queries if len(qd[1]) > 1]   # keep only used
             B_actual = len(valid_q)
-            e_q = e_q.contiguous()
             e_d = e_d.contiguous()
-            q_embs = e_q[::N][:B_actual]                # [B_actual, D]
+            q_embs = torch.cat([embed_query(enc, q) for q, _ in valid_q], dim=0)  # [B,D]
             d_embs = e_d.reshape(B_actual, N, -1)       # [B_actual, N, D]
             scores = rer(q_embs, d_embs) / 0.1
             tgt = torch.zeros(B_actual, dtype=torch.long, device=DEVICE)  # Positive at index 0
@@ -315,6 +321,7 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
             print(f"step {step:>5} | loss {loss.item():.3f} | Δt {dt:.1f}s")
 
         if step % 500 == 0:
+            vs_data = random.sample(list(itertools.islice(stream_qd(vs),1000)), 200)
             enc.eval(); rer.eval()
             rr = []
             with torch.no_grad():
@@ -325,7 +332,7 @@ def rerank(steps=10_000, ckpt_volume: modal.Volume = None, ckpt="/data/unsupervi
                     rank   = scores.argsort(descending=True).tolist().index(0) + 1
                     rr.append(1.0 / rank)
             print(f"MRR@{len(vs_data)} = {sum(rr)/len(rr):.4f}")
-            debug_show_examples()
+            debug_show_examples(vs_data)
             if ckpt_volume is not None:
                 print(f"--- Saving models to checkpoint volume ---")
                 torch.save(rer.state_dict(), f"{CKPT_DIR}/{MODEL_NAME}_step_{step}.pt")
@@ -356,21 +363,19 @@ enc = None
 rer = None
 
 def rerank_documents(query: str, documents: List[str]) -> List[str]:
-    """Rerank documents based on query using pre-trained encoder and reranker."""
-    global enc, rer
     if not documents:
         return []
+
     with torch.no_grad(), torch.cuda.amp.autocast(enabled=(DEVICE.type == 'cuda')):
+        q_emb = embed_query(enc, query)                           # <- new line
+
         x_lst, la_lst = zip(*(build_pair(query, d) for d in documents))
-        x = torch.tensor(x_lst, device=DEVICE)
+        x  = torch.tensor(x_lst, device=DEVICE)
         la = torch.tensor(la_lst, device=DEVICE)
-        _, e_q, e_d = enc(x, la)
-        q_emb = e_q[0:1]  # [1, D], using the first query embedding (all are same)
-        d_embs = e_d      # [N, D]
-        scores = rer(q_emb, d_embs.unsqueeze(0))[0]  # [N]
-    sorted_indices = scores.argsort(descending=True).tolist()
-    ranked_docs = [documents[i] for i in sorted_indices]
-    return ranked_docs
+        _, _, e_d = enc(x, la)                                    # we only need docs
+
+        scores = rer(q_emb, e_d.unsqueeze(0))[0] / 0.1            # [N]
+    return [documents[i] for i in scores.argsort(descending=True)]
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
