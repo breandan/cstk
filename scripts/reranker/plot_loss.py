@@ -9,8 +9,8 @@ if len(sys.argv) < 2:
 log_file = sys.argv[1]
 
 # Regular expressions to match log patterns
-loss_pattern = r"Step\s+(\d+)\s+\|\s+Avg Loss:\s+(\d+\.\d+)"
-mrr_pattern = r"└─ Step\s+(\d+)\s+Validation MRR:\s+(\d+\.\d+)\s+\(\d+\s+queries\)"
+loss_pattern = r"step\s+(\d+)\s+\|\s+loss\s+(\d+\.\d+)"
+mrr_pattern = r"MRR@100 =\s+(\d+\.\d+)"
 
 # Lists to store data
 losses = []
@@ -29,8 +29,8 @@ with open(log_file, 'r') as f:
         # Match validation MRR
         match_mrr = re.match(mrr_pattern, line)
         if match_mrr:
-            step = int(match_mrr.group(1))
-            mrr = float(match_mrr.group(2))
+            # step = int(match_mrr.group(1))
+            mrr = float(match_mrr.group(1))
             mrrs.append((step, mrr))
 
 # Extract steps and values for plotting
