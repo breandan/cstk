@@ -142,7 +142,7 @@ fun evaluateRegexRepairOnStackOverflow() {
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
     .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
 //    .replace(" ", "_").replace("/", "_")
-  val positiveHeader = "length, lev_dist, led, sample_ms, sample_rerank_ms, total_samples, lang_size, final_rank, orig_rank\n"
+  val positiveHeader = "length, lev_dist, led, sample_ms, sample_rerank_ms, cpu_time, gpu_time, total_samples, lang_size, final_rank, orig_rank\n"
   val title = "regex_bar_hillel"
   val csv = try { File("data/${title}_results_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
   catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }.also { println("Writing positive CSV to: ${it.absolutePath}") }
@@ -194,9 +194,16 @@ fun evaluateRegexRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
 
-//    val unrankedResults = sendGPU(brokeStr).lines()
-//      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-//      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
+    val gpuResults = sendGPU(brokeStr).lines()
+      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
+
+    val gpuTime = clock.elapsedNow().inWholeMilliseconds
+    val cpuClock = TimeSource.Monotonic.markNow()
+    var cpuTime: Long
+
+    println("GPU returned ${gpuResults.size} results in $gpuTime ms")
+
 //    val langSize = 0
 
     var filtered = 0
@@ -205,11 +212,15 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
 
+    var origRank = -1
     val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
       .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
       .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
       .let {
+        cpuTime = cpuClock.elapsedNow().inWholeMilliseconds
+        origRank = it.indexOf(fixedStr)
         totalSamples = it.size
+        println("CPU returned $totalSamples results in $cpuTime ms")
         if ("Error" in getOutput(fixedStr)) it
         else it.asSequence().asStream().parallel()
           .filter { ("Error" !in getOutput(it)).also { if(!it) filtered++ } }
@@ -219,16 +230,15 @@ fun evaluateRegexRepairOnStackOverflow() {
     println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-    val origRank = unrankedResults.indexOf(fixedStr)
-    val rankedResults = //unrankedResults
-      if (unrankedResults.isEmpty()) emptyList()
-      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
-        .onEachIndexed { i, it ->
-          if (it == fixedStr) {
-            matchFound = true
-            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
-          }
-        }
+    val rankedResults = unrankedResults
+//      if (unrankedResults.isEmpty()) emptyList()
+//      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+//        .onEachIndexed { i, it ->
+//          if (it == fixedStr) {
+//            matchFound = true
+//            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
+//          }
+//        }
 
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
     println("Repairs fetched in $elapsed ms, reranking completed in $allElapsed ms")
@@ -268,7 +278,7 @@ fun evaluateRegexRepairOnStackOverflow() {
       samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
     }
-    csv.appendText("${brokeToks.size}, $levDist, $latestLangEditDistance, $elapsed, $allElapsed, $totalSamples, $langSize, $indexOfTarget, $origRank\n")
+    csv.appendText("${brokeToks.size}, $levDist, $latestLangEditDistance, $elapsed, $allElapsed, $gpuTime, $cpuTime, $totalSamples, $langSize, $indexOfTarget, $origRank\n")
 
     if (allRate.total % 100 == 0) summarizeRunningStats()
     println()
