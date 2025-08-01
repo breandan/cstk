@@ -43,7 +43,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  implementation("com.squareup.okhttp3:okhttp:4.12.0")
+  implementation("com.squareup.okhttp3:okhttp:5.1.0")
 
   val multikVersion = "0.2.3"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
@@ -78,13 +78,13 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.324")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.0.0")
+  implementation("org.gitlab4j:gitlab4j-api:6.1.0")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.10.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.11.0")
 
   // Read compressed repositories downloaded from GitHub
-  implementation("org.apache.commons:commons-compress:1.27.0")
+  implementation("org.apache.commons:commons-compress:1.28.0")
   implementation("org.apache.commons:commons-vfs2:2.10.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
@@ -99,7 +99,7 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
   // Pretty-printing string diffs
-  implementation("io.github.java-diff-utils:java-diff-utils:4.15")
+  implementation("io.github.java-diff-utils:java-diff-utils:4.16")
 
   // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.70.0")
@@ -144,7 +144,7 @@ dependencies {
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
   implementation("org.apache.datasketches:datasketches-java:8.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.2.1")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
@@ -158,7 +158,7 @@ dependencies {
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:3.1.2")
+  implementation("com.diffplug.spotless:spotless-lib:3.3.1")
 
   implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
