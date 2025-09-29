@@ -32,9 +32,9 @@ fun main() {
   MAX_RADIUS = 3
   CFG_THRESH = 10_000
 
-  startWGPUServer()
+//  startWGPUServer()
   evaluateRegexRepairOnStackOverflow()
-  stopWGPUServer()
+//  stopWGPUServer()
 //  evaluateMatrixBarHillelRepairOnStackOverflow()
 //  evaluateBarHillelRepairOnStackOverflow()
 //  evaluateSeq2ParseRepair()
@@ -194,16 +194,17 @@ fun evaluateRegexRepairOnStackOverflow() {
     var matchFound = false
     val timeout = (TIMEOUT_MS / 1000).seconds
 
-    val gpuResults = sendGPU(brokeStr).lines()
-      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
+    var gpuResults = emptyList<Σᐩ>()
+//  gpuResults = sendGPU(brokeStr).lines()
+//      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+//      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
 
     val gpuRank = gpuResults.indexOf(fixedStr)
     val gpuTime = clock.elapsedNow().inWholeMilliseconds
+//    println("GPU returned ${gpuResults.size} results in $gpuTime ms, rank of true repair: $gpuRank")
+
     val cpuClock = TimeSource.Monotonic.markNow()
     var cpuTime: Long
-
-    println("GPU returned ${gpuResults.size} results in $gpuTime ms, rank of true repair: $gpuRank")
 
 //    val langSize = 0
 
@@ -222,17 +223,39 @@ fun evaluateRegexRepairOnStackOverflow() {
         origRank = it.indexOf(fixedStr)
         totalSamples = it.size
         println("CPU returned $totalSamples results in $cpuTime ms")
-        if ("Error" in getOutput(fixedStr)) it
-        else it.asSequence().asStream().parallel()
-          .filter { ("Error" !in getOutput(it)).also { if(!it) filtered++ } }
-          .limit(1_000).toList()
+        if ("Error" in getOutput(fixedStr)) it else {
+          val errorsAndRepairs = it.asSequence().asStream().parallel()
+              .map { it to getOutput(it).let {
+                  if (it.isEmpty()) ""
+                  else it.trim().replace("\n", "\\n")
+                    .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
+                 }
+               }
+            .limit(10_000)
+            .toList()
+
+//          val errHst = mutableMapOf<String, Int>()
+//          val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
+//          errorsAndRepairs.filter { it.second.isNotEmpty() }
+//            .forEach { it.second.also { errHst[it] = 1 + errHst.getOrElse(it) { 0 } } }
+//          val summary = errHst.toMap().entries.sortedBy { -it.component2() }
+//            .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
+//          println("Rejection histogram:\n$summary")
+//          errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
+//            ls.mapIndexed { i, it -> it to i }
+//              .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
+//              .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
+//          }
+
+          errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
+        }
       }
 
     println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
     val rankedResults = unrankedResults
-//      if (unrankedResults.isEmpty()) emptyList()
+//      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
 //      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
 //        .onEachIndexed { i, it ->
 //          if (it == fixedStr) {

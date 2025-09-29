@@ -259,6 +259,12 @@ fun getOutput(code: String): String = try {
     if (process.waitFor() == 0) "" else output.toString().trim()
   } catch (e: Exception) { e.message ?: e.localizedMessage }
 
+
+fun String.getPyErrorType(): String =
+  if (isEmpty()) "" else substringBeforeLast(":").substringAfterLast("\\n")
+
+fun String.getPyErrorMessage(): String = substringAfterLast(": ").substringBefore('.').trim()
+
 fun Σᐩ.isInterpretablePython(): Boolean =
 // Checks whether IO contains the string "SyntaxError"
   !ProcessBuilder("pylyzer", "-c", this).start()

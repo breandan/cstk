@@ -5,7 +5,7 @@ plugins {
   kotlin("jvm") version "2.1.0"
   id("com.github.ben-manes.versions") version "0.52.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "9.0.0-beta15"
+  id("com.gradleup.shadow") version "9.1.0"
 }
 
 group = "com.github.breandan"
@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.33.0"
+  val djlVersion = "0.34.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -81,14 +81,14 @@ dependencies {
   implementation("org.gitlab4j:gitlab4j-api:6.1.0")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.11.0")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.11.1")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.28.0")
   implementation("org.apache.commons:commons-vfs2:2.10.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.13.4784"
+  val ortoolsVersion = "9.14.6206"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
