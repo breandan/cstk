@@ -2,10 +2,10 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.1.0"
-  id("com.github.ben-manes.versions") version "0.52.0"
+  kotlin("jvm") version "2.1.21"
+  id("com.github.ben-manes.versions") version "0.53.0"
   id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "9.1.0"
+  id("com.gradleup.shadow") version "9.3.0"
 }
 
 group = "com.github.breandan"
@@ -28,7 +28,7 @@ dependencies {
 //  implementation("ai.djl.tensorflow:tensorflow-native-cu101:2.3.1")
 //  implementation("ai.djl:examples:0.6.0")
 
-  val djlVersion = "0.34.0"
+  val djlVersion = "0.36.0"
   implementation("ai.djl:api:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-engine:$djlVersion")
   implementation("ai.djl.mxnet:mxnet-native-cu102mkl:1.9.1")
@@ -43,7 +43,7 @@ dependencies {
   implementation("com.github.jelmerk:hnswlib-core:$hnswlibVersion")
   implementation("com.github.jelmerk:hnswlib-utils:$hnswlibVersion")
 
-  implementation("com.squareup.okhttp3:okhttp:5.1.0")
+  implementation("com.squareup.okhttp3:okhttp:5.3.2")
 
   val multikVersion = "0.2.3"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
@@ -61,9 +61,9 @@ dependencies {
 //  implementation("com.github.h0tk3y.betterParse:better-parse:0.4.2")
 
   // https://github.com/LearnLib/learnlib
-//  implementation("de.learnlib.distribution:learnlib-distribution:0.16.0")
+  implementation("de.learnlib.distribution:learnlib-distribution:0.18.0")
   // https://github.com/LearnLib/automatalib
-//  implementation("net.automatalib.distribution:automata-distribution:0.10.0")
+  implementation("net.automatalib.distribution:automata-distribution:0.12.1")
 
 //  https://github.com/lorisdanto/symbolicautomata
 //  implementation("com.github.lorisdanto.symbolicautomata:0da3f79677")
@@ -78,10 +78,10 @@ dependencies {
   // Querying and filtering data from GitHub
   implementation("org.kohsuke:github-api:1.324")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.1.0")
+  implementation("org.gitlab4j:gitlab4j-api:6.2.0")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
-  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.11.1")
+  implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.12.1")
 
   // Read compressed repositories downloaded from GitHub
   implementation("org.apache.commons:commons-compress:1.28.0")
@@ -144,7 +144,7 @@ dependencies {
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
   implementation("org.apache.datasketches:datasketches-java:8.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
 
   // Source Code Transformations
   implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
@@ -153,17 +153,17 @@ dependencies {
   implementation("com.aallam.openai:openai-client:4.0.1")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:4.0.1")
+  implementation("org.hipparchus:hipparchus-stat:4.0.2")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:3.3.1")
+  implementation("com.diffplug.spotless:spotless-lib:4.1.0")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.0")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.21")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 
-  implementation("net.java.dev.jna:jna:5.17.0")
+  implementation("net.java.dev.jna:jna:5.18.1")
 }
 
 configurations.all {

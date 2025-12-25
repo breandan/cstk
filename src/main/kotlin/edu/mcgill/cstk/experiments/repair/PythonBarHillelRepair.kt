@@ -11,6 +11,7 @@ import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import java.util.stream.Stream
 import kotlin.concurrent.withLock
 import kotlin.math.*
 import kotlin.sequences.toList
@@ -231,8 +232,8 @@ fun evaluateRegexRepairOnStackOverflow() {
                     .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
                  }
                }
-            .limit(10_000)
-            .toList()
+              .limit(10_000)
+              .toList()
 
 //          val errHst = mutableMapOf<String, Int>()
 //          val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
@@ -926,7 +927,7 @@ fun measureLevenshteinBlanketSize() {
       val pTree = intGram.toPTree()
       val clock = TimeSource.Monotonic.markNow()
 
-      val sampler =
+      val sampler: Stream<String> =
         if (intGram.size < CFG_THRESH) {
           println("Small grammar, sampling without replacement...")
           pTree.sampleDirectlyWOR(stoppingCriterion = { clock.elapsedNow() < timeout })

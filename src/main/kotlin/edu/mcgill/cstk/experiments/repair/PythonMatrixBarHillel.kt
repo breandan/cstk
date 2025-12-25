@@ -226,7 +226,7 @@ fun jvmIntersectPTree(brokenStr: List<Σᐩ>, cfg: CFG, radius: Int,
   val dp: Array<Array<Array<PTree?>>> = Array(nStates) { Array(nStates) { Array(width) { null } } }
 
   // 2) Initialize terminal productions A -> a
-  val aitx = levFSA.allIndexedTxs1(cfg.unitProductions)
+  val aitx = levFSA.allIndexedTxs1(cfg.grpUPs)
   aitx.parallelStream().forEach { (p, σ, q) ->
     val Aidxs = bimap.TDEPS[σ]!!.map { bindex[it] }
     for (Aidx in Aidxs) {
