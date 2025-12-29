@@ -20,3 +20,4 @@ grex*
 *.auxlock
 *.dpth
 *.md5
+*.safetensors
