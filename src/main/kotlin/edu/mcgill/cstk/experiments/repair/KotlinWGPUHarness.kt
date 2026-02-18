@@ -235,7 +235,7 @@ fun sendCPU(query: String): String =
 fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): Pair<Long, BAutomaton?> {
   val repair = repairWithCompactCircuit(brokenStr, cfg)
   val dfa = repair?.toDFA(cfg.tmLst)?.apply { determinize() }
-  return (dfa?.toDFSM()?.minimize() ?.countWords() ?: 1L) to dfa
+  return (dfa?.toDFSM() ?.countWords() ?: 1L) to dfa?.apply { minimize() }
 }
 
 fun measureCPU(query: String, rad: Int): Pair<Int, Long> {
