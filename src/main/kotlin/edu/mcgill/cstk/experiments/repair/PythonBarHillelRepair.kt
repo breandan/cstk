@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.experiments.repair
 
+import ai.hypergraph.kaliningraph.parsing.approximations.*
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
@@ -65,6 +66,7 @@ fun printMemoryUsage() {
 }
 
 fun readResourceFile(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readText()
+fun readResourceBytes(path: String) = object {}.javaClass.classLoader.getResource(path)!!.readBytes()
 
 fun readPCFG3(): Map<Π3A<Σᐩ>, Int> =
   readResourceFile("models/pcfg3_BIFI.csv").lines().map { it.split(" ::: ") }
@@ -83,6 +85,8 @@ val parikhMap by lazy {
   LangCache.prepopPythonLangCache()
   s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
+
+val pdfa: WFA by lazy { readResourceBytes("models/pdfa4.safetensor").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()
@@ -214,6 +218,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     val dfaRecognized = try { dfa!!.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
 
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
+    if (!dfaRecognized) { allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++ }
 
     var origRank = -1
     val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
@@ -226,7 +231,8 @@ fun evaluateRegexRepairOnStackOverflow() {
         println("CPU returned $totalSamples results in $cpuTime ms")
         if ("Error" in getOutput(fixedStr)) it else {
           val errorsAndRepairs = it.asSequence().asStream().parallel()
-              .map { it to getOutput(it).let {
+              .map { it to "".let {
+//            .map { it to getOutput(it).let {
                   if (it.isEmpty()) ""
                   else it.trim().replace("\n", "\\n")
                     .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
@@ -256,17 +262,19 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
     val rankedResults = unrankedResults
+      .map { it to -pdfa.dfaScore(it.tokenizeByWhitespace()) }
+      .sortedBy { it.second }.map { it.first }
 //      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
 //      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
-//        .onEachIndexed { i, it ->
-//          if (it == fixedStr) {
-//            matchFound = true
-//            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
-//          }
-//        }
+        .onEachIndexed { i, it ->
+          if (it == fixedStr) {
+            matchFound = true
+            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
+          }
+        }
 
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
-    println("Repairs fetched in $elapsed ms, reranking completed in $allElapsed ms")
+    println("Repairs fetched in $elapsed ms, reranking completed in ${allElapsed - elapsed} ms")
 
     val indexOfTarget = rankedResults.indexOf(fixedStr).also {
       if (matchFound) {
