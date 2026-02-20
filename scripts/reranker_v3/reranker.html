@@ -1,0 +1,262 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tidyparse Reranking Benchmark</title>
+    <style>
+        body { font: 14px/1.4 system-ui, -apple-system, sans-serif; margin: 18px; background: #fdfdfd;}
+        pre { background: #f0f0f0; padding: 14px; border-radius: 8px; overflow: auto; font-family: ui-monospace, monospace; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<h2>Tidyparse Reranking Benchmark</h2>
+<p><b>Status:</b> <span id="status">idle</span></p>
+<pre id="out"></pre>
+
+<script type="module">
+    import model from "./reranker.js";
+
+    const statusEl = document.getElementById("status");
+    const outEl = document.getElementById("out");
+
+    // ===== MUST MATCH PYTHON CONSTANTS =====
+    const DIM = 128, MAX_LEN_Q = 100, MAX_LEN_D = 110;
+    const MAX_LEN = MAX_LEN_Q + MAX_LEN_D + 2; // 212
+    const CLS_Q = 90; // '{' id
+    const CLS_D = 91; // '|' id
+
+    // ===== MODEL EXPORT SHAPE =====
+    const MODEL_DOCS = 64;
+    const TOTAL_DOCS = 64;
+    const ITERS = 10;
+
+    function assert(cond, msg) { if (!cond) throw new Error(msg); }
+
+    async function initWebGPU() {
+        if (!navigator.gpu) throw new Error("WebGPU not available in this browser.");
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) throw new Error("No WebGPU adapter available.");
+
+        const requiredFeatures = adapter.features.has("shader-f16") ? ["shader-f16"] : [];
+        return await adapter.requestDevice({ requiredFeatures });
+    }
+
+    // Costs match Python: ins=1, del=1, sub=2, match=0
+    function levAlign(qStr, dStr) {
+        const q = qStr;
+        const d = dStr;
+        const m = q.length, n = d.length;
+        const n1 = n + 1;
+        const dp = new Uint16Array((m + 1) * (n + 1));
+
+        for (let i = 0; i <= m; i++) dp[i * n1 + 0] = i;
+        for (let j = 0; j <= n; j++) dp[0 * n1 + j] = j;
+
+        for (let i = 1; i <= m; i++) {
+            const qi = q.charCodeAt(i - 1);
+            const row = i * n1;
+            const prow = (i - 1) * n1;
+            for (let j = 1; j <= n; j++) {
+                const dj = d.charCodeAt(j - 1);
+                const costSub = (qi === dj) ? 0 : 2;
+
+                const del = dp[prow + j] + 1;
+                const ins = dp[row + (j - 1)] + 1;
+                const sub = dp[prow + (j - 1)] + costSub;
+
+                let best = del;
+                if (ins < best) best = ins;
+                if (sub < best) best = sub;
+                dp[row + j] = best;
+            }
+        }
+
+        const la = new Int32Array(n);
+        let i = m, j = n;
+
+        while (i > 0 || j > 0) {
+            const cur = dp[i * n1 + j];
+
+            if (i > 0 && j > 0) {
+                const qi = q.charCodeAt(i - 1);
+                const dj = d.charCodeAt(j - 1);
+                const costSub = (qi === dj) ? 0 : 2;
+                if (cur === dp[(i - 1) * n1 + (j - 1)] + costSub) {
+                    la[j - 1] = (costSub === 0) ? 0 : 2;
+                    i--; j--;
+                    continue;
+                }
+            }
+
+            if (j > 0 && (i === 0 || cur === dp[i * n1 + (j - 1)] + 1)) {
+                la[j - 1] = 1;
+                j--;
+                continue;
+            }
+
+            i--;
+        }
+
+        return la;
+    }
+
+    function buildLAFull(queryStr, docStr) {
+        const q = queryStr.slice(0, MAX_LEN_Q);
+        const d = docStr.slice(0, MAX_LEN_D);
+        const laDoc = levAlign(q, d);           // length = d.length
+        const laFull = new Int32Array(MAX_LEN); // zeros
+        const base = MAX_LEN_Q + 2;
+        laFull.set(laDoc, base);
+        return laFull;
+    }
+
+    // Python map: {chr(i): i - 33 for i in range(33, 127)}
+    function encodeStr(str, maxLen) {
+        const ids = new Int32Array(maxLen);
+        for (let i = 0; i < maxLen; i++) {
+            if (i < str.length) {
+                const code = str.charCodeAt(i) - 33;
+                ids[i] = (code >= 0 && code < 94) ? code : 0;
+            } else {
+                ids[i] = 0;
+            }
+        }
+        return ids;
+    }
+
+    function makeRandomText(min, max) {
+        const len = min + Math.floor(Math.random() * (max - min));
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:;!?()-";
+        let s = "";
+        for (let i = 0; i < len; i++) s += chars[(Math.random() * chars.length) | 0];
+        return s;
+    }
+
+    function buildQueryBuffers(queryStr) {
+        const qIds = encodeStr(queryStr, MAX_LEN_Q);
+
+        const x_q = new Int32Array(MAX_LEN);
+        x_q[0] = CLS_Q;
+        x_q.set(qIds, 1);
+        x_q[MAX_LEN_Q + 1] = CLS_D;
+
+        const la_q = new Int32Array(MAX_LEN);
+        return { x_q, la_q, qIds };
+    }
+
+    // Build one doc row input (x_d row and la_d row)
+    function writeDocRow(x_d, la_d, rowIndex, qIds, queryStr, docStr) {
+        const dIds = encodeStr(docStr, MAX_LEN_D);
+        const offset = rowIndex * MAX_LEN;
+
+        // x_ids = [CLS_Q] + q_ids + [CLS_D] + d_ids
+        x_d[offset] = CLS_Q;
+        x_d.set(qIds, offset + 1);
+        x_d[offset + MAX_LEN_Q + 1] = CLS_D;
+        x_d.set(dIds, offset + MAX_LEN_Q + 2);
+
+        const laFull = buildLAFull(queryStr, docStr);
+        la_d.set(laFull, offset);
+    }
+
+    // Robustly extract scores from tinygrad’s return shape
+    function unpackScores(ret) {
+        // Most commonly: [Float32Array] or [[Float32Array]]
+        if (Array.isArray(ret)) {
+            if (ret.length === 1 && (ret[0] instanceof Float32Array || ArrayBuffer.isView(ret[0]))) return ret[0];
+            if (ret.length === 1 && Array.isArray(ret[0])) return unpackScores(ret[0]);
+            // sometimes direct array of numbers
+            if (ret.length && typeof ret[0] === "number") return Float32Array.from(ret);
+        }
+        // direct typed array
+        if (ret instanceof Float32Array || ArrayBuffer.isView(ret)) return ret;
+        throw new Error("Could not unpack model output into scores array");
+    }
+
+    async function score1000Docs(net, x_q, la_q, qIds, queryStr, docStrings) {
+        const scoresAll = new Float32Array(TOTAL_DOCS);
+
+        // allocate per-chunk buffers once
+        const x_d = new Int32Array(MODEL_DOCS * MAX_LEN);
+        const la_d = new Int32Array(MODEL_DOCS * MAX_LEN);
+
+        for (let base = 0; base < TOTAL_DOCS; base += MODEL_DOCS) {
+            // fill chunk with real docs; pad the tail with empty docs if needed
+            const chunkCount = Math.min(MODEL_DOCS, TOTAL_DOCS - base);
+
+            for (let i = 0; i < MODEL_DOCS; i++) {
+                const docIndex = base + i;
+                const docStr = (i < chunkCount) ? docStrings[docIndex] : ""; // pad
+                writeDocRow(x_d, la_d, i, qIds, queryStr, docStr);
+            }
+
+            const ret = await net(x_q, la_q, x_d, la_d);
+            const chunkScores = unpackScores(ret);
+
+            assert(chunkScores.length === MODEL_DOCS, `Expected ${MODEL_DOCS} scores, got ${chunkScores.length}`);
+
+            // copy only the real portion into scoresAll
+            for (let i = 0; i < chunkCount; i++) scoresAll[base + i] = chunkScores[i];
+        }
+
+        return scoresAll;
+    }
+
+    async function main() {
+        statusEl.textContent = "Requesting WebGPU device...";
+        const device = await initWebGPU();
+
+        statusEl.textContent = "Loading weights & building pipelines...";
+        const net = await model.load(device, "./reranker.safetensors");
+
+        // Build query
+        const queryStr = "x = y + z " + makeRandomText(10, 20);
+        const { x_q, la_q, qIds } = buildQueryBuffers(queryStr);
+
+        // Build doc strings
+        const docStrings = Array.from({ length: TOTAL_DOCS }, (_, i) => `Doc ${i}: ` + makeRandomText(30, 80));
+
+        // Warmup: run one full 1000-doc scoring pass (chunks)
+        statusEl.textContent = "Warming up...";
+        await score1000Docs(net, x_q, la_q, qIds, queryStr, docStrings);
+
+        // Benchmark
+        statusEl.textContent = `Running benchmark (${ITERS} iterations)...`;
+        let lastScores = null;
+
+        const t0 = performance.now();
+        for (let it = 0; it < ITERS; it++) {
+            lastScores = await score1000Docs(net, x_q, la_q, qIds, queryStr, docStrings);
+        }
+        const t1 = performance.now();
+
+        const avgMs = (t1 - t0) / ITERS;
+        statusEl.textContent = "Completed";
+
+        // Top-k
+        const idx = Array.from({ length: TOTAL_DOCS }, (_, i) => i)
+            .sort((a, b) => lastScores[b] - lastScores[a]);
+
+        let out = "";
+        out += `====== BENCHMARK RESULTS ======\n`;
+        out += `Model docs/call   : ${MODEL_DOCS}\n`;
+        out += `Total docs scored : ${TOTAL_DOCS}  (chunked in ${Math.ceil(TOTAL_DOCS / MODEL_DOCS)} calls)\n`;
+        out += `Iterations        : ${ITERS}\n`;
+        out += `Avg latency       : ${avgMs.toFixed(2)} ms (1 query vs ${TOTAL_DOCS} docs)\n`;
+        out += `\n====== QUERY ======\n"${queryStr}"\n\n`;
+        out += `====== TOP 10 DOCUMENTS & SCORES ======\n`;
+        for (let r = 0; r < 10; r++) {
+            const i = idx[r];
+            out += `[Score: ${lastScores[i].toFixed(4).padStart(8)}]  ${docStrings[i]}\n`;
+        }
+
+        outEl.textContent = out;
+    }
+
+    main().catch(e => {
+        statusEl.textContent = "Error (See console/output)";
+        outEl.textContent = String(e?.stack || e);
+    });
+</script>
+</body>
+</html>
