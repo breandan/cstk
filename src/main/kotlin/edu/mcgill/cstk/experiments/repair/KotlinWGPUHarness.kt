@@ -232,6 +232,11 @@ fun sendCPU(query: String): String =
     .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
     .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
 
+fun sendCPU2(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): DFSM? {
+  val repair = repairWithTCC(brokenStr, cfg)
+  return repair?.toDFSMDirect(cfg.tmLst)
+}
+
 fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): Pair<Long, BAutomaton?> {
   val repair = repairWithTCC(brokenStr, cfg)
   val dfa = repair

@@ -215,58 +215,63 @@ fun evaluateRegexRepairOnStackOverflow() {
 //    val langSize = 0
 
     var filtered = 0
-    val (langSize, dfa) = sendCPUAndMeasureLang(brokeStr)
-    val dfaRecognized = try { dfa!!.run(termDict.encode(fixedToks)) } catch (_: Exception) { false }
+    val dfa = sendCPU2(brokeStr)
+    val dfaRecognized = dfa?.recognizes(fixedToks, s2pg.tmLst) ?: false
+    val langSize = 0
 
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
     if (!dfaRecognized) { allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++ }
 
     var origRank = -1
-    val unrankedResults = (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
-      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
+    val unrankedResults =
+      (dfa?.decodeDFA(mc = P_BIFI_PY150, timeout = timeout, dec = termDict) ?: emptyList())
+        .parallelStream().map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+        .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first.addNewLineIfMissing() }.toList()
+//      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
+//      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
       .let {
         cpuTime = cpuClock.elapsedNow().inWholeMilliseconds
         origRank = it.indexOf(fixedStr)
         totalSamples = it.size
         println("CPU returned $totalSamples results in $cpuTime ms")
-        if ("Error" in getOutput(fixedStr)) it else {
-          val errorsAndRepairs = it.asSequence().asStream().parallel()
-              .map { it to "".let {
-//            .map { it to getOutput(it).let {
-                  if (it.isEmpty()) ""
-                  else it.trim().replace("\n", "\\n")
-                    .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
-                 }
-               }
-              .limit(10_000)
-              .toList()
-
-//          val errHst = mutableMapOf<String, Int>()
-//          val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
-//          errorsAndRepairs.filter { it.second.isNotEmpty() }
-//            .forEach { it.second.also { errHst[it] = 1 + errHst.getOrElse(it) { 0 } } }
-//          val summary = errHst.toMap().entries.sortedBy { -it.component2() }
-//            .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
-//          println("Rejection histogram:\n$summary")
-//          errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
-//            ls.mapIndexed { i, it -> it to i }
-//              .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
-//              .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
-//          }
-
-          errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
-        }
+//        if ("Error" in getOutput(fixedStr)) it else {
+//          val errorsAndRepairs = it.asSequence().asStream().parallel()
+//              .map { it to "".let {
+////            .map { it to getOutput(it).let {
+//                  if (it.isEmpty()) ""
+//                  else it.trim().replace("\n", "\\n")
+//                    .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
+//                 }
+//               }
+//              .limit(10_000)
+//              .toList()
+//
+////          val errHst = mutableMapOf<String, Int>()
+////          val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
+////          errorsAndRepairs.filter { it.second.isNotEmpty() }
+////            .forEach { it.second.also { errHst[it] = 1 + errHst.getOrElse(it) { 0 } } }
+////          val summary = errHst.toMap().entries.sortedBy { -it.component2() }
+////            .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
+////          println("Rejection histogram:\n$summary")
+////          errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
+////            ls.mapIndexed { i, it -> it to i }
+////              .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
+////              .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
+////          }
+//
+//          errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
+//        }
+        it
       }
 
     println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-//    val rankedResults = unrankedResults
-//      .map { it to it.scoreWithPDFA() }
-//      .sortedBy { it.second }.map { it.first }
-      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
-      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+    val rankedResults = unrankedResults
+      .parallelStream().map { it to it.scoreWithPDFA() }
+      .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first }.toList()
+//      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
+//      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
         .onEachIndexed { i, it ->
           if (it == fixedStr) {
             matchFound = true
