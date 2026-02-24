@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.types.to
 import edu.mcgill.cstk.experiments.probing.MakeMore
@@ -86,7 +87,7 @@ val parikhMap by lazy {
   s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
 
-val pdfa: WFA by lazy { readResourceBytes("models/pdfa4.safetensor").toWFA() }
+val pdfa: WFA by lazy { readResourceBytes("models/wfa_ckpt_90000.safetensors").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()
@@ -261,11 +262,11 @@ fun evaluateRegexRepairOnStackOverflow() {
     println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-    val rankedResults = unrankedResults
-      .map { it to -pdfa.dfaScore(it.tokenizeByWhitespace()) }
-      .sortedBy { it.second }.map { it.first }
-//      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
-//      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+//    val rankedResults = unrankedResults
+//      .map { it to it.scoreWithPDFA() }
+//      .sortedBy { it.second }.map { it.first }
+      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
+      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
         .onEachIndexed { i, it ->
           if (it == fixedStr) {
             matchFound = true
@@ -319,6 +320,8 @@ fun evaluateRegexRepairOnStackOverflow() {
 
   summarizeRunningStats()
 }
+
+fun String.scoreWithPDFA(): Double = -pdfa.score(charify().map { it.toString() })
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()

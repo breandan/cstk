@@ -233,9 +233,11 @@ fun sendCPU(query: String): String =
     .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
 
 fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): Pair<Long, BAutomaton?> {
-  val repair = repairWithCompactCircuit(brokenStr, cfg)
-  val dfa = repair?.toDFA(cfg.tmLst)?.apply { determinize() }
-  return (dfa?.toDFSM() ?.countWords() ?: 1L) to dfa?.apply { minimize() }
+  val repair = repairWithTCC(brokenStr, cfg)
+  val dfa = repair
+    ?.run { measureTimedValue { toDFA(cfg.tmLst) }.also { println("GRE -> DFA took ${it.duration}") }.value }
+    ?.apply { measureTime { determinize() }.also { println("Determinization took $it") } }
+  return (dfa?.toDFSM()?.countWords() ?: 1L) to dfa
 }
 
 fun measureCPU(query: String, rad: Int): Pair<Int, Long> {
