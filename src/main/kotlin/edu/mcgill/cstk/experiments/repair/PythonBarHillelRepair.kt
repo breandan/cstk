@@ -326,7 +326,7 @@ fun evaluateRegexRepairOnStackOverflow() {
   summarizeRunningStats()
 }
 
-fun String.scoreWithPDFA(): Double = -pdfa.score(charify().map { it.toString() })
+fun String.scoreWithPDFA(): Double = -pdfa.scoreString(this)
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
