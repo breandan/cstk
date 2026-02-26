@@ -3,6 +3,7 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.sampling.FastMC
 import ai.hypergraph.kaliningraph.sampling.pow
 import ai.hypergraph.markovian.mcmc.*
 import ai.hypergraph.kaliningraph.types.*
@@ -66,6 +67,7 @@ val P_PY150: MarkovChain<Σᐩ> by lazy {
 }
 
 val P_BIFI_PY150: MarkovChain<Σᐩ> by lazy { P_BIFI + P_PY150 }
+val FAST_MC: FastMC<Σᐩ> by lazy { P_BIFI_PY150.compile() }
 
 val topTokens by lazy { P_BIFI.topK(200).map { it.first } + "ε" - "BOS" - "EOS" }// + errDeck
 
