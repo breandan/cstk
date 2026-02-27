@@ -2,11 +2,15 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.parsing.approximations.intersectz
+import ai.hypergraph.kaliningraph.parsing.approximations.toWFA
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import edu.mcgill.cstk.utils.getOutput
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
 import kotlin.streams.asStream
+import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
@@ -141,9 +145,13 @@ fun evaluateRegexRepairOnStackOverflow() {
         it
       }
 
+//    println()
+//    measureTimeMillis { val dfa2 =dfa!!.toWFA(s2pg.tmLst); println("dFa2: ${dfa2.summary()}"); pythonPDFA.intersectOther(dfa2) }
+//      .also { println("Took: ${it}ms to intersect ${pythonPDFA.summary()}") }
+
     val elapsed = clock.elapsedNow().inWholeMilliseconds
     val rankedResults = unrankedResults
-      .parallelStream().map { it to it.scoreWithPDFA() }
+      .parallelStream().map { it to it.charify().scoreWithPDFA() }
 //      .parallelStream().map { it to FAST_MC.score(it.tokenizeByWhitespace()) }
       .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first }.toList()
 //      val rankedResults = if (unrankedResults.isEmpty()) emptyList()

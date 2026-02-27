@@ -15,6 +15,7 @@ import java.util.stream.Stream
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
 import kotlin.streams.asStream
+import kotlin.text.contains
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -60,7 +61,7 @@ val parikhMap by lazy {
   s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
 
-val pdfa: WFA by lazy { readResourceBytes("models/wfa_ckpt_90000.safetensors").toWFA() }
+val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_90000.safetensors").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()
@@ -108,9 +109,9 @@ fun writeToFileWithThreadLock(filePath: String, data: String) {
 fun List<String>.filterErrors(clock: TimeSource.Monotonic.ValueTimeMark): List<String> {
   var filtered = 0
   val s = asSequence().asStream().parallel()
-    .map {
-      it to "".let {
-//            .map { it to getOutput(it).let {
+//    .map { it to "".let {
+      .map { fix -> fix to getOutput(fix).let {
+//        if ("SyntaxError: invalid syntax" in it && fix !in cfg.language) println("$fix")
         if (it.isEmpty()) ""
         else it.trim().replace("\n", "\\n")
           .let { op -> op.getPyErrorType() + ": " + op.getPyErrorMessage() }
@@ -118,27 +119,25 @@ fun List<String>.filterErrors(clock: TimeSource.Monotonic.ValueTimeMark): List<S
     }
     .limit(10_000)
     .toList().let { errorsAndRepairs ->
-
-//          val errHst = mutableMapOf<String, Int>()
-//          val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
-//          errorsAndRepairs.filter { it.second.isNotEmpty() }
-//            .forEach { it.second.also { errHst[it] = 1 + errHst.getOrElse(it) { 0 } } }
-//          val summary = errHst.toMap().entries.sortedBy { -it.component2() }
-//            .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
-//          println("Rejection histogram:\n$summary")
-//          errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
-//            ls.mapIndexed { i, it -> it to i }
-//              .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
-//              .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
-//          }
-
-      errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
+        val errHst = mutableMapOf<String, Int>()
+        val pad = (errHst.values.maxOrNull()?.toString()?.length ?: 1) + 1
+        errorsAndRepairs.filter { it.second.isNotEmpty() }
+          .forEach { it.second.also { errHst[it] = 1 + errHst.getOrElse(it) { 0 } } }
+        val summary = errHst.toMap().entries.sortedBy { -it.component2() }.take(10)
+          .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
+        println("Rejection histogram:\n$summary")
+        errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
+          ls.mapIndexed { i, it -> it to i }
+            .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
+            .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
+        }
+        errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
     }
 
   return s.also { println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})") }
 }
 
-fun String.scoreWithPDFA(): Double = -pdfa.scoreString(this)
+fun String.scoreWithPDFA(): Double = -pythonPDFA.scoreString(this)
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
