@@ -4,6 +4,7 @@ import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
 import kotlin.streams.asStream
@@ -121,7 +122,8 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val radius = (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS)
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()}, $trueLevDist/$radius)")
-    if (!dfaRecognized && trueLevDist <= radius) {
+    if (!dfaRecognized) {
+      if (trueLevDist <= radius)
       System.err.println("True Levenshtein distance ($trueLevDist) was <=${latestLangEditDistance + LED_BUFFER}, but true repair rejected!")
       allRate.error++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.error++
     }
