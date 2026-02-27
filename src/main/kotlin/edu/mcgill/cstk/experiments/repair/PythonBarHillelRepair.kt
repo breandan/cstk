@@ -2,15 +2,11 @@ package edu.mcgill.cstk.experiments.repair
 
 import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.parsing.approximations.intersectz
-import ai.hypergraph.kaliningraph.parsing.approximations.toWFA
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
-import edu.mcgill.cstk.utils.getOutput
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
 import kotlin.streams.asStream
-import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
