@@ -133,7 +133,8 @@ fun evaluateRegexRepairOnStackOverflow() {
     val unrankedResults =
       (dfa?.decodeDFA(mc = FAST_MC, timeout = timeout, dec = termDict) ?: emptyList())
         .parallelStream().map { it to FAST_MC.score(it.tokenizeByWhitespace()) }
-        .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first.addNewLineIfMissing() }.toList()
+        .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
+        .map { it.first.addNewLineIfMissing() }.toList()
 //      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 //      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
       .let {
