@@ -81,20 +81,20 @@ fun evaluateRegexRepairOnStackOverflow() {
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
     val levAlign = levenshteinAlign(brokeToks, fixedToks)
-    val levDist = levAlign.patchSize() // True distance, only used for logging purposes
+    val trueLevDist = levAlign.patchSize() // True distance, only used for logging purposes
 
     val lenBucket = (brokeToks.size / LEN_BUCKET_INTERVAL) * LEN_BUCKET_INTERVAL
-    P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-    P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-    P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-    P_1000ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
-    P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.total++
+    P_1ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.total++
+    P_10ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.total++
+    P_100ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.total++
+    P_1000ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.total++
+    P_AllByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.total++
 
     val humanRepairANSI = levenshteinAlign(brokeToks, fixedToks).paintANSIColors()
     println("Source: ${brokeToks.joinToString(" ")}")
     println("Repair: $humanRepairANSI")
 
-    allRate.total++; levRates.getOrPut(levDist) { LBHMetrics() }.total++
+    allRate.total++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.total++
 
     val clock = TimeSource.Monotonic.markNow()
     var totalSamples = 0
@@ -119,8 +119,12 @@ fun evaluateRegexRepairOnStackOverflow() {
     val dfaRecognized = dfa?.recognizes(fixedToks, s2pg.tmLst) ?: false
     val langSize = 0
 
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()})")
-    if (!dfaRecognized) { allRate.error++; levRates.getOrPut(levDist) { LBHMetrics() }.error++ }
+    val radius = (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS)
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()}, $trueLevDist/$radius)")
+    if (!dfaRecognized && trueLevDist <= radius) {
+      System.err.println("True Levenshtein distance ($trueLevDist) was <=${latestLangEditDistance + LED_BUFFER}, but true repair rejected!")
+      allRate.error++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.error++
+    }
 
     println("Ranking results...")
     var origRank = -1
@@ -162,11 +166,11 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val indexOfTarget = rankedResults.indexOf(fixedStr).also {
       if (matchFound) {
-        P_AllByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-        if (it == 0) P_1ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-        if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-        if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
-        if (it <= 1000) P_1000ByLevDist.getOrPut(lenBucket to levDist) { S2PMetrics() }.top1++
+        P_AllByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it == 0) P_1ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it <= 1000) P_1000ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
       }
     }
 
@@ -177,20 +181,20 @@ fun evaluateRegexRepairOnStackOverflow() {
 //      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout, Δ=$levDist human repair not found")
 //      negative.appendText("${brokeToks.size}, $levDist, $latestLangEditDistance, $elapsed, $allElapsed, $totalSamples, $langSize\n")
     } else {
-      allRate.recall++; levRates.getOrPut(levDist) { LBHMetrics() }.recall++
-      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(levDist) { LBHMetrics() }.top1++ } }
+      allRate.recall++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.recall++
+      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.top1++ } }
 
-      println("Found Δ=$levDist repair in $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
+      println("Found Δ=$trueLevDist repair in $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
 //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
-      sampleTimeByLevDist[levDist] = (sampleTimeByLevDist[levDist] ?: 0.0) + elapsed
+      sampleTimeByLevDist[trueLevDist] = (sampleTimeByLevDist[trueLevDist] ?: 0.0) + elapsed
       println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      allTimeByLevDist[levDist] = (allTimeByLevDist[levDist] ?: 0.0) + allElapsed
+      allTimeByLevDist[trueLevDist] = (allTimeByLevDist[trueLevDist] ?: 0.0) + allElapsed
       println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
-      samplesBeforeMatchByLevDist[levDist] = (samplesBeforeMatchByLevDist[levDist] ?: 0.0) + totalSamples
+      samplesBeforeMatchByLevDist[trueLevDist] = (samplesBeforeMatchByLevDist[trueLevDist] ?: 0.0) + totalSamples
       println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
     }
-    csv.appendText("${brokeToks.size}, $levDist, $latestLangEditDistance, $elapsed, $allElapsed, $gpuTime, $cpuTime, $totalSamples, $langSize, $indexOfTarget, $origRank, $gpuRank\n")
+    csv.appendText("${brokeToks.size}, $trueLevDist, $latestLangEditDistance, $elapsed, $allElapsed, $gpuTime, $cpuTime, $totalSamples, $langSize, $indexOfTarget, $origRank, $gpuRank\n")
 
     if (allRate.total % 100 == 0) summarizeRunningStats()
     println()

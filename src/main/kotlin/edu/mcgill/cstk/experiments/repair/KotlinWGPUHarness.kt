@@ -233,7 +233,7 @@ fun sendCPUAndFetchTopK(query: String, K: Int = 65535): String =
     .sortedBy { it.second }.map { it.first }.take(K).joinToString("\n")
 
 fun sendCPU(query: String, cfg: CFG = vanillaS2PCFG): DFSM? =
-  repairWithSparseGRE(query.tokenizeByWhitespace(), cfg)?.toDFSMDirect(cfg.tmLst)
+  repairWithSparseGRE(query.tokenizeByWhitespace(), cfg)?.toDFSMDirectParallel(cfg.tmLst)
 
 fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): Pair<Long, BAutomaton?> {
   val repair = repairWithTCC(brokenStr, cfg)
