@@ -50,11 +50,9 @@ fun evaluateRegexRepairOnStackOverflow() {
 
   val latestCommitMessage = lastGitMessage().replace(Regex("[^A-Za-z0-9]"), "_")
     .let { if ("fatal: not a git repository" !in it) it else System.currentTimeMillis().toString() }
-//    .replace(" ", "_").replace("/", "_")
   val positiveHeader = "length, lev_dist, led, sample_ms, sample_rerank_ms, cpu_time, gpu_time, total_samples, lang_size, final_rank, orig_rank, gpu_rank\n"
   val title = "regex_bar_hillel"
-  val csv = try { File("data/${title}_results_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }
-  catch (e: Exception) { File("/scratch/b/bengioy/breandan/${title}_results_$latestCommitMessage.csv").also { it.appendText(positiveHeader) } }.also { println("Writing positive CSV to: ${it.absolutePath}") }
+  val csv = File("data/${title}_results_$latestCommitMessage.csv").also { it.appendText(positiveHeader) }
   println()
 
   val P_1ByLevDist = mutableMapOf<Pair<Int, Int>, S2PMetrics>()
