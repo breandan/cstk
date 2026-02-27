@@ -13,7 +13,6 @@ import java.net.http.*
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.concurrent.*
-import kotlin.math.absoluteValue
 import kotlin.time.*
 import kotlin.time.Duration.Companion.seconds
 
@@ -227,15 +226,14 @@ fun startTrainingService() {
   println("BIFI iterator service started at http://localhost:${PORT + 1}/fetch")
 }
 
-fun sendCPU(query: String): String =
-  initiateSerialRepair(query.tokenizeByWhitespace(), vanillaS2PCFG).toSet()
+fun sendCPUAndFetchTopK(query: String, K: Int = 65535): String =
+  (repairWithSparseGRE(query.tokenizeByWhitespace(), vanillaS2PCFG)
+    ?.toDFSMDirect(vanillaS2PCFG.tmLst)?.sampleUniformly(vanillaS2PCFG.tmLst) ?: sequenceOf())
     .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-    .sortedBy { it.second }.map { it.first }.take(65535).joinToString("\n")
+    .sortedBy { it.second }.map { it.first }.take(K).joinToString("\n")
 
-fun sendCPU2(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): DFSM? {
-  val repair = repairWithSparseGRE(brokenStr, cfg)
-  return repair?.toDFSMDirect(cfg.tmLst)
-}
+fun sendCPU(query: String, cfg: CFG = vanillaS2PCFG): DFSM? =
+  repairWithSparseGRE(query.tokenizeByWhitespace(), cfg)?.toDFSMDirect(cfg.tmLst)
 
 fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenizeByWhitespace(), cfg: CFG = vanillaS2PCFG): Pair<Long, BAutomaton?> {
   val repair = repairWithTCC(brokenStr, cfg)
@@ -261,7 +259,7 @@ fun writeValidationSet() {
         .forEach { (broke, fixed) ->
           try {
             val query = broke
-            val reprs = sendCPU(query)
+            val reprs = sendCPUAndFetchTopK(query)
             if (reprs.isNotBlank()) {
               val qenc = query.charify()
               val fenc = fixed.charify()
@@ -283,7 +281,7 @@ fun writeTrainingSetWithMulticoreCPU() {
     }.filter { it != null }.forEach {
       try {
         val query = it!!
-        val reprs = sendCPU(query)
+        val reprs = sendCPUAndFetchTopK(query)
         if (reprs.isNotBlank()) {
           val qenc = query.charify()
           val renc = reprs.lines().map { it.charify() }.shuffled()
