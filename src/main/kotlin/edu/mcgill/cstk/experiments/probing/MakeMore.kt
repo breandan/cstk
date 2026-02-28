@@ -9,6 +9,7 @@ import ai.hypergraph.kaliningraph.parsing.language
 import ai.hypergraph.kaliningraph.parsing.terminals
 import ai.hypergraph.kaliningraph.parsing.Σᐩ
 import ai.hypergraph.kaliningraph.repair.MAX_DFA_IN
+import ai.hypergraph.kaliningraph.repair.s2pg
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFG
 import ai.hypergraph.kaliningraph.repair.vanillaS2PCFGWE
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
@@ -32,8 +33,8 @@ object MakeMore {
   val terms = vocab.map { decode("$it") }.toSet()
 
   object PyTokMap {
-    val tm: Map<Σᐩ, Char> = vanillaS2PCFG.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
-    val mt: Map<Char, Σᐩ> = vanillaS2PCFG.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
+    val tm: Map<Σᐩ, Char> = s2pg.terminals.mapIndexed { i, it -> it to (33 + i).toChar() }.toMap()
+    val mt: Map<Char, Σᐩ> = s2pg.terminals.mapIndexed { i, it -> (33 + i).toChar() to it }.toMap()
     val size = tm.size
   }
 

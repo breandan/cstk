@@ -55,7 +55,6 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
       /** See [Tree.quintuples] */
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
-val s2pg by lazy { vanillaS2PCFG }
 val parikhMap by lazy {
   LangCache.prepopPythonLangCache()
   s2pg.parikhMap }
@@ -105,8 +104,7 @@ fun writeToFileWithThreadLock(filePath: String, data: String) {
   }
 }
 
-
-fun List<String>.filterErrors(clock: TimeSource.Monotonic.ValueTimeMark): List<String> {
+fun List<String>.filterErrors(cfg: CFG, clock: TimeSource.Monotonic.ValueTimeMark): List<String> {
   var filtered = 0
   val s = asSequence().asStream().parallel()
 //    .map { it to "".let {
@@ -126,12 +124,13 @@ fun List<String>.filterErrors(clock: TimeSource.Monotonic.ValueTimeMark): List<S
         val summary = errHst.toMap().entries.sortedBy { -it.component2() }.take(10)
           .joinToString("\n") { "${it.value.toString().padEnd(pad)}| ${it.key}" }
         println("Rejection histogram:\n$summary")
-        errorsAndRepairs.filter { it.second.isNotEmpty() }.also { ls ->
-          ls.mapIndexed { i, it -> it to i }
-            .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
-            .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
-        }
-        errorsAndRepairs.map { it.first }.filter { ("Error" !in it).also { if (!it) filtered++ } }
+        errorsAndRepairs.filter { it.second.isNotEmpty() }
+          .also { ls ->
+            ls.mapIndexed { i, it -> it to i }
+              .joinToString("\n") { "${it.first}\n${"E(${it.third}/${ls.size})".padEnd(15)}| ${it.second}" }
+              .also { File("error_messages.log").apply { createNewFile() }.appendText(it) }
+          }
+        errorsAndRepairs.filter { p -> ("Error" !in p.second).also { if (!it) filtered++ } }.map { it.first }
     }
 
   return s.also { println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})") }

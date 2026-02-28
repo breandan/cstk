@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
+import edu.mcgill.cstk.utils.getOutput
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
 import kotlin.streams.asStream
@@ -42,7 +43,6 @@ fun evaluateRegexRepairOnStackOverflow() {
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val allTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
   val samplesBeforeMatchByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
-  val s2pg = vanillaS2PCFG
   val termDict = TermDict(s2pg.terminals)
 
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
@@ -128,21 +128,18 @@ fun evaluateRegexRepairOnStackOverflow() {
       allRate.error++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.error++
     }
 
-    println("Ranking results...")
     var origRank = -1
     val unrankedResults =
       (dfa?.decodeDFA(mc = FAST_MC, timeout = timeout, dec = termDict) ?: emptyList())
-        .parallelStream().map { it to FAST_MC.score(it.tokenizeByWhitespace()) }
+        .parallelStream().map { it to it.charify().scoreWithPDFA() }
         .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
         .map { it.first.addNewLineIfMissing() }.toList()
-//      .map { it to P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
-//      .sortedBy { it.second }.map { it.first }.map { it.addNewLineIfMissing() }
       .let {
         cpuTime = cpuClock.elapsedNow().inWholeMilliseconds
         origRank = it.indexOf(fixedStr)
         totalSamples = it.size
         println("CPU returned $totalSamples results in $cpuTime ms")
-//        if ("Error" in getOutput(fixedStr)) it else it.filterErrors(clock)
+//        if ("Error" in getOutput(fixedStr)) it else it.filterErrors(s2pg, clock)
         it
       }
 
@@ -151,16 +148,15 @@ fun evaluateRegexRepairOnStackOverflow() {
 //      .also { println("Took: ${it}ms to intersect ${pythonPDFA.summary()}") }
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-    val rankedResults = unrankedResults
-      .parallelStream().map { it to it.charify().scoreWithPDFA() }
-//      .parallelStream().map { it to FAST_MC.score(it.tokenizeByWhitespace()) }
-      .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first }.toList()
-//      val rankedResults = if (unrankedResults.isEmpty()) emptyList()
-//      else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+//    val rankedResults = unrankedResults
+//      .parallelStream().map { it to it.charify().scoreWithPDFA() }
+//      .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first }.toList()
+    val rankedResults = if (unrankedResults.isEmpty()) emptyList()
+    else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
         .onEachIndexed { i, it ->
           if (it == fixedStr) {
             matchFound = true
-            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}): $humanRepairANSI")
+            println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}):\n$humanRepairANSI")
           }
         }
 
@@ -178,7 +174,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     }
 
     rankedResults.firstOrNull()?.tokenizeByWhitespace()
-      ?.let { println("Top1 scoring repair: ${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
+      ?.let { println("Top-1 scoring repair:\n${levenshteinAlign(brokeToks, it).paintANSIColors()}") }
 
     if (indexOfTarget < 0) {
 //      println("Drew $totalSamples samples in ${clock.elapsedNow()}/$timeout, Δ=$levDist human repair not found")
