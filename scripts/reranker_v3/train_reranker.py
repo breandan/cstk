@@ -255,10 +255,10 @@ def clip_grad_norm_(params, max_norm: float, eps: float = 1e-12):
 # -------------------------------------------------------------------- #
 #  Export helpers
 # -------------------------------------------------------------------- #
-def export_artifacts(infer_model: InferPipeline, outdir: Path, num_docs: int):
+def export_artifacts(infer_model: InferPipeline, outdir: Path, step: int, num_docs: int):
     # 1. Save weights from active CUDA model
     sd = get_state_dict(infer_model)
-    safe_save(sd, (outdir / "reranker.safetensors").as_posix())
+    safe_save(sd, (outdir / f"reranker_{step}.safetensors").as_posix())
 
     # 2. Temporarily switch context to WEBGPU
     old_device = Device.DEFAULT
@@ -279,7 +279,7 @@ def export_artifacts(infer_model: InferPipeline, outdir: Path, num_docs: int):
 
     # 5. Export the JS program (this will now properly output WGSL)
     prg, inp_sizes, out_sizes, state = export_model(infer_ext, "webgpu", *example_inputs)
-    (outdir / "reranker.js").write_text(prg, encoding="utf-8")
+    (outdir / f"reranker_{step}.js").write_text(prg, encoding="utf-8")
 
     # 6. Restore the CUDA context so training can continue smoothly
     Device.DEFAULT = old_device
@@ -483,7 +483,7 @@ def main():
         # Call the JIT function
         loss, gnorm = train_step(xq_t, laq_t, xd_t, lad_t)
 
-        if step % 1 == 0:
+        if step % 10 == 0:
             dt = time.time() - t0
             t0 = time.time()
             # JIT outputs are tensors, use .item() safely now
@@ -494,7 +494,7 @@ def main():
             print(f"--- validation @ step {step} ---")
             run_validation()
             print(f"--- export @ step {step} ---")
-            export_artifacts(infer_model, outdir, num_docs=args.export_docs)
+            export_artifacts(infer_model, outdir, step, num_docs=args.export_docs)
             print(f"wrote: {(outdir/'reranker.safetensors').name}, {(outdir/'reranker.js').name}")
 
     # Final export at end (handy)
