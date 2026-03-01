@@ -20,8 +20,8 @@ image = (
 
 @app.function(image=image, volumes={"/data": data_vol})
 def upload_data_file(filename: str, contents: bytes):
-    if filename not in ("so_ts_markov.txt", "so_vs_markov.txt"):
-        raise ValueError("filename must be so_ts_markov.txt or so_vs_markov.txt")
+    if filename not in ("so_ts_wfa.txt", "so_vs_wfa.txt"):
+        raise ValueError("filename must be so_ts_wfa.txt or so_vs_wfa.txt")
     dst = f"/data/{filename}"
     with open(dst, "wb") as f:
         f.write(contents)
@@ -48,7 +48,7 @@ def train_remote(
     os.makedirs("/out", exist_ok=True)
 
     # Symlink datasets into /out (so train script finds them in CWD)
-    for fn in ("so_ts_markov.txt", "so_vs_markov.txt"):
+    for fn in ("so_ts_wfa.txt", "so_vs_wfa.txt"):
         src = f"/data/{fn}"
         dst = f"/out/{fn}"
         if not os.path.exists(src):
@@ -157,8 +157,8 @@ def train_remote(
         "--wd", str(wd),
         "--grad-clip", str(grad_clip),
         "--seed", str(seed),
-        "--train-file", "so_ts_markov.txt",
-        "--val-file", "so_vs_markov.txt",
+        "--train-file", "so_ts_wfa.txt",
+        "--val-file", "so_vs_wfa.txt",
     ]
 
     print("🚀 Launching training:")
@@ -195,10 +195,10 @@ def main(
 ):
     if upload_ts:
         p = pathlib.Path(upload_ts)
-        upload_data_file.remote("so_ts_markov.txt", p.read_bytes())
+        upload_data_file.remote("so_ts_wfa.txt", p.read_bytes())
     if upload_vs:
         p = pathlib.Path(upload_vs)
-        upload_data_file.remote("so_vs_markov.txt", p.read_bytes())
+        upload_data_file.remote("so_vs_wfa.txt", p.read_bytes())
 
     if run:
         train_remote.remote(steps=steps)

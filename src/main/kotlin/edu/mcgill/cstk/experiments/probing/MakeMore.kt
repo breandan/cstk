@@ -26,6 +26,11 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
+fun String.charify() = "|${encodeToMakemore()}}"
+fun String.uncharify() = removePrefix("|").removeSuffix("}").decodeFromMakemore()
+fun Σᐩ.encodeToMakemore() = tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString("")
+fun Σᐩ.decodeFromMakemore() = map { MakeMore.PyTokMap.mt[it]!! }.joinToString(" ")
+
 // Character-level LLM, transforms Python lexical tokens to ASCII characters
 object MakeMore {
   // BIFI dataset vocab, n.b. does not include entire vanillaS2PCFG alphabet due to rare tokens, e.g., <>

@@ -105,6 +105,16 @@ def stream_qd(path: str):
                     if lines:
                         yield lines[0], lines[1:]
 
+def iter_qd_once(path: str):
+    """Yield (query, docs) exactly once."""
+    p = Path(path)
+    with p.open(encoding="utf-8") as f:
+        for gap, grp in itertools.groupby(f, key=lambda l: not l.strip()):
+            if not gap:
+                lines = [l.rstrip("\n") for l in grp]
+                if lines:
+                    yield lines[0], lines[1:]
+
 # -------------------------------------------------------------------- #
 #  Model Definitions
 # -------------------------------------------------------------------- #
@@ -361,6 +371,70 @@ def main():
 
         return q_items, x_q, la_q, x_d, la_d
 
+    def score_docs_for_query(q: str, docs: List[str]) -> np.ndarray:
+        N = len(docs)
+
+        qx, qla = build_query_only(q)
+        x_q = np.asarray([qx], dtype=np.int32)
+        la_q = np.asarray([qla], dtype=np.int32)
+
+        x_d = np.zeros((N, MAX_LEN), dtype=np.int32)
+        la_d = np.zeros((N, MAX_LEN), dtype=np.int32)
+
+        for j, d in enumerate(docs):
+            xd, lad = build_pair(q, d)
+            x_d[j, :] = np.asarray(xd, dtype=np.int32)
+            la_d[j, :] = np.asarray(lad, dtype=np.int32)
+
+        xq_t  = Tensor(x_q, dtype=dtypes.int32)
+        laq_t = Tensor(la_q, dtype=dtypes.int32)
+        xd_t  = Tensor(x_d, dtype=dtypes.int32)
+        lad_t = Tensor(la_d, dtype=dtypes.int32)
+
+        scores = train_model(xq_t, laq_t, xd_t, lad_t, B=1, N=N)
+        Tensor.realize(scores)
+        return scores.numpy().reshape(-1)
+
+    def run_validation(max_groups: int = 100):
+        was_training = Tensor.training
+        Tensor.training = False
+
+        total = 0
+        total_loss = 0.0
+        total_rank = 0
+        top1 = 0
+
+        for q, docs in itertools.islice(iter_qd_once(vs_path.as_posix()), max_groups):
+            if not docs:
+                continue
+
+            s = score_docs_for_query(q, docs)
+
+            # positive doc is always docs[0]
+            pos_rank = 1 + int((s[1:] > s[0]).sum()) if len(s) > 1 else 1
+
+            # numpy version of listwise_xent for logging
+            m = float(s.max())
+            lse = m + math.log(float(np.exp(s - m).sum()))
+            loss = lse - float(s[0])
+
+            total += 1
+            total_loss += loss
+            total_rank += pos_rank
+            top1 += int(pos_rank == 1)
+
+        if total:
+            print(
+                f"val summary (first {total} groups) | "
+                f"mean_loss {total_loss/total:.4f} | "
+                f"mean_pos_rank {total_rank/total:.2f} | "
+                f"top1 {top1/total:.3f}"
+            )
+        else:
+            print("val summary | no validation groups with docs")
+
+        Tensor.training = was_training
+
     def clip_grad_norm_jit(params, max_norm: float, eps: float = 1e-12) -> Tensor:
         grads = [p.grad for p in params if p.grad is not None]
         if not grads: return Tensor([0.0])
@@ -417,6 +491,8 @@ def main():
 
         if step % args.export_every == 0:
             Tensor.training = False
+            print(f"--- validation @ step {step} ---")
+            run_validation()
             print(f"--- export @ step {step} ---")
             export_artifacts(infer_model, outdir, num_docs=args.export_docs)
             print(f"wrote: {(outdir/'reranker.safetensors').name}, {(outdir/'reranker.js').name}")

@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
+import edu.mcgill.cstk.experiments.probing.charify
 import edu.mcgill.cstk.utils.getOutput
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File

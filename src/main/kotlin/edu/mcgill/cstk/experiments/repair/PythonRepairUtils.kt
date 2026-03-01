@@ -7,6 +7,7 @@ import ai.hypergraph.kaliningraph.parsing.approximations.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import edu.mcgill.cstk.experiments.probing.MakeMore
+import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.*
 import java.io.File
 import java.util.*
@@ -60,7 +61,7 @@ val parikhMap by lazy {
   s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
 
-val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_90000.safetensors").toWFA() }
+val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_200000.safetensors").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()

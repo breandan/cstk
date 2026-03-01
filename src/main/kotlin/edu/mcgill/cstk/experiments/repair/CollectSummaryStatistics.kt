@@ -9,6 +9,9 @@ import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
 import edu.mcgill.cstk.experiments.probing.MakeMore
+import edu.mcgill.cstk.experiments.probing.charify
+import edu.mcgill.cstk.experiments.probing.encodeToMakemore
+import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
@@ -26,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 ./gradlew collectSummaryStats
  */
 fun main() {
-  LangCache.prepopPythonLangCache()
+//  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
 //  stackOverflowSnips().computeRawTokenFrequencies()
 //  seq2ParseSnips().computeBigramFrequencies()
@@ -63,7 +66,8 @@ fun main() {
 //  MakeMore.previewSamples()
 //  prepareFixerDataset()
 //  collectSingleLineExamples()
-  measureIntersection()
+//  measureIntersection()
+  prepareRerankerDataset()
 //  correctNames()
 //  errorPredDiscrepancy()
 //  reconstructAndRebalance()
@@ -188,6 +192,29 @@ fun errorPredDiscrepancy() {
   }
 }
 
+fun prepareRerankerDataset() {
+  val training = File("so_ts_wfa.txt").apply { writeText("") }
+  val validation =  File("so_vs_wfa.txt").apply { writeText("") }
+  val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"
+  val contents = object {}.javaClass.classLoader.getResource(filename)!!.readText()
+  var i = 0
+  contents.lines().asSequence().windowed(4, 4).map { it[0] to it[1] to it[2] to it[3] }
+    .map { (broke, fixed) -> broke to fixed to levenshtein(broke, fixed) }
+    .map { (broke, fixed) -> broke.addNewLineIfMissing() to fixed.addNewLineIfMissing() }
+    .filter { (broke, fixed) ->
+      broke.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
+      fixed.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
+      (levenshtein(broke, fixed) <= MAX_RADIUS)
+    }
+    .map { (broke, fixed) -> broke.charify() to fixed.charify() to sendCPUAndFetchTop1kRepairs(broke).map { it.charify() } }
+    .forEach { (broke, fixed, top1k) ->
+      "$broke\n$fixed\n${top1k.joinToString("\n")}\n\n".let {
+        println(it.lines().take(20).joinToString("\n") { it.uncharify() } + "\n...\n")
+        (if (i++ % 10 == 0) validation else training).appendText(it)
+      }
+    }
+}
+
 fun prepareFixerDataset() =
   File("names.txt").readLines().stream().parallel()
     .map { MakeMore.decode(it) }
@@ -221,13 +248,9 @@ fun measureThroughput() {
 fun prepareUnsupervisedMakemoreDataset() {
   streamBIFIContents().forEach {
     val str = it.mapToUnquotedPythonTokens() + " NEWLINE"
-    if (str in vanillaS2PCFG.language)
-      println(str.encodeToMakemore())
+    if (str in vanillaS2PCFG.language) println(str.encodeToMakemore())
   }
 }
-
-fun Σᐩ.encodeToMakemore() = tokenizeByWhitespace().map { MakeMore.PyTokMap.tm[it]!! }.joinToString("")
-fun Σᐩ.decodeFromMakemore() = map { MakeMore.PyTokMap.mt[it]!! }.joinToString(" ")
 
 fun prepareBreakerDataset() {
   val filename = "datasets/python/stack_overflow/naturally_small_repairs_unminimized_base64.txt"

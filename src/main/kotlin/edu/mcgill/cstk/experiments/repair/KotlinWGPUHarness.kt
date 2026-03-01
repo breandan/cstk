@@ -4,7 +4,10 @@ import ai.hypergraph.kaliningraph.automata.*
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.tokenizeByWhitespace
+import ai.hypergraph.kaliningraph.types.to
 import com.sun.net.httpserver.*
+import edu.mcgill.cstk.experiments.probing.charify
+import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.awt.Desktop
 import java.io.File
@@ -243,6 +246,19 @@ fun sendCPUAndMeasureLang(query: String, brokenStr: List<Σᐩ> = query.tokenize
   return (dfa?.toDFSM()?.countWords() ?: 1L) to dfa
 }
 
+fun sendCPUAndFetchTop1kRepairs(query: String, cfg: CFG = vanillaS2PCFG): List<String> {
+  val dfa = sendCPU(query, cfg)
+
+  val unrankedResults =
+    (dfa?.decodeDFA(mc = FAST_MC, timeout = (TIMEOUT_MS / 1000).seconds, dec = termDict) ?: emptyList())
+      .parallelStream().map { it to it.charify().scoreWithPDFA() }
+      .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
+
+      .map { it.first.addNewLineIfMissing() }.limit(1000).toList()
+
+  return unrankedResults
+}
+
 fun measureCPU(query: String, rad: Int): Pair<Int, Long> {
   val repair = repairWithGREAtDist(query.tokenizeByWhitespace(), vanillaS2PCFG, rad)
   return ((repair?.second ?: -1) to (repair?.first?.toDFA()?.apply { determinize() }?.toDFSM()?.countWords() ?: -1L))
@@ -318,8 +334,6 @@ fun sendGPU(query: String, timeoutSec: Long = 30) = try {
   resultWaiter!!.get(timeoutSec, TimeUnit.SECONDS)
 } catch (e: Exception) { "" }
 
-fun String.charify() = "|${encodeToMakemore()}}"
-fun String.uncharify() = removePrefix("|").removeSuffix("}").decodeFromMakemore()
 
 fun rerankGPU(query: String, docs: String = sendGPU(query), url: String = "http://localhost:8082/rerank"): List<String> {
   if (docs.isEmpty()) return emptyList()
