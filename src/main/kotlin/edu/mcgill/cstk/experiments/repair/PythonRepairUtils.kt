@@ -61,7 +61,7 @@ val parikhMap by lazy {
   s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
 
-val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_200000.safetensors").toWFA() }
+val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_3800.safetensors").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()
@@ -138,6 +138,7 @@ fun List<String>.filterErrors(cfg: CFG, clock: TimeSource.Monotonic.ValueTimeMar
 }
 
 fun String.scoreWithPDFA(): Double = -pythonPDFA.scoreString(this)
+fun String.scoreWithMC(): Double = P_BIFI_PY150.score(uncharify().tokenizeByWhitespace())
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()

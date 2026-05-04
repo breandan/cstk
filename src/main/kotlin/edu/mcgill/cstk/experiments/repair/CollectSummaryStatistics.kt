@@ -1,17 +1,17 @@
 package edu.mcgill.cstk.experiments.repair
 
+
 import ai.hypergraph.kaliningraph.*
 import ai.hypergraph.kaliningraph.parsing.*
+import ai.hypergraph.kaliningraph.parsing.approximations.*
 import ai.hypergraph.kaliningraph.repair.*
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
+import ai.hypergraph.markovian.concurrency.*
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
-import edu.mcgill.cstk.experiments.probing.MakeMore
-import edu.mcgill.cstk.experiments.probing.charify
-import edu.mcgill.cstk.experiments.probing.encodeToMakemore
-import edu.mcgill.cstk.experiments.probing.uncharify
+import edu.mcgill.cstk.experiments.probing.*
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
@@ -67,11 +67,14 @@ fun main() {
 //  prepareFixerDataset()
 //  collectSingleLineExamples()
 //  measureIntersection()
-  prepareRerankerDataset()
+//  prepareRerankerDataset()
+  evaluateRerankerMRR()
+//  trainPDFA()
 //  correctNames()
 //  errorPredDiscrepancy()
 //  reconstructAndRebalance()
 }
+
 
 fun reconstructAndRebalance() {
   val markovRepairs = "datasets/python/stack_overflow/so_ds_markov.txt"
@@ -174,9 +177,8 @@ fun filterProductionsByPopularity() {
   val map = readPCFG3()
   pythonStatementCNF.filter { (a, b) ->
     b.size == 1 || (map[Triple(a, b[0], b[1])] ?: 10001) > 10000
-  }.toSet().normalize().noEpsilonOrNonterminalStubs.forEach {
-    println(it.first + " -> " + it.second.joinToString(" "))
-  }
+  }.toSet().normalize().noEpsilonOrNonterminalStubs
+    .forEach { println(it.first + " -> " + it.second.joinToString(" ")) }
 }
 
 fun errorPredDiscrepancy() {
@@ -213,6 +215,122 @@ fun prepareRerankerDataset() {
         (if (i++ % 10 == 0) validation else training).appendText(it)
       }
     }
+}
+
+fun trainPDFA(): WFA {
+  val h1 = s2pg.toNederhofNFA(startSymbol = "START", historyDepth = 2) { removeEpsilonsParallel() }
+  println(h1.summary())
+  val d1 = h1.determinize()
+  println(d1.summary())
+
+  val instances = File("so_ts_wfa.txt")
+    .readText()
+    .split(Regex("""\R\s*\R+"""))
+    .filter { it.isNotBlank() }
+    .asSequence()
+    .mapNotNull { block ->
+      val lines = block.lines().filter { it.isNotBlank() }
+      if (lines.size < 3) { null } else { lines.drop(1).map { it.uncharify().tokenizeByWhitespace() } }
+    }.flatten().toList()
+
+  return d1.trainDFAParallel(instances)
+}
+
+fun evaluateRerankerMRR(path: String = "so_vs_wfa.txt", reportEvery: Int = 100) {
+  data class Instance(val broke: String, val fixed: String, val candidates: List<String>)
+  data class Scorer(val name: String, val score: (String) -> Double)
+
+  class Stats {
+    val lock = Any()
+    var rrSum = 0.0
+    var n = 0
+    var batchNs = 0L
+  }
+
+  val instances = File(path)
+    .readText().split(Regex("""\R\s*\R+""")).filter { it.isNotBlank() }
+    .mapIndexedNotNull { idx, block ->
+      val lines = block.lines().filter { it.isNotBlank() }
+
+      if (lines.size < 3) {
+        synchronized(System.out) { println("Skipping malformed block ${idx + 1}: only ${lines.size} lines") }
+        null
+      } else {
+        val broke = lines[0]
+        val fixed = lines[1]
+        val top1k = lines.drop(2)
+
+        // Ensure fixed is present. Preserve first occurrence.
+        val candidates = (listOf(fixed) + top1k).distinct()
+
+        Instance(broke, fixed, candidates)
+      }
+    }
+
+  if (instances.isEmpty()) { println("No valid instances found in $path"); return }
+
+  val wdfa = trainPDFA()
+  fun String.scoreWithWDFA(): Double = -wdfa.scoreTokens(uncharify().tokenizeByWhitespace())
+
+  val scorers = listOf(
+//    Scorer("WDFA") { it.scoreWithWDFA() },
+    Scorer("PDFA") { it.scoreWithPDFA() },
+    Scorer("NGMC") { it.scoreWithMC() },
+    Scorer("WDFA") { it.scoreWithWDFA() }
+  )
+
+  val stats = Array(scorers.size) { Stats() }
+  val every = reportEvery.coerceAtLeast(1)
+
+  fun rankOfFixed(instance: Instance, score: (String) -> Double): Int {
+    val scored = instance.candidates.map { candidate -> candidate to score(candidate) }
+    val sorted = scored.sortedWith(compareBy<Pair<String, Double>> { it.second }.thenBy { it.first })
+    val rank = sorted.indexOfFirst { it.first == instance.fixed } + 1
+    return rank
+  }
+
+  instances.parallelStream().forEach { instance ->
+    scorers.forEachIndexed { scorerIdx, scorer ->
+      val t0 = System.nanoTime()
+      val rank = rankOfFixed(instance, scorer.score)
+      val evalNs = System.nanoTime() - t0
+
+      val rr = 1.0 / rank
+      val s = stats[scorerIdx]
+
+      synchronized(s.lock) {
+        s.rrSum += rr
+        s.batchNs += evalNs
+        s.n++
+
+        if (s.n % every == 0 || s.n == instances.size) {
+          val runningMRR = s.rrSum / s.n
+          val batchSec = s.batchNs / 1e9
+          val avgMs = s.batchNs / 1e6 / every.coerceAtMost(s.n)
+
+          s.batchNs = 0L
+
+          synchronized(System.out) {
+            println(
+              "${scorer.name} | seen ${s.n}/${instances.size} | " +
+                  "MRR %.6f | last_rank $rank | last_RR %.6f | batch_eval %.2fs | avg %.2fms"
+                    .format(runningMRR, rr, batchSec, avgMs)
+            )
+          }
+        }
+      }
+    }
+  }
+
+  scorers.forEachIndexed { scorerIdx, scorer ->
+    val s = stats[scorerIdx]
+
+    synchronized(s.lock) {
+      synchronized(System.out) {
+        println("${scorer.name} | FINAL | n=${s.n} | MRR %.6f".format(if (s.n == 0) Double.NaN else s.rrSum / s.n))
+      }
+    }
+  }
 }
 
 fun prepareFixerDataset() =

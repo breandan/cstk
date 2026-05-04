@@ -149,11 +149,14 @@ fun evaluateRegexRepairOnStackOverflow() {
 //      .also { println("Took: ${it}ms to intersect ${pythonPDFA.summary()}") }
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
+    val rerankerTime = TimeSource.Monotonic.markNow()
 //    val rankedResults = unrankedResults
 //      .parallelStream().map { it to it.charify().scoreWithPDFA() }
 //      .sorted { p1, p2 -> p1.second.compareTo(p2.second) }.map { it.first }.toList()
     val rankedResults = if (unrankedResults.isEmpty()) emptyList()
-    else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+    else (rerankGPUNew(brokeStr, unrankedResults.take(RERANK_THR))
+      .also { println("GPU reranked ${it.size} results in ${rerankerTime.elapsedNow()}") }
+        + unrankedResults.drop(RERANK_THR))
         .onEachIndexed { i, it ->
           if (it == fixedStr) {
             matchFound = true

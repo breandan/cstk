@@ -325,7 +325,7 @@ fun writeTrainingSetWithGPU() {
   }
 }
 
-fun sendGPU(query: String, timeoutSec: Long = 30) = try {
+fun sendGPU(query: String, timeoutSec: Long = 30): String = try {
   val ex = streams.poll(timeoutSec, TimeUnit.SECONDS) ?: error("browser did not open /stream in time")
   resultWaiter = CompletableFuture()
   ex.responseHeaders.add("Content-Type", "text/event-stream")

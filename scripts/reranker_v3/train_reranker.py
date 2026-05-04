@@ -20,7 +20,7 @@ Device.DEFAULT = os.environ.get("DEVICE", Device.DEFAULT)
 # -------------------------------------------------------------------- #
 #  Constants
 # -------------------------------------------------------------------- #
-DIM, N_HEADS, N_LAYERS = 128, 8, 4
+DIM, N_HEADS, N_LAYERS = 256, 8, 4
 MAX_LEN_Q, MAX_LEN_D   = 100, 110
 VOCAB                  = 94                           # ASCII 33–126
 CHAR_TO_ID             = {chr(i): i - 33 for i in range(33, 127)}

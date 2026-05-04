@@ -39,7 +39,7 @@ def train_remote(
         batch_size: int = 8,
         neg_samp: int = 199,
         export_every: int = 100,
-        export_docs: int = 64,
+        export_docs: int = 1000,
         lr: float = 1e-4,
         wd: float = 1e-2,
         grad_clip: float = 5.0,
