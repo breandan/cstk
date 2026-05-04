@@ -69,12 +69,12 @@ fun main() {
 //  measureIntersection()
 //  prepareRerankerDataset()
   evaluateRerankerMRR()
+//  trainPDFA(s2pg, 2).writeWDFA("wdfa.bin", s2pg)
 //  trainPDFA()
 //  correctNames()
 //  errorPredDiscrepancy()
 //  reconstructAndRebalance()
 }
-
 
 fun reconstructAndRebalance() {
   val markovRepairs = "datasets/python/stack_overflow/so_ds_markov.txt"
@@ -217,17 +217,14 @@ fun prepareRerankerDataset() {
     }
 }
 
-fun trainPDFA(): WFA {
-  val h1 = s2pg.toNederhofNFA(startSymbol = "START", historyDepth = 2) { removeEpsilonsParallel() }
+fun trainPDFA(cfg: CFG, history: Int = 2): WFA {
+  val h1 = cfg.toNederhofNFA(startSymbol = "START", historyDepth = history) { removeEpsilonsParallel() }
   println(h1.summary())
   val d1 = h1.determinize()
   println(d1.summary())
 
   val instances = File("so_ts_wfa.txt")
-    .readText()
-    .split(Regex("""\R\s*\R+"""))
-    .filter { it.isNotBlank() }
-    .asSequence()
+    .readText().split(Regex("""\R\s*\R+""")).filter { it.isNotBlank() }.asSequence()
     .mapNotNull { block ->
       val lines = block.lines().filter { it.isNotBlank() }
       if (lines.size < 3) { null } else { lines.drop(1).map { it.uncharify().tokenizeByWhitespace() } }
@@ -269,7 +266,7 @@ fun evaluateRerankerMRR(path: String = "so_vs_wfa.txt", reportEvery: Int = 100) 
 
   if (instances.isEmpty()) { println("No valid instances found in $path"); return }
 
-  val wdfa = trainPDFA()
+  val wdfa = trainPDFA(s2pg)
   fun String.scoreWithWDFA(): Double = -wdfa.scoreTokens(uncharify().tokenizeByWhitespace())
 
   val scorers = listOf(
