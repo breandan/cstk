@@ -266,12 +266,9 @@ fun evaluateRerankerMRR(path: String = "so_vs_wfa.txt", reportEvery: Int = 100) 
 
   if (instances.isEmpty()) { println("No valid instances found in $path"); return }
 
-  val wdfa = trainPDFA(s2pg)
-  fun String.scoreWithWDFA(): Double = -wdfa.scoreTokens(uncharify().tokenizeByWhitespace())
-
   val scorers = listOf(
 //    Scorer("WDFA") { it.scoreWithWDFA() },
-    Scorer("PDFA") { it.scoreWithPDFA() },
+    Scorer("WNFA") { it.scoreWithWNFA() },
     Scorer("NGMC") { it.scoreWithMC() },
     Scorer("WDFA") { it.scoreWithWDFA() }
   )
@@ -282,8 +279,7 @@ fun evaluateRerankerMRR(path: String = "so_vs_wfa.txt", reportEvery: Int = 100) 
   fun rankOfFixed(instance: Instance, score: (String) -> Double): Int {
     val scored = instance.candidates.map { candidate -> candidate to score(candidate) }
     val sorted = scored.sortedWith(compareBy<Pair<String, Double>> { it.second }.thenBy { it.first })
-    val rank = sorted.indexOfFirst { it.first == instance.fixed } + 1
-    return rank
+    return sorted.indexOfFirst { it.first == instance.fixed } + 1
   }
 
   instances.parallelStream().forEach { instance ->

@@ -14,6 +14,8 @@ from typing import List, Tuple
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 import modal
+import threading
+from contextlib import nullcontext
 
 import torch, torch.nn as nn, torch.nn.functional as F
 
@@ -362,20 +364,43 @@ def color_alignment(q: str, d: str, la: List[int]) -> str:
 enc = None
 rer = None
 
+import threading
+from contextlib import nullcontext
+
+_infer_lock = threading.Lock()
+
+def _amp_context():
+    if DEVICE.type == "cuda":
+        return torch.cuda.amp.autocast()
+    return nullcontext()
+
+def embed_query_fast(enc: nn.Module, q: str) -> torch.Tensor:
+    x_ids = [CLS_Q] + encode(q, MAX_LEN_Q) + [CLS_D] + [0] * MAX_LEN_D
+    x  = torch.tensor([x_ids], device=DEVICE, dtype=torch.long)
+    la = torch.zeros((1, MAX_LEN), device=DEVICE, dtype=torch.long)
+
+    h = enc(x, la, return_logits=False)   # [1, MAX_LEN, DIM], no vocab head
+    return h[:, 0, :]                     # [1, DIM]
+
 def rerank_documents(query: str, documents: List[str]) -> List[str]:
     if not documents:
         return []
 
-    with torch.no_grad(), torch.cuda.amp.autocast(enabled=(DEVICE.type == 'cuda')):
-        q_emb = embed_query(enc, query)                           # <- new line
+    # Prevent overlapping GPU forwards from ThreadingHTTPServer.
+    with _infer_lock, torch.inference_mode(), _amp_context():
+        q_emb = embed_query_fast(enc, query)
 
         x_lst, la_lst = zip(*(build_pair(query, d) for d in documents))
-        x  = torch.tensor(x_lst, device=DEVICE)
-        la = torch.tensor(la_lst, device=DEVICE)
-        _, _, e_d = enc(x, la)                                    # we only need docs
+        x  = torch.tensor(x_lst, device=DEVICE, dtype=torch.long)
+        la = torch.tensor(la_lst, device=DEVICE, dtype=torch.long)
 
-        scores = rer(q_emb, e_d.unsqueeze(0))[0] / 0.1            # [N]
-    return [documents[i] for i in scores.argsort(descending=True)]
+        h = enc(x, la, return_logits=False)       # no logits allocation
+        e_d = h[:, MAX_LEN_Q + 1, :]              # [N, DIM]
+
+        scores = rer(q_emb, e_d.unsqueeze(0))[0] / 0.1
+        order = scores.argsort(descending=True).detach().cpu().tolist()
+
+    return [documents[i] for i in order]
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
@@ -446,10 +471,11 @@ def serve():
     rer = Reranker().to(DEVICE)
     rer.load_state_dict(torch.load("reranker.pt", map_location=DEVICE, weights_only=True))
     enc.eval(); rer.eval()
+    torch.set_grad_enabled(False)
 
     server_address = ('', 8082)
     httpd = ThreadingHTTPServer(server_address, RerankerHandler)
-    print(f"Serving on port 8082...")
+    print("Serving on port 8082...")
     httpd.serve_forever()
 
 # -------------------------------------------------------------------- #

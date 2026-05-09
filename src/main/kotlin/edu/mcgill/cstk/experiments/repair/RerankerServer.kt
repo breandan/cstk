@@ -130,9 +130,7 @@ fun startRerankerServer() {
     start()
   }
 
-  if (Desktop.isDesktopSupported()) {
-    Desktop.getDesktop().browse(URI("http://localhost:$PORT/"))
-  }
+  if (Desktop.isDesktopSupported()) { Desktop.getDesktop().browse(URI("http://localhost:$PORT/")) }
 }
 
 /**

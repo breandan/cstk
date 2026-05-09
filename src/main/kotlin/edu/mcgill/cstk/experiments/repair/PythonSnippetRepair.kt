@@ -101,8 +101,8 @@ Local run command:
 
 fun main() {
 //  evaluateTidyparseOnSeq2Parse15k()
-  evaluateTidyparseOnStackoverflow()
-//  evaluateSeq2ParseOnStackOverflowDataset()
+//  evaluateTidyparseOnStackoverflow()
+  evaluateSeq2ParseOnStackOverflowDataset()
 //  println(extractErrProbs().joinToString(", ", "listOf(", ")") { "\"${it.first}\" to ${it.second}" })
 //  runSingleExample()
 }

@@ -251,7 +251,7 @@ fun sendCPUAndFetchTop1kRepairs(query: String, cfg: CFG = vanillaS2PCFG): List<S
 
   val unrankedResults =
     (dfa?.decodeDFA(mc = FAST_MC, timeout = (TIMEOUT_MS / 1000).seconds, dec = termDict) ?: emptyList())
-      .parallelStream().map { it to it.charify().scoreWithPDFA() }
+      .parallelStream().map { it to it.charify().scoreWithWNFA() }
       .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
 
       .map { it.first.addNewLineIfMissing() }.limit(1000).toList()

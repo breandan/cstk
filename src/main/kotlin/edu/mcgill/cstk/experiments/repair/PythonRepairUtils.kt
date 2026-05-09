@@ -56,12 +56,11 @@ fun readPCFG5(s2pg: CFG): Map<Int, Int> =
       /** See [Tree.quintuples] */
       .let { hash(it[0], it[1], it[2], it[3], it[4]) }, it[1].toInt()) }
 
-val parikhMap by lazy {
-  LangCache.prepopPythonLangCache()
-  s2pg.parikhMap }
+val parikhMap by lazy { LangCache.prepopPythonLangCache(); s2pg.parikhMap }
 val termDict by lazy { TermDict(s2pg.terminals) }
 
-val pythonPDFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_3800.safetensors").toWFA() }
+val pythonWDFA: WFA by lazy { trainPDFA(s2pg) }
+val pythonWNFA: WFA by lazy { readResourceBytes("models/wfa_ckpt_3800.safetensors").toWFA() }
 
 fun parallelPythonRepair(brokeStr: String): List<Σᐩ> {
   val brokeToks = brokeStr.tokenizeByWhitespace()
@@ -137,8 +136,10 @@ fun List<String>.filterErrors(cfg: CFG, clock: TimeSource.Monotonic.ValueTimeMar
   return s.also { println("Filtered out $filtered invalid samples! (in ${clock.elapsedNow()})") }
 }
 
-fun String.scoreWithPDFA(): Double = -pythonPDFA.scoreString(this)
-fun String.scoreWithMC(): Double = P_BIFI_PY150.score(uncharify().tokenizeByWhitespace())
+fun String.scoreWithWDFA(uncharify: Boolean = true): Double =
+  -pythonWDFA.scoreTokens((if (uncharify) uncharify() else this).tokenizeByWhitespace())
+fun String.scoreWithWNFA(): Double = -pythonWNFA.scoreString(this)
+fun String.scoreWithMC(uncharify: Boolean = true): Double = P_BIFI_PY150.score((if (uncharify) uncharify() else this).tokenizeByWhitespace())
 
 fun evaluateBarHillelRepairOnStackOverflow() {
   val dataset = sizeAndDistBalancedRepairsUnminimized//corruptedBIFIGoodCode//sizeAndDistBalancedRepairsUnminimized.toList()
