@@ -34,3 +34,29 @@ Avg latency       : 1201.12 ms (1 query vs 1000 docs)
 [Score:  -1.2430]  Doc 961: R4?Wyq(22j4daaztS5g2vs281b6dxYagT,9.,1D7:y)s5a(l jsG8G2w1ZTDM-epRVMcs00gklGLy8Z
 [Score:  -1.2431]  Doc 657: 2Y)Xucr6elu)?Gz9HGaoZsFpI,c2u)7WGUCjPvnsWb,Eo,ItmAb5oyW0PxHBJNL NyPH;d,SQV!sZf
 ```
+
+TODO: integrate reranker into WebGPU repair pipeline.
+
+Plot loss:
+
+```
+python plot_loss.py training_log.txt
+```
+
+Modal completer is trained on $\underline\sigma \sigma'$ pairs with LTR $\sigma'$ masking.
+
+```
+modal run train_modal_completer.py --download completer.pt --out completer.pt
+```
+
+WFA learner learns an NFA from data with no constraints:
+
+```
+modal run wfa/learn_wfa_modal.py \                                               
+--upload-ts so_ts_wfa.txt \
+--train-file so_ts_wfa.txt \
+--steps 2000000 \
+--batch-size 16 \
+--lr 0.01 \
+--save-every 1000
+```

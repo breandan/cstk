@@ -7,15 +7,12 @@ data_vol = modal.Volume.from_name("ranker-data", create_if_missing=True)
 out_vol  = modal.Volume.from_name("ranker-artifacts", create_if_missing=True)
 
 image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04",
-        add_python="3.11",
-    )
-    .apt_install("git", "ca-certificates", "clang", "libvulkan1")
-    .pip_install("numpy", "safetensors", "dawn-python")
-    .run_commands("git clone --depth 1 https://github.com/tinygrad/tinygrad.git /opt/tinygrad")
-    .env({"PYTHONPATH": "/opt/tinygrad"})
-    .add_local_file("train_reranker.py", "/workspace/train_reranker.py")
+    modal.Image.from_registry("nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04", add_python="3.11")
+        .apt_install("git", "ca-certificates", "clang", "libvulkan1")
+        .pip_install("numpy", "safetensors", "dawn-python")
+        .run_commands("git clone --depth 1 https://github.com/tinygrad/tinygrad.git /opt/tinygrad")
+        .env({"PYTHONPATH": "/opt/tinygrad"})
+        .add_local_file("train_reranker.py", "/workspace/train_reranker.py")
 )
 
 @app.function(image=image, volumes={"/data": data_vol})
