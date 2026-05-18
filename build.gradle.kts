@@ -2,10 +2,10 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.1.21"
+  kotlin("jvm") version "2.3.21"
   id("com.github.ben-manes.versions") version "0.53.0"
-  id("de.undercouch.download") version "5.6.0"
-  id("com.gradleup.shadow") version "9.3.0"
+  id("de.undercouch.download") version "5.7.0"
+  id("com.gradleup.shadow") version "9.4.1"
 }
 
 group = "com.github.breandan"
@@ -45,7 +45,7 @@ dependencies {
 
   implementation("com.squareup.okhttp3:okhttp:5.3.2")
 
-  val multikVersion = "0.2.3"
+  val multikVersion = "0.3.1"
   implementation("org.jetbrains.kotlinx:multik-core:$multikVersion")
   implementation("org.jetbrains.kotlinx:multik-default:$multikVersion")
 
@@ -99,7 +99,7 @@ dependencies {
   implementation("net.sf.extjwnl:extjwnl-data-wn31:1.2")
 
   // Pretty-printing string diffs
-  implementation("io.github.java-diff-utils:java-diff-utils:4.16")
+  implementation("io.github.java-diff-utils:java-diff-utils:4.17")
 
   // Simulate a browser for scraping JS XML content
   implementation("net.sourceforge.htmlunit:htmlunit:2.70.0")
@@ -150,7 +150,7 @@ dependencies {
   implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
-  implementation("com.aallam.openai:openai-client:4.0.1")
+  implementation("com.aallam.openai:openai-client:4.1.0")
 
   // Common statistical tests
   implementation("org.hipparchus:hipparchus-stat:4.0.2")
