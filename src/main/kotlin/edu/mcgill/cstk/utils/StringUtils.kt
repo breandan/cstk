@@ -15,7 +15,6 @@ import net.sf.extjwnl.dictionary.Dictionary
 import org.antlr.v4.runtime.*
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.kotlin.lexer.*
-import spoon.Launcher
 import java.io.File
 import java.net.*
 import java.nio.file.*
@@ -85,17 +84,15 @@ val openParens = setOf('(', '{', '[')
 val closeParens = setOf(')', '}', ']')
 
 // Slices files into method-level chunks using a Dyck-1 language
-fun Sequence<URI>.allMethods(
-  parser: (Σᐩ) -> List<Σᐩ> =
-    { file -> Launcher.parseClass(file).methods.map { it.toString() } }
-): Sequence<Pair<Σᐩ, URI>> =
-  mapNotNull { path ->
-    path.contents()?.let {
-      try {
-        parser(it).map { it to path }
-      } catch (exception: Exception) { null }
-    }
-  }.flatten()
+fun Sequence<URI>.allMethods(parser: (Σᐩ) -> List<Σᐩ> = { TODO() }): Sequence<Pair<Σᐩ, URI>> = TODO()
+//    { file -> Launcher.parseClass(file).methods.map { it.toString() } }
+//  mapNotNull { path ->
+//    path.contents()?.let {
+//      try {
+//        parser(it).map { it to path }
+//      } catch (exception: Exception) { null }
+//    }
+//  }.flatten()
 
 fun Σᐩ.splitMethods(): List<Σᐩ> =
   lineSequence().fold(-1 to listOf<Σᐩ>()) { (dyckSum, methods), line ->

@@ -78,6 +78,11 @@ fun main() {
 //  println(s2pg.terminals)
 //  println(pythonStatementCNFAllProds.terminals)
 //  File("python.cnf").writeText(s2pg.joinToString("\n") { it.pretty() })
+
+  sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
+    parallelPythonRepair(broke).take(10).forEach { println(it) }
+    println()
+  }
 }
 
 fun testTokenIndexing() = """

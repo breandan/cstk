@@ -2,10 +2,10 @@ import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  kotlin("jvm") version "2.3.21"
-  id("com.github.ben-manes.versions") version "0.53.0"
+  kotlin("jvm") version "2.4.0"
+  id("com.github.ben-manes.versions") version "0.54.0"
   id("de.undercouch.download") version "5.7.0"
-  id("com.gradleup.shadow") version "9.4.1"
+  id("com.gradleup.shadow") version "9.4.2"
 }
 
 group = "com.github.breandan"
@@ -52,9 +52,6 @@ dependencies {
   // String comparison metrics
   implementation("info.debatty:java-string-similarity:2.0.0")
 
-  // CLI parser
-  implementation("com.github.ajalt.clikt:clikt:5.0.3")
-
   implementation("com.beust:klaxon:5.6")
 
   // Source code transformation
@@ -76,9 +73,9 @@ dependencies {
   implementation("dk.brics:automaton:1.12-4")
 
   // Querying and filtering data from GitHub
-  implementation("org.kohsuke:github-api:1.324")
+//  implementation("org.kohsuke:github-api:2.0.0-alpha-2")
   // Querying and filtering data from GitLab
-  implementation("org.gitlab4j:gitlab4j-api:6.2.0")
+//  implementation("org.gitlab4j:gitlab4j-api:6.2.0")
 
   implementation("org.jetbrains.lets-plot:platf-awt-jvm:4.4.1")
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.12.1")
@@ -88,7 +85,7 @@ dependencies {
   implementation("org.apache.commons:commons-vfs2:2.10.0")
 
   // Constraint minimization for Kantorovich-Rubenstein distance
-  val ortoolsVersion = "9.14.6206"
+  val ortoolsVersion = "9.15.6755"
   implementation("com.google.ortools:ortools-java:$ortoolsVersion")
   // AArch64 support? https://github.com/google/or-tools/issues/716
   // Darwin/M1 support? https://github.com/google/or-tools/issues/2332
@@ -144,26 +141,23 @@ dependencies {
   //implementation("org.apache.datasketches:datasketches-java:6.1.0")
   implementation("org.apache.datasketches:datasketches-java:8.0.0")
   implementation("io.github.vovak:astminer:0.9.0")
-  implementation("com.github.ben-manes.caffeine:caffeine:3.2.3")
-
-  // Source Code Transformations
-  implementation("fr.inria.gforge.spoon:spoon-core:11.2.1-beta-12")
+  implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
 
 //  implementation("com.theokanning.openai-gpt3-java:api:0.12.0")
   implementation("com.aallam.openai:openai-client:4.1.0")
 
   // Common statistical tests
-  implementation("org.hipparchus:hipparchus-stat:4.0.2")
+  implementation("org.hipparchus:hipparchus-stat:4.0.3")
 
 //  implementation("io.github.danielnaczo:python3parser:1.0.4")
   implementation("org.antlr:antlr4:4.13.2")
 
-  implementation("com.diffplug.spotless:spotless-lib:4.1.0")
+//  implementation("com.diffplug.spotless:spotless-lib:4.1.0")
 
-  implementation("org.jetbrains.kotlin:kotlin-compiler:2.1.21")
+  implementation("org.jetbrains.kotlin:kotlin-compiler:2.4.0")
   implementation(files("libs/kotlin-grammar-tools-0.1-43.jar"))
 
-  implementation("net.java.dev.jna:jna:5.18.1")
+  implementation("net.java.dev.jna:jna:5.19.0")
 }
 
 configurations.all {
@@ -199,7 +193,6 @@ tasks {
     "code2Vec" to "edu.mcgill.cstk.experiments.search.Code2VecKt",
     "vizCodeEmbed" to "edu.mcgill.cstk.experiments.search.VizCodeEmbeddingsKt",
     "astMiner" to "edu.mcgill.cstk.experiments.search.ASTMinerKt",
-    "spoon" to "edu.mcgill.cstk.experiments.rewriting.SpoonTestKt",
     "sampleRepos" to "edu.mcgill.cstk.crawler.SampleReposKt",
     "localizedSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.LocalizedSyntaxRepairKt",
     "syntheticSyntaxRepair" to "edu.mcgill.cstk.experiments.repair.SyntheticSyntaxRepairKt",

@@ -1,5 +1,6 @@
 package edu.mcgill.cstk.crawler
 
+/*
 import com.gargoylesoftware.htmlunit.*
 import com.gargoylesoftware.htmlunit.BrowserVersion.CHROME
 import com.gargoylesoftware.htmlunit.html.HtmlPage
@@ -150,3 +151,4 @@ fun shouldBeIncludedFromGitlab(
   strsToExclude.none { it in text } &&
     "repository-language-bar-tooltip-language&quot;&gt;$lang&lt;" in text
 } catch (e: Exception) { false }
+ */
