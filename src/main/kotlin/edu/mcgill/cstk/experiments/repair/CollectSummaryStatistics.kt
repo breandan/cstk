@@ -69,12 +69,33 @@ fun main() {
 //  measureIntersection()
 //  prepareRerankerDataset()
 //  evaluateRerankerMRR()
-  trainPDFA(s2pg, 2).writeWDFA("wdfa.bin", s2pg)
+//  trainPDFA(s2pg, 2).writeWDFA("wdfa.bin", s2pg, pythonStatementCNFAllProds)
 //  trainPDFA()
 //  correctNames()
 //  errorPredDiscrepancy()
 //  reconstructAndRebalance()
+//  testTokenIndexing()
+//  println(s2pg.terminals)
+//  println(pythonStatementCNFAllProds.terminals)
+//  File("python.cnf").writeText(s2pg.joinToString("\n") { it.pretty() })
 }
+
+fun testTokenIndexing() = """
+    x = 1 + 1
+    [ i for i in j ]
+    stripped_lines = lambda f : (l.rstrip("\n") for l in f)
+    newlist = [word for word in words if len(word) == 9]
+    Keys = [x for x in d if d[x] == 'a']
+    gen_fun = lambda num: (x for u in range(num) for x in (u*2, u*10, u*u))
+    [2 * x if x > 2 else add_nothing_to_list for x in some_list]
+    lines = [[float(x) for x in line] for line in csv.reader(f)]
+    filtered = [x for x in common if x in words]
+    () + (1, 'a') + (2, 'b') + (3, 'c')
+  """.lines().filter { it.isNotBlank() }.sortedBy {
+    val tks = it.lexToStrTypesAsPython()
+      .map { it.replace("'", "") }.filter { it in s2pg.terminals }
+    pythonWDFA.scoreTokens(tks)
+  }.also { println(it.joinToString("\n")) }
 
 fun reconstructAndRebalance() {
   val markovRepairs = "datasets/python/stack_overflow/so_ds_markov.txt"
@@ -217,7 +238,7 @@ fun prepareRerankerDataset() {
     }
 }
 
-fun trainPDFA(cfg: CFG, history: Int = 2): WFA {
+fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
   val h1 = cfg.toNederhofNFA(startSymbol = "START", historyDepth = history) { removeEpsilonsParallel() }
   println(h1.summary())
   val d1 = h1.determinize()
