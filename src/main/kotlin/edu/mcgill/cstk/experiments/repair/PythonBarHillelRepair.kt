@@ -150,51 +150,51 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     println("WDFA RANK: $origRank / $totalSamples")
 
-    val cstdTime = TimeSource.Monotonic.markNow()
-    var cstdRank = -1
-    val wgpuResults =
-      (dfa?.decodeDFAWithExternalModel(
-        brokePrefix = brokeToks.joinToString(" ").charify(),
-        tokToChar = MakeMore.PyTokMap.tm,
-        charToTok = MakeMore.PyTokMap.mt,
-        timeout = timeout,
-        debugWire = true,
-      ) ?: emptyList()).map { it.addNewLineIfMissing() }.distinct()
-        .also {
-          val rrt = cstdTime.elapsedNow()
-          println("CSTD tok/ms = ${it.sumOf { s -> s.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
-        }
-        .let {
-          val cstdtime = cstdTime.elapsedNow()
-          cstdRank = it.indexOf(fixedStr)
-          totalSamples = it.size
-          println("GPU returned $totalSamples CSTD-ranked results in $cstdtime ms")
-          it
-        }
-    println("CSTD RANK: $cstdRank / $totalSamples")
+//    val cstdTime = TimeSource.Monotonic.markNow()
+//    var cstdRank = -1
+//    val wgpuResults =
+//      (dfa?.decodeDFAWithExternalModel(
+//        brokePrefix = brokeToks.joinToString(" ").charify(),
+//        tokToChar = MakeMore.PyTokMap.tm,
+//        charToTok = MakeMore.PyTokMap.mt,
+//        timeout = timeout,
+//        debugWire = true,
+//      ) ?: emptyList()).map { it.addNewLineIfMissing() }.distinct()
+//        .also {
+//          val rrt = cstdTime.elapsedNow()
+//          println("CSTD tok/ms = ${it.sumOf { s -> s.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
+//        }
+//        .let {
+//          val cstdtime = cstdTime.elapsedNow()
+//          cstdRank = it.indexOf(fixedStr)
+//          totalSamples = it.size
+//          println("GPU returned $totalSamples CSTD-ranked results in $cstdtime ms")
+//          it
+//        }
+//    println("CSTD RANK: $cstdRank / $totalSamples")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
     val rerankerTime = TimeSource.Monotonic.markNow()
 
-    var neuralRank = -1
-    val torchClock = TimeSource.Monotonic.markNow()
+    var webgpuRank = -1
+    val wgpuClock = TimeSource.Monotonic.markNow()
     val rerankedResults = if (unrankedResults.isEmpty() || origRank == -1) emptyList()
-    else (rerankGPU(brokeStr, unrankedResults.take(RERANK_THR).joinToString("\n")) + unrankedResults.drop(RERANK_THR))
+    else (rerankWGPU(brokeStr, unrankedResults.take(RERANK_THR)) + unrankedResults.drop(RERANK_THR))
       .also {
         val rrt = rerankerTime.elapsedNow()
-        println("GPU reranked ${it.size}x${brokeStr.tokenizeByWhitespace().size} results in $rrt")
-        println("TRR tok/ms = ${it.sumOf { it.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
+        println("WebGPU reranked ${it.size}x${brokeStr.tokenizeByWhitespace().size} results in $rrt")
+        println("WGPU tok/ms = ${it.sumOf { it.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
       }
       .onEachIndexed { i, it ->
-        if (it == fixedStr && neuralRank == -1) {
+        if (it == fixedStr && webgpuRank == -1) {
           matchFound = true
-          neuralRank = i
+          webgpuRank = i
           println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}):\n$humanRepairANSI")
         }
       }
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
-    println("NEURAL RANK: $neuralRank / $totalSamples")
-    println("PyTorch repairs fetched in ${torchClock.elapsedNow().inWholeMilliseconds}ms")
+    println("WEBGPU RANK: $webgpuRank / $totalSamples")
+    println("WebGPU repairs fetched in ${wgpuClock.elapsedNow().inWholeMilliseconds}ms")
 
 //    var webgpuRank = -1
 //    val wgpuClock = TimeSource.Monotonic.markNow()

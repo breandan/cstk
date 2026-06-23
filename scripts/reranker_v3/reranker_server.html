@@ -3,14 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tidyparse WebGPU Reranker Validation</title>
+    <title>Tidyparse WebGPU Reranker Server</title>
     <style>
         :root { color-scheme: light dark; }
         body { font: 14px/1.45 system-ui, -apple-system, sans-serif; margin: 18px; max-width: 1100px; }
         h2 { margin-bottom: 8px; }
         .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
-        progress { width: min(680px, 80vw); height: 18px; }
-        button, select { font: inherit; padding: 5px 9px; }
         pre {
             background: color-mix(in srgb, Canvas 92%, CanvasText 8%);
             padding: 14px;
@@ -22,33 +20,17 @@
             line-height: 1.5;
         }
         .muted { opacity: 0.72; }
-        #casePanel[hidden] { display: none; }
     </style>
 </head>
 <body>
-<h2>Tidyparse WebGPU Reranker Validation</h2>
+<h2>Tidyparse WebGPU Reranker Server</h2>
 <div class="row"><b>Status:</b> <span id="status">idle</span></div>
-<div class="row">
-    <progress id="progress" value="0" max="100"></progress>
-    <span id="progressText">0 / 100</span>
-    <button id="runButton" type="button" disabled>Run validation again</button>
-</div>
-<p class="muted">Scores the first 100 non-empty query groups in <code>so_vs_wfa.txt</code>. The first document in each group is the positive.</p>
-<pre id="summary">Preparing validation…</pre>
-
-<section id="casePanel" hidden>
-    <div class="row">
-        <b>Inspect instance:</b>
-        <select id="caseSelect"></select>
-    </div>
-    <pre id="caseOutput"></pre>
-</section>
+<p class="muted">Keep this page open while the JVM repair experiment is running.</p>
+<pre id="summary">Preparing WebGPU reranker...</pre>
 
 <script type="module">
     const MODEL_JS_URL = "./reranker_1100.js";
     const WEIGHTS_URL = "./reranker_1100.safetensors";
-    const VALIDATION_URL = "./so_vs_wfa.txt";
-    const MAX_GROUPS = 100;
 
     // Must match train_reranker.py.
     const MAX_LEN_Q = 100;
@@ -58,24 +40,46 @@
     const CLS_D = 91;
 
     const statusEl = document.getElementById("status");
-    const progressEl = document.getElementById("progress");
-    const progressTextEl = document.getElementById("progressText");
     const summaryEl = document.getElementById("summary");
-    const runButton = document.getElementById("runButton");
-    const casePanel = document.getElementById("casePanel");
-    const caseSelect = document.getElementById("caseSelect");
-    const caseOutput = document.getElementById("caseOutput");
 
     let device = null;
     let net = null;
     let modelInfo = null;
-    let validationGroups = [];
-    let validationResults = [];
     let setupMs = 0;
-    let running = false;
+    let eventSource = null;
+    let busy = false;
+
+    const stats = {
+        requests: 0,
+        docs: 0,
+        lastDocs: 0,
+        lastMs: 0,
+        totalMs: 0,
+        connectedAt: null,
+    };
 
     function assert(condition, message) {
         if (!condition) throw new Error(message);
+    }
+
+    function logSummary(extra = "") {
+        const averageMs = stats.requests ? stats.totalMs / stats.requests : 0;
+        const docsPerSecond = stats.totalMs ? stats.docs / (stats.totalMs / 1000) : 0;
+        summaryEl.textContent = [
+            "====== WEBGPU RERANKER SERVER ======",
+            `Model JS           : ${MODEL_JS_URL}`,
+            `Weights            : ${WEIGHTS_URL}`,
+            `Model docs/call    : ${modelInfo?.modelDocs ?? "unknown"}`,
+            `Model setup        : ${setupMs ? `${setupMs.toFixed(2)} ms` : "pending"}`,
+            "",
+            `Requests completed : ${stats.requests}`,
+            `Documents scored   : ${stats.docs}`,
+            `Last request       : ${stats.lastDocs} docs in ${stats.lastMs.toFixed(2)} ms`,
+            `Average request    : ${averageMs.toFixed(2)} ms`,
+            `Throughput         : ${docsPerSecond.toFixed(1)} documents/s`,
+            "",
+            extra,
+        ].join("\n").trimEnd();
     }
 
     async function fetchChecked(url, kind) {
@@ -193,7 +197,6 @@
                 `missing=${missing.slice(0, 5).join(", ") || "none"}, extra=${extra.slice(0, 5).join(", ") || "none"}`
             );
         }
-        return metadata;
     }
 
     async function initWebGPU() {
@@ -227,35 +230,14 @@
         const gpuDevice = await adapter.requestDevice({ requiredFeatures, requiredLimits: requestedLimits });
 
         gpuDevice.addEventListener("uncapturederror", event => {
-            statusEl.textContent = "WebGPU validation error";
-            summaryEl.textContent += `\n\nUncaptured WebGPU error: ${event.error?.message ?? event.error}`;
+            statusEl.textContent = "WebGPU error";
+            logSummary(`Uncaptured WebGPU error: ${event.error?.message ?? event.error}`);
         });
         gpuDevice.lost.then(info => {
             statusEl.textContent = "WebGPU device lost";
-            summaryEl.textContent += `\n\nWebGPU device lost: ${info.message || info.reason}`;
+            logSummary(`WebGPU device lost: ${info.message || info.reason}`);
         });
         return gpuDevice;
-    }
-
-    function parseValidationGroups(text) {
-        const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
-        const groups = [];
-        let lines = [];
-
-        const flush = () => {
-            if (lines.length) {
-                const [query, ...docs] = lines;
-                groups.push({ query, docs });
-                lines = [];
-            }
-        };
-
-        for (const line of normalized.split("\n")) {
-            if (line.trim() === "") flush();
-            else lines.push(line);
-        }
-        flush();
-        return groups;
     }
 
     // Costs and backtrace order match train_reranker.py: insertion=1, deletion=1, substitution=2.
@@ -377,199 +359,117 @@
         return allScores;
     }
 
-    function nextPaint() {
-        return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    function parseJob(body) {
+        const form = new URLSearchParams(body);
+        const id = form.get("id");
+        if (!id) throw new Error("Rerank job is missing id.");
+        return { id, query: form.get("q") ?? "", docs: form.getAll("d") };
     }
 
-    function formatPercent(value) {
-        return `${(value * 100).toFixed(2)}%`;
-    }
-
-    function formatLiveSummary(done, total, aggregate, elapsedMs) {
-        const hitRate = done ? aggregate.hit10 / done : 0;
-        const precision10 = aggregate.p10Slots ? aggregate.hit10 / aggregate.p10Slots : 0;
-        return [
-            "====== VALIDATION IN PROGRESS ======",
-            `Instances completed : ${done} / ${total}`,
-            `Documents scored    : ${aggregate.docs}`,
-            `Positive in top 10  : ${formatPercent(hitRate)}`,
-            `Precision@10        : ${precision10.toFixed(4)}`,
-            `Elapsed             : ${(elapsedMs / 1000).toFixed(1)} s`,
-        ].join("\n");
-    }
-
-    function formatFinalSummary(aggregate, elapsedMs, count) {
-        const docCounts = validationResults.map(result => result.docs.length);
-        const precision10 = aggregate.p10Slots ? aggregate.hit10 / aggregate.p10Slots : 0;
-        const hitRate10 = aggregate.hit10 / count;
-        const top1 = aggregate.top1 / count;
-        const mrr = aggregate.rr / count;
-        const meanRank = aggregate.rankSum / count;
-        const avgMs = elapsedMs / count;
-        const docsPerSecond = aggregate.docs / (elapsedMs / 1000);
-
-        return [
-            "====== WEBGPU VALIDATION RESULTS ======",
-            `Dataset             : ${VALIDATION_URL}`,
-            `Instances evaluated : ${count}`,
-            `Documents scored    : ${aggregate.docs}`,
-            `Docs per instance   : ${Math.min(...docCounts)}–${Math.max(...docCounts)}`,
-            `Model docs/call     : ${modelInfo.modelDocs}`,
-            "",
-            `Precision@10        : ${precision10.toFixed(4)}  (${aggregate.hit10} relevant / ${aggregate.p10Slots} top-k slots)`,
-            `Positive in top 10  : ${formatPercent(hitRate10)}  (${aggregate.hit10}/${count})`,
-            `Top-1 accuracy      : ${formatPercent(top1)}`,
-            `MRR                 : ${mrr.toFixed(4)}`,
-            `Mean positive rank  : ${meanRank.toFixed(2)}`,
-            "",
-            `Validation latency  : ${(elapsedMs / 1000).toFixed(2)} s total; ${avgMs.toFixed(2)} ms/instance`,
-            `Throughput          : ${docsPerSecond.toFixed(1)} documents/s`,
-            `Model setup         : ${setupMs.toFixed(2)} ms`,
-            "",
-            `Generated module    : ${modelInfo.kernelCalls} calls, ${modelInfo.uniqueKernels} unique WGSL kernels, ` +
-            `${modelInfo.weightNames.length} external weights`,
-            "",
-            "Metric note: each validation group has one relevant document (docs[0]). Therefore strict Precision@10",
-            "is relevant documents retrieved divided by the number of top-10 slots; Positive-in-top-10 is the",
-            "corresponding per-query hit rate.",
-        ].join("\n");
-    }
-
-    function renderCase(index) {
-        const result = validationResults[index];
-        if (!result) return;
-
-        const lines = [
-            `====== INSTANCE ${index + 1} / ${validationResults.length} ======`,
-            `Query             : ${result.query}`,
-            `Documents         : ${result.docs.length}`,
-            `Positive rank     : ${result.rank}`,
-            `Positive score    : ${result.scores[0].toFixed(6)}`,
-            `Latency           : ${result.elapsedMs.toFixed(2)} ms`,
-            "",
-            "====== TOP 10 DOCUMENTS & SCORES ======",
-        ];
-
-        const top = result.order.slice(0, 10);
-        top.forEach((docIndex, rankIndex) => {
-            const marker = docIndex === 0 ? " ★ POSITIVE" : "";
-            lines.push(
-                `${String(rankIndex + 1).padStart(2)}. [${result.scores[docIndex].toFixed(6).padStart(12)}]` +
-                `${marker}  ${result.docs[docIndex]}`
-            );
+    async function postForm(path, fields) {
+        const response = await fetch(path, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+            body: fields,
         });
-
-        if (!top.includes(0)) {
-            lines.push("", "====== POSITIVE DOCUMENT ======", result.docs[0]);
+        if (!response.ok && response.status !== 204) {
+            throw new Error(`${path} returned ${response.status} ${response.statusText}: ${await response.text()}`);
         }
-        caseOutput.textContent = lines.join("\n");
     }
 
-    function populateCaseInspector() {
-        caseSelect.replaceChildren();
-        validationResults.forEach((result, index) => {
-            const option = document.createElement("option");
-            option.value = String(index);
-            option.textContent = `#${index + 1}: positive rank ${result.rank}/${result.docs.length}`;
-            caseSelect.append(option);
-        });
-        casePanel.hidden = false;
-        caseSelect.value = "0";
-        renderCase(0);
+    async function postResult(id, rankedDocs) {
+        const fields = new URLSearchParams();
+        fields.set("id", id);
+        for (const doc of rankedDocs) fields.append("d", doc);
+        await postForm("/result", fields);
     }
 
-    async function runValidation() {
-        if (running) return;
-        running = true;
-        runButton.disabled = true;
-        casePanel.hidden = true;
-        validationResults = [];
+    async function postError(id, error) {
+        const fields = new URLSearchParams();
+        fields.set("id", id);
+        fields.set("message", String(error?.stack || error));
+        await postForm("/error", fields);
+    }
 
-        const groups = validationGroups.filter(group => group.docs.length > 0).slice(0, MAX_GROUPS);
-        assert(groups.length === MAX_GROUPS,
-            `Validation file has only ${groups.length} groups with documents; ${MAX_GROUPS} are required.`);
+    async function processJob(body) {
+        const { id, query, docs } = parseJob(body);
+        busy = true;
+        statusEl.textContent = `Scoring request ${id} (${docs.length} docs)...`;
+        logSummary(`Active request    : ${id}\nQuery chars       : ${query.length}`);
 
-        progressEl.max = groups.length;
-        progressEl.value = 0;
-        progressTextEl.textContent = `0 / ${groups.length}`;
-        statusEl.textContent = "Running WebGPU validation…";
-
-        const aggregate = { docs: 0, hit10: 0, top1: 0, rr: 0, rankSum: 0, p10Slots: 0 };
-        const validationStart = performance.now();
-
+        const started = performance.now();
         try {
-            for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-                const { query, docs } = groups[groupIndex];
-                const instanceStart = performance.now();
-                const scores = await scoreDocuments(query, docs);
-                const instanceElapsed = performance.now() - instanceStart;
-
-                const nonFiniteIndex = Array.from(scores).findIndex(score => !Number.isFinite(score));
-                if (nonFiniteIndex !== -1) {
-                    throw new Error(`Non-finite score at instance ${groupIndex + 1}, document ${nonFiniteIndex + 1}.`);
-                }
-
-                const positiveScore = scores[0];
-                let rank = 1;
-                for (let i = 1; i < scores.length; i++) if (scores[i] > positiveScore) rank++;
-
-                const order = Array.from({ length: docs.length }, (_, i) => i)
-                    .sort((a, b) => (scores[b] - scores[a]) || (a - b));
-                const cutoff = Math.min(10, docs.length);
-                const hit10 = rank <= cutoff;
-
-                validationResults.push({ query, docs, scores, order, rank, elapsedMs: instanceElapsed });
-                aggregate.docs += docs.length;
-                aggregate.hit10 += Number(hit10);
-                aggregate.top1 += Number(rank === 1);
-                aggregate.rr += 1 / rank;
-                aggregate.rankSum += rank;
-                aggregate.p10Slots += cutoff;
-
-                const completed = groupIndex + 1;
-                const elapsed = performance.now() - validationStart;
-                progressEl.value = completed;
-                progressTextEl.textContent = `${completed} / ${groups.length}`;
-                statusEl.textContent = `Scored instance ${completed} of ${groups.length}`;
-                summaryEl.textContent = formatLiveSummary(completed, groups.length, aggregate, elapsed);
-                await nextPaint();
+            const scores = await scoreDocuments(query, docs);
+            const nonFiniteIndex = Array.from(scores).findIndex(score => !Number.isFinite(score));
+            if (nonFiniteIndex !== -1) {
+                throw new Error(`Non-finite score for document ${nonFiniteIndex + 1}.`);
             }
 
-            const elapsed = performance.now() - validationStart;
-            summaryEl.textContent = formatFinalSummary(aggregate, elapsed, groups.length);
-            populateCaseInspector();
-            statusEl.textContent = "Completed";
+            const order = Array.from({ length: docs.length }, (_, i) => i)
+                .sort((a, b) => (scores[b] - scores[a]) || (a - b));
+            const rankedDocs = order.map(index => docs[index]);
+            await postResult(id, rankedDocs);
+
+            const elapsedMs = performance.now() - started;
+            stats.requests++;
+            stats.docs += docs.length;
+            stats.lastDocs = docs.length;
+            stats.lastMs = elapsedMs;
+            stats.totalMs += elapsedMs;
+            statusEl.textContent = "Waiting for JVM requests...";
+            logSummary(`Last request id   : ${id}\nTop score          : ${scores[order[0]]?.toFixed(6) ?? "n/a"}`);
+        } catch (error) {
+            await postError(id, error).catch(postErrorFailure => {
+                console.error("Could not report reranker failure to JVM", postErrorFailure);
+            });
+            statusEl.textContent = "Last request failed";
+            logSummary(String(error?.stack || error));
         } finally {
-            running = false;
-            runButton.disabled = false;
+            busy = false;
         }
+    }
+
+    function connectStream() {
+        if (eventSource) eventSource.close();
+        eventSource = new EventSource("/stream");
+        eventSource.onopen = () => {
+            stats.connectedAt = new Date();
+            if (!busy) statusEl.textContent = "Waiting for JVM requests...";
+            logSummary("Browser stream    : connected");
+        };
+        eventSource.onmessage = event => {
+            processJob(event.data).catch(error => {
+                statusEl.textContent = "Stream job failed";
+                logSummary(String(error?.stack || error));
+            });
+        };
+        eventSource.onerror = () => {
+            if (!busy) statusEl.textContent = "Waiting for JVM requests...";
+        };
     }
 
     async function main() {
-        statusEl.textContent = "Checking generated module…";
+        statusEl.textContent = "Checking generated module...";
         const sourceResponse = await fetchChecked(MODEL_JS_URL, "generated JavaScript module");
         const source = await sourceResponse.text();
         modelInfo = inspectGeneratedModule(source);
+        logSummary();
 
-        statusEl.textContent = "Loading validation strings…";
-        const validationResponse = await fetchChecked(VALIDATION_URL, "validation file");
-        validationGroups = parseValidationGroups(await validationResponse.text());
-
-        statusEl.textContent = "Loading and checking safetensors…";
+        statusEl.textContent = "Loading and checking safetensors...";
         const weightsResponse = await fetchChecked(WEIGHTS_URL, "safetensors weights");
         const weightsBuffer = await weightsResponse.arrayBuffer();
         parseSafetensorMetadata(weightsBuffer);
 
-        statusEl.textContent = "Requesting WebGPU device…";
+        statusEl.textContent = "Requesting WebGPU device...";
         device = await initWebGPU();
 
-        statusEl.textContent = "Importing generated module…";
+        statusEl.textContent = "Importing generated module...";
         const moduleUrl = new URL(MODEL_JS_URL, location.href);
-        moduleUrl.searchParams.set("validation", String(Date.now()));
+        moduleUrl.searchParams.set("server", String(Date.now()));
         const imported = await import(moduleUrl.href);
         assert(imported.default?.setupNet, "Generated module does not export setupNet().");
 
-        statusEl.textContent = "Building WebGPU pipelines and loading weights…";
+        statusEl.textContent = "Building WebGPU pipelines and loading weights...";
         const setupStart = performance.now();
         device.pushErrorScope("validation");
         let setupError = null;
@@ -583,18 +483,14 @@
         if (gpuError) throw new Error(`WebGPU setup failed: ${gpuError.message}`);
         setupMs = performance.now() - setupStart;
 
-        runButton.disabled = false;
-        await runValidation();
+        statusEl.textContent = "Connecting to JVM request stream...";
+        logSummary("Browser stream    : connecting");
+        connectStream();
     }
 
-    caseSelect.addEventListener("change", () => renderCase(Number(caseSelect.value)));
-    runButton.addEventListener("click", () => {
-        runValidation().catch(showFatalError);
-    });
-
     function showFatalError(error) {
-        running = false;
-        runButton.disabled = net == null;
+        busy = false;
+        if (eventSource) eventSource.close();
         statusEl.textContent = "Fatal error";
         summaryEl.textContent = String(error?.stack || error);
     }

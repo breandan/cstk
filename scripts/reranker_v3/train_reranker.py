@@ -234,15 +234,18 @@ class InferPipeline:
 # -------------------------------------------------------------------- #
 #  Loss + grad utils
 # -------------------------------------------------------------------- #
-def listwise_xent(scores: Tensor) -> Tensor:
+def listwise_xent(scores: Tensor, targets: Tensor) -> Tensor:
     """
-    scores: [B, N], target is always index 0 (positive doc)
-    cross entropy: -log softmax(scores)[0]
+    scores: [B, N], targets: [B]
+    cross entropy: -log softmax(scores)[target]
     """
     # stable logsumexp over N
     m = scores.max(axis=1, keepdim=True)
     lse = m + (scores - m).exp().sum(axis=1, keepdim=True).log()
-    loss = (lse.squeeze(1) - scores[:, 0]).mean()
+    n = scores.shape[1]
+    target_mask = (Tensor.arange(n).reshape(1, n) == targets.reshape(-1, 1)).cast(scores.dtype)
+    target_scores = (scores * target_mask).sum(axis=1)
+    loss = (lse.squeeze(1) - target_scores).mean()
     return loss
 
 def clip_grad_norm_(params, max_norm: float, eps: float = 1e-12):
@@ -405,6 +408,8 @@ def main():
     ap.add_argument("--steps", type=int, default=10_000)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--neg-samp", type=int, default=199)     # N = 200 like PyTorch default
+    ap.add_argument("--neg-pool", type=int, default=200,
+                    help="sample negatives from the first K confounders after the positive; <=0 uses all confounders")
     ap.add_argument("--lr", type=float, default=5e-5)
     ap.add_argument("--wd", type=float, default=1e-2)
     ap.add_argument("--grad-clip", type=float, default=5.0)
@@ -415,10 +420,10 @@ def main():
                     help="validation cadence in steps; defaults to --export-every; <=0 disables validation")
     ap.add_argument("--val-groups", type=int, default=24,
                     help="number of validation groups to score at each validation pass")
-    ap.add_argument("--val-docs", type=int, default=200,
+    ap.add_argument("--val-docs", type=int, default=0,
                     help="max docs per validation group, including the positive doc; <=0 scores all docs")
     ap.add_argument("--val-batch-size", type=int, default=8,
-                    help="number of validation queries to score per forward pass")
+                    help="deprecated; validation is scored one query at a time in --export-docs chunks")
     ap.add_argument("--no-val-cache", action="store_true",
                     help="rebuild validation features every validation pass instead of caching them")
     ap.add_argument("--train-file", type=str, default="so_ts_markov.txt")
@@ -465,7 +470,8 @@ def main():
 
     print(f"Device: {Device.DEFAULT}")
     print(f"Training on: {tr_path.name}  (val: {vs_path.name})")
-    print(f"B={args.batch_size}, NEG={args.neg_samp} => N={args.neg_samp+1}")
+    neg_pool_msg = "all confounders" if args.neg_pool <= 0 else f"top {args.neg_pool} confounders"
+    print(f"B={args.batch_size}, NEG={args.neg_samp} from {neg_pool_msg} => N={args.neg_samp+1}")
     print(f"Export every {args.export_every} steps -> versioned files + canonical reranker.safetensors/reranker.js")
     print(
         f"Export docs/call {args.export_docs} -> estimated largest encoder binding "
@@ -477,7 +483,7 @@ def main():
         cache_msg = "cached" if not args.no_val_cache else "uncached"
         print(
             f"Validate every {args.val_every} steps -> first {args.val_groups} groups, "
-            f"{val_docs_msg}, batch {args.val_batch_size}, {cache_msg}"
+            f"{val_docs_msg}, {args.export_docs} docs/call, {cache_msg}"
         )
     else:
         print("Validation disabled")
@@ -511,6 +517,7 @@ def main():
         # Build flattened docs tensors [B*N, MAX_LEN]
         x_d = np.zeros((B * N, MAX_LEN), dtype=np.int32)
         la_d = np.zeros((B * N, MAX_LEN), dtype=np.int32)
+        targets = np.zeros((B,), dtype=np.int32)
 
         for i, (q, docs) in enumerate(q_items):
             # query-only
@@ -522,13 +529,17 @@ def main():
 
             # docs: 1 positive + K negatives (sample w/ replacement if needed)
             pos = docs[0]
-            neg_pool = docs[1:]
+            all_negs = docs[1:]
+            neg_pool = all_negs if args.neg_pool <= 0 else all_negs[:args.neg_pool]
             if len(neg_pool) >= args.neg_samp:
                 negs = random.sample(neg_pool, args.neg_samp)
             else:
                 negs = list(neg_pool)
                 negs += random.choices(neg_pool, k=args.neg_samp - len(negs))
-            docs_batch = [pos] + negs
+            docs_labeled = [(pos, True)] + [(neg, False) for neg in negs]
+            random.shuffle(docs_labeled)
+            targets[i] = next(j for j, (_, is_pos) in enumerate(docs_labeled) if is_pos)
+            docs_batch = [doc for doc, _ in docs_labeled]
 
             # build_pair(q,d) (includes q in the doc input and la_full)
             for j, d in enumerate(docs_batch):
@@ -537,7 +548,7 @@ def main():
                 x_d[row, :] = xd
                 la_d[row, :] = lad
 
-        return q_items, x_q, la_q, x_d, la_d
+        return q_items, x_q, la_q, x_d, la_d, targets
 
     val_cache = None
 
@@ -548,54 +559,48 @@ def main():
         negs = docs[1:]
         return [docs[0]] + rng.sample(negs, args.val_docs - 1)
 
-    def build_validation_batches():
+    def build_validation_cache():
+        t_build = time.time()
+        docs_per_call = max(1, args.export_docs)
         groups = []
         for group_idx, (q, docs) in enumerate(iter_qd_once(vs_path.as_posix())):
             if len(groups) >= args.val_groups:
                 break
             if not docs:
                 continue
-            groups.append((q, select_validation_docs(docs, group_idx)))
+            docs = select_validation_docs(docs, group_idx)
+
+            q_tr = q[:MAX_LEN_Q]
+            q_ids = encode(q_tr, MAX_LEN_Q)
+            x_q = np.zeros((1, MAX_LEN), dtype=np.int32)
+            la_q = np.zeros((1, MAX_LEN), dtype=np.int32)
+            x_q[0, :] = [CLS_Q] + q_ids + [CLS_D] + ([0] * MAX_LEN_D)
+
+            doc_chunks = []
+            for start in range(0, len(docs), docs_per_call):
+                chunk_docs = docs[start:start + docs_per_call]
+                x_d = np.zeros((docs_per_call, MAX_LEN), dtype=np.int32)
+                la_d = np.zeros((docs_per_call, MAX_LEN), dtype=np.int32)
+                for j, d in enumerate(chunk_docs):
+                    xd, lad = build_pair_from_query(q_tr, q_ids, d)
+                    x_d[j, :] = xd
+                    la_d[j, :] = lad
+                doc_chunks.append((x_d, la_d, len(chunk_docs)))
+
+            groups.append((x_q, la_q, doc_chunks, len(docs)))
 
         if not groups:
             return []
 
-        val_n = max(len(docs) for _, docs in groups)
-        batches = []
-        bs = max(1, args.val_batch_size)
-        t_build = time.time()
-
-        for start in range(0, len(groups), bs):
-            chunk = groups[start:start + bs]
-            Bv = len(chunk)
-            x_q = np.zeros((Bv, MAX_LEN), dtype=np.int32)
-            la_q = np.zeros((Bv, MAX_LEN), dtype=np.int32)
-            x_d = np.zeros((Bv * val_n, MAX_LEN), dtype=np.int32)
-            la_d = np.zeros((Bv * val_n, MAX_LEN), dtype=np.int32)
-            actual_lens = []
-
-            for i, (q, docs) in enumerate(chunk):
-                q_tr = q[:MAX_LEN_Q]
-                q_ids = encode(q_tr, MAX_LEN_Q)
-                qx = [CLS_Q] + q_ids + [CLS_D] + ([0] * MAX_LEN_D)
-                x_q[i, :] = qx
-                # la_q is already zero-filled.
-                actual_lens.append(len(docs))
-
-                for j, d in enumerate(docs):
-                    xd, lad = build_pair_from_query(q_tr, q_ids, d)
-                    row = i * val_n + j
-                    x_d[row, :] = xd
-                    la_d[row, :] = lad
-
-            batches.append((x_q, la_q, x_d, la_d, actual_lens))
+        doc_counts = [n_docs for _, _, _, n_docs in groups]
+        calls = sum(len(chunks) for _, _, chunks, _ in groups)
 
         print(
             f"prepared validation cache: {len(groups)} groups, "
-            f"{sum(len(docs) for _, docs in groups)} docs, N={val_n}, "
-            f"{len(batches)} batches in {time.time() - t_build:.2f}s"
+            f"{sum(doc_counts)} docs, docs/group {min(doc_counts)}-{max(doc_counts)}, "
+            f"{docs_per_call} docs/call, {calls} calls in {time.time() - t_build:.2f}s"
         )
-        return batches
+        return groups
 
     def run_validation():
         nonlocal val_cache
@@ -603,7 +608,7 @@ def main():
         Tensor.training = False
 
         if args.no_val_cache or val_cache is None:
-            val_cache = build_validation_batches()
+            val_cache = build_validation_cache()
 
         total = 0
         total_loss = 0.0
@@ -614,39 +619,36 @@ def main():
         rr_sum = 0.0
 
         t_val = time.time()
-        for x_q, la_q, x_d, la_d, actual_lens in val_cache:
-            Bv = len(actual_lens)
-            val_n = x_d.shape[0] // Bv
-
+        for x_q, la_q, doc_chunks, n_docs in val_cache:
             xq_t  = Tensor(x_q, dtype=dtypes.int32)
             laq_t = Tensor(la_q, dtype=dtypes.int32)
-            xd_t  = Tensor(x_d, dtype=dtypes.int32)
-            lad_t = Tensor(la_d, dtype=dtypes.int32)
+            score_parts = []
+            for x_d, la_d, count in doc_chunks:
+                xd_t = Tensor(x_d, dtype=dtypes.int32)
+                lad_t = Tensor(la_d, dtype=dtypes.int32)
+                scores = train_model(xq_t, laq_t, xd_t, lad_t, B=1, N=x_d.shape[0])
+                Tensor.realize(scores)
+                score_parts.append(scores.numpy().reshape(-1)[:count])
 
-            scores = train_model(xq_t, laq_t, xd_t, lad_t, B=Bv, N=val_n)
-            Tensor.realize(scores)
-            scores_np = scores.numpy().reshape(Bv, val_n)
+            if n_docs <= 0:
+                continue
+            s = np.concatenate(score_parts, axis=0)
 
-            for i, n_docs in enumerate(actual_lens):
-                if n_docs <= 0:
-                    continue
-                s = scores_np[i, :n_docs]
+            # positive doc is still docs[0] in the validation file; this is used only for metrics.
+            pos_rank = 1 + int((s[1:] > s[0]).sum()) if len(s) > 1 else 1
 
-                # positive doc is always docs[0]
-                pos_rank = 1 + int((s[1:] > s[0]).sum()) if len(s) > 1 else 1
+            # numpy version of listwise_xent for logging over the full candidate list
+            m = float(s.max())
+            lse = m + math.log(float(np.exp(s - m).sum()))
+            loss = lse - float(s[0])
 
-                # numpy version of listwise_xent for logging
-                m = float(s.max())
-                lse = m + math.log(float(np.exp(s - m).sum()))
-                loss = lse - float(s[0])
-
-                total += 1
-                total_loss += loss
-                total_rank += pos_rank
-                top1 += int(pos_rank == 1)
-                hit10 += int(pos_rank <= 10)
-                p10_slots += min(10, n_docs)
-                rr_sum += 1.0 / pos_rank
+            total += 1
+            total_loss += loss
+            total_rank += pos_rank
+            top1 += int(pos_rank == 1)
+            hit10 += int(pos_rank <= 10)
+            p10_slots += min(10, n_docs)
+            rr_sum += 1.0 / pos_rank
 
         if total:
             print(
@@ -683,10 +685,10 @@ def main():
         return norm
 
     @TinyJit
-    def train_step(xq_t: Tensor, laq_t: Tensor, xd_t: Tensor, lad_t: Tensor) -> Tuple[Tensor, Tensor]:
+    def train_step(xq_t: Tensor, laq_t: Tensor, xd_t: Tensor, lad_t: Tensor, target_t: Tensor) -> Tuple[Tensor, Tensor]:
         opt.zero_grad()
         scores = train_model(xq_t, laq_t, xd_t, lad_t, B=args.batch_size, N=args.neg_samp + 1)
-        loss = listwise_xent(scores)
+        loss = listwise_xent(scores, target_t)
         loss.backward()
 
         gnorm = clip_grad_norm_jit(params, args.grad_clip)
@@ -700,16 +702,17 @@ def main():
     for step in range(1, args.steps + 1):
         Tensor.training = True
 
-        q_items, xq, laq, xd, lad = next_batch()
+        q_items, xq, laq, xd, lad, targets = next_batch()
 
         # Create tensors (do not put .realize() here, let JIT handle it)
         xq_t  = Tensor(xq, dtype=dtypes.int32)
         laq_t = Tensor(laq, dtype=dtypes.int32)
         xd_t  = Tensor(xd, dtype=dtypes.int32)
         lad_t = Tensor(lad, dtype=dtypes.int32)
+        target_t = Tensor(targets, dtype=dtypes.int32)
 
         # Call the JIT function
-        loss, gnorm = train_step(xq_t, laq_t, xd_t, lad_t)
+        loss, gnorm = train_step(xq_t, laq_t, xd_t, lad_t, target_t)
 
         if step % 10 == 0:
             dt = time.time() - t0

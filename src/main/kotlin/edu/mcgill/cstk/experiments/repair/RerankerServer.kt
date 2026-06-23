@@ -10,18 +10,14 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URLDecoder
 import java.net.URLEncoder
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.net.http.HttpTimeoutException
 import java.nio.charset.StandardCharsets
-import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 private const val PORT = 8000
+private const val RERANKER_MODEL_VERSION = "1100"
 
 private val webRoot = "scripts/reranker_v3/"
 private val streams = LinkedBlockingQueue<HttpExchange>()
@@ -86,22 +82,20 @@ private fun buildJobBody(id: Long, query: String, docs: List<String>): String =
     for (doc in docs) append("&d=").append(enc(doc))
   }
 
-val rerankerVersion = "7700"
-
 fun startRerankerServer() {
   if (::server.isInitialized) return
 
   server = HttpServer.create(InetSocketAddress(PORT), 0).apply {
     createContext("/") { ex ->
-      ex.sendFile(File(webRoot, "reranker_$rerankerVersion.html"), "text/html; charset=utf-8")
+      ex.sendFile(File(webRoot, "reranker_server.html"), "text/html; charset=utf-8")
     }
 
-    createContext("/reranker_$rerankerVersion.js") { ex ->
-      ex.sendFile(File(webRoot, "reranker_$rerankerVersion.js"), "text/javascript; charset=utf-8")
+    createContext("/reranker_${RERANKER_MODEL_VERSION}.js") { ex ->
+      ex.sendFile(File(webRoot, "reranker_${RERANKER_MODEL_VERSION}.js"), "text/javascript; charset=utf-8")
     }
 
-    createContext("/reranker_$rerankerVersion.safetensors") { ex ->
-      ex.sendFile(File(webRoot, "reranker_$rerankerVersion.safetensors"), "application/octet-stream")
+    createContext("/reranker_${RERANKER_MODEL_VERSION}.safetensors") { ex ->
+      ex.sendFile(File(webRoot, "reranker_${RERANKER_MODEL_VERSION}.safetensors"), "application/octet-stream")
     }
 
     // Browser opens EventSource("/stream").
@@ -126,18 +120,39 @@ fun startRerankerServer() {
       }
     }
 
+    createContext("/error") { ex ->
+      val body = ex.requestBody.readAllBytes().toString(StandardCharsets.UTF_8)
+      val form = parseForm(body)
+
+      val id = form["id"]?.firstOrNull()?.toLongOrNull()
+      val message = form["message"]?.firstOrNull() ?: "Unknown browser-side reranker error"
+
+      val p = pending
+      if (p != null && id == p.id) {
+        p.future.completeExceptionally(IllegalStateException(message))
+        ex.sendResponseHeaders(204, -1)
+      } else {
+        ex.sendText(409, "text/plain; charset=utf-8", "No matching pending request")
+      }
+    }
+
     executor = null
     start()
   }
 
-  if (Desktop.isDesktopSupported()) { Desktop.getDesktop().browse(URI("http://localhost:$PORT/")) }
+  println("WebGPU reranker page: http://localhost:$PORT/")
+  runCatching {
+    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+      Desktop.getDesktop().browse(URI("http://localhost:$PORT/"))
+    }
+  }.onFailure { println("Could not open browser automatically: ${it.message}") }
 }
 
 /**
  * Rerank docs for a query. Returns the docs sorted descending by model score.
  */
 @Synchronized
-fun rerankGPUNew(query: String, docs: List<String>, timeoutSec: Long = 30): List<String> {
+fun rerankWGPU(query: String, docs: List<String>, timeoutSec: Long = 120): List<String> {
   if (docs.isEmpty()) return emptyList()
   startRerankerServer()
 
@@ -161,9 +176,9 @@ fun rerankGPUNew(query: String, docs: List<String>, timeoutSec: Long = 30): List
     ex.responseHeaders.add("Connection", "keep-alive")
     ex.sendResponseHeaders(200, 0)
 
-    // One SSE event, then close. EventSource auto-reconnects because of retry: 0.
+    // One SSE event, then close. EventSource reconnects to provide the next long-poll slot.
     ex.responseBody.use { os ->
-      val msg = "retry: 0\ndata: $body\n\n"
+      val msg = "retry: 50\ndata: $body\n\n"
       os.write(msg.toByteArray(StandardCharsets.UTF_8))
       os.flush()
     }
@@ -171,3 +186,9 @@ fun rerankGPUNew(query: String, docs: List<String>, timeoutSec: Long = 30): List
     return future.get(timeoutSec, TimeUnit.SECONDS).map { it.uncharify() }
   } finally { pending = null }
 }
+
+fun rerankWGPU(query: String, docs: String, timeoutSec: Long = 120): List<String> =
+  rerankWGPU(query, docs.lines().filter { it.isNotBlank() }, timeoutSec)
+
+fun rerankGPUNew(query: String, docs: List<String>, timeoutSec: Long = 120): List<String> =
+  rerankWGPU(query, docs, timeoutSec)
