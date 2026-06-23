@@ -48,7 +48,7 @@ def train_remote(steps: int = 20_000, resume: bool = False):
     sys.path.insert(0, ".")
 
     # Symlink the dataset files from the volume to the workspace.
-    for fn in ("so_vs_markov.txt", "so_ts_markov.txt"):
+    for fn in ("so_vs_wfa.txt", "so_ts_wfa.txt"):
         src = f"/data/{fn}"
         dst = f"/workspace/{fn}"
         if os.path.exists(src) and not os.path.exists(dst):
