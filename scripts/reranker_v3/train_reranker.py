@@ -27,7 +27,7 @@ CHAR_TO_ID             = {chr(i): i - 33 for i in range(33, 127)}
 CLS_Q, CLS_D           = CHAR_TO_ID['{'], CHAR_TO_ID['|']  # 90, 91
 MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 2
 NUM_LA_TYPES           = 4                            # 0,1,2,3 (3 unused by current lev_align)
-TEMP                   = 0.1
+TEMP                   = 0.2
 WEBGPU_STORAGE_BINDING_LIMIT = 128 * 1024 * 1024
 WEBGPU_EXPORT_QKV_BYTES_PER_DOC = MAX_LEN * DIM * 3 * 4
 WEBGPU_EXPORT_ATTN_BYTES_PER_DOC = N_HEADS * MAX_LEN * MAX_LEN * 4
@@ -405,7 +405,7 @@ def main():
     ap.add_argument("--steps", type=int, default=10_000)
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--neg-samp", type=int, default=199)     # N = 200 like PyTorch default
-    ap.add_argument("--lr", type=float, default=1e-4)
+    ap.add_argument("--lr", type=float, default=5e-5)
     ap.add_argument("--wd", type=float, default=1e-2)
     ap.add_argument("--grad-clip", type=float, default=5.0)
     ap.add_argument("--export-every", type=int, default=100)
