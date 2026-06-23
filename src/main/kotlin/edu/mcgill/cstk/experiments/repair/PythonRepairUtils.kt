@@ -15,6 +15,9 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.stream.Stream
 import kotlin.concurrent.withLock
 import kotlin.math.absoluteValue
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.streams.asStream
 import kotlin.text.contains
 import kotlin.time.*
@@ -22,6 +25,25 @@ import kotlin.time.Duration.Companion.seconds
 
 
 val LEN_BUCKET_INTERVAL = 10
+
+private fun truncateDouble(value: Double, places: Int = 3): Double {
+  if (!value.isFinite()) return value
+  val scale = 10.0.pow(places.toDouble())
+  return if (value >= 0) floor(value * scale) / scale else ceil(value * scale) / scale
+}
+
+fun Double.trunc3(): String =
+  if (isFinite()) String.format(Locale.US, "%.3f", truncateDouble(this))
+  else toString()
+
+fun Duration.ms3(): String = "${toDouble(DurationUnit.MILLISECONDS).trunc3()}ms"
+
+fun tokensPerMs3(tokens: Int, duration: Duration): String =
+  (tokens.toDouble() / duration.toDouble(DurationUnit.MILLISECONDS)).trunc3()
+
+fun Map<Int, Double>.formatTrunc3(): String =
+  entries.sortedBy { it.key }
+    .joinToString(prefix = "{", postfix = "}") { (key, value) -> "$key=${value.trunc3()}" }
 
 //fun writeParikhMap() {
 //  val txt = ParikhMap.serialize(vanillaS2PCFG.parikhMap)
@@ -382,10 +404,20 @@ fun evaluateBarHillelRepairOnStackOverflow() {
 fun Map<Int, LBHMetrics>.summarize() =
   entries.sortedBy { it.key }.joinToString("\n") { (k, v) -> "Lev($k): $v" }
 
-data class LBHMetrics(var top1: Int = 0, var recall: Int = 0, var total: Int = 0, var error: Int = 0) {
+data class LBHMetrics(
+  var top1: Int = 0,
+  var top10: Int = 0,
+  var top100: Int = 0,
+  var recall: Int = 0,
+  var total: Int = 0,
+  var error: Int = 0
+) {
+  private fun ratio(numerator: Int) = if (total == 0) 0.0 else numerator.toDouble() / total
+
   override fun toString() =
-    "Top-1/rec/pos/total: $top1 / $recall / ${total-error} / $total, " +
-        "errors: $error, P@1: ${top1.toDouble() / total}, P@All: ${recall.toDouble() / total}"
+    "Top-1/10/100/rec/pos/total: $top1 / $top10 / $top100 / $recall / ${total-error} / $total, " +
+        "errors: $error, P@1: ${ratio(top1).trunc3()}, P@10: ${ratio(top10).trunc3()}, " +
+        "P@100: ${ratio(top100).trunc3()}, P@All: ${ratio(recall).trunc3()}"
 }
 
 val naturallySmallRepairs: Sequence<Π2A<Σᐩ>> by lazy {
@@ -783,7 +815,7 @@ fun measureLevenshteinBlanketSize() {
 
 @JvmName("summarizeS2PMetrics")
 fun Map<Int, S2PMetrics>.summarize() =
-  "Lev(*): ${values.sumOf { it.top1 }.toDouble() / values.sumOf { it.total }}\n" +
+  "Lev(*): ${(values.sumOf { it.top1 }.toDouble() / values.sumOf { it.total }).trunc3()}\n" +
       entries.sortedBy { it.key }.joinToString("\n") { (k, v) -> "Lev($k): $v" }
 
 fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
@@ -803,7 +835,8 @@ fun Map<Pair<Int, Int>, S2PMetrics>.summarizeLenAndDist() =
 
 data class S2PMetrics(var top1: Int = 0, var total: Int = 0) {
   operator fun plus(other: S2PMetrics) = S2PMetrics(top1 + other.top1, total + other.total)
-  override fun toString() = "Top-1/total: $top1 / $total ≈ ${top1.toDouble() / total}"
+  override fun toString() =
+    "Top-1/total: $top1 / $total ≈ ${(if (total == 0) 0.0 else top1.toDouble() / total).trunc3()}"
 }
 
 fun profileRecognizer() {

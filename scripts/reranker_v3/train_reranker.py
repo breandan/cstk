@@ -168,55 +168,54 @@ class TxEncoder:
         self.la_emb  = nn.Embedding(NUM_LA_TYPES, DIM)
         self.layers = [TransformerEncoderLayer(DIM, N_HEADS, 4*DIM) for _ in range(N_LAYERS)]
 
-    def __call__(self, x: Tensor, la: Tensor):
+    def __call__(self, x: Tensor, la: Tensor) -> Tensor:
         B, S = x.shape
         pos = Tensor.arange(S).reshape(1, S).expand(B, S)
         h = self.tok_emb(x) + self.pos_emb(pos) + self.la_emb(la)
         for layer in self.layers:
             h = layer(h)
-        e_q = h[:, 0, :]
-        e_d = h[:, MAX_LEN_Q+1, :]
-        return e_q, e_d
+
+        # x already contains the complete [CLS_Q] query [CLS_D] document pair.
+        # Its leading state is therefore the pair-conditioned cross-encoder embedding.
+        return h[:, 0, :]
 
 class RerankerHead:
+    """Small pointwise scorer over the pair-conditioned [CLS_Q] embedding."""
     def __init__(self):
-        self.cls = Tensor.randn(1, 1, DIM) * 0.02
-        self.pos = Tensor.randn(3, DIM) * 0.02
-        self.layers = [TransformerEncoderLayer(DIM, 8, 4*DIM) for _ in range(4)]
-        self.sc = nn.Linear(DIM, 1)
+        self.proj = nn.Linear(DIM, DIM // 2)
+        self.sc = nn.Linear(DIM // 2, 1)
 
-    def __call__(self, q_embs: Tensor, d_embs: Tensor) -> Tensor:
-        B, N, D = d_embs.shape
-        cls = self.cls.expand(B, N, 1, D)
-        q = q_embs.unsqueeze(1).unsqueeze(1).expand(B, N, 1, D)
-        d = d_embs.unsqueeze(2)
+    def __call__(self, pair_embs: Tensor) -> Tensor:
+        return self.sc(self.proj(pair_embs).gelu()).squeeze(-1)
 
-        seq = cls.cat(q, d, dim=2)
-        seq = seq + self.pos.reshape(1, 1, 3, D)
-        seq = seq.reshape(B*N, 3, D)
 
-        for layer in self.layers:
-            seq = layer(seq)
+def _legacy_input_offset(x_q: Tensor, la_q: Tensor) -> Tensor:
+    """Keep the existing four-input WebGPU/HTML signature without a query encoder.
 
-        out = seq[:, 0, :].reshape(B, N, D)
-        return self.sc(out).squeeze(-1)
+    The offset is constant across all candidates for a query, so it cannot change
+    their ordering or the listwise objective. Its only purpose is to keep input0
+    and input1 live in the exported graph while downstream harnesses are unchanged.
+    """
+    return (
+            x_q.cast(dtypes.float32).sum(axis=1)
+            + la_q.cast(dtypes.float32).sum(axis=1)
+    ) * 1e-12
 
-# Training wrapper: supports batched queries and N docs each
+
+# Training wrapper: supports batched queries and N pair sequences each.
 class TrainPipeline:
     def __init__(self, enc: TxEncoder, rer: RerankerHead):
         self.enc = enc
         self.rer = rer
 
     def __call__(self, x_q: Tensor, la_q: Tensor, x_d: Tensor, la_d: Tensor, B: int, N: int) -> Tensor:
-        # x_q, la_q: [B, MAX_LEN]
-        # x_d, la_d: [B*N, MAX_LEN] (flattened)
-        e_q, _ = self.enc(x_q, la_q)         # [B, D]
-        _, e_d = self.enc(x_d, la_d)         # [B*N, D]
-        d_embs = e_d.reshape(B, N, DIM)      # [B, N, D]
-        scores = self.rer(e_q, d_embs) / TEMP
-        return scores                         # [B, N]
+        # x_q, la_q: [B, MAX_LEN], retained only for export/harness compatibility.
+        # x_d, la_d: [B*N, MAX_LEN], each row is a complete query-document pair.
+        pair_embs = self.enc(x_d, la_d).reshape(B, N, DIM)
+        scores = self.rer(pair_embs) / TEMP
+        return scores + _legacy_input_offset(x_q, la_q).reshape(B, 1)
 
-# Inference/export wrapper: matches HTML harness signature (1 query vs NUM_DOCS docs)
+# Inference/export wrapper: preserves the existing four-input HTML harness signature.
 class InferPipeline:
     def __init__(self, enc: TxEncoder, rer: RerankerHead, num_docs: int):
         self.enc = enc
@@ -224,12 +223,11 @@ class InferPipeline:
         self.num_docs = num_docs
 
     def __call__(self, x_q: Tensor, la_q: Tensor, x_d: Tensor, la_d: Tensor) -> Tensor:
-        # x_q, la_q: [1, MAX_LEN]
-        # x_d, la_d: [NUM_DOCS, MAX_LEN]
-        e_q, _ = self.enc(x_q, la_q)         # [1, D]
-        _, e_d = self.enc(x_d, la_d)         # [NUM_DOCS, D]
-        scores = self.rer(e_q, e_d.unsqueeze(0)) / TEMP  # [1, NUM_DOCS]
-        return scores.squeeze(0)             # [NUM_DOCS]
+        # x_q, la_q: [1, MAX_LEN], retained only for export/harness compatibility.
+        # x_d, la_d: [NUM_DOCS, MAX_LEN], complete query-document pairs.
+        pair_embs = self.enc(x_d, la_d)
+        scores = self.rer(pair_embs) / TEMP
+        return scores + _legacy_input_offset(x_q, la_q).reshape(1)
 
 # -------------------------------------------------------------------- #
 #  Loss + grad utils

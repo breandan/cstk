@@ -123,7 +123,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     val langSize = 0
 
     val radius = (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS)
-    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow()}, $trueLevDist/$radius)")
+    println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow().ms3()}, $trueLevDist/$radius)")
     if (!dfaRecognized) {
       if (trueLevDist <= radius) System.err.println("trueLevDist=$trueLevDist (<=${latestLangEditDistance + LED_BUFFER}), but was rejected!")
       allRate.error++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.error++
@@ -138,7 +138,7 @@ fun evaluateRegexRepairOnStackOverflow() {
         .map { it.first.addNewLineIfMissing() }.distinct().toList()
         .also {
           val rrt = wdfaTime.elapsedNow()
-          println("WDFA tok/ms = ${it.sumOf { it.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
+          println("WDFA tok/ms = ${tokensPerMs3(it.sumOf { it.tokenizeByWhitespace().size }, rrt)}")
         }
         .let {
           cpuTime = cpuClock.elapsedNow().inWholeMilliseconds
@@ -178,18 +178,19 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     var webgpuRank = -1
     val wgpuClock = TimeSource.Monotonic.markNow()
+    val rerankWindow = unrankedResults.take(RERANK_THR)
     val rerankedResults = if (unrankedResults.isEmpty() || origRank == -1) emptyList()
-    else (rerankWGPU(brokeStr, unrankedResults.take(RERANK_THR)) + unrankedResults.drop(RERANK_THR))
-      .also {
+    else (rerankWGPU(brokeStr, rerankWindow) + unrankedResults.drop(RERANK_THR))
+      .also { results ->
         val rrt = rerankerTime.elapsedNow()
-        println("WebGPU reranked ${it.size}x${brokeStr.tokenizeByWhitespace().size} results in $rrt")
-        println("WGPU tok/ms = ${it.sumOf { it.tokenizeByWhitespace().size }.toDouble() / rrt.inWholeMilliseconds}")
+        println("WebGPU reranked ${rerankWindow.size}/${results.size}x${brokeStr.tokenizeByWhitespace().size} results in ${rrt.ms3()}")
+        println("WGPU tok/ms = ${tokensPerMs3(rerankWindow.sumOf { it.tokenizeByWhitespace().size }, rrt)}")
       }
       .onEachIndexed { i, it ->
         if (it == fixedStr && webgpuRank == -1) {
           matchFound = true
           webgpuRank = i
-          println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow()}):\n$humanRepairANSI")
+          println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow().ms3()}):\n$humanRepairANSI")
         }
       }
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
@@ -219,9 +220,9 @@ fun evaluateRegexRepairOnStackOverflow() {
       if (matchFound) {
         P_AllByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
         if (it == 0) P_1ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
-        if (it <= 10) P_10ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
-        if (it <= 100) P_100ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
-        if (it <= 1000) P_1000ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it in 0 until 10) P_10ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it in 0 until 100) P_100ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
+        if (it in 0 until 1000) P_1000ByLevDist.getOrPut(lenBucket to trueLevDist) { S2PMetrics() }.top1++
       }
     }
 
@@ -233,17 +234,20 @@ fun evaluateRegexRepairOnStackOverflow() {
 //      negative.appendText("${brokeToks.size}, $levDist, $latestLangEditDistance, $elapsed, $allElapsed, $totalSamples, $langSize\n")
     } else {
       allRate.recall++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.recall++
-      indexOfTarget.also { if (it == 0) { allRate.top1++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.top1++ } }
+      val levRate = levRates.getOrPut(trueLevDist) { LBHMetrics() }
+      if (indexOfTarget == 0) { allRate.top1++; levRate.top1++ }
+      if (indexOfTarget in 0 until 10) { allRate.top10++; levRate.top10++ }
+      if (indexOfTarget in 0 until 100) { allRate.top100++; levRate.top100++ }
 
       println("Found Δ=$trueLevDist repair in $allElapsed ms, samp=${totalSamples}/$langSize, $indexOfTarget rank, $origRank orig")
       allRate.run { println("Lev(*): $allRate") }; println(levRates.summarize())
 //      sampleTimeByLevDist[levDist] = sampleTimeByLevDist[levDist]!! + elapsed
       sampleTimeByLevDist[trueLevDist] = (sampleTimeByLevDist[trueLevDist] ?: 0.0) + elapsed
-      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }}")
+      println("Draw timings (ms): ${sampleTimeByLevDist.mapValues { it.value / allRate.recall }.formatTrunc3()}")
       allTimeByLevDist[trueLevDist] = (allTimeByLevDist[trueLevDist] ?: 0.0) + allElapsed
-      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }}")
+      println("Full timings (ms): ${allTimeByLevDist.mapValues { it.value / allRate.recall }.formatTrunc3()}")
       samplesBeforeMatchByLevDist[trueLevDist] = (samplesBeforeMatchByLevDist[trueLevDist] ?: 0.0) + totalSamples
-      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }}")
+      println("Avg samples drawn: ${samplesBeforeMatchByLevDist.mapValues { it.value / allRate.recall }.formatTrunc3()}")
     }
     csv.appendText("${brokeToks.size}, $trueLevDist, $latestLangEditDistance, $elapsed, $allElapsed, $gpuTime, $cpuTime, $totalSamples, $langSize, $indexOfTarget, $origRank, $gpuRank\n")
 
