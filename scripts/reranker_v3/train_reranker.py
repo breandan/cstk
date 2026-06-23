@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, itertools, random, time, math
+import argparse, itertools, random, time, math, re, shutil
 from pathlib import Path
 from typing import List, Tuple
 from array import array
@@ -8,7 +8,7 @@ import numpy as np
 import os
 from tinygrad import Tensor, dtypes, nn
 from tinygrad.device import Device
-from tinygrad.nn.state import get_state_dict, load_state_dict, safe_save, get_parameters
+from tinygrad.nn.state import get_state_dict, load_state_dict, safe_load, safe_save, get_parameters
 from tinygrad.nn.optim import AdamW
 from extra.export_model import export_model
 from tinygrad.device import Device
@@ -28,6 +28,12 @@ CLS_Q, CLS_D           = CHAR_TO_ID['{'], CHAR_TO_ID['|']  # 90, 91
 MAX_LEN                = MAX_LEN_Q + MAX_LEN_D + 2
 NUM_LA_TYPES           = 4                            # 0,1,2,3 (3 unused by current lev_align)
 TEMP                   = 0.1
+WEBGPU_STORAGE_BINDING_LIMIT = 128 * 1024 * 1024
+WEBGPU_EXPORT_QKV_BYTES_PER_DOC = MAX_LEN * DIM * 3 * 4
+WEBGPU_EXPORT_ATTN_BYTES_PER_DOC = N_HEADS * MAX_LEN * MAX_LEN * 4
+WEBGPU_EXPORT_BYTES_PER_DOC = max(WEBGPU_EXPORT_QKV_BYTES_PER_DOC, WEBGPU_EXPORT_ATTN_BYTES_PER_DOC)
+WEBGPU_MAX_EXPORT_DOCS = WEBGPU_STORAGE_BINDING_LIMIT // WEBGPU_EXPORT_BYTES_PER_DOC
+WEBGPU_DEFAULT_EXPORT_DOCS = min(64, WEBGPU_MAX_EXPORT_DOCS)
 
 # -------------------------------------------------------------------- #
 #  Data helpers
@@ -37,7 +43,7 @@ def encode(txt: str, max_len: int) -> List[int]:
     if len(ids) < max_len: ids.extend([0] * (max_len - len(ids)))
     return ids
 
-def lev_align(q_chars: List[str], d_chars: List[str]) -> List[int]:
+def lev_align(q_chars, d_chars) -> List[int]:
     m, n = len(q_chars), len(d_chars)
     n1 = n + 1
 
@@ -77,16 +83,19 @@ def lev_align(q_chars: List[str], d_chars: List[str]) -> List[int]:
 
     return la
 
-def build_pair(q: str, d: str) -> Tuple[List[int], List[int]]:
-    q_tr = q[:MAX_LEN_Q]
+def build_pair_from_query(q_tr: str, q_ids: List[int], d: str) -> Tuple[List[int], List[int]]:
     d_tr = d[:MAX_LEN_D]
-    q_ids = encode(q_tr, MAX_LEN_Q)
     d_ids = encode(d_tr, MAX_LEN_D)
 
-    la = lev_align(list(q_tr), list(d_tr))             # length = len(d_tr)
+    la = lev_align(q_tr, d_tr)                         # length = len(d_tr)
     la_full = [0] * (MAX_LEN_Q + 2) + la + [0] * (MAX_LEN_D - len(la))
     x_ids = [CLS_Q] + q_ids + [CLS_D] + d_ids
     return x_ids, la_full
+
+def build_pair(q: str, d: str) -> Tuple[List[int], List[int]]:
+    q_tr = q[:MAX_LEN_Q]
+    q_ids = encode(q_tr, MAX_LEN_Q)
+    return build_pair_from_query(q_tr, q_ids, d)
 
 def build_query_only(q: str) -> Tuple[List[int], List[int]]:
     q_ids = encode(q[:MAX_LEN_Q], MAX_LEN_Q)
@@ -255,34 +264,138 @@ def clip_grad_norm_(params, max_norm: float, eps: float = 1e-12):
 # -------------------------------------------------------------------- #
 #  Export helpers
 # -------------------------------------------------------------------- #
+def _atomic_copy(src: Path, dst: Path):
+    tmp = dst.with_name(f".{dst.name}.{os.getpid()}.tmp")
+    try:
+        shutil.copyfile(src, tmp)
+        os.replace(tmp, dst)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def _check_webgpu_export_docs(num_docs: int):
+    if num_docs <= 0:
+        raise ValueError(f"--export-docs must be positive, got {num_docs}")
+    binding_bytes = num_docs * WEBGPU_EXPORT_BYTES_PER_DOC
+    if binding_bytes > WEBGPU_STORAGE_BINDING_LIMIT:
+        raise ValueError(
+            f"--export-docs {num_docs} may require a {binding_bytes:,} byte WebGPU storage-buffer binding "
+            f"for encoder intermediates, exceeding Dawn's "
+            f"{WEBGPU_STORAGE_BINDING_LIMIT:,} byte limit. Use --export-docs <= {WEBGPU_MAX_EXPORT_DOCS} "
+            f"(default/recommended: {WEBGPU_DEFAULT_EXPORT_DOCS}) and score larger candidate sets in chunks."
+        )
+
+
+def _validate_webgpu_export(prg: str, inp_sizes, out_sizes, state_keys, num_docs: int):
+    """Fail before publishing an incomplete or unweighted generated module."""
+    if "\n// ...\n" in prg:
+        raise RuntimeError("WebGPU export contains a literal '// ...' placeholder; WGSL was truncated")
+
+    kernel_match = re.search(r"const\s+kernels\s*=\s*\[([^\]]*)\]\s*;", prg, re.S)
+    if not kernel_match:
+        raise RuntimeError("WebGPU export has no `const kernels = [...]` list")
+
+    kernel_refs = re.findall(r"\b[A-Za-z_$][\w$]*\b", kernel_match.group(1))
+    kernel_decls = set(re.findall(r"const\s+([A-Za-z_$][\w$]*)\s*=\s*`", prg))
+    missing_kernels = sorted(set(kernel_refs) - kernel_decls)
+    if not kernel_refs or not kernel_decls or missing_kernels:
+        preview = ", ".join(missing_kernels[:8])
+        suffix = " ..." if len(missing_kernels) > 8 else ""
+        raise RuntimeError(
+            f"WebGPU export is missing {len(missing_kernels)} WGSL declaration(s): {preview}{suffix}"
+        )
+
+    # Every trained tensor must be represented by an external safetensor-backed GPU buffer.
+    weight_refs = re.findall(r"metadata\[['\"]([^'\"]+)['\"]\]", prg)
+    expected_weights = set(state_keys)
+    actual_weights = set(weight_refs)
+    missing_weights = sorted(expected_weights - actual_weights)
+    extra_weights = sorted(actual_weights - expected_weights)
+    if missing_weights or extra_weights or len(weight_refs) != len(expected_weights):
+        raise RuntimeError(
+            "WebGPU export did not bind the trained state correctly: "
+            f"expected {len(expected_weights)} tensors, found {len(weight_refs)} references; "
+            f"missing={missing_weights[:5]}, extra={extra_weights[:5]}"
+        )
+
+    expected_inputs = {
+        "input0": MAX_LEN * 4,
+        "input1": MAX_LEN * 4,
+        "input2": num_docs * MAX_LEN * 4,
+        "input3": num_docs * MAX_LEN * 4,
+    }
+    expected_outputs = {"output0": num_docs * 4}
+    if dict(inp_sizes) != expected_inputs:
+        raise RuntimeError(f"Unexpected WebGPU input sizes: {inp_sizes}; expected {expected_inputs}")
+    if dict(out_sizes) != expected_outputs:
+        raise RuntimeError(f"Unexpected WebGPU output sizes: {out_sizes}; expected {expected_outputs}")
+
+    return {
+        "kernel_calls": len(kernel_refs),
+        "unique_kernels": len(kernel_decls),
+        "weight_buffers": len(weight_refs),
+    }
+
+
 def export_artifacts(infer_model: InferPipeline, outdir: Path, step: int, num_docs: int):
-    # 1. Save weights from active CUDA model
-    sd = get_state_dict(infer_model)
-    safe_save(sd, (outdir / f"reranker_{step}.safetensors").as_posix())
+    """Export a versioned checkpoint and canonical aliases, publishing only after validation."""
+    _check_webgpu_export_docs(num_docs)
+    outdir.mkdir(parents=True, exist_ok=True)
+    state = get_state_dict(infer_model)
 
-    # 2. Temporarily switch context to WEBGPU
+    version_weights = outdir / f"reranker_{step}.safetensors"
+    version_js = outdir / f"reranker_{step}.js"
+    canonical_weights = outdir / "reranker.safetensors"
+    canonical_js = outdir / "reranker.js"
+
+    tmp_weights = outdir / f".{version_weights.name}.{os.getpid()}.tmp"
+    tmp_js = outdir / f".{version_js.name}.{os.getpid()}.tmp"
+
     old_device = Device.DEFAULT
-    Device.DEFAULT = "WEBGPU"
+    was_training = Tensor.training
+    try:
+        # Save to a temporary file first. A failed JS export must not publish a half-pair.
+        safe_save(state, tmp_weights.as_posix())
 
-    # 3. Create a fresh model instance strictly on WEBGPU for tracing
-    enc_ext = TxEncoder()
-    rer_ext = RerankerHead()
-    infer_ext = InferPipeline(enc_ext, rer_ext, num_docs=num_docs)
+        Tensor.training = False
+        Device.DEFAULT = "WEBGPU"
 
-    # 4. Force example inputs to the WEBGPU device
-    example_inputs = (
-        Tensor(np.zeros((1, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
-        Tensor(np.zeros((1, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
-        Tensor(np.zeros((num_docs, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
-        Tensor(np.zeros((num_docs, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
-    )
+        # The exporter identifies external weights only when the traced model's parameters
+        # are realized buffers. Loading the trained state is therefore mandatory.
+        enc_ext = TxEncoder()
+        rer_ext = RerankerHead()
+        infer_ext = InferPipeline(enc_ext, rer_ext, num_docs=num_docs)
+        load_state_dict(infer_ext, state, strict=True, verbose=False, realize=True)
+        Tensor.realize(*get_parameters(infer_ext))
 
-    # 5. Export the JS program (this will now properly output WGSL)
-    prg, inp_sizes, out_sizes, state = export_model(infer_ext, "webgpu", *example_inputs)
-    (outdir / f"reranker_{step}.js").write_text(prg, encoding="utf-8")
+        example_inputs = (
+            Tensor(np.zeros((1, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
+            Tensor(np.zeros((1, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
+            Tensor(np.zeros((num_docs, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
+            Tensor(np.zeros((num_docs, MAX_LEN), dtype=np.int32), dtype=dtypes.int32, device="WEBGPU"),
+        )
 
-    # 6. Restore the CUDA context so training can continue smoothly
-    Device.DEFAULT = old_device
+        prg, inp_sizes, out_sizes, _ = export_model(infer_ext, "webgpu", *example_inputs)
+        stats = _validate_webgpu_export(prg, inp_sizes, out_sizes, state.keys(), num_docs)
+        tmp_js.write_text(prg, encoding="utf-8")
+
+        # Publish the versioned pair, then refresh the canonical aliases watched by Modal.
+        os.replace(tmp_weights, version_weights)
+        os.replace(tmp_js, version_js)
+        _atomic_copy(version_weights, canonical_weights)
+        _atomic_copy(version_js, canonical_js)
+
+        print(
+            f"exported step {step}: {version_weights.name}, {version_js.name} | "
+            f"{stats['kernel_calls']} calls / {stats['unique_kernels']} WGSL kernels / "
+            f"{stats['weight_buffers']} external weights / {num_docs} docs per call"
+        )
+        return version_weights, version_js
+    finally:
+        Device.DEFAULT = old_device
+        Tensor.training = was_training
+        tmp_weights.unlink(missing_ok=True)
+        tmp_js.unlink(missing_ok=True)
 
 # -------------------------------------------------------------------- #
 #  Training
@@ -296,16 +409,55 @@ def main():
     ap.add_argument("--wd", type=float, default=1e-2)
     ap.add_argument("--grad-clip", type=float, default=5.0)
     ap.add_argument("--export-every", type=int, default=100)
-    ap.add_argument("--export-docs", type=int, default=1000) # must match HTML harness
+    ap.add_argument("--export-docs", type=int, default=WEBGPU_DEFAULT_EXPORT_DOCS,
+                    help="fixed docs per exported WebGPU call; larger candidate sets are scored in chunks")
+    ap.add_argument("--val-every", type=int, default=None,
+                    help="validation cadence in steps; defaults to --export-every; <=0 disables validation")
+    ap.add_argument("--val-groups", type=int, default=24,
+                    help="number of validation groups to score at each validation pass")
+    ap.add_argument("--val-docs", type=int, default=200,
+                    help="max docs per validation group, including the positive doc; <=0 scores all docs")
+    ap.add_argument("--val-batch-size", type=int, default=8,
+                    help="number of validation queries to score per forward pass")
+    ap.add_argument("--no-val-cache", action="store_true",
+                    help="rebuild validation features every validation pass instead of caching them")
     ap.add_argument("--train-file", type=str, default="so_ts_markov.txt")
     ap.add_argument("--val-file", type=str, default="so_vs_markov.txt")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--export-from", type=str, default="", metavar="SAFETENSORS",
+                    help="regenerate JS from an existing checkpoint and exit")
+    ap.add_argument("--export-step", type=int, default=None,
+                    help="step label for --export-from; inferred from reranker_<step>.safetensors")
     args = ap.parse_args()
 
     random.seed(args.seed)
     np.random.seed(args.seed)
+    if args.val_every is None:
+        args.val_every = args.export_every
+    _check_webgpu_export_docs(args.export_docs)
 
     outdir = Path(".").resolve()
+
+    if args.export_from:
+        checkpoint = Path(args.export_from).expanduser().resolve()
+        if not checkpoint.exists():
+            raise FileNotFoundError(f"missing export checkpoint: {checkpoint}")
+        step = args.export_step
+        if step is None:
+            match = re.search(r"_(\d+)\.safetensors$", checkpoint.name)
+            if not match:
+                raise ValueError("--export-step is required when the checkpoint name has no _<step> suffix")
+            step = int(match.group(1))
+
+        print(f"Regenerating WebGPU artifacts from {checkpoint.name} at step {step}")
+        enc = TxEncoder()
+        rer = RerankerHead()
+        infer_model = InferPipeline(enc, rer, num_docs=args.export_docs)
+        load_state_dict(infer_model, safe_load(checkpoint.as_posix()), strict=True, verbose=True, realize=True)
+        export_artifacts(infer_model, outdir, step, num_docs=args.export_docs)
+        print("done.")
+        return
+
     tr_path = outdir / args.train_file
     vs_path = outdir / args.val_file
     assert tr_path.exists(), f"missing {tr_path}"
@@ -314,7 +466,21 @@ def main():
     print(f"Device: {Device.DEFAULT}")
     print(f"Training on: {tr_path.name}  (val: {vs_path.name})")
     print(f"B={args.batch_size}, NEG={args.neg_samp} => N={args.neg_samp+1}")
-    print(f"Export every {args.export_every} steps -> reranker.safetensors + reranker.js (overwrite)")
+    print(f"Export every {args.export_every} steps -> versioned files + canonical reranker.safetensors/reranker.js")
+    print(
+        f"Export docs/call {args.export_docs} -> estimated largest encoder binding "
+        f"{args.export_docs * WEBGPU_EXPORT_BYTES_PER_DOC:,} bytes "
+        f"(limit {WEBGPU_STORAGE_BINDING_LIMIT:,}; max docs/call {WEBGPU_MAX_EXPORT_DOCS})"
+    )
+    if args.val_every > 0:
+        val_docs_msg = "all docs" if args.val_docs <= 0 else f"up to {args.val_docs} docs/group"
+        cache_msg = "cached" if not args.no_val_cache else "uncached"
+        print(
+            f"Validate every {args.val_every} steps -> first {args.val_groups} groups, "
+            f"{val_docs_msg}, batch {args.val_batch_size}, {cache_msg}"
+        )
+    else:
+        print("Validation disabled")
 
     enc = TxEncoder()
     rer = RerankerHead()
@@ -348,9 +514,11 @@ def main():
 
         for i, (q, docs) in enumerate(q_items):
             # query-only
-            qx, qla = build_query_only(q)
-            x_q[i, :] = np.asarray(qx, dtype=np.int32)
-            la_q[i, :] = np.asarray(qla, dtype=np.int32)
+            q_tr = q[:MAX_LEN_Q]
+            q_ids = encode(q_tr, MAX_LEN_Q)
+            qx = [CLS_Q] + q_ids + [CLS_D] + ([0] * MAX_LEN_D)
+            x_q[i, :] = qx
+            # la_q is already zero-filled.
 
             # docs: 1 positive + K negatives (sample w/ replacement if needed)
             pos = docs[0]
@@ -364,71 +532,131 @@ def main():
 
             # build_pair(q,d) (includes q in the doc input and la_full)
             for j, d in enumerate(docs_batch):
-                xd, lad = build_pair(q, d)
+                xd, lad = build_pair_from_query(q_tr, q_ids, d)
                 row = i * N + j
-                x_d[row, :] = np.asarray(xd, dtype=np.int32)
-                la_d[row, :] = np.asarray(lad, dtype=np.int32)
+                x_d[row, :] = xd
+                la_d[row, :] = lad
 
         return q_items, x_q, la_q, x_d, la_d
 
-    def score_docs_for_query(q: str, docs: List[str]) -> np.ndarray:
-        N = len(docs)
+    val_cache = None
 
-        qx, qla = build_query_only(q)
-        x_q = np.asarray([qx], dtype=np.int32)
-        la_q = np.asarray([qla], dtype=np.int32)
+    def select_validation_docs(docs: List[str], group_idx: int) -> List[str]:
+        if args.val_docs <= 0 or len(docs) <= args.val_docs:
+            return docs
+        rng = random.Random(args.seed + group_idx)
+        negs = docs[1:]
+        return [docs[0]] + rng.sample(negs, args.val_docs - 1)
 
-        x_d = np.zeros((N, MAX_LEN), dtype=np.int32)
-        la_d = np.zeros((N, MAX_LEN), dtype=np.int32)
+    def build_validation_batches():
+        groups = []
+        for group_idx, (q, docs) in enumerate(iter_qd_once(vs_path.as_posix())):
+            if len(groups) >= args.val_groups:
+                break
+            if not docs:
+                continue
+            groups.append((q, select_validation_docs(docs, group_idx)))
 
-        for j, d in enumerate(docs):
-            xd, lad = build_pair(q, d)
-            x_d[j, :] = np.asarray(xd, dtype=np.int32)
-            la_d[j, :] = np.asarray(lad, dtype=np.int32)
+        if not groups:
+            return []
 
-        xq_t  = Tensor(x_q, dtype=dtypes.int32)
-        laq_t = Tensor(la_q, dtype=dtypes.int32)
-        xd_t  = Tensor(x_d, dtype=dtypes.int32)
-        lad_t = Tensor(la_d, dtype=dtypes.int32)
+        val_n = max(len(docs) for _, docs in groups)
+        batches = []
+        bs = max(1, args.val_batch_size)
+        t_build = time.time()
 
-        scores = train_model(xq_t, laq_t, xd_t, lad_t, B=1, N=N)
-        Tensor.realize(scores)
-        return scores.numpy().reshape(-1)
+        for start in range(0, len(groups), bs):
+            chunk = groups[start:start + bs]
+            Bv = len(chunk)
+            x_q = np.zeros((Bv, MAX_LEN), dtype=np.int32)
+            la_q = np.zeros((Bv, MAX_LEN), dtype=np.int32)
+            x_d = np.zeros((Bv * val_n, MAX_LEN), dtype=np.int32)
+            la_d = np.zeros((Bv * val_n, MAX_LEN), dtype=np.int32)
+            actual_lens = []
 
-    def run_validation(max_groups: int = 100):
+            for i, (q, docs) in enumerate(chunk):
+                q_tr = q[:MAX_LEN_Q]
+                q_ids = encode(q_tr, MAX_LEN_Q)
+                qx = [CLS_Q] + q_ids + [CLS_D] + ([0] * MAX_LEN_D)
+                x_q[i, :] = qx
+                # la_q is already zero-filled.
+                actual_lens.append(len(docs))
+
+                for j, d in enumerate(docs):
+                    xd, lad = build_pair_from_query(q_tr, q_ids, d)
+                    row = i * val_n + j
+                    x_d[row, :] = xd
+                    la_d[row, :] = lad
+
+            batches.append((x_q, la_q, x_d, la_d, actual_lens))
+
+        print(
+            f"prepared validation cache: {len(groups)} groups, "
+            f"{sum(len(docs) for _, docs in groups)} docs, N={val_n}, "
+            f"{len(batches)} batches in {time.time() - t_build:.2f}s"
+        )
+        return batches
+
+    def run_validation():
+        nonlocal val_cache
         was_training = Tensor.training
         Tensor.training = False
+
+        if args.no_val_cache or val_cache is None:
+            val_cache = build_validation_batches()
 
         total = 0
         total_loss = 0.0
         total_rank = 0
         top1 = 0
+        hit10 = 0
+        p10_slots = 0
+        rr_sum = 0.0
 
-        for q, docs in itertools.islice(iter_qd_once(vs_path.as_posix()), max_groups):
-            if not docs:
-                continue
+        t_val = time.time()
+        for x_q, la_q, x_d, la_d, actual_lens in val_cache:
+            Bv = len(actual_lens)
+            val_n = x_d.shape[0] // Bv
 
-            s = score_docs_for_query(q, docs)
+            xq_t  = Tensor(x_q, dtype=dtypes.int32)
+            laq_t = Tensor(la_q, dtype=dtypes.int32)
+            xd_t  = Tensor(x_d, dtype=dtypes.int32)
+            lad_t = Tensor(la_d, dtype=dtypes.int32)
 
-            # positive doc is always docs[0]
-            pos_rank = 1 + int((s[1:] > s[0]).sum()) if len(s) > 1 else 1
+            scores = train_model(xq_t, laq_t, xd_t, lad_t, B=Bv, N=val_n)
+            Tensor.realize(scores)
+            scores_np = scores.numpy().reshape(Bv, val_n)
 
-            # numpy version of listwise_xent for logging
-            m = float(s.max())
-            lse = m + math.log(float(np.exp(s - m).sum()))
-            loss = lse - float(s[0])
+            for i, n_docs in enumerate(actual_lens):
+                if n_docs <= 0:
+                    continue
+                s = scores_np[i, :n_docs]
 
-            total += 1
-            total_loss += loss
-            total_rank += pos_rank
-            top1 += int(pos_rank == 1)
+                # positive doc is always docs[0]
+                pos_rank = 1 + int((s[1:] > s[0]).sum()) if len(s) > 1 else 1
+
+                # numpy version of listwise_xent for logging
+                m = float(s.max())
+                lse = m + math.log(float(np.exp(s - m).sum()))
+                loss = lse - float(s[0])
+
+                total += 1
+                total_loss += loss
+                total_rank += pos_rank
+                top1 += int(pos_rank == 1)
+                hit10 += int(pos_rank <= 10)
+                p10_slots += min(10, n_docs)
+                rr_sum += 1.0 / pos_rank
 
         if total:
             print(
-                f"val summary (first {total} groups) | "
+                f"val summary ({total} groups, {time.time() - t_val:.2f}s) | "
                 f"mean_loss {total_loss/total:.4f} | "
                 f"mean_pos_rank {total_rank/total:.2f} | "
-                f"top1 {top1/total:.3f}"
+                f"top1 {top1/total:.3f} | "
+                f"hit@10 {hit10/total:.3f} | "
+                f"precision@10 {hit10/p10_slots:.4f} | "
+                f"mrr {rr_sum/total:.4f}"
             )
         else:
             print("val summary | no validation groups with docs")
@@ -489,17 +717,21 @@ def main():
             # JIT outputs are tensors, use .item() safely now
             print(f"step {step:>6} | loss {loss.item():.4f} | grad_norm {gnorm.item():.2f} | Δt {dt:.2f}s")
 
-        if step % args.export_every == 0:
+        if args.val_every > 0 and step % args.val_every == 0:
             Tensor.training = False
             print(f"--- validation @ step {step} ---")
             run_validation()
+
+        if args.export_every > 0 and step % args.export_every == 0:
+            Tensor.training = False
             print(f"--- export @ step {step} ---")
             export_artifacts(infer_model, outdir, step, num_docs=args.export_docs)
-            print(f"wrote: {(outdir/'reranker.safetensors').name}, {(outdir/'reranker.js').name}")
 
-    # Final export at end (handy)
+    # Export the last step only when it was not already emitted by the periodic cadence.
     Tensor.training = False
-    export_artifacts(infer_model, outdir, num_docs=args.export_docs)
+    if args.export_every <= 0 or args.steps % args.export_every != 0:
+        print(f"--- final export @ step {args.steps} ---")
+        export_artifacts(infer_model, outdir, args.steps, num_docs=args.export_docs)
     print("done.")
 
 if __name__ == "__main__":

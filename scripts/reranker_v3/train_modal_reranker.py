@@ -36,11 +36,16 @@ def train_remote(
         batch_size: int = 8,
         neg_samp: int = 199,
         export_every: int = 100,
-        export_docs: int = 1000,
+        export_docs: int = 64,
+        val_every: int = 100,
+        val_groups: int = 24,
+        val_docs: int = 200,
+        val_batch_size: int = 8,
         lr: float = 1e-4,
         wd: float = 1e-2,
         grad_clip: float = 5.0,
         seed: int = 0,
+        smoke_tests: bool = False,
 ):
     os.makedirs("/out", exist_ok=True)
 
@@ -57,7 +62,10 @@ def train_remote(
     print("Artifacts will be written to /out and committed when reranker.safetensors changes.")
 
     safepath = "/out/reranker.safetensors"
-    last_mtime = 0.0
+    try:
+        last_mtime = os.stat(safepath).st_mtime
+    except FileNotFoundError:
+        last_mtime = 0.0
 
     def maybe_commit(force: bool = False):
         nonlocal last_mtime
@@ -103,45 +111,48 @@ def train_remote(
     env["WEBGPU_PATH"] = pick
     print("WEBGPU_PATH =", pick)
 
-    print("=== webgpu smoke test ===")
-    smoke = "\n".join([
-        "import os, ctypes, platform",
-        "pick = os.environ['WEBGPU_PATH']",
-        "print('platform.system  =', platform.system())",
-        "print('platform.machine =', platform.machine())",
-        "print('WEBGPU_PATH      =', pick)",
-        # don't accidentally try to load a dylib on linux
-        "if platform.system().lower() == 'linux':",
-        "  assert pick.endswith('.so'), f'expected .so on Linux, got {pick}'",
-        "os.environ.setdefault('WEBGPU_BACKEND', 'Null')",
-        "ctypes.CDLL(pick)",
-        "print('CDLL load: OK')",
-        "from tinygrad.device import Device",
-        "from tinygrad import Tensor",
-        "Device.DEFAULT = 'WEBGPU'",
-        "x = (Tensor.randn(4,4) @ Tensor.randn(4,4)).realize()",
-        "print('tinygrad WEBGPU realize: OK', x.shape)",
-    ])
-    subprocess.run([sys.executable, "-u", "-c", smoke], env=env, check=True)
+    if smoke_tests:
+        print("=== webgpu smoke test ===")
+        smoke = "\n".join([
+            "import os, ctypes, platform",
+            "pick = os.environ['WEBGPU_PATH']",
+            "print('platform.system  =', platform.system())",
+            "print('platform.machine =', platform.machine())",
+            "print('WEBGPU_PATH      =', pick)",
+            # don't accidentally try to load a dylib on linux
+            "if platform.system().lower() == 'linux':",
+            "  assert pick.endswith('.so'), f'expected .so on Linux, got {pick}'",
+            "os.environ.setdefault('WEBGPU_BACKEND', 'Null')",
+            "ctypes.CDLL(pick)",
+            "print('CDLL load: OK')",
+            "from tinygrad.device import Device",
+            "from tinygrad import Tensor",
+            "Device.DEFAULT = 'WEBGPU'",
+            "x = (Tensor.randn(4,4) @ Tensor.randn(4,4)).realize()",
+            "print('tinygrad WEBGPU realize: OK', x.shape)",
+        ])
+        subprocess.run([sys.executable, "-u", "-c", smoke], env=env, check=True)
 
-    print("=== nvidia-smi ===")
-    subprocess.run(["bash", "-lc", "nvidia-smi"], check=False)
+        print("=== nvidia-smi ===")
+        subprocess.run(["bash", "-lc", "nvidia-smi"], check=False)
 
-    print("=== tinygrad smoke test ===")
-    subprocess.run(
-        [sys.executable, "-u", "-c",
-         "import os; "
-         "from tinygrad.device import Device; "
-         "from tinygrad import Tensor; "
-         "print('DEVICE env =', os.environ.get('DEVICE')); "
-         "print('Device.DEFAULT (before) =', Device.DEFAULT); "
-         "Device.DEFAULT = os.environ.get('DEVICE','CUDA'); "
-         "print('Device.DEFAULT (after) =', Device.DEFAULT); "
-         "x=Tensor.randn(1024,1024); y=(x@x).realize(); "
-         "print('ok, realized')"],
-        env=env,
-        check=True,
-    )
+        print("=== tinygrad smoke test ===")
+        subprocess.run(
+            [sys.executable, "-u", "-c",
+             "import os; "
+             "from tinygrad.device import Device; "
+             "from tinygrad import Tensor; "
+             "print('DEVICE env =', os.environ.get('DEVICE')); "
+             "print('Device.DEFAULT (before) =', Device.DEFAULT); "
+             "Device.DEFAULT = os.environ.get('DEVICE','CUDA'); "
+             "print('Device.DEFAULT (after) =', Device.DEFAULT); "
+             "x=Tensor.randn(1024,1024); y=(x@x).realize(); "
+             "print('ok, realized')"],
+            env=env,
+            check=True,
+        )
+    else:
+        print("Skipping smoke tests (pass --smoke-tests to enable).")
 
     cmd = [
         sys.executable, "-u", "/workspace/train_reranker.py",
@@ -150,6 +161,10 @@ def train_remote(
         "--neg-samp", str(neg_samp),
         "--export-every", str(export_every),
         "--export-docs", str(export_docs),
+        "--val-every", str(val_every),
+        "--val-groups", str(val_groups),
+        "--val-docs", str(val_docs),
+        "--val-batch-size", str(val_batch_size),
         "--lr", str(lr),
         "--wd", str(wd),
         "--grad-clip", str(grad_clip),
@@ -186,6 +201,15 @@ def train_remote(
 @app.local_entrypoint()
 def main(
     steps: int = 20_000,
+    batch_size: int = 8,
+    neg_samp: int = 199,
+    export_every: int = 100,
+    export_docs: int = 64,
+    val_every: int = 100,
+    val_groups: int = 24,
+    val_docs: int = 200,
+    val_batch_size: int = 8,
+    smoke_tests: bool = False,
     upload_ts: str = "",
     upload_vs: str = "",
     run: bool = True,
@@ -198,4 +222,15 @@ def main(
         upload_data_file.remote("so_vs_wfa.txt", p.read_bytes())
 
     if run:
-        train_remote.remote(steps=steps)
+        train_remote.remote(
+            steps=steps,
+            batch_size=batch_size,
+            neg_samp=neg_samp,
+            export_every=export_every,
+            export_docs=export_docs,
+            val_every=val_every,
+            val_groups=val_groups,
+            val_docs=val_docs,
+            val_batch_size=val_batch_size,
+            smoke_tests=smoke_tests,
+        )

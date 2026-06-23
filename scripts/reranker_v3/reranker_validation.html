@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tidyparse WebGPU Reranker Validation</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body { font: 14px/1.45 system-ui, -apple-system, sans-serif; margin: 18px; max-width: 1100px; }
+        h2 { margin-bottom: 8px; }
+        .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+        progress { width: min(680px, 80vw); height: 18px; }
+        button, select { font: inherit; padding: 5px 9px; }
+        pre {
+            background: color-mix(in srgb, Canvas 92%, CanvasText 8%);
+            padding: 14px;
+            border-radius: 8px;
+            overflow: auto;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            line-height: 1.5;
+        }
+        .muted { opacity: 0.72; }
+        #casePanel[hidden] { display: none; }
+    </style>
+</head>
+<body>
+<h2>Tidyparse WebGPU Reranker Validation</h2>
+<div class="row"><b>Status:</b> <span id="status">idle</span></div>
+<div class="row">
+    <progress id="progress" value="0" max="100"></progress>
+    <span id="progressText">0 / 100</span>
+    <button id="runButton" type="button" disabled>Run validation again</button>
+</div>
+<p class="muted">Scores the first 100 non-empty query groups in <code>so_vs_wfa.txt</code>. The first document in each group is the positive.</p>
+<pre id="summary">Preparing validation…</pre>
+
+<section id="casePanel" hidden>
+    <div class="row">
+        <b>Inspect instance:</b>
+        <select id="caseSelect"></select>
+    </div>
+    <pre id="caseOutput"></pre>
+</section>
+
+<script type="module">
+    const MODEL_JS_URL = "./reranker_300.js";
+    const WEIGHTS_URL = "./reranker_300.safetensors";
+    const VALIDATION_URL = "./so_vs_wfa.txt";
+    const MAX_GROUPS = 100;
+
+    // Must match train_reranker.py.
+    const MAX_LEN_Q = 100;
+    const MAX_LEN_D = 110;
+    const MAX_LEN = MAX_LEN_Q + MAX_LEN_D + 2;
+    const CLS_Q = 90;
+    const CLS_D = 91;
+
+    const statusEl = document.getElementById("status");
+    const progressEl = document.getElementById("progress");
+    const progressTextEl = document.getElementById("progressText");
+    const summaryEl = document.getElementById("summary");
+    const runButton = document.getElementById("runButton");
+    const casePanel = document.getElementById("casePanel");
+    const caseSelect = document.getElementById("caseSelect");
+    const caseOutput = document.getElementById("caseOutput");
+
+    let device = null;
+    let net = null;
+    let modelInfo = null;
+    let validationGroups = [];
+    let validationResults = [];
+    let setupMs = 0;
+    let running = false;
+
+    function assert(condition, message) {
+        if (!condition) throw new Error(message);
+    }
+
+    async function fetchChecked(url, kind) {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) {
+            throw new Error(`Could not load ${kind} (${response.status} ${response.statusText}): ${url}`);
+        }
+        return response;
+    }
+
+    function extractBufferSize(source, name) {
+        const match = source.match(new RegExp(
+            `const\\s+${name}\\s*=\\s*createEmptyBuf\\(device,\\s*(\\d+)\\)`
+        ));
+        if (!match) throw new Error(`Could not infer ${name} size from ${MODEL_JS_URL}`);
+        return Number(match[1]);
+    }
+
+    function inspectGeneratedModule(source) {
+        if (source.includes("\n// ...\n")) {
+            throw new Error(
+                "Generated JS is truncated: it contains a literal `// ...` where the WGSL declarations must be. " +
+                "Regenerate it with the patched train_reranker.py; do not patch the generated JS by hand."
+            );
+        }
+
+        const kernelListMatch = source.match(/const\s+kernels\s*=\s*\[([^\]]*)\]\s*;/s);
+        if (!kernelListMatch) throw new Error("Generated JS has no kernel list.");
+
+        const kernelRefs = kernelListMatch[1].match(/\b[A-Za-z_$][\w$]*\b/g) ?? [];
+        const declaredKernels = new Set(
+            Array.from(source.matchAll(/const\s+([A-Za-z_$][\w$]*)\s*=\s*`/g), m => m[1])
+        );
+        const missingKernels = [...new Set(kernelRefs.filter(name => !declaredKernels.has(name)))];
+        if (!kernelRefs.length || !declaredKernels.size || missingKernels.length) {
+            throw new Error(
+                `Generated JS is missing ${missingKernels.length || "all"} WGSL declarations` +
+                (missingKernels.length ? `: ${missingKernels.slice(0, 8).join(", ")}` : ".")
+            );
+        }
+
+        const weightNames = Array.from(
+            source.matchAll(/metadata\[['"]([^'"]+)['"]\]/g), m => m[1]
+        );
+        if (!weightNames.length) {
+            throw new Error(
+                "Generated JS has zero safetensor-backed weight buffers. The WebGPU trace was made from a fresh " +
+                "unloaded model; load and realize the trained state before calling export_model()."
+            );
+        }
+
+        const input0Bytes = extractBufferSize(source, "input0");
+        const input1Bytes = extractBufferSize(source, "input1");
+        const input2Bytes = extractBufferSize(source, "input2");
+        const input3Bytes = extractBufferSize(source, "input3");
+        const output0Bytes = extractBufferSize(source, "output0");
+
+        assert(input0Bytes === MAX_LEN * 4, `input0 has ${input0Bytes} bytes; expected ${MAX_LEN * 4}`);
+        assert(input1Bytes === MAX_LEN * 4, `input1 has ${input1Bytes} bytes; expected ${MAX_LEN * 4}`);
+        assert(input2Bytes === input3Bytes, "Document ID and alignment input sizes differ.");
+        assert(input2Bytes % (MAX_LEN * 4) === 0, "Document input size is not a whole number of rows.");
+
+        const modelDocs = input2Bytes / (MAX_LEN * 4);
+        assert(Number.isInteger(modelDocs) && modelDocs > 0, `Invalid exported document count: ${modelDocs}`);
+        assert(output0Bytes === modelDocs * 4,
+            `Output has ${output0Bytes} bytes; expected ${modelDocs * 4} for ${modelDocs} scores.`);
+
+        const allocationSizes = Array.from(
+            source.matchAll(/create(?:Empty|Weight)Buf\(device,\s*(\d+)/g), m => Number(m[1])
+        );
+        const maxBufferBytes = Math.max(output0Bytes, ...allocationSizes);
+        const usesF16 = /\bf16\b/.test(source);
+
+        return {
+            modelDocs,
+            kernelCalls: kernelRefs.length,
+            uniqueKernels: declaredKernels.size,
+            weightNames,
+            maxBufferBytes,
+            usesF16,
+        };
+    }
+
+    function parseSafetensorMetadata(buffer) {
+        assert(buffer.byteLength >= 8, "Safetensors file is shorter than its 8-byte header.");
+        const view = new DataView(buffer);
+        const headerBig = view.getBigUint64(0, true);
+        assert(headerBig <= BigInt(Number.MAX_SAFE_INTEGER), "Safetensors header is too large.");
+        const headerLength = Number(headerBig);
+        const dataStart = 8 + headerLength;
+        assert(dataStart <= buffer.byteLength, "Safetensors header extends past the end of the file.");
+
+        let metadata;
+        try {
+            metadata = JSON.parse(new TextDecoder("utf-8").decode(new Uint8Array(buffer, 8, headerLength)));
+        } catch (error) {
+            throw new Error(`Invalid safetensors metadata JSON: ${error.message}`);
+        }
+
+        for (const name of modelInfo.weightNames) {
+            const entry = metadata[name];
+            if (!entry) throw new Error(`Safetensors file is missing weight: ${name}`);
+            const offsets = entry.data_offsets;
+            assert(Array.isArray(offsets) && offsets.length === 2, `Bad data offsets for weight: ${name}`);
+            assert(dataStart + offsets[1] <= buffer.byteLength, `Weight extends past EOF: ${name}`);
+        }
+
+        const fileWeights = new Set(Object.keys(metadata).filter(name => name !== "__metadata__"));
+        const moduleWeights = new Set(modelInfo.weightNames);
+        const missing = [...moduleWeights].filter(name => !fileWeights.has(name));
+        const extra = [...fileWeights].filter(name => !moduleWeights.has(name));
+        if (missing.length || extra.length || modelInfo.weightNames.length !== fileWeights.size) {
+            throw new Error(
+                `JS/weights mismatch: module references ${modelInfo.weightNames.length} tensors, file contains ${fileWeights.size}; ` +
+                `missing=${missing.slice(0, 5).join(", ") || "none"}, extra=${extra.slice(0, 5).join(", ") || "none"}`
+            );
+        }
+        return metadata;
+    }
+
+    async function initWebGPU() {
+        if (!navigator.gpu) throw new Error("WebGPU is unavailable. Use a current browser with WebGPU enabled.");
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+        if (!adapter) throw new Error("No WebGPU adapter is available.");
+
+        if (modelInfo.maxBufferBytes > adapter.limits.maxBufferSize) {
+            throw new Error(
+                `Model needs a ${modelInfo.maxBufferBytes}-byte buffer, but this adapter allows only ` +
+                `${adapter.limits.maxBufferSize} bytes.`
+            );
+        }
+        if (modelInfo.maxBufferBytes > adapter.limits.maxStorageBufferBindingSize) {
+            throw new Error(
+                `Model needs a ${modelInfo.maxBufferBytes}-byte storage binding, but this adapter allows only ` +
+                `${adapter.limits.maxStorageBufferBindingSize} bytes.`
+            );
+        }
+
+        const requiredFeatures = [];
+        if (modelInfo.usesF16) {
+            if (!adapter.features.has("shader-f16")) throw new Error("The generated model uses f16, but this adapter lacks shader-f16.");
+            requiredFeatures.push("shader-f16");
+        }
+
+        const requestedLimits = {
+            maxBufferSize: modelInfo.maxBufferBytes,
+            maxStorageBufferBindingSize: modelInfo.maxBufferBytes,
+        };
+        const gpuDevice = await adapter.requestDevice({ requiredFeatures, requiredLimits: requestedLimits });
+
+        gpuDevice.addEventListener("uncapturederror", event => {
+            statusEl.textContent = "WebGPU validation error";
+            summaryEl.textContent += `\n\nUncaptured WebGPU error: ${event.error?.message ?? event.error}`;
+        });
+        gpuDevice.lost.then(info => {
+            statusEl.textContent = "WebGPU device lost";
+            summaryEl.textContent += `\n\nWebGPU device lost: ${info.message || info.reason}`;
+        });
+        return gpuDevice;
+    }
+
+    function parseValidationGroups(text) {
+        const normalized = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+        const groups = [];
+        let lines = [];
+
+        const flush = () => {
+            if (lines.length) {
+                const [query, ...docs] = lines;
+                groups.push({ query, docs });
+                lines = [];
+            }
+        };
+
+        for (const line of normalized.split("\n")) {
+            if (line.trim() === "") flush();
+            else lines.push(line);
+        }
+        flush();
+        return groups;
+    }
+
+    // Costs and backtrace order match train_reranker.py: insertion=1, deletion=1, substitution=2.
+    function levAlign(query, doc) {
+        const m = query.length;
+        const n = doc.length;
+        const width = n + 1;
+        const dp = new Uint16Array((m + 1) * (n + 1));
+
+        for (let i = 0; i <= m; i++) dp[i * width] = i;
+        for (let j = 0; j <= n; j++) dp[j] = j;
+
+        for (let i = 1; i <= m; i++) {
+            const qi = query.charCodeAt(i - 1);
+            const row = i * width;
+            const previousRow = (i - 1) * width;
+            for (let j = 1; j <= n; j++) {
+                const substitutionCost = qi === doc.charCodeAt(j - 1) ? 0 : 2;
+                const deletion = dp[previousRow + j] + 1;
+                const insertion = dp[row + j - 1] + 1;
+                const substitution = dp[previousRow + j - 1] + substitutionCost;
+                dp[row + j] = Math.min(deletion, insertion, substitution);
+            }
+        }
+
+        const alignment = new Int32Array(n);
+        let i = m;
+        let j = n;
+        while (i > 0 || j > 0) {
+            const current = dp[i * width + j];
+            if (i > 0 && j > 0) {
+                const substitutionCost = query.charCodeAt(i - 1) === doc.charCodeAt(j - 1) ? 0 : 2;
+                if (current === dp[(i - 1) * width + j - 1] + substitutionCost) {
+                    alignment[j - 1] = substitutionCost === 0 ? 0 : 2;
+                    i--;
+                    j--;
+                    continue;
+                }
+            }
+            if (j > 0 && (i === 0 || current === dp[i * width + j - 1] + 1)) {
+                alignment[j - 1] = 1;
+                j--;
+                continue;
+            }
+            i--;
+        }
+        return alignment;
+    }
+
+    function encodeString(text, maxLength) {
+        const ids = new Int32Array(maxLength);
+        const truncated = text.slice(0, maxLength);
+        for (let i = 0; i < truncated.length; i++) {
+            const id = truncated.charCodeAt(i) - 33;
+            ids[i] = id >= 0 && id < 94 ? id : 0;
+        }
+        return ids;
+    }
+
+    function buildQueryBuffers(query) {
+        const queryIds = encodeString(query, MAX_LEN_Q);
+        const inputIds = new Int32Array(MAX_LEN);
+        inputIds[0] = CLS_Q;
+        inputIds.set(queryIds, 1);
+        inputIds[MAX_LEN_Q + 1] = CLS_D;
+        return { inputIds, alignmentIds: new Int32Array(MAX_LEN), queryIds };
+    }
+
+    function writeDocumentRow(inputIds, alignmentIds, row, queryIds, query, doc) {
+        const offset = row * MAX_LEN;
+        inputIds[offset] = CLS_Q;
+        inputIds.set(queryIds, offset + 1);
+        inputIds[offset + MAX_LEN_Q + 1] = CLS_D;
+        inputIds.set(encodeString(doc, MAX_LEN_D), offset + MAX_LEN_Q + 2);
+
+        const queryTruncated = query.slice(0, MAX_LEN_Q);
+        const docTruncated = doc.slice(0, MAX_LEN_D);
+        const docAlignment = levAlign(queryTruncated, docTruncated);
+        const fullAlignment = new Int32Array(MAX_LEN);
+        fullAlignment.set(docAlignment, MAX_LEN_Q + 2);
+        alignmentIds.set(fullAlignment, offset);
+    }
+
+    function unpackScores(result) {
+        if (Array.isArray(result)) {
+            if (result.length === 1 && ArrayBuffer.isView(result[0])) return result[0];
+            if (result.length === 1 && Array.isArray(result[0])) return unpackScores(result[0]);
+            if (result.length && typeof result[0] === "number") return Float32Array.from(result);
+        }
+        if (ArrayBuffer.isView(result)) return result;
+        throw new Error("Could not unpack the generated model output into a score array.");
+    }
+
+    async function scoreDocuments(query, docs) {
+        const { inputIds: queryIdsInput, alignmentIds: queryAlignment, queryIds } = buildQueryBuffers(query);
+        const allScores = new Float32Array(docs.length);
+        const docIdsInput = new Int32Array(modelInfo.modelDocs * MAX_LEN);
+        const docAlignment = new Int32Array(modelInfo.modelDocs * MAX_LEN);
+
+        for (let base = 0; base < docs.length; base += modelInfo.modelDocs) {
+            const count = Math.min(modelInfo.modelDocs, docs.length - base);
+            for (let row = 0; row < modelInfo.modelDocs; row++) {
+                writeDocumentRow(
+                    docIdsInput,
+                    docAlignment,
+                    row,
+                    queryIds,
+                    query,
+                    row < count ? docs[base + row] : ""
+                );
+            }
+
+            const result = await net(queryIdsInput, queryAlignment, docIdsInput, docAlignment);
+            const chunkScores = unpackScores(result);
+            assert(chunkScores.length === modelInfo.modelDocs,
+                `Expected ${modelInfo.modelDocs} scores, received ${chunkScores.length}.`);
+            allScores.set(chunkScores.subarray(0, count), base);
+        }
+        return allScores;
+    }
+
+    function nextPaint() {
+        return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    }
+
+    function formatPercent(value) {
+        return `${(value * 100).toFixed(2)}%`;
+    }
+
+    function formatLiveSummary(done, total, aggregate, elapsedMs) {
+        const hitRate = done ? aggregate.hit10 / done : 0;
+        const precision10 = aggregate.p10Slots ? aggregate.hit10 / aggregate.p10Slots : 0;
+        return [
+            "====== VALIDATION IN PROGRESS ======",
+            `Instances completed : ${done} / ${total}`,
+            `Documents scored    : ${aggregate.docs}`,
+            `Positive in top 10  : ${formatPercent(hitRate)}`,
+            `Precision@10        : ${precision10.toFixed(4)}`,
+            `Elapsed             : ${(elapsedMs / 1000).toFixed(1)} s`,
+        ].join("\n");
+    }
+
+    function formatFinalSummary(aggregate, elapsedMs, count) {
+        const docCounts = validationResults.map(result => result.docs.length);
+        const precision10 = aggregate.p10Slots ? aggregate.hit10 / aggregate.p10Slots : 0;
+        const hitRate10 = aggregate.hit10 / count;
+        const top1 = aggregate.top1 / count;
+        const mrr = aggregate.rr / count;
+        const meanRank = aggregate.rankSum / count;
+        const avgMs = elapsedMs / count;
+        const docsPerSecond = aggregate.docs / (elapsedMs / 1000);
+
+        return [
+            "====== WEBGPU VALIDATION RESULTS ======",
+            `Dataset             : ${VALIDATION_URL}`,
+            `Instances evaluated : ${count}`,
+            `Documents scored    : ${aggregate.docs}`,
+            `Docs per instance   : ${Math.min(...docCounts)}–${Math.max(...docCounts)}`,
+            `Model docs/call     : ${modelInfo.modelDocs}`,
+            "",
+            `Precision@10        : ${precision10.toFixed(4)}  (${aggregate.hit10} relevant / ${aggregate.p10Slots} top-k slots)`,
+            `Positive in top 10  : ${formatPercent(hitRate10)}  (${aggregate.hit10}/${count})`,
+            `Top-1 accuracy      : ${formatPercent(top1)}`,
+            `MRR                 : ${mrr.toFixed(4)}`,
+            `Mean positive rank  : ${meanRank.toFixed(2)}`,
+            "",
+            `Validation latency  : ${(elapsedMs / 1000).toFixed(2)} s total; ${avgMs.toFixed(2)} ms/instance`,
+            `Throughput          : ${docsPerSecond.toFixed(1)} documents/s`,
+            `Model setup         : ${setupMs.toFixed(2)} ms`,
+            "",
+            `Generated module    : ${modelInfo.kernelCalls} calls, ${modelInfo.uniqueKernels} unique WGSL kernels, ` +
+            `${modelInfo.weightNames.length} external weights`,
+            "",
+            "Metric note: each validation group has one relevant document (docs[0]). Therefore strict Precision@10",
+            "is relevant documents retrieved divided by the number of top-10 slots; Positive-in-top-10 is the",
+            "corresponding per-query hit rate.",
+        ].join("\n");
+    }
+
+    function renderCase(index) {
+        const result = validationResults[index];
+        if (!result) return;
+
+        const lines = [
+            `====== INSTANCE ${index + 1} / ${validationResults.length} ======`,
+            `Query             : ${result.query}`,
+            `Documents         : ${result.docs.length}`,
+            `Positive rank     : ${result.rank}`,
+            `Positive score    : ${result.scores[0].toFixed(6)}`,
+            `Latency           : ${result.elapsedMs.toFixed(2)} ms`,
+            "",
+            "====== TOP 10 DOCUMENTS & SCORES ======",
+        ];
+
+        const top = result.order.slice(0, 10);
+        top.forEach((docIndex, rankIndex) => {
+            const marker = docIndex === 0 ? " ★ POSITIVE" : "";
+            lines.push(
+                `${String(rankIndex + 1).padStart(2)}. [${result.scores[docIndex].toFixed(6).padStart(12)}]` +
+                `${marker}  ${result.docs[docIndex]}`
+            );
+        });
+
+        if (!top.includes(0)) {
+            lines.push("", "====== POSITIVE DOCUMENT ======", result.docs[0]);
+        }
+        caseOutput.textContent = lines.join("\n");
+    }
+
+    function populateCaseInspector() {
+        caseSelect.replaceChildren();
+        validationResults.forEach((result, index) => {
+            const option = document.createElement("option");
+            option.value = String(index);
+            option.textContent = `#${index + 1}: positive rank ${result.rank}/${result.docs.length}`;
+            caseSelect.append(option);
+        });
+        casePanel.hidden = false;
+        caseSelect.value = "0";
+        renderCase(0);
+    }
+
+    async function runValidation() {
+        if (running) return;
+        running = true;
+        runButton.disabled = true;
+        casePanel.hidden = true;
+        validationResults = [];
+
+        const groups = validationGroups.filter(group => group.docs.length > 0).slice(0, MAX_GROUPS);
+        assert(groups.length === MAX_GROUPS,
+            `Validation file has only ${groups.length} groups with documents; ${MAX_GROUPS} are required.`);
+
+        progressEl.max = groups.length;
+        progressEl.value = 0;
+        progressTextEl.textContent = `0 / ${groups.length}`;
+        statusEl.textContent = "Running WebGPU validation…";
+
+        const aggregate = { docs: 0, hit10: 0, top1: 0, rr: 0, rankSum: 0, p10Slots: 0 };
+        const validationStart = performance.now();
+
+        try {
+            for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+                const { query, docs } = groups[groupIndex];
+                const instanceStart = performance.now();
+                const scores = await scoreDocuments(query, docs);
+                const instanceElapsed = performance.now() - instanceStart;
+
+                const nonFiniteIndex = Array.from(scores).findIndex(score => !Number.isFinite(score));
+                if (nonFiniteIndex !== -1) {
+                    throw new Error(`Non-finite score at instance ${groupIndex + 1}, document ${nonFiniteIndex + 1}.`);
+                }
+
+                const positiveScore = scores[0];
+                let rank = 1;
+                for (let i = 1; i < scores.length; i++) if (scores[i] > positiveScore) rank++;
+
+                const order = Array.from({ length: docs.length }, (_, i) => i)
+                    .sort((a, b) => (scores[b] - scores[a]) || (a - b));
+                const cutoff = Math.min(10, docs.length);
+                const hit10 = rank <= cutoff;
+
+                validationResults.push({ query, docs, scores, order, rank, elapsedMs: instanceElapsed });
+                aggregate.docs += docs.length;
+                aggregate.hit10 += Number(hit10);
+                aggregate.top1 += Number(rank === 1);
+                aggregate.rr += 1 / rank;
+                aggregate.rankSum += rank;
+                aggregate.p10Slots += cutoff;
+
+                const completed = groupIndex + 1;
+                const elapsed = performance.now() - validationStart;
+                progressEl.value = completed;
+                progressTextEl.textContent = `${completed} / ${groups.length}`;
+                statusEl.textContent = `Scored instance ${completed} of ${groups.length}`;
+                summaryEl.textContent = formatLiveSummary(completed, groups.length, aggregate, elapsed);
+                await nextPaint();
+            }
+
+            const elapsed = performance.now() - validationStart;
+            summaryEl.textContent = formatFinalSummary(aggregate, elapsed, groups.length);
+            populateCaseInspector();
+            statusEl.textContent = "Completed";
+        } finally {
+            running = false;
+            runButton.disabled = false;
+        }
+    }
+
+    async function main() {
+        statusEl.textContent = "Checking generated module…";
+        const sourceResponse = await fetchChecked(MODEL_JS_URL, "generated JavaScript module");
+        const source = await sourceResponse.text();
+        modelInfo = inspectGeneratedModule(source);
+
+        statusEl.textContent = "Loading validation strings…";
+        const validationResponse = await fetchChecked(VALIDATION_URL, "validation file");
+        validationGroups = parseValidationGroups(await validationResponse.text());
+
+        statusEl.textContent = "Loading and checking safetensors…";
+        const weightsResponse = await fetchChecked(WEIGHTS_URL, "safetensors weights");
+        const weightsBuffer = await weightsResponse.arrayBuffer();
+        parseSafetensorMetadata(weightsBuffer);
+
+        statusEl.textContent = "Requesting WebGPU device…";
+        device = await initWebGPU();
+
+        statusEl.textContent = "Importing generated module…";
+        const moduleUrl = new URL(MODEL_JS_URL, location.href);
+        moduleUrl.searchParams.set("validation", String(Date.now()));
+        const imported = await import(moduleUrl.href);
+        assert(imported.default?.setupNet, "Generated module does not export setupNet().");
+
+        statusEl.textContent = "Building WebGPU pipelines and loading weights…";
+        const setupStart = performance.now();
+        device.pushErrorScope("validation");
+        let setupError = null;
+        try {
+            net = await imported.default.setupNet(device, new Uint8Array(weightsBuffer));
+        } catch (error) {
+            setupError = error;
+        }
+        const gpuError = await device.popErrorScope();
+        if (setupError) throw setupError;
+        if (gpuError) throw new Error(`WebGPU setup failed: ${gpuError.message}`);
+        setupMs = performance.now() - setupStart;
+
+        runButton.disabled = false;
+        await runValidation();
+    }
+
+    caseSelect.addEventListener("change", () => renderCase(Number(caseSelect.value)));
+    runButton.addEventListener("click", () => {
+        runValidation().catch(showFatalError);
+    });
+
+    function showFatalError(error) {
+        running = false;
+        runButton.disabled = net == null;
+        statusEl.textContent = "Fatal error";
+        summaryEl.textContent = String(error?.stack || error);
+    }
+
+    main().catch(showFatalError);
+</script>
+</body>
+</html>
