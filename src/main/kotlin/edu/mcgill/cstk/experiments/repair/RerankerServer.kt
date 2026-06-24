@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 private const val PORT = 8000
-private const val RERANKER_MODEL_VERSION = "1100"
+private const val RERANKER_MODEL_VERSION = "2000"
 
 private val webRoot = "scripts/reranker_v3/"
 private val streams = LinkedBlockingQueue<HttpExchange>()
@@ -96,6 +96,10 @@ fun startRerankerServer() {
 
     createContext("/reranker_${RERANKER_MODEL_VERSION}.safetensors") { ex ->
       ex.sendFile(File(webRoot, "reranker_${RERANKER_MODEL_VERSION}.safetensors"), "application/octet-stream")
+    }
+
+    createContext("/reranker_${RERANKER_MODEL_VERSION}.q8.safetensors") { ex ->
+      ex.sendFile(File(webRoot, "reranker_${RERANKER_MODEL_VERSION}.q8.safetensors"), "application/octet-stream")
     }
 
     // Browser opens EventSource("/stream").

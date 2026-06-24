@@ -10,6 +10,15 @@ Fetch WebGPU artifacts:
 modal volume get ranker-artifacts reranker.safetensors . --force && modal volume get ranker-artifacts reranker.js . -- force
 ```
 
+Quantize the browser-transfer weights:
+
+```bash
+python3 quantize_safetensors.py reranker_2000.safetensors
+```
+
+This writes `reranker_2000.q8.safetensors`. The WebGPU kernels still run with
+f32 buffers; `reranker_server.html` expands the q8 transfer file during setup.
+
 Expected benchmark results:
 
 ```
