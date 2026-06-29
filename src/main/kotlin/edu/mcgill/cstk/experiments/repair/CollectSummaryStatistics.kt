@@ -28,7 +28,12 @@ import kotlin.time.Duration.Companion.seconds
 /*
 ./gradlew collectSummaryStats
  */
-fun main() {
+fun main(args: Array<String>) {
+  if (args.firstOrNull() == "benchmarkRefinedPDFA") {
+    benchmarkRefinedPDFAConstructions()
+    return
+  }
+
 //  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
 //  stackOverflowSnips().computeRawTokenFrequencies()
@@ -243,20 +248,200 @@ fun prepareRerankerDataset() {
     }
 }
 
-fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
+private fun readWfaBlocks(path: String, maxBlocks: Int? = null): List<List<String>> {
+  val blocks = ArrayList<List<String>>()
+
+  File(path).useLines { lines ->
+    val block = ArrayList<String>()
+
+    fun flush() {
+      if (block.isNotEmpty()) {
+        blocks.add(block.toList())
+        block.clear()
+      }
+    }
+
+    val iterator = lines.iterator()
+    while (iterator.hasNext() && (maxBlocks == null || blocks.size < maxBlocks)) {
+      val line = iterator.next()
+      if (line.isBlank()) flush()
+      else block.add(line)
+    }
+
+    if (maxBlocks == null || blocks.size < maxBlocks) flush()
+  }
+
+  return blocks
+}
+
+private fun decodeWfaLine(line: String): List<Σᐩ>? =
+  try { line.uncharify().tokenizeByWhitespace() } catch (_: Exception) { null }
+
+fun readWfaTrainingInstances(
+  path: String = "so_ts_wfa.txt",
+  maxBlocks: Int? = null,
+  maxCandidatesPerBlock: Int? = null
+): List<List<Σᐩ>> =
+  readWfaBlocks(path, maxBlocks).asSequence()
+    .filter { it.size >= 3 }
+    .flatMap { block ->
+      val candidates = block.drop(1)
+      (if (maxCandidatesPerBlock == null) candidates else candidates.take(maxCandidatesPerBlock)).asSequence()
+    }
+    .mapNotNull(::decodeWfaLine)
+    .toList()
+
+private fun readWfaValidationPositives(
+  path: String = "so_vs_wfa.txt",
+  maxBlocks: Int? = null
+): List<List<Σᐩ>> =
+  readWfaBlocks(path, maxBlocks).mapNotNull { block -> block.getOrNull(1)?.let(::decodeWfaLine) }
+
+private fun buildPDFADFA(cfg: CFG, history: Int): NFA {
   val h1 = cfg.toNederhofNFA(startSymbol = "START", historyDepth = history) { removeEpsilonsParallel() }
   println(h1.summary())
   val d1 = h1.determinize()
   println(d1.summary())
+  return d1
+}
 
-  val instances = File("so_ts_wfa.txt")
-    .readText().split(Regex("""\R\s*\R+""")).filter { it.isNotBlank() }.asSequence()
-    .mapNotNull { block ->
-      val lines = block.lines().filter { it.isNotBlank() }
-      if (lines.size < 3) { null } else { lines.drop(1).map { it.uncharify().tokenizeByWhitespace() } }
-    }.flatten().toList()
+fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
+  val d1 = buildPDFADFA(cfg, history)
+  val instances = readWfaTrainingInstances()
 
   return d1.trainDFAParallel(instances)
+}
+
+fun trainRefinedPDFA(
+  cfg: CFG = s2pg,
+  history: Int = 2,
+  contextDepth: Int = 2,
+  maxContexts: Int = 512,
+  minContextCount: Int = 2,
+  localWeight: Double = 0.50,
+  alpha: Double = DEFAULT_LIDSTONE_ALPHA,
+  trainingPath: String = "so_ts_wfa.txt"
+): WFA {
+  val d1 = buildPDFADFA(cfg, history)
+  val instances = readWfaTrainingInstances(trainingPath)
+  val baseline = d1.trainDFAParallel(instances, alpha = alpha)
+  val refined =
+    d1.refineWithTokenHistory(
+      data = instances,
+      contextDepth = contextDepth,
+      maxContexts = maxContexts,
+      minContextCount = minContextCount,
+      verbose = true
+    )
+
+  println("Refined PDFA summary: ${refined.summary()}")
+  val local = refined.dfa.trainDFAParallel(instances, alpha = alpha)
+  return refined.interpolateWithBackoff(local = local, backoff = baseline, localWeight = localWeight)
+}
+
+data class PDFARefinementConfig(
+  val name: String,
+  val contextDepth: Int,
+  val maxContexts: Int,
+  val minContextCount: Int,
+  val localWeight: Double = 0.50
+)
+
+data class PDFABenchmarkResult(
+  val name: String,
+  val meanPositiveLogProb: Double,
+  val meanImprovement: Double,
+  val finitePairs: Int,
+  val states: Int,
+  val transitions: Int,
+  val duration: Duration
+)
+
+private fun pairedImprovement(
+  baselineScores: List<Double>,
+  refinedScores: List<Double>
+): Pair<Double, Int> {
+  val deltas =
+    baselineScores.zip(refinedScores)
+      .mapNotNull { (base, refined) ->
+        if (base.isFinite() && refined.isFinite()) refined - base else null
+      }
+
+  return deltas.average() to deltas.size
+}
+
+fun benchmarkRefinedPDFAConstructions(
+  cfg: CFG = s2pg,
+  history: Int = 2,
+  trainingPath: String = "so_ts_wfa.txt",
+  validationPath: String = "so_vs_wfa.txt",
+  maxTrainingBlocks: Int? = 200,
+  maxCandidatesPerBlock: Int? = 32,
+  maxValidationBlocks: Int? = 200,
+  configs: List<PDFARefinementConfig> = listOf(
+    PDFARefinementConfig("ctx1-top512-mix25", contextDepth = 1, maxContexts = 512, minContextCount = 2, localWeight = 0.25),
+    PDFARefinementConfig("ctx2-top512-mix10", contextDepth = 2, maxContexts = 512, minContextCount = 2, localWeight = 0.10),
+    PDFARefinementConfig("ctx2-top512-mix25", contextDepth = 2, maxContexts = 512, minContextCount = 2, localWeight = 0.25),
+    PDFARefinementConfig("ctx2-top512-mix50", contextDepth = 2, maxContexts = 512, minContextCount = 2, localWeight = 0.50),
+    PDFARefinementConfig("ctx2-top512-mix75", contextDepth = 2, maxContexts = 512, minContextCount = 2, localWeight = 0.75),
+    PDFARefinementConfig("ctx2-top512-local", contextDepth = 2, maxContexts = 512, minContextCount = 2, localWeight = 1.00),
+    PDFARefinementConfig("ctx2-top2048-mix10", contextDepth = 2, maxContexts = 2048, minContextCount = 2, localWeight = 0.10),
+    PDFARefinementConfig("ctx2-top2048-mix25", contextDepth = 2, maxContexts = 2048, minContextCount = 2, localWeight = 0.25),
+    PDFARefinementConfig("ctx3-top2048-mix10", contextDepth = 3, maxContexts = 2048, minContextCount = 2, localWeight = 0.10),
+    PDFARefinementConfig("ctx3-top2048-mix25", contextDepth = 3, maxContexts = 2048, minContextCount = 2, localWeight = 0.25)
+  )
+): List<PDFABenchmarkResult> {
+  val instances = readWfaTrainingInstances(trainingPath, maxTrainingBlocks, maxCandidatesPerBlock)
+  val positives = readWfaValidationPositives(validationPath, maxValidationBlocks)
+  require(instances.isNotEmpty()) { "No training instances found in $trainingPath" }
+  require(positives.isNotEmpty()) { "No validation positives found in $validationPath" }
+
+  val d1 = buildPDFADFA(cfg, history)
+  val baseline = measureTimedValue { d1.trainDFAParallel(instances, reportEvery = 0) }
+  val baselineScores = positives.map { baseline.value.scoreTokens(it) }
+  val finiteBaseline = baselineScores.filter { it.isFinite() }
+  val baselineMean = finiteBaseline.average()
+
+  println(
+    "baseline trainPDFA: meanPositiveLogProb=$baselineMean, " +
+        "finite=${finiteBaseline.size}/${positives.size}, duration=${baseline.duration}"
+  )
+
+  return configs.map { config ->
+    val timed = measureTimedValue {
+      val refined =
+        d1.refineWithTokenHistory(
+          data = instances,
+          contextDepth = config.contextDepth,
+          maxContexts = config.maxContexts,
+          minContextCount = config.minContextCount,
+          verbose = true
+        )
+      refined to refined.dfa.trainDFAParallel(instances, reportEvery = 0)
+    }
+
+    val (refined, localWfa) = timed.value
+    val wfa = refined.interpolateWithBackoff(localWfa, baseline.value, config.localWeight)
+    val refinedScores = positives.map { wfa.scoreTokens(it) }
+    val finiteRefined = refinedScores.filter { it.isFinite() }
+    val (meanImprovement, finitePairs) = pairedImprovement(baselineScores, refinedScores)
+
+    PDFABenchmarkResult(
+      name = config.name,
+      meanPositiveLogProb = finiteRefined.average(),
+      meanImprovement = meanImprovement,
+      finitePairs = finitePairs,
+      states = refined.dfa.allStates.size,
+      transitions = refined.dfa.transitions.values.sumOf { it.size },
+      duration = timed.duration
+    ).also {
+      println(
+        "${it.name}: meanPositiveLogProb=${it.meanPositiveLogProb}, " +
+            "meanImprovement=${it.meanImprovement}, finitePairs=${it.finitePairs}/${positives.size}, " +
+            "states=${it.states}, transitions=${it.transitions}, duration=${it.duration}"
+      )
+    }
+  }.sortedByDescending { it.meanImprovement }
 }
 
 fun evaluateRerankerMRR(path: String = "so_vs_wfa.txt", reportEvery: Int = 100) {
