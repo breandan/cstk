@@ -133,7 +133,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     val wdfaTime = TimeSource.Monotonic.markNow()
     val unrankedResults =
       (dfa?.decodeDFAWithWDFA(wdfa = pythonWDFA, timeout = timeout, dec = termDict) ?: emptyList())
-        .stream().map { it to it.scoreWithWDFA(false) }
+        .parallelStream().map { it to it.scoreWithWDFA(false) }
         .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
         .map { it.first.addNewLineIfMissing() }.distinct().toList()
         .also {
@@ -185,7 +185,6 @@ fun evaluateRegexRepairOnStackOverflow() {
         val rrt = rerankerTime.elapsedNow()
         println("WebGPU reranked ${rerankWindow.size}/${results.size}x${brokeStr.tokenizeByWhitespace().size} results in ${rrt.ms3()}")
         println("WGPU tok/ms = ${tokensPerMs3(rerankWindow.sumOf { it.tokenizeByWhitespace().size }, rrt)}")
-        println("LenvCPUmsvGPUms: ${brokeToks.size} , $cpuTime , $gpuTime")
       }
       .onEachIndexed { i, it ->
         if (it == fixedStr && webgpuRank == -1) {
