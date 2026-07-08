@@ -555,7 +555,7 @@ val sizeAndDistBalancedRepairsUnminimized: Sequence<Π4A<Σᐩ>> by lazy {
     }.filter { (broke, fixed, bc, oc, size) ->
       broke.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
           fixed.tokenizeByWhitespace().size in MIN_TOKENS until MAX_TOKENS &&
-          size.second == MAX_RADIUS
+          size.second <= MAX_RADIUS
     }.toList()
     .groupBy { it.π5 }.let { map ->
       val minSize = map.entries.minBy { it.value.size }
