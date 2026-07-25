@@ -1,34 +1,47 @@
 package edu.mcgill.cstk.experiments.repair
 
 
-import ai.hypergraph.kaliningraph.*
+import ai.hypergraph.kaliningraph.ANSI_GREEN_BACKGROUND
+import ai.hypergraph.kaliningraph.ANSI_ORANGE_BACKGROUND
+import ai.hypergraph.kaliningraph.ANSI_RED_BACKGROUND
 import ai.hypergraph.kaliningraph.parsing.*
-import ai.hypergraph.kaliningraph.parsing.approximations.*
+import ai.hypergraph.kaliningraph.parsing.approximations.WFA
+import ai.hypergraph.kaliningraph.parsing.approximations.toNederhofNFA
 import ai.hypergraph.kaliningraph.repair.*
+import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
-import ai.hypergraph.markovian.concurrency.*
+import ai.hypergraph.markovian.concurrency.removeEpsilonsParallel
+import ai.hypergraph.markovian.concurrency.trainDFAParallel
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
-import edu.mcgill.cstk.experiments.probing.*
+import edu.mcgill.cstk.experiments.probing.MakeMore
+import edu.mcgill.cstk.experiments.probing.charify
+import edu.mcgill.cstk.experiments.probing.encodeToMakemore
+import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
-import java.util.stream.*
+import java.util.stream.Collectors
+import java.util.stream.Stream
 import kotlin.collections.filter
-import kotlin.math.*
-import kotlin.streams.*
-import kotlin.time.*
+import kotlin.math.absoluteValue
+import kotlin.math.floor
+import kotlin.streams.asStream
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
+import kotlin.time.measureTimedValue
 
 /*
 ./gradlew collectSummaryStats
  */
 fun main(args: Array<String>) {
+//  evaluateChatGPTRepairPrecision()
 //  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
 //  stackOverflowSnips().computeRawTokenFrequencies()
@@ -79,10 +92,10 @@ fun main(args: Array<String>) {
 //  println(pythonStatementCNFAllProds.terminals)
 //  File("python.cnf").writeText(s2pg.joinToString("\n") { it.pretty() })
 
-  sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
-    parallelPythonRepair(broke).take(10).forEach { println(it) }
-    println()
-  }
+//  sizeAndDistBalancedRepairsUnminimized.forEach { (broke, fixed) ->
+//    parallelPythonRepair(broke).take(10).forEach { println(it) }
+//    println()
+//  }
 }
 
 fun testTokenIndexing() = """
@@ -303,6 +316,8 @@ private fun buildPDFADFA(cfg: CFG, history: Int): NFA {
 fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
   val d1 = buildPDFADFA(cfg, history)
   val instances = readWfaTrainingInstances()
+
+  println("Training on ${instances.size} total repairs and ${instances.sumOf { it.size }}")
 
   return d1.trainDFAParallel(instances)
 }
