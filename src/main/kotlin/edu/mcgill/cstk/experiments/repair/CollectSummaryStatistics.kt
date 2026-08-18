@@ -4,6 +4,7 @@ package edu.mcgill.cstk.experiments.repair
 import ai.hypergraph.kaliningraph.ANSI_GREEN_BACKGROUND
 import ai.hypergraph.kaliningraph.ANSI_ORANGE_BACKGROUND
 import ai.hypergraph.kaliningraph.ANSI_RED_BACKGROUND
+import ai.hypergraph.kaliningraph.automata.latestLangEditDistance
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.parsing.approximations.WFA
 import ai.hypergraph.kaliningraph.parsing.approximations.toNederhofNFA
@@ -23,6 +24,8 @@ import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.*
 import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
+import java.io.OutputStream
+import java.io.PrintStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
@@ -41,6 +44,7 @@ import kotlin.time.measureTimedValue
 ./gradlew collectSummaryStats
  */
 fun main(args: Array<String>) {
+  measurePythonDFASlices()
 //  evaluateChatGPTRepairPrecision()
 //  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
@@ -96,6 +100,14 @@ fun main(args: Array<String>) {
 //    parallelPythonRepair(broke).take(10).forEach { println(it) }
 //    println()
 //  }
+}
+
+fun measurePythonDFASlices(): PackedDFA {
+  var t = TimeSource.Monotonic.markNow()
+  return pythonStatementCFG.minimalSliceDFA(20) { n, (q, delta) ->
+    println("n=$n |Q|=$q |δ|=$delta, t=${t.elapsedNow()}")
+    t = TimeSource.Monotonic.markNow()
+  }.also { println("packed ${it.summarize()}") }
 }
 
 fun testTokenIndexing() = """
