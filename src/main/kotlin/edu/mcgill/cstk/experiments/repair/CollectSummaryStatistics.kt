@@ -26,6 +26,7 @@ import org.apache.datasketches.frequencies.ErrorType
 import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
+import java.math.BigInteger
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
@@ -40,11 +41,17 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
+@Volatile
+private var dfaDecodeChecksum = 0L
+
 /*
 ./gradlew collectSummaryStats
  */
-fun main(args: Array<String>) {
-  measurePythonDFASlices()
+fun main() {
+  measurePythonDFAUnrankingDelay()
+//  measurePythonDFAEnumerationDelay()
+//  paginatePythonDFASlices()
+//  measurePythonDFASlices()
 //  evaluateChatGPTRepairPrecision()
 //  LangCache.prepopPythonLangCache()
 //  stackOverflowSnips().computeLengthDistributionStats()
@@ -102,10 +109,138 @@ fun main(args: Array<String>) {
 //  }
 }
 
+/**
+ * Samples global shortlex ranks in the windows 1, 2..10, 11..100, ... and separately reports
+ * DFA preparation, exact BigInteger unranking, and total non-output time for each bucket.
+ */
+fun measurePythonDFAUnrankingDelay(
+  maxSamplesPerBucket: Int = 1_000,
+  samplesToPrint: Int = 10,
+  randomSeed: Long = 0L,
+  output: PrintStream = System.out
+) {
+  require(maxSamplesPerBucket > 0)
+  require(samplesToPrint >= 0)
+  val index = pythonStatementCNFAllProds.shortlexDFAIndex()
+  val random = Random(randomSeed)
+  var lowerBound = BigInteger.ZERO
+  var upperBound = BigInteger.ONE
+
+  output.println(
+    "Measuring DFA shortlex BigInteger unranking " +
+      "(up to $maxSamplesPerBucket uniformly sampled solutions/bucket, seed=$randomSeed); " +
+      "interrupt to stop."
+  )
+  while (true) {
+    val firstRank = lowerBound + BigInteger.ONE
+    output.println("preparing bucketRanks=$firstRank..$upperBound")
+    output.flush()
+
+    val bucketStarted = TimeSource.Monotonic.markNow()
+    val dfaPrepStarted = TimeSource.Monotonic.markNow()
+    index.releaseBefore(lowerBound)
+    index.ensureRank(upperBound - BigInteger.ONE)
+    val dfaPrepTime = dfaPrepStarted.elapsedNow()
+    val ranks = sampleBigIntegerRange(
+      from = lowerBound,
+      until = upperBound,
+      limit = maxSamplesPerBucket,
+      random = random
+    )
+    val decoded = arrayOfNulls<List<String>>(ranks.size)
+    val decodeStarted = TimeSource.Monotonic.markNow()
+    for (sample in ranks.indices) decoded[sample] = index.unrank(ranks[sample])
+    val decodeTime = decodeStarted.elapsedNow()
+    var checksum = 1L
+    decoded.forEach { word -> checksum = checksum * 31 + word.hashCode() }
+    dfaDecodeChecksum = checksum
+    val totalTime = bucketStarted.elapsedNow()
+
+    output.println("bucketRanks=$firstRank..$upperBound samples=${ranks.size}")
+    repeat(minOf(samplesToPrint, ranks.size)) { sample ->
+      val rank = ranks[sample]
+      val word = decoded[sample]!!
+      output.println(
+        "rank=${rank + BigInteger.ONE} length=${word.size} ${word.joinToString(" ")}"
+      )
+    }
+    output.println("dfaPrepTime=$dfaPrepTime decodeTime=$decodeTime totalTime=$totalTime")
+    output.println()
+    output.flush()
+
+    lowerBound = upperBound
+    upperBound *= BigInteger.TEN
+  }
+}
+
+private fun sampleBigIntegerRange(from: BigInteger, until: BigInteger, limit: Int, random: Random): List<BigInteger> {
+  require(from.signum() >= 0 && from < until)
+  require(limit > 0)
+  val population = until - from
+  if (population <= BigInteger.valueOf(limit.toLong())) {
+    val result = ArrayList<BigInteger>(population.intValueExact())
+    var rank = from
+    while (rank < until) {
+      result += rank
+      rank += BigInteger.ONE
+    }
+    Collections.shuffle(result, random)
+    return result
+  }
+
+  // Rejection of duplicate draws gives a uniform ordered sample without replacement.
+  val result = LinkedHashSet<BigInteger>(limit * 4 / 3 + 1)
+  while (result.size < limit)
+    result += from + random.nextBigInteger(population)
+  return result.toMutableList().also { Collections.shuffle(it, random) }
+}
+
+private fun Random.nextBigInteger(bound: BigInteger): BigInteger {
+  require(bound.signum() > 0)
+  while (true) {
+    val candidate = BigInteger(bound.bitLength(), this)
+    if (candidate < bound) return candidate
+  }
+}
+
+fun paginatePythonDFASlices(
+  maxLength: Int = 20,
+  pageSize: Int = 20,
+  readCommand: () -> String? = { readlnOrNull() },
+  output: PrintStream = System.out
+) {
+  require(maxLength >= 1)
+  require(pageSize > 0)
+  var rank = BigInteger.ONE
+  var pageNumber = 1
+
+  output.println(
+    "Python statement solutions in DFA shortlex order " +
+      "(token lengths 1..$maxLength; ε is shown explicitly)"
+  )
+  for (page in pythonStatementCNFAllProds.wordsInShortlexOrder(maxLength).chunked(pageSize)) {
+    output.println("\nPage $pageNumber")
+    page.forEach { tokens ->
+      output.println("$rank. ${tokens.joinToString(" ")}")
+      rank += BigInteger.ONE
+    }
+
+    output.print("\n[Enter] next page, q [Enter] quit > ")
+    output.flush()
+    val command = readCommand()?.trim()
+    if (command == null || command.equals("q", ignoreCase = true) || command.equals("quit", ignoreCase = true)) {
+      output.println()
+      return
+    }
+    pageNumber++
+  }
+  output.println("\nNo more solutions.")
+}
+
 fun measurePythonDFASlices(): PackedDFA {
   var t = TimeSource.Monotonic.markNow()
-  return pythonStatementCFG.minimalSliceDFA(20) { n, (q, delta) ->
-    println("n=$n |Q|=$q |δ|=$delta, t=${t.elapsedNow()}")
+  return pythonStatementCNFAllProds.minimalSliceDFA(20) { n, (q, delta, languageSize) ->
+    println("n=$n |Q|=$q |δ|=$delta |L|=$languageSize, t=${t.elapsedNow()}")
     t = TimeSource.Monotonic.markNow()
   }.also { println("packed ${it.summarize()}") }
 }
