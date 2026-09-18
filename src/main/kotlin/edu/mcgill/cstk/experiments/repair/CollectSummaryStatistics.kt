@@ -27,8 +27,10 @@ import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
 import java.math.BigInteger
+import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Function
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -47,8 +49,10 @@ private var dfaDecodeChecksum = 0L
 /*
 ./gradlew collectSummaryStats
  */
-fun main() {
-  measurePythonDFAUnrankingDelay()
+fun main(args: Array<String>) {
+  trainPythonStatementPCFG()
+//  measureSingleLineStatementCoverage()
+//  measurePythonDFAUnrankingDelay()
 //  measurePythonDFAEnumerationDelay()
 //  paginatePythonDFASlices()
 //  measurePythonDFASlices()
@@ -107,6 +111,139 @@ fun main() {
 //    parallelPythonRepair(broke).take(10).forEach { println(it) }
 //    println()
 //  }
+}
+
+/**
+ * Tokenizes BIFI's original good snippets and parses their statements in parallel, using the
+ * coverage measurement's extraction. Uses one CNF parse per statement and add-one smoothing.
+ */
+fun trainPythonStatementPCFG(
+  datasetFile: File = File("src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"),
+  outputFile: File = File("python_statement_pcfg.txt")
+): File {
+  val grammar = pythonStatementCNFAllProds.sortedBy { it.pretty() }.toSet().freeze()
+  fun String.statements() = tokenizeByWhitespace()
+    .fold(mutableListOf(mutableListOf<String>())) { statements, token ->
+      when (token) {
+        "NEWLINE" -> statements.add(mutableListOf())
+        "INDENT", "DEDENT" -> Unit
+        else -> statements.last().add(token)
+      }
+      statements
+    }.filter { it.isNotEmpty() }
+
+  fun Tree.productions(): Sequence<Production> =
+    sequenceOf(root to if (children.isEmpty()) listOf(requireNotNull(terminal)) else children.map { it.root }) +
+      children.asSequence().flatMap { it.productions() }
+
+  val snippets = AtomicInteger(0)
+  val frequencies = Files.lines(datasetFile.toPath()).use { lines ->
+    lines.parallel().filter { it.trimStart().startsWith("\"code_string\":") }
+      .map { requireNotNull(Klaxon().parseJsonObject("{${it.trim().removeSuffix(",")}}".reader()).string("code_string")) }
+      .map { it.mapToUnquotedPythonTokens() }
+      .peek { if (snippets.incrementAndGet() % 10_000 == 0) println("Tokenized $snippets BIFI snippets") }
+      .flatMap { it.statements().stream() }
+      .collect(Collectors.groupingByConcurrent(Function.identity(), Collectors.counting()))
+  }
+  // Initialize the grammar's shared lazy indices before parallel parsing.
+  grammar.parseForest("NAME NEWLINE")
+  val parsed = AtomicLong(0)
+  val processed = AtomicInteger(0)
+  val counts = frequencies.entries.parallelStream()
+    .flatMap { (tokens, frequency) ->
+      // Extraction leaves tokens unchanged; adapt arrow spelling and restore NEWLINE for the grammar.
+      tokens.map { if (it == "->") "arrow" else it }.plus("NEWLINE").joinToString(" ")
+        .let { grammar.parseForest(it).firstOrNull { it.root == START_SYMBOL } }
+        .also { if (processed.incrementAndGet() % 1_000 == 0) println("Parsed $processed/${frequencies.size} distinct statements") }
+        ?.also { parsed.addAndGet(frequency) }
+        ?.productions()?.map { Pair(it, frequency) }?.asStream() ?: Stream.empty()
+    }.collect(Collectors.groupingByConcurrent({ it.first }, Collectors.summingLong { it.second }))
+  check(parsed.get() > 0L) { "No BIFI statements parsed; PCFG output was not written" }
+
+  val smoothedCounts = grammar.associateWith { counts.getOrDefault(it, 0L) + 1L }
+  val totals = smoothedCounts.entries.groupBy { it.key.LHS }
+    .mapValues { (_, rules) -> rules.sumOf { it.value } }
+  tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
+
+  return smoothedCounts.entries.joinToString("\n", postfix = "\n") { (production, numerator) ->
+    val denominator = totals.getValue(production.LHS)
+    gcd(numerator, denominator).let { "${production.pretty()} [${numerator / it}/${denominator / it}]" }
+  }.let { outputFile.apply { writeText(it) } }
+    .also { println("Wrote ${grammar.size} productions to ${it.absolutePath}; " +
+      "accepted=$parsed skipped=${frequencies.values.sum() - parsed.get()} (add-one smoothing)") }
+}
+
+fun measureSingleLineStatementCoverage(tokenLimit: Int = 80, editLimits: IntRange = 2..6) {
+  val filename = "datasets/python/stack_overflow/so_err_rep.txt"
+  fun String.statements() = tokenizeByWhitespace()
+    .fold(mutableListOf(mutableListOf<String>())) { statements, token ->
+      when (token) {
+        "NEWLINE" -> statements.add(mutableListOf())
+        "INDENT", "DEDENT" -> Unit
+        else -> statements.last().add(token)
+      }
+      statements
+    }.filter { it.isNotEmpty() }
+
+  fun countEditedStatements(broke: List<List<String>>, fixed: List<List<String>>): Pair<IntArray, Int> {
+    val costs = Array(broke.size + 1) { IntArray(fixed.size + 1) }
+    for (i in 1..broke.size) costs[i][0] = costs[i - 1][0] + broke[i - 1].size
+    for (j in 1..fixed.size) costs[0][j] = costs[0][j - 1] + fixed[j - 1].size
+    for (i in 1..broke.size) for (j in 1..fixed.size) {
+      costs[i][j] = minOf(
+        costs[i - 1][j - 1] + levenshtein(broke[i - 1], fixed[j - 1]),
+        costs[i - 1][j] + broke[i - 1].size,
+        costs[i][j - 1] + fixed[j - 1].size
+      )
+    }
+
+    var (i, j, edited) = listOf(broke.size, fixed.size, 0)
+    val underLimits = IntArray(editLimits.last + 1)
+    while (i > 0 || j > 0) {
+      val editDistance = if (i > 0 && j > 0) levenshtein(broke[i - 1], fixed[j - 1]) else Int.MAX_VALUE
+      when {
+        i > 0 && j > 0 && costs[i][j] == costs[i - 1][j - 1] + editDistance -> {
+          if (editDistance > 0) {
+            edited++
+            editLimits.filter { editDistance < it }.forEach { underLimits[it]++ }
+          }
+          i--; j--
+        }
+        i > 0 && costs[i][j] == costs[i - 1][j] + broke[i - 1].size -> {
+          edited++
+          editLimits.filter { broke[i - 1].size < it }.forEach { underLimits[it]++ }
+          i--
+        }
+        else -> j--
+      }
+    }
+    return underLimits to edited
+  }
+
+  var totalStatements = 0
+  var statementsUnderTokenLimit = 0
+  var editedStatements = 0
+  val statementsUnderEditLimits = IntArray(editLimits.last + 1)
+
+  object {}.javaClass.classLoader.getResource(filename)!!.readText()
+    .lines().asSequence().windowed(4, 4).forEach { (broke, fixed) ->
+      val statements = broke.statements()
+      totalStatements += statements.size
+      statementsUnderTokenLimit += statements.count { it.size < tokenLimit }
+      countEditedStatements(statements, fixed.statements()).let { (underLimits, edited) ->
+        editLimits.forEach { statementsUnderEditLimits[it] += underLimits[it] }
+        editedStatements += edited
+      }
+    }
+
+  fun percentage(count: Int, total: Int) = String.format(Locale.US, "%.2f", 100.0 * count / total)
+  println("Statements under $tokenLimit tokens: $statementsUnderTokenLimit / $totalStatements " +
+    "(${percentage(statementsUnderTokenLimit, totalStatements)}%)")
+  editLimits.forEach { limit ->
+    println("Edited statements with <$limit same-line lexical edits: " +
+      "${statementsUnderEditLimits[limit]} / $editedStatements " +
+      "(${percentage(statementsUnderEditLimits[limit], editedStatements)}%)")
+  }
 }
 
 /**
