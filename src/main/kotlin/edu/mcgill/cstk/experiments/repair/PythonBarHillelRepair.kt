@@ -9,6 +9,8 @@ import edu.mcgill.cstk.experiments.probing.charify
 import edu.mcgill.cstk.experiments.probing.uncharify
 import edu.mcgill.cstk.utils.lastGitMessage
 import java.io.File
+import java.math.BigInteger
+import java.math.MathContext
 import kotlin.streams.asStream
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
@@ -37,8 +39,47 @@ fun main() {
 //  writeParikhMap()
 }
 
-fun evaluateRegexRepairOnStackOverflow() {
+internal val statementPCFGWeights by lazy {
+  File("python_statement_pcfg.txt").readLines().filter { it.isNotBlank() }.associate { line ->
+    val (lhs, rhs) = line.substringBeforeLast(" [").split(" -> ")
+    val (num, den) = line.substringAfterLast('[').removeSuffix("]").split('/').map(String::toDouble)
+    (lhs to rhs.tokenizeByWhitespace()) to (num / den)
+  }
+}
+
+/** One-based first-hit derivation rank over every length accepted by the repair DFA. */
+fun printPCFGIntersectionRank(dfa: DFSM?, fixedTokens: List<String>, seed: Int = 0): IntersectionPCFGSampler? {
+  if (dfa == null) {
+    println("PCFG length=${fixedTokens.size} rank=unparseable / 0 parse trees (empty intersection)")
+    return null
+  }
+  val normalize = { token: String -> if (token == "->") "arrow" else token }
+  val sampler = IntersectionPCFGSampler(pythonStatementCNFAllProds, statementPCFGWeights,
+    dfa, vanillaS2PCFG.tmLst.map(normalize), seed)
+  val rank = sampler.rank(fixedTokens.map(normalize))?.plus(BigInteger.ONE)
+  val percent = rank?.toBigDecimal()?.scaleByPowerOfTen(2)?.divide(sampler.size.toBigDecimal(), MathContext(4))
+  println("PCFG length=${fixedTokens.size} rank=${rank ?: "unparseable"} / ${sampler.size} parse trees" +
+    (percent?.let { " ($it%)" } ?: "") + " (seed=$seed)")
+  return sampler
+}
+
+fun evaluateRegexRepairOnStackOverflow(
+  repairLimit: Int = 1_000,
+  seed: Int = 0,
+  rankCsvFile: File = File("repair_rank_comparison.csv"),
+  rankPlotFile: File = File("repair_rank_cdfs.tex")
+) {
+  require(repairLimit > 0)
   val dataset = sizeAndDistBalancedRepairsUnminimized
+    .filter { (_, fixed) -> fixed.tokenizeByWhitespace().count { it == "NEWLINE" } == 1 }
+    .take(repairLimit).toList()
+  check(dataset.isNotEmpty()) { "No single-statement repairs in the test set" }
+  val lengthSampler = SeededPCFGSampler(pythonStatementCNFAllProds, statementPCFGWeights,
+    dataset.maxOf { it.π2.tokenizeByWhitespace().size }, seed)
+  val lengthRanks = mutableMapOf<List<String>, BigInteger?>()
+  val rankPairs = mutableListOf<Pair<BigInteger?, BigInteger?>>()
+  rankCsvFile.writeText("instance,length,lev_dist,led,lev_radius,seed,lev_rank,lev_log10_rank,lev_parse_trees," +
+    "length_rank,length_log10_rank,length_parse_trees,lev_status,length_status,broken,fixed\n")
   val allRate = LBHMetrics()
   val levRates = mutableMapOf<Int, LBHMetrics>()
   val sampleTimeByLevDist = (1..MAX_RADIUS).associateWith { 0.0 }.toMutableMap()
@@ -47,6 +88,7 @@ fun evaluateRegexRepairOnStackOverflow() {
   val termDict = TermDict(s2pg.terminals)
 
   println("Running Bar-Hillel repair on Python snippets with $NUM_CORES cores")
+  println("Recording paired PCFG ranks for ${dataset.size} repairs (seed=$seed; length includes NEWLINE)")
   println("Sampling timeout: $TIMEOUT_MS ms, max tokens: $MAX_TOKENS, max radius: $MAX_RADIUS, max unique: $MAX_UNIQUE, CFG threshold: $CFG_THRESH")
   dataset.first().π2.let { P_BIFI_PY150.score(it.tokenizeByWhitespace()) }
 
@@ -79,7 +121,7 @@ fun evaluateRegexRepairOnStackOverflow() {
     println()
   }
 
-  dataset.asStream().forEach { (brokeStr, fixedStr) ->
+  dataset.forEach { (brokeStr, fixedStr) ->
     val allTime = TimeSource.Monotonic.markNow()
     val brokeToks = brokeStr.tokenizeByWhitespace()
     val fixedToks = fixedStr.tokenizeByWhitespace()
@@ -120,10 +162,20 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     val dfa = sendCPU(brokeStr)
     val dfaRecognized = dfa?.recognizes(fixedToks, s2pg.tmLst) ?: false
-    val langSize = 0
 
-    val radius = (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS)
+    val radius = (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER)
     println("∩-DFA ${if (dfaRecognized) "accepted" else "rejected"} human repair! (Total time=${allTime.elapsedNow().ms3()}, $trueLevDist/$radius)")
+    val pcfgSampler = printPCFGIntersectionRank(dfa, fixedToks, seed)
+    val langSize = pcfgSampler?.size ?: BigInteger.ZERO
+    val rankTokens = fixedToks.map { if (it == "->") "arrow" else it }
+    val levRank = pcfgSampler?.rank(rankTokens)?.plus(BigInteger.ONE)
+    val lengthRank = lengthRanks.getOrPut(rankTokens) { lengthSampler.rank(rankTokens)?.plus(BigInteger.ONE) }
+    rankPairs.add(levRank to lengthRank)
+    rankCsvFile.appendText(listOf(rankPairs.size, rankTokens.size, trueLevDist, latestLangEditDistance, radius, seed,
+      levRank ?: "", levRank?.log10Rank() ?: "", langSize,
+      lengthRank ?: "", lengthRank?.log10Rank() ?: "", lengthSampler.size(rankTokens.size),
+      if (levRank == null) "outside_intersection" else "ranked", if (lengthRank == null) "unparseable" else "ranked",
+      "\"${brokeStr.replace("\"", "\"\"")}\"", "\"${fixedStr.replace("\"", "\"\"")}\"").joinToString(",") + "\n")
     if (!dfaRecognized) {
       if (trueLevDist <= radius) System.err.println("trueLevDist=$trueLevDist (<=${latestLangEditDistance + LED_BUFFER}), but was rejected!")
       allRate.error++; levRates.getOrPut(trueLevDist) { LBHMetrics() }.error++
@@ -131,8 +183,14 @@ fun evaluateRegexRepairOnStackOverflow() {
 
     var origRank = -1
     val wdfaTime = TimeSource.Monotonic.markNow()
+    val pcfgLimit = langSize.min(BigInteger.valueOf(10_000)).toInt()
+    val pcfgRepairs = pcfgSampler?.let { sampler ->
+      (0 until pcfgLimit).map { sampler.unrank(it.toBigInteger()).joinToString(" ") }.distinct()
+    }.orEmpty()
+    println("Decoded $pcfgLimit PCFG parse trees into ${pcfgRepairs.size} distinct repairs")
     val unrankedResults =
-      (dfa?.decodeDFAWithWDFA(wdfa = pythonWDFA, timeout = timeout, dec = termDict) ?: emptyList())
+//      (dfa?.decodeDFAWithWDFA(wdfa = pythonWDFA, timeout = timeout, dec = termDict) ?: emptyList())
+      pcfgRepairs
         .parallelStream().map { it to it.scoreWithWDFA(false) }
         .sorted { p1, p2 -> p1.second.compareTo(p2.second) }
         .map { it.first.addNewLineIfMissing() }.distinct().toList()
@@ -143,8 +201,9 @@ fun evaluateRegexRepairOnStackOverflow() {
         .let {
           cpuTime = cpuClock.elapsedNow().inWholeMilliseconds
           origRank = it.indexOf(fixedStr)
+          matchFound = origRank >= 0
           totalSamples = it.size
-          println("CPU returned $totalSamples WDFA-ranked results in $cpuTime ms")
+          println("CPU returned $totalSamples WDFA-reranked PCFG repairs in $cpuTime ms")
           it
         }
 
@@ -174,28 +233,28 @@ fun evaluateRegexRepairOnStackOverflow() {
 //    println("CSTD RANK: $cstdRank / $totalSamples")
 
     val elapsed = clock.elapsedNow().inWholeMilliseconds
-    val rerankerTime = TimeSource.Monotonic.markNow()
-
-    var webgpuRank = -1
-    val wgpuClock = TimeSource.Monotonic.markNow()
-    val rerankWindow = unrankedResults.take(RERANK_THR)
-    val rerankedResults = if (unrankedResults.isEmpty() || origRank == -1) emptyList()
-    else (rerankWGPU(brokeStr, rerankWindow) + unrankedResults.drop(RERANK_THR))
-      .also { results ->
-        val rrt = rerankerTime.elapsedNow()
-        println("WebGPU reranked ${rerankWindow.size}/${results.size}x${brokeStr.tokenizeByWhitespace().size} results in ${rrt.ms3()}")
-        println("WGPU tok/ms = ${tokensPerMs3(rerankWindow.sumOf { it.tokenizeByWhitespace().size }, rrt)}")
-      }
-      .onEachIndexed { i, it ->
-        if (it == fixedStr && webgpuRank == -1) {
-          matchFound = true
-          webgpuRank = i
-          println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow().ms3()}):\n$humanRepairANSI")
-        }
-      }
+//    val rerankerTime = TimeSource.Monotonic.markNow()
+//
+//    var webgpuRank = -1
+//    val wgpuClock = TimeSource.Monotonic.markNow()
+//    val rerankWindow = unrankedResults.take(RERANK_THR)
+//    val rerankedResults = if (unrankedResults.isEmpty() || origRank == -1) emptyList()
+//    else (rerankWGPU(brokeStr, rerankWindow) + unrankedResults.drop(RERANK_THR))
+//      .also { results ->
+//        val rrt = rerankerTime.elapsedNow()
+//        println("WebGPU reranked ${rerankWindow.size}/${results.size}x${brokeStr.tokenizeByWhitespace().size} results in ${rrt.ms3()}")
+//        println("WGPU tok/ms = ${tokensPerMs3(rerankWindow.sumOf { it.tokenizeByWhitespace().size }, rrt)}")
+//      }
+//      .onEachIndexed { i, it ->
+//        if (it == fixedStr && webgpuRank == -1) {
+//          matchFound = true
+//          webgpuRank = i
+//          println("Found human repair ((rank: $i, orig: $origRank) ${clock.elapsedNow().ms3()}):\n$humanRepairANSI")
+//        }
+//      }
     val allElapsed = clock.elapsedNow().inWholeMilliseconds
-    println("WEBGPU RANK: $webgpuRank / $totalSamples")
-    println("WebGPU repairs fetched in ${wgpuClock.elapsedNow().inWholeMilliseconds}ms")
+//    println("WEBGPU RANK: $webgpuRank / $totalSamples")
+//    println("WebGPU repairs fetched in ${wgpuClock.elapsedNow().inWholeMilliseconds}ms")
 
 //    var webgpuRank = -1
 //    val wgpuClock = TimeSource.Monotonic.markNow()
@@ -215,6 +274,8 @@ fun evaluateRegexRepairOnStackOverflow() {
 //      }
 //    println("WEBGPU RANK: $webgpuRank / $totalSamples")
 //    println("WEBGPU reranking completed in ${wgpuClock.elapsedNow().inWholeMilliseconds}ms")
+
+    val rerankedResults = unrankedResults
 
     val indexOfTarget = rerankedResults.indexOf(fixedStr).also {
       if (matchFound) {
@@ -256,6 +317,9 @@ fun evaluateRegexRepairOnStackOverflow() {
   }
 
   summarizeRunningStats()
+  writeRankCDFLatex(rankPairs.map { it.first }, rankPairs.map { it.second }, seed, rankPlotFile)
+  println("Recorded ${rankPairs.size} paired ranks in ${rankCsvFile.absolutePath}; " +
+    "paste-ready TikZ plots: ${rankPlotFile.absolutePath}")
 }
 
 /*

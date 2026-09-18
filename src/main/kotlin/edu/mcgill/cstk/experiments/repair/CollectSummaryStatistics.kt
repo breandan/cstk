@@ -27,6 +27,7 @@ import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
 import java.math.BigInteger
+import java.math.MathContext
 import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -50,7 +51,10 @@ private var dfaDecodeChecksum = 0L
 ./gradlew collectSummaryStats
  */
 fun main(args: Array<String>) {
-  trainPythonStatementPCFG()
+  runPrefixRankExperiment()
+//  runLengthSliceRankExperiment()
+//  runRankExperiment()
+//  trainPythonStatementPCFG()
 //  measureSingleLineStatementCoverage()
 //  measurePythonDFAUnrankingDelay()
 //  measurePythonDFAEnumerationDelay()
@@ -111,6 +115,144 @@ fun main(args: Array<String>) {
 //    parallelPythonRepair(broke).take(10).forEach { println(it) }
 //    println()
 //  }
+}
+
+/** Reuses recorded fixes so every prefix experiment follows the same examples as the rank CDFs. */
+fun runPrefixRankExperiment(
+  inputFile: File = File("repair_rank_comparison.csv"), seed: Int = 0,
+  csvFile: File = File("prefix_ranks.csv"), texFile: File = File("prefix_rank_violin.tex"),
+  panelFile: File = File("prefix_rank_panel_c.tex"), summaryFile: File = File("prefix_rank_summary.csv")
+) {
+  // Both rank CSV writers store the quoted fixed-token sequence in the final column.
+  val lines = inputFile.readLines()
+  require(lines.first().substringAfterLast(',') in setOf("fixed", "tokens"))
+  val statements = lines.drop(1).filter { it.isNotBlank() }.map { line ->
+    require(line.endsWith('"') && ",\"" in line)
+    line.substringAfterLast(",\"").dropLast(1).replace("\"\"", "\"").tokenizeByWhitespace()
+      .map { if (it == "->") "arrow" else it }
+  }
+  require(statements.isNotEmpty() && statements.all { it.size in 1..80 })
+  val sampler = SeededPCFGSampler(pythonStatementCNFAllProds, statementPCFGWeights, statements.maxOf { it.size }, seed)
+  val done = AtomicInteger()
+  val distinct = statements.distinct()
+  println("Ranking all prefixes of ${statements.size} repairs (${distinct.size} distinct statements), seed=$seed")
+  val ranks = distinct.parallelStream().map { tokens ->
+    Pair(tokens, sampler.prefixRanks(tokens)).also {
+      if (done.incrementAndGet() % 25 == 0) println("Ranked prefixes for ${done.get()}/${distinct.size} statements")
+    }
+  }.toList().toMap()
+  val buckets = sortedMapOf<Int, MutableList<Double>>()
+  csvFile.bufferedWriter().use { writer ->
+    writer.appendLine("instance,length,prefix_length,unrevealed,slice_size,rank,log10_rank,seed,status,tokens")
+    statements.forEachIndexed { i, tokens ->
+      ranks.getValue(tokens).forEachIndexed { prefix, (size, zeroRank) ->
+        val rank = zeroRank?.plus(BigInteger.ONE)
+        val logRank = rank?.log10Rank()
+        logRank?.let { buckets.getOrPut(tokens.size - prefix) { mutableListOf() }.add(it) }
+        writer.appendLine(listOf(i + 1, tokens.size, prefix, tokens.size - prefix, size, rank ?: "", logRank ?: "", seed,
+          if (rank == null) "unparseable" else "ranked", "\"${tokens.joinToString(" ").replace("\"", "\"\"")}\"")
+          .joinToString(","))
+      }
+    }
+  }
+  summaryFile.writeText("unrevealed,samples,mean_log10_rank,population_sd_log10_rank,lower,upper,min_log10_rank,max_log10_rank\n" +
+    buckets.entries.reversed().joinToString("\n") { (remaining, values) ->
+      val mean = values.average()
+      val sd = kotlin.math.sqrt(values.sumOf { (it - mean) * (it - mean) } / values.size)
+      listOf(remaining, values.size, mean, sd, mean - sd, mean + sd, values.min(), values.max()).joinToString(",")
+    } + "\n")
+  texFile.writeText(prefixRankPlotTikz(buckets) + "\n")
+  panelFile.writeText(prefixRankPlotTikz(buckets, groupSlot = true) + "\n")
+  println("Wrote ${csvFile.absolutePath}, ${summaryFile.absolutePath}, ${texFile.absolutePath}, and ${panelFile.absolutePath}")
+}
+
+/** Exact first-hit tree ranks for single-statement fixes; n includes the final NEWLINE. */
+fun runLengthSliceRankExperiment(
+  samples: Int = 1_000, seed: Int = 0,
+  csvFile: File = File("length_slice_ranks.csv"), texFile: File = File("length_slice_rank_cdf.tex")
+) {
+  require(samples > 0)
+  MIN_TOKENS = 3; MAX_TOKENS = 80; MAX_RADIUS = 3
+  val statements = sizeAndDistBalancedRepairsUnminimized.map { it.π2.tokenizeByWhitespace() }
+    .filter { it.count { token -> token == "NEWLINE" } == 1 }.take(samples)
+    .map { it.map { token -> if (token == "->") "arrow" else token } }.toList()
+  check(statements.isNotEmpty()) { "No single-statement repairs in the test set" }
+  if (statements.size < samples) println("Only ${statements.size}/$samples single-statement repairs available after filtering")
+  println("Ranking ${statements.size} length-slice repairs with seed=$seed (length includes NEWLINE)")
+  val sampler = SeededPCFGSampler(pythonStatementCNFAllProds, statementPCFGWeights, statements.maxOf { it.size }, seed)
+  val ranks = statements.distinct().parallelStream().map { tokens ->
+    Pair(tokens, sampler.rank(tokens)?.also { check(sampler.unrank(tokens.size, it) == tokens) }?.plus(BigInteger.ONE))
+  }.toList().toMap()
+  csvFile.bufferedWriter().use { writer ->
+    writer.appendLine("instance,length,slice_size,rank,log10_rank,seed,status,tokens")
+    statements.forEachIndexed { i, tokens ->
+      val rank = ranks[tokens]
+      val size = sampler.size(tokens.size)
+      println("length=${tokens.size} trees=$size rank=${rank ?: "unparseable"}")
+      writer.appendLine(listOf(i + 1, tokens.size, size, rank ?: "", rank?.log10Rank() ?: "", seed,
+        if (rank == null) "unparseable" else "ranked",
+        "\"${tokens.joinToString(" ").replace("\"", "\"\"")}\"").joinToString(","))
+    }
+  }
+  texFile.writeText(rankCDFTikz(statements.map { ranks[it] }, "${'$'}L(G)\\cap\\Sigma^{n}${'$'}", seed) + "\n")
+  println("Wrote ${statements.size} samples to ${csvFile.absolutePath} and ${texFile.absolutePath}")
+}
+
+/** First-hit ranks in the seeded PCFG derivation sampler; lengths include the final NEWLINE. */
+fun runRankExperiment(
+  seed: Int = 0,
+  pcfgFile: File = File("python_statement_pcfg.txt"),
+  csvFile: File = File("rank_experiment.csv"),
+  plotFile: File = File("rank_cdf.svg")
+) {
+  val weights = pcfgFile.readLines().filter { it.isNotBlank() }.associate { line ->
+    val (lhs, rhs) = line.substringBeforeLast(" [").split(" -> ")
+    val (numerator, denominator) = line.substringAfterLast('[').removeSuffix("]").split('/').map(String::toDouble)
+    require(numerator > 0 && denominator >= numerator) { "Invalid PCFG weight: $line" }
+    Pair(lhs to rhs.tokenizeByWhitespace(), numerator / denominator)
+  }
+  val statements = sizeAndDistBalancedRepairsUnminimized.take(100).toList().flatMapIndexed { snippet, (_, fixed) ->
+    fixed.tokenizeByWhitespace()
+      .fold(mutableListOf(mutableListOf<String>())) { statements, token ->
+        when (token) {
+          "NEWLINE" -> statements.add(mutableListOf())
+          "INDENT", "DEDENT" -> Unit
+          else -> statements.last().add(token)
+        }
+        statements
+      }.filter { it.isNotEmpty() }.mapIndexed { statement, tokens ->
+        Triple(snippet + 1, statement + 1, tokens.map { if (it == "->") "arrow" else it } + "NEWLINE")
+      }
+  }
+  check(statements.isNotEmpty()) { "No fixed statements in the test set" }
+  println("Ranking ${statements.size} statements with seed=$seed; lengths include NEWLINE")
+  val sampler = SeededPCFGSampler(pythonStatementCNFAllProds, weights, statements.maxOf { it.third.size }, seed)
+  val ranks = statements.map { it.third }.distinct().associateWith { tokens ->
+    sampler.rank(tokens)?.also { check(sampler.unrank(tokens.size, it) == tokens) }
+      ?.plus(BigInteger.ONE)
+  }
+  fun BigInteger.log10() = maxOf(0, bitLength() - 53).let {
+    kotlin.math.log10(shiftRight(it).toDouble()) + it * kotlin.math.log10(2.0)
+  }
+  csvFile.bufferedWriter().use { writer ->
+    writer.appendLine("snippet,statement,length,rank,log10_rank,slice_size,seed,status,tokens")
+    statements.forEach { (snippet, statement, tokens) ->
+      println(tokens.joinToString(" "))
+      val rank = ranks[tokens]
+      val sliceSize = sampler.size(tokens.size)
+      val rankPercent = rank?.toBigDecimal()?.scaleByPowerOfTen(2)
+        ?.divide(sliceSize.toBigDecimal(), MathContext(4))
+      println("length=${tokens.size} rank=${rank ?: "unparseable"}" +
+        (rankPercent?.let { " ($it% of parse trees)" } ?: ""))
+      writer.appendLine(listOf(snippet, statement, tokens.size, rank ?: "", rank?.log10() ?: "",
+        sliceSize, seed, if (rank == null) "unparseable" else "ranked",
+        "\"${tokens.joinToString(" ").replace("\"", "\"\"")}\"").joinToString(","))
+    }
+  }
+  val logRanks = statements.mapNotNull { ranks[it.third]?.log10() }
+  plotRankCDF(logRanks, statements.size, seed, plotFile)
+  println("Ranked ${logRanks.size}/${statements.size} statements (seed=$seed); " +
+    "wrote ${csvFile.absolutePath} and ${plotFile.absolutePath}")
 }
 
 /**
