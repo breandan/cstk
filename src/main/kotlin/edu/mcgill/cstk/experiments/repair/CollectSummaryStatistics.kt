@@ -51,7 +51,8 @@ private var dfaDecodeChecksum = 0L
 ./gradlew collectSummaryStats
  */
 fun main(args: Array<String>) {
-  runPrefixRankExperiment()
+  runHistogramRankExperiment(costQuantum = 1.0, maxTokens = 80)
+//  runPrefixRankExperiment()
 //  runLengthSliceRankExperiment()
 //  runRankExperiment()
 //  trainPythonStatementPCFG()
@@ -115,6 +116,70 @@ fun main(args: Array<String>) {
 //    parallelPythonRepair(broke).take(10).forEach { println(it) }
 //    println()
 //  }
+}
+
+/** Compares exact tree ranks on the same saved fixes, with all histogram work outside decoding. */
+fun runHistogramRankExperiment(
+  samples: Int = 1_000, seed: Int = 0, costQuantum: Double = 1.0, maxTokens: Int = 80,
+  inputFile: File = File("repair_rank_comparison.csv"),
+  csvFile: File = File("histogram_rank_comparison.csv"),
+  texFile: File = File("histogram_rank_cdf.tex"), svgFile: File = File("histogram_rank_cdf.svg")
+) {
+  require(samples > 0 && maxTokens > 0)
+  val lines = inputFile.readLines()
+  require(lines.first().substringAfterLast(',') in setOf("fixed", "tokens"))
+  val statements = lines.drop(1).filter { it.isNotBlank() }.map { line ->
+    require(line.endsWith('"') && ",\"" in line)
+    line.substringAfterLast(",\"").dropLast(1).replace("\"\"", "\"").tokenizeByWhitespace()
+      .map { if (it == "->") "arrow" else it }
+  }.filter { it.size in 1..maxTokens }.take(samples)
+  require(statements.isNotEmpty())
+  println("Comparing ${statements.size} saved fixes; cost quantum=$costQuantum, seed=$seed")
+  val clock = TimeSource.Monotonic.markNow()
+  val decoder = HistogramPCFGDecoder(pythonStatementCNFAllProds, statementPCFGWeights,
+    statements.maxOf { it.size }, costQuantum) { length ->
+    if (length % 5 == 0) println("Counted cost histograms through length=$length in ${clock.elapsedNow()}")
+  }
+  val greedy = SeededPCFGSampler(pythonStatementCNFAllProds, statementPCFGWeights, decoder.maxLength, seed)
+  statements.map { it.size }.distinct().forEach { check(decoder.size(it) == greedy.size(it)) }
+  val targets = statements.distinct().parallelStream().map { it to decoder.minimumTree(it) }.toList().toMap()
+  val buckets = targets.values.filterNotNull().map { it.tokens().size to decoder.cost(it) }
+    .distinct().sortedWith(compareBy({ it.first }, { it.second }))
+  val buildTime = clock.elapsedNow()
+  val compileClock = TimeSource.Monotonic.markNow()
+  buckets.forEachIndexed { i, (length, cost) ->
+    decoder.compile(length, cost)
+    if ((i + 1) % 10 == 0 || i == buckets.lastIndex)
+      println("Compiled ${i + 1}/${buckets.size} root cost buckets in ${compileClock.elapsedNow()}")
+  }
+  val compileTime = compileClock.elapsedNow()
+  val ranks = targets.entries.parallelStream().map { (tokens, tree) ->
+    val rank = tree?.let {
+      decoder.rank(it).also { rank ->
+        val decoded = decoder.unrankTree(tokens.size, rank)
+        check(decoded == it && decoded.tokens() == tokens && decoder.rank(decoded) == rank)
+        check(decoder.costAtRank(tokens.size, rank) == decoder.cost(it))
+      }.plus(BigInteger.ONE)
+    }
+    tokens to (rank to greedy.rank(tokens)?.plus(BigInteger.ONE))
+  }.toList().toMap()
+  csvFile.bufferedWriter().use { writer ->
+    writer.appendLine("instance,length,slice_size,cost_quantum,cost,cost_bucket_size,cost_rank,cost_log10_rank,greedy_rank,greedy_log10_rank,seed,status,tokens")
+    statements.forEachIndexed { i, tokens ->
+      val (rank, baseline) = ranks.getValue(tokens)
+      val cost = targets[tokens]?.let(decoder::cost)
+      val size = decoder.size(tokens.size)
+      println("length=${tokens.size} trees=$size cost=$cost rank=$rank greedy=$baseline")
+      writer.appendLine(listOf(i + 1, tokens.size, size, costQuantum, cost ?: "",
+        cost?.let { decoder.histogram(tokens.size)[it] } ?: "", rank ?: "", rank?.log10Rank() ?: "",
+        baseline ?: "", baseline?.log10Rank() ?: "", seed, if (rank == null) "unparseable" else "ranked",
+        "\"${tokens.joinToString(" ").replace("\"", "\"\"")}\"").joinToString(","))
+    }
+  }
+  writeHistogramRankComparison(statements.map { ranks.getValue(it).first },
+    statements.map { ranks.getValue(it).second }, costQuantum, seed, texFile, svgFile)
+  println("Histogram/target construction: $buildTime; cost-index compilation: $compileTime; total: ${clock.elapsedNow()}")
+  println("Wrote ${csvFile.absolutePath}, ${texFile.absolutePath}, and ${svgFile.absolutePath}")
 }
 
 /** Reuses recorded fixes so every prefix experiment follows the same examples as the rank CDFs. */

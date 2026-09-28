@@ -19,6 +19,8 @@ repositories {
 }
 
 dependencies {
+  testImplementation(kotlin("test"))
+
   // String index
   implementation("com.googlecode.concurrent-trees:concurrent-trees:2.6.1")
 
