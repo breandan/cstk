@@ -81,7 +81,7 @@ class CNFTopKChart:
                 chart[size, head, :len(values)] = values
         self.max_length = length
 
-    def compile_length(self, length, bins=None):
+    def compile_length(self, length, bins=None, *, build_provenance=True):
         """Return a normal backend forest/index for exactly this token length."""
         self.extend(length)
         bins = self.max_bins if bins is None else bins
@@ -120,7 +120,8 @@ class CNFTopKChart:
                     tails = ((left, left_size), (right, size - left_size))
                     forest.add(module.Edge(state, tails, edge.weight, edge.cost))
                     pending.extend(t for t in tails if t not in seen)
-        index = module.CostIndex(forest, None, self.scale, histogram_buckets=bins)
+        index = module.CostIndex(forest, None, self.scale, histogram_buckets=bins,
+                                 build_provenance=build_provenance)
         forest._cost_index = index
         assert tuple(int(v) for v in costs) == index.root_costs
         return forest, index

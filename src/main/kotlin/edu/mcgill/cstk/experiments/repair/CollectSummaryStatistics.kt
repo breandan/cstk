@@ -5,6 +5,7 @@ import ai.hypergraph.kaliningraph.ANSI_GREEN_BACKGROUND
 import ai.hypergraph.kaliningraph.ANSI_ORANGE_BACKGROUND
 import ai.hypergraph.kaliningraph.ANSI_RED_BACKGROUND
 import ai.hypergraph.kaliningraph.automata.latestLangEditDistance
+import ai.hypergraph.kaliningraph.automata.repairWithSparseGRE
 import ai.hypergraph.kaliningraph.parsing.*
 import ai.hypergraph.kaliningraph.parsing.approximations.WFA
 import ai.hypergraph.kaliningraph.parsing.approximations.toNederhofNFA
@@ -13,7 +14,9 @@ import ai.hypergraph.kaliningraph.tokenizeByWhitespace
 import ai.hypergraph.kaliningraph.types.*
 import ai.hypergraph.kaliningraph.visualization.alsoCopy
 import ai.hypergraph.markovian.concurrency.removeEpsilonsParallel
+import ai.hypergraph.markovian.concurrency.determinizeParallel
 import ai.hypergraph.markovian.concurrency.trainDFAParallel
+import ai.hypergraph.markovian.concurrency.writeWDFA
 import ai.hypergraph.markovian.mcmc.toMarkovChain
 import com.beust.klaxon.Klaxon
 import com.google.common.util.concurrent.AtomicLongMap
@@ -51,11 +54,19 @@ private var dfaDecodeChecksum = 0L
 ./gradlew collectSummaryStats
  */
 fun main(args: Array<String>) {
-  runHistogramRankExperiment(costQuantum = 1.0, maxTokens = 80)
+  addBifiNgramRanks()
+//  addBifiStateRefinementRanks()
+//  addBifiTokenHistoryRanks()
+//  prepareLaterRerankerDataset()
+//  addBifiPcfgRanks()
+//  addBifiHistory3Ranks()
+//  compareWfaTrainingCorpora()
+//  runHistogramRankExperiment(costQuantum = 1.0, maxTokens = 80)
 //  runPrefixRankExperiment()
 //  runLengthSliceRankExperiment()
 //  runRankExperiment()
 //  trainPythonStatementPCFG()
+//  trainMarkovizedPythonStatementPCFG()
 //  measureSingleLineStatementCoverage()
 //  measurePythonDFAUnrankingDelay()
 //  measurePythonDFAEnumerationDelay()
@@ -378,6 +389,180 @@ fun trainPythonStatementPCFG(
   }.let { outputFile.apply { writeText(it) } }
     .also { println("Wrote ${grammar.size} productions to ${it.absolutePath}; " +
       "accepted=$parsed skipped=${frequencies.values.sum() - parsed.get()} (add-one smoothing)") }
+}
+
+/** Fit full BIFI snippets with one deterministic CNF parse each and add-one production counts. */
+fun trainBifiPCFG(): Map<Production, Double> {
+  val corpus = File("bifi_good_code.txt")
+  val output = File("bifi_pcfg.txt")
+  val productions = vanillaS2PCFG.sortedBy { it.pretty() }
+  val alphabet = MakeMore.PyTokMap.mt.toSortedMap()
+  fun fingerprint(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256")
+    .digest(bytes).joinToString("") { "%02x".format(it) }
+  val corpusDigest = java.security.MessageDigest.getInstance("SHA-256")
+  corpus.inputStream().buffered().use { input ->
+    val buffer = ByteArray(1024 * 1024)
+    while (true) {
+      val count = input.read(buffer)
+      if (count < 0) break
+      corpusDigest.update(buffer, 0, count)
+    }
+  }
+  val provenance = "# bifi-pcfg-first-cnf-v1 corpus-sha256=" +
+    corpusDigest.digest().joinToString("") { "%02x".format(it) } +
+    " grammar-sha256=" + fingerprint(productions.joinToString("\n") { it.pretty() }.toByteArray()) +
+    " alphabet-sha256=" + fingerprint(alphabet.entries.joinToString("\n") { "${it.key.code}=${it.value}" }.toByteArray())
+  if (output.isFile) {
+    val lines = output.readLines()
+    if (lines.firstOrNull() == provenance) {
+      val weights = lines.filterNot { it.startsWith('#') || it.isBlank() }.associate { line ->
+        val (lhs, rhs) = line.substringBeforeLast(" [").split(" -> ")
+        val (num, den) = line.substringAfterLast('[').removeSuffix("]").split('/').map(String::toDouble)
+        require(num > 0 && den >= num && den.isFinite()) { "Invalid cached PCFG weight: $line" }
+        Pair(lhs to rhs.tokenizeByWhitespace(), num / den)
+      }
+      require(weights.keys == productions.toSet()) { "Cached BIFI PCFG has different productions" }
+      require(weights.entries.groupBy { it.key.LHS }.values.all { rules ->
+        kotlin.math.abs(rules.sumOf { it.value } - 1.0) < 1e-9
+      }) { "Cached BIFI PCFG weights are not normalized" }
+      println("Loaded ${output.absolutePath}: ${lines.getOrNull(1)?.removePrefix("# ")}")
+      return weights
+    }
+  }
+
+  // Keep the compact character encoding in memory; repeated snippets retain their multiplicity.
+  val frequencies = HashMap<String, Long>()
+  var total = 0L
+  var maxTokens = 0
+  corpus.useLines { lines -> lines.filter(String::isNotBlank).forEach { text ->
+    require(text.startsWith('|') && text.endsWith('}')) { "Missing BIFI snippet delimiters at line ${total + 1}" }
+    require(text.substring(1, text.lastIndex).all { it in alphabet }) { "Unknown BIFI token at line ${total + 1}" }
+    frequencies[text] = (frequencies[text] ?: 0L) + 1L
+    total++
+    maxTokens = maxOf(maxTokens, text.length - 2)
+  } }
+  require(total > 0) { "Empty BIFI corpus" }
+  val nts = productions.map { it.LHS }.distinct().sorted()
+  val ntIds = nts.withIndex().associate { it.value to it.index }
+  val start = ntIds.getValue(START_SYMBOL)
+  val parents = IntArray(productions.size) { ntIds.getValue(productions[it].LHS) }
+  val lefts = IntArray(productions.size) { -1 }
+  val rights = IntArray(productions.size) { -1 }
+  val byLeft = Array(nts.size) { mutableListOf<Int>() }
+  val byToken = mutableMapOf<String, MutableList<Int>>()
+  productions.forEachIndexed { id, (_, rhs) ->
+    require(rhs.size == 1 && rhs[0] !in ntIds || rhs.size == 2 && rhs.all { it in ntIds }) {
+      "Expected CNF production: ${productions[id]}"
+    }
+    if (rhs.size == 1) byToken.getOrPut(rhs[0]) { mutableListOf() }.add(id)
+    else {
+      lefts[id] = ntIds.getValue(rhs[0]); rights[id] = ntIds.getValue(rhs[1])
+      byLeft[lefts[id]].add(id)
+    }
+  }
+  val binary = byLeft.map { it.toIntArray() }.toTypedArray()
+  val lexical = alphabet.mapValues { (_, token) -> byToken[token]?.toIntArray() ?: IntArray(0) }
+  val stride = maxTokens + 1
+  require(stride.toLong() * productions.size < Int.MAX_VALUE)
+  val slots = stride.toLong() * stride * nts.size
+  require(slots <= Int.MAX_VALUE) { "BIFI chart is too large: $maxTokens tokens, ${nts.size} nonterminals" }
+
+  class Parser {
+    // Intrusive active lists make joins/reset sparse; arrays are reused across snippets.
+    val heads = IntArray(stride * stride)
+    val choices = IntArray(slots.toInt())
+    val next = IntArray(slots.toInt())
+    val counts = LongArray(productions.size)
+    var accepted = 0L
+    var acceptedDistinct = 0
+    fun add(cell: Int, rule: Int, split: Int) {
+      val nt = parents[rule]
+      val slot = cell * nts.size + nt
+      if (choices[slot] != 0) return
+      choices[slot] = split * productions.size + rule + 1
+      next[slot] = heads[cell]
+      heads[cell] = nt + 1
+    }
+    fun fit(text: String, frequency: Long) {
+      val n = text.length - 2
+      for (i in 0 until n) for (rule in lexical.getValue(text[i + 1])) add(i * stride + i + 1, rule, 0)
+      for (length in 2..n) for (begin in 0..n - length) {
+        val end = begin + length
+        val cell = begin * stride + end
+        for (split in begin + 1 until end) {
+          val leftCell = begin * stride + split
+          val rightCell = split * stride + end
+          if (heads[rightCell] == 0) continue
+          var active = heads[leftCell]
+          while (active != 0) {
+            val nt = active - 1
+            for (rule in binary[nt]) {
+              if (choices[rightCell * nts.size + rights[rule]] != 0) add(cell, rule, split)
+            }
+            active = next[leftCell * nts.size + nt]
+          }
+        }
+      }
+      fun count(begin: Int, end: Int, nt: Int) {
+        val choice = choices[(begin * stride + end) * nts.size + nt] - 1
+        val rule = choice % productions.size
+        counts[rule] += frequency
+        if (lefts[rule] >= 0) {
+          val split = choice / productions.size
+          count(begin, split, lefts[rule]); count(split, end, rights[rule])
+        }
+      }
+      if (n > 0 && choices[n * nts.size + start] != 0) {
+        count(0, n, start)
+        accepted += frequency
+        acceptedDistinct++
+      }
+      for (begin in 0 until n) for (end in begin + 1..n) {
+        val cell = begin * stride + end
+        var active = heads[cell]
+        while (active != 0) {
+          val slot = cell * nts.size + active - 1
+          choices[slot] = 0
+          active = next[slot]
+        }
+        heads[cell] = 0
+      }
+    }
+  }
+  val workers = minOf(Runtime.getRuntime().availableProcessors(), 8)
+  val parsers = java.util.concurrent.ConcurrentLinkedQueue<Parser>()
+  val local = ThreadLocal.withInitial { Parser().also { parsers.add(it) } }
+  val processed = AtomicInteger(0)
+  val started = TimeSource.Monotonic.markNow()
+  println("Fitting BIFI PCFG: $total snippets, ${frequencies.size} distinct, max_tokens=$maxTokens, workers=$workers")
+  val pool = java.util.concurrent.ForkJoinPool(workers)
+  try {
+    pool.submit { frequencies.entries.parallelStream().forEach { (text, frequency) ->
+      local.get().fit(text, frequency)
+      val done = processed.incrementAndGet()
+      if (done % 10_000 == 0) println("Parsed $done/${frequencies.size} distinct BIFI snippets in ${started.elapsedNow()}")
+    } }.get()
+  } finally { pool.shutdown() }
+  val accepted = parsers.sumOf { it.accepted }
+  check(accepted > 0) { "No full BIFI snippets parsed; PCFG output was not written" }
+  val counts = LongArray(productions.size) { id -> 1L + parsers.sumOf { it.counts[id] } }
+  val totals = LongArray(nts.size)
+  counts.indices.forEach { totals[parents[it]] += counts[it] }
+  val stats = "snippets=$total distinct=${frequencies.size} accepted=$accepted skipped=${total - accepted}" +
+    " accepted_distinct=${parsers.sumOf { it.acceptedDistinct }} max_tokens=$maxTokens add_one=true"
+  tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
+  val temporary = File(output.path + ".tmp")
+  temporary.bufferedWriter().use { writer ->
+    writer.appendLine(provenance); writer.appendLine("# $stats")
+    productions.forEachIndexed { id, production ->
+      val num = counts[id]; val den = totals[parents[id]]; val divisor = gcd(num, den)
+      writer.appendLine("${production.pretty()} [${num / divisor}/${den / divisor}]")
+    }
+  }
+  Files.move(temporary.toPath(), output.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+    java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+  println("Wrote ${output.absolutePath}: $stats in ${started.elapsedNow()}")
+  return productions.indices.associate { Pair(productions[it], counts[it].toDouble() / totals[parents[it]]) }
 }
 
 fun measureSingleLineStatementCoverage(tokenLimit: Int = 80, editLimits: IntRange = 2..6) {
@@ -724,6 +909,52 @@ fun errorPredDiscrepancy() {
   }
 }
 
+// ./gradlew collectSummaryStats --args=--prepare-bifi-good-code
+// One natural snippet per line, using the same ASCII alphabet and boundaries as so_ts_wfa.txt.
+fun prepareBifiGoodCodeDataset(
+  datasetFile: File = File("src/main/resources/datasets/python/bifi/data/orig_good_code/orig.good.json"),
+  outputFile: File = File("scripts/reranker_v4/wfa/bifi_good_code.txt")
+): File {
+  val alphabet = MakeMore.PyTokMap.tm
+  require(alphabet.values.all { it.code in 33..126 })
+  "pass\n".mapToUnquotedPythonTokens().addNewLineIfMissing().charify()
+  val seen = AtomicInteger()
+  val skipped = AtomicInteger()
+  val unsupported = AtomicLongMap.create<String>()
+  var written = 0
+  val temporary = Files.createTempFile(outputFile.absoluteFile.parentFile.toPath(), ".bifi-good-", ".txt")
+  try {
+    Files.newBufferedWriter(temporary, Charsets.US_ASCII).use { writer ->
+      Files.lines(datasetFile.toPath()).use { lines ->
+        lines.parallel().filter { it.trimStart().startsWith("\"code_string\":") }.map { line ->
+          val code = requireNotNull(Klaxon().parseJsonObject(
+            "{${line.trim().removeSuffix(",")}}".reader()).string("code_string"))
+          seen.incrementAndGet()
+          val tokens = code.mapToUnquotedPythonTokens().tokenizeByWhitespace().map {
+            when (it) { "->" -> "arrow"; "|" -> "OR"; else -> it }
+          }
+          val unknown = tokens.filter { it !in alphabet }.toSet()
+          if (tokens.isEmpty() || unknown.isNotEmpty()) {
+            unknown.forEach { unsupported.incrementAndGet(it) }
+            skipped.incrementAndGet()
+            null
+          } else tokens.joinToString(" ").addNewLineIfMissing().charify()
+        }.filter { it != null }.forEachOrdered {
+          writer.appendLine(requireNotNull(it))
+          if (++written % 10_000 == 0) println("Wrote $written BIFI snippets ($skipped skipped)")
+        }
+      }
+    }
+    check(written > 0) { "No encodable snippets found in $datasetFile" }
+    Files.move(temporary, outputFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+  } finally {
+    Files.deleteIfExists(temporary)
+  }
+  println("Wrote $written/$seen natural snippets to $outputFile; skipped $skipped empty/unsupported snippets")
+  if (!unsupported.isEmpty) println("Unsupported tokens (snippet counts): ${unsupported.asMap().toSortedMap()}")
+  return outputFile
+}
+
 fun prepareRerankerDataset() {
   val training = File("so_ts_wfa.txt").apply { writeText("") }
   val validation =  File("so_vs_wfa.txt").apply { writeText("") }
@@ -745,6 +976,153 @@ fun prepareRerankerDataset() {
         (if (i++ % 10 == 0) validation else training).appendText(it)
       }
     }
+}
+
+/** Mine neural top-1k from a history-2 WDFA stream, pacing the full dataset toward ten hours.
+ * Writes so_{ts,vs}_later.txt in the working directory; rerunning resumes committed blocks.
+ * First batches may borrow time (at most one minute per instance), so ten hours is a soft target.
+ */
+fun prepareLaterRerankerDataset() {
+  val cfg = vanillaS2PCFG
+  val inputs = listOf("vs", "ts").associateWith { split ->
+    readWfaBlocks("so_${split}_wfa.txt").map { block ->
+      require(block.size >= 2)
+      block.take(2).also { pair -> pair.forEach { requireNotNull(decodeWfaLine(it)) } }
+    }
+  }
+  val outputs = inputs.keys.associateWith { File("so_${it}_later.txt") }
+  fun sha256(file: File): String {
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+    file.inputStream().buffered().use { input ->
+      val buffer = ByteArray(1024 * 1024)
+      while (true) { val n = input.read(buffer); if (n < 0) break; digest.update(buffer, 0, n) }
+    }
+    return digest.digest().joinToString("") { "%02x".format(it) }
+  }
+  val manifest = File("so_later.manifest")
+  val provenance = "late-neural-v1 history=2 alpha=1 radius=LED+2,max5 target_ms=36000000 max_instance_ms=60000 top=1000\n" +
+    listOf("so_ts_wfa.txt", "so_vs_wfa.txt", "bifi_good_code.txt", "scripts/reranker_v3/reranker_2000.js",
+      "scripts/reranker_v3/reranker_2000.q8.safetensors").joinToString("\n", postfix = "\n") { "$it ${sha256(File(it))}" } +
+    cfg.sortedBy { it.pretty() }.joinToString("\n", postfix = "\n") { it.pretty() }
+  if (manifest.exists()) require(manifest.readText() == provenance) { "Inputs/model changed since so_later was started" }
+  else {
+    require(outputs.values.none { it.exists() && it.length() > 0 }) { "Existing later dataset has no provenance manifest" }
+    manifest.writeText(provenance)
+  }
+  val completed = outputs.mapValues { (split, file) ->
+    if (!file.exists()) file.writeText("")
+    val text = file.readText()
+    val end = text.lastIndexOf("\n\n").let { if (it < 0) 0 else it + 2 }
+    val blocks = text.take(end).split("\n\n").filter(String::isNotBlank).map { it.lines() }
+    require(blocks.size <= inputs.getValue(split).size)
+    blocks.forEachIndexed { i, block ->
+      require(block.take(2) == inputs.getValue(split)[i]) { "Output/input mismatch: $split instance ${i + 1}" }
+      require(block.size <= 1002 && block.drop(2).distinct().size == block.size - 2)
+      block.drop(2).forEach { requireNotNull(decodeWfaLine(it)) }
+    }
+    if (end != text.length) java.io.RandomAccessFile(file, "rw").use { it.setLength(end.toLong()) }
+    blocks.size.also { println("Resume $split: $it/${inputs.getValue(split).size} complete -> ${file.absolutePath}") }
+  }
+  if (completed.all { (split, count) -> count == inputs.getValue(split).size }) return
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val model = run {
+    val encoded = File("bifi_good_code.txt").readLines().filter(String::isNotBlank)
+    val words = object : AbstractList<List<String>>() {
+      override val size = encoded.size
+      override fun get(index: Int) = requireNotNull(decodeWfaLine(encoded[index]))
+    }
+    println("Fitting history=2 WDFA on ${words.size} BIFI snippets")
+    buildPDFADFA(s2pg, 2).trainDFAParallel(words).also { it.tokenStartState() }
+  }
+  val progress = File("so_later_progress.csv")
+  if (!progress.exists()) progress.writeText("split,instance,scored,retained,gold_rank,elapsed_ms,status\n")
+  val progressText = progress.readText()
+  if (!progressText.endsWith('\n')) progress.writeText(progressText.take(progressText.lastIndexOf('\n') + 1))
+  var spentMs = progress.readLines().drop(1).filter(String::isNotBlank).sumOf { line ->
+    val fields = line.split(',')
+    if (fields.size == 7 && fields[1].toInt() <= completed.getValue(fields[0])) fields[5].toLong() else 0L
+  }
+  var remaining = inputs.values.sumOf { it.size } - completed.values.sum()
+  val profile = Files.createTempDirectory("cstk-later-chrome-").toFile()
+  val chromePath = if (System.getProperty("os.name").contains("Mac"))
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" else "google-chrome"
+  startRerankerServer(openBrowser = false)
+  val chrome = ProcessBuilder(chromePath, "--headless=new", "--enable-unsafe-webgpu", "--no-first-run",
+    "--no-default-browser-check", "--disable-background-timer-throttling", "--disable-renderer-backgrounding",
+    "--user-data-dir=${profile.absolutePath}", "http://127.0.0.1:8000/")
+    .redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.appendTo(File("so_later_browser.log")))
+    .let { builder ->
+      try { builder.start() }
+      catch (error: Exception) { stopRerankerServer(); profile.deleteRecursively(); throw error }
+    }
+  val cleanup = Thread { chrome.destroy(); stopRerankerServer() }
+  Runtime.getRuntime().addShutdownHook(cleanup)
+  try {
+    val warmup = inputs.getValue("vs").first().map { it.uncharify() }
+    scoreWGPU(warmup[0], List(64) { warmup[1] }, 120_000)
+    data class Candidate(val text: String, val score: Double, val ordinal: Long)
+    val bestFirst = compareByDescending<Candidate> { it.score }.thenBy { it.ordinal }
+    for (i in 0 until inputs.values.maxOf { it.size }) for ((split, pairs) in inputs) {
+      if (i < completed.getValue(split) || i >= pairs.size) continue
+      check(chrome.isAlive) { "Neural scorer browser exited; restart to resume" }
+      val pair = pairs[i]
+      val query = pair[0].uncharify()
+      val started = System.nanoTime()
+      val allowanceMs = ((36_000_000L - spentMs).coerceAtLeast(0) / remaining).coerceAtMost(60_000L)
+      val targetDeadline = started + allowanceMs * 1_000_000L
+      val hardDeadline = started + 60_000_000_000L
+      val top = PriorityQueue(bestFirst.reversed())
+      var scored = 0L
+      var status = "time_limit"
+      var lastBatchMs = 1000L
+      fun checkDeadline() {
+        if (System.nanoTime() >= hardDeadline) throw java.util.concurrent.TimeoutException("Instance budget exhausted")
+      }
+      try {
+        val repair = repairWithSparseGRE(query.tokenizeByWhitespace(), cfg, ::checkDeadline)
+          ?.toDFSMAntimirov(cfg.tmLst, checkDeadline = ::checkDeadline)
+        val candidates = repair?.repairsByWDFA(model, cfg.tmLst) {
+          if (scored == 0L) hardDeadline else targetDeadline
+        }?.iterator() ?: emptyList<Pair<List<String>, Double>>().iterator()
+        // Always try one complete batch; expensive constructions borrow from subsequent allowances.
+        while (System.nanoTime() < if (scored == 0L) hardDeadline else targetDeadline) {
+          val deadline = if (scored == 0L) hardDeadline else targetDeadline
+          val batch = ArrayList<String>(1024)
+          while (batch.size < 1024 && System.nanoTime() < deadline && candidates.hasNext())
+            batch.add(candidates.next().first.joinToString(" "))
+          if (batch.isEmpty()) { if (System.nanoTime() < deadline) status = "exhausted"; break }
+          val remainingMs = (deadline - System.nanoTime()) / 1_000_000
+          if (scored > 0 && remainingMs <= lastBatchMs + 50) break
+          if (remainingMs <= 0) break
+          val batchStarted = System.nanoTime()
+          val scores = scoreWGPU(query, batch, remainingMs)
+          if (System.nanoTime() >= deadline) throw java.util.concurrent.TimeoutException("Scoring budget exhausted")
+          check(scores.size == batch.size && scores.all(Double::isFinite))
+          lastBatchMs = (System.nanoTime() - batchStarted) / 1_000_000
+          batch.zip(scores).forEach { (text, score) ->
+            val candidate = Candidate(text, score, scored++)
+            if (top.size < 1000) top.add(candidate)
+            else if (bestFirst.compare(candidate, top.peek()) < 0) { top.poll(); top.add(candidate) }
+          }
+        }
+      } catch (_: java.util.concurrent.TimeoutException) { /* Keep only batches completed before the deadline. */ }
+      val retained = top.sortedWith(bestFirst).map { it.text.charify() }
+      check(retained.size <= 1000 && retained.distinct().size == retained.size)
+      val block = (pair + retained).joinToString("\n", postfix = "\n\n")
+      java.io.FileOutputStream(outputs.getValue(split), true).use { it.write(block.toByteArray()); it.fd.sync() }
+      val elapsedMs = (System.nanoTime() - started) / 1_000_000
+      spentMs += elapsedMs; remaining--
+      val goldRank = retained.indexOf(pair[1]).let { if (it < 0) "" else (it + 1).toString() }
+      progress.appendText("$split,${i + 1},$scored,${retained.size},$goldRank,$elapsedMs,$status\n")
+      println("LATER $split ${i + 1}/${pairs.size} | scored=$scored | kept=${retained.size} | gold_rank=$goldRank | " +
+        "${elapsedMs}ms / target ${allowanceMs}ms | $status | remaining=$remaining")
+    }
+  } finally {
+    Runtime.getRuntime().removeShutdownHook(cleanup)
+    chrome.destroy(); chrome.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
+    if (chrome.isAlive) chrome.destroyForcibly()
+    stopRerankerServer(); profile.deleteRecursively()
+  }
 }
 
 private fun readWfaBlocks(path: String, maxBlocks: Int? = null): List<List<String>> {
@@ -799,9 +1177,113 @@ private fun readWfaValidationPositives(
 private fun buildPDFADFA(cfg: CFG, history: Int): NFA {
   val h1 = cfg.toNederhofNFA(startSymbol = "START", historyDepth = history) { removeEpsilonsParallel() }
   println(h1.summary())
-  val d1 = h1.determinize()
+  val d1 = if (history > 2) h1.determinizeParallel(reportEvery = 10_000) else h1.determinize()
   println(d1.summary())
   return d1
+}
+
+private class PDFASizeLimit(message: String) : RuntimeException(message)
+
+/** Split reachable states by token suffix and a finite output feature; retain every base continuation. */
+private fun buildPDFADFAWithTokenHistory(
+  base: NFA, tokenHistory: Int = 2, featureStates: Int = 1,
+  nextFeature: (Int, String) -> Int = { state, _ -> state },
+  parentProjection: MutableMap<Int, Int>? = null, maxBytes: Long = 50_000_000
+): NFA {
+  require(tokenHistory >= 0) { "Token history must be nonnegative" }
+  require(featureStates > 0)
+  require(base.startStates.size <= 1) { "Token-history product requires a deterministic base" }
+  val clock = TimeSource.Monotonic.markNow()
+  val states = base.allStates.sorted()
+  val stateIds = states.withIndex().associate { (i, q) -> q to i }
+  val alphabet = base.transitions.values.asSequence().flatten().map {
+    requireNotNull(it.label) { "Token-history product requires an epsilon-free base" }
+  }.distinct().sorted().toList()
+  for ((q, edges) in base.transitions)
+    require(edges.map { it.label }.toSet().size == edges.size) { "Nondeterministic base state $q" }
+  val tokenIds = alphabet.withIndex().associate { (i, token) -> token to i + 1 }
+  val radix = alphabet.size.toLong() + 1
+  val stateCount = maxOf(1, states.size).toLong()
+  val featureStride = Math.multiplyExact(stateCount, featureStates.toLong())
+  var historyCapacity = 1L
+  repeat(tokenHistory) {
+    require(historyCapacity <= Long.MAX_VALUE / featureStride / radix) { "Token history exceeds packed Long capacity" }
+    historyCapacity *= radix
+  }
+  val suffixModulus = if (tokenHistory == 0) 1L else historyCapacity / radix
+  val ids = HashMap<Long, Int>()
+  val keys = ArrayList<Long>()
+  fun id(q: Int, history: Long, feature: Int): Int {
+    require(feature in 0 until featureStates)
+    val key = history * featureStride + feature * stateCount + stateIds.getValue(q)
+    return ids.getOrPut(key) {
+      check(keys.size < Int.MAX_VALUE) { "Token-history product exceeds Int state IDs" }
+      keys.add(key)
+      parentProjection?.put(keys.lastIndex, q)
+      keys.lastIndex
+    }
+  }
+  // Nonzero token digits distinguish empty and short prefixes without a separate length field.
+  val starts = base.startStates.mapTo(linkedSetOf()) { id(it, 0L, 0) }
+  val finals = HashSet<Int>()
+  val transitions = HashMap<Int, List<NFA.Edge>>()
+  var next = 0
+  var edgeCount = 0L
+  val headerBytes = 36L + alphabet.sumOf { 4L + it.toByteArray(Charsets.UTF_8).size }
+  while (next < keys.size) {
+    val current = next++
+    val key = keys[current]
+    val q = states[(key % stateCount).toInt()]
+    val history = key / featureStride
+    val feature = ((key / stateCount) % featureStates).toInt()
+    if (q in base.finalStates) finals.add(current)
+    val edges = base.transitions[q].orEmpty()
+    if (edges.isNotEmpty()) transitions[current] = edges.map { edge ->
+      val suffix = if (tokenHistory == 0) 0L
+        else (history % suffixModulus) * radix + tokenIds.getValue(edge.label!!)
+      NFA.Edge(edge.label, id(edge.target, suffix, nextFeature(feature, edge.label!!)))
+    }
+    edgeCount += edges.size
+    val bytes = headerBytes + 12L * keys.size + 16L * edgeCount
+    if (bytes > maxBytes) throw PDFASizeLimit("Reachable product exceeded $maxBytes bytes ($bytes so far)")
+  }
+  println("Token-history k=$tokenHistory, feature states=$featureStates product: ${states.size} -> ${keys.size} states, " +
+    "$edgeCount edges, built in ${clock.elapsedNow()}")
+  return NFA(starts, finals, transitions)
+}
+
+/** Research WDL8 v1: little-endian sparse rows and lossless Double log weights, not quantized WDFA. */
+private fun WFA.writeLosslessWDFA(file: File): Long {
+  require(startWeights.size == 1) { "Lossless WDFA requires exactly one start state" }
+  val states = allStates.sorted()
+  val stateIds = states.withIndex().associate { (i, q) -> q to i }
+  val rows = states.map { q ->
+    transitions[q].orEmpty().also { edges ->
+      require(edges.all { it.label != null }) { "Lossless WDFA requires epsilon-free transitions" }
+      require(edges.map { it.label }.toSet().size == edges.size) { "Nondeterministic state $q" }
+    }.sortedBy { it.label }
+  }
+  val labels = rows.asSequence().flatten().map { it.label!! }.distinct().sorted().toList()
+  val tokenIds = labels.withIndex().associate { (i, label) -> label to i }
+  val dictionary = labels.map { it.toByteArray(Charsets.UTF_8) }
+  val edgeCount = rows.sumOf { it.size.toLong() }
+  val byteCount = 36L + dictionary.sumOf { 4L + it.size } + 12L * states.size + 16L * edgeCount
+  require(byteCount <= Int.MAX_VALUE) { "Lossless WDFA exceeds ByteBuffer capacity: $byteCount bytes" }
+  val out = java.nio.ByteBuffer.allocate(byteCount.toInt()).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+  val start = startWeights.entries.single()
+  out.putInt(0x384C4457).putInt(1).putInt(states.size).putInt(edgeCount.toInt()).putInt(stateIds.getValue(start.key))
+  out.putLong(start.value.toRawBits()).putInt(labels.size)
+  for (token in dictionary) out.putInt(token.size).put(token)
+  for (q in states) out.putLong((finalWeights[q] ?: Double.NEGATIVE_INFINITY).toRawBits())
+  var offset = 0
+  for (row in rows) { out.putInt(offset); offset += row.size }
+  out.putInt(offset)
+  for (row in rows) for (edge in row) out.putInt(tokenIds.getValue(edge.label!!))
+  for (row in rows) for (edge in row) out.putInt(stateIds.getValue(edge.target))
+  for (row in rows) for (edge in row) out.putLong(edge.weight.toRawBits())
+  check(out.position().toLong() == byteCount && offset.toLong() == edgeCount)
+  file.writeBytes(out.array())
+  return file.length().also { check(it == byteCount) { "Incomplete lossless WDFA write: $it / $byteCount bytes" } }
 }
 
 fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
@@ -811,6 +1293,617 @@ fun trainPDFA(cfg: CFG = s2pg, history: Int = 2): WFA {
   println("Training on ${instances.size} total repairs and ${instances.sumOf { it.size }}")
 
   return d1.trainDFAParallel(instances)
+}
+
+private fun WFA.rankRepairLanguage(
+  repair: ai.hypergraph.kaliningraph.automata.DFSM, gold: List<String>,
+  terminalNames: List<String>, languageSize: BigInteger
+): java.math.BigDecimal {
+  val model = this
+  val sizes = mutableMapOf<String, BigInteger>()
+  fun size(q: String): BigInteger = sizes.getOrPut(q) {
+    (if (q in repair.F) BigInteger.ONE else BigInteger.ZERO) +
+      repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { sum, next -> sum + size(next) }
+  }
+  val target = model.scoreTokens(gold)
+  check(target.isFinite()) { "Nonfinite WFA score for ground truth" }
+  val bounds = mutableMapOf<Pair<String, Int>, Pair<Double, Double>>()
+  fun span(q: String, w: Int): Pair<Double, Double> = bounds.getOrPut(q to w) {
+    val stop = model.tokenFinalWeight(w)
+    var lo = if (q in repair.F) stop else Double.POSITIVE_INFINITY
+    var hi = if (q in repair.F) stop else Double.NEGATIVE_INFINITY
+    repair.deltaMap[q].orEmpty().forEach { (label, next) ->
+      if (size(next).signum() != 0) {
+        val edge = model.stepTokenState(w, terminalNames[label])
+        val (low, high) = span(next, edge.target)
+        lo = minOf(lo, edge.delta + low); hi = maxOf(hi, edge.delta + high)
+      }
+    }
+    lo to hi
+  }
+  val memo = mutableMapOf<Triple<String, Int, Double>, Pair<BigInteger, BigInteger>>()
+  // Count better and tied complete words; whole suffix languages can be counted at once.
+  // Bounds have conservative rounding slack; ties within 1e-9 receive their average rank.
+  fun count(q: String, w: Int, score: Double): Pair<BigInteger, BigInteger> {
+    if (size(q).signum() == 0) return BigInteger.ZERO to BigInteger.ZERO
+    val (lo, hi) = span(q, w)
+    if (score + hi < target - 1e-7) return BigInteger.ZERO to BigInteger.ZERO
+    if (score + lo > target + 1e-7) return size(q) to BigInteger.ZERO
+    return memo.getOrPut(Triple(q, w, score)) {
+      val delta = score + model.tokenFinalWeight(w) - target
+      var better = if (q in repair.F && delta > 1e-9) BigInteger.ONE else BigInteger.ZERO
+      var tied = if (q in repair.F && delta.absoluteValue <= 1e-9) BigInteger.ONE else BigInteger.ZERO
+      repair.deltaMap[q].orEmpty().forEach { (label, next) ->
+        val edge = model.stepTokenState(w, terminalNames[label])
+        val (b, t) = count(next, edge.target, score + edge.delta)
+        better += b; tied += t
+      }
+      better to tied
+    }
+  }
+  val (better, tied) = count(repair.q_alpha, model.tokenStartState(), model.tokenStartWeight())
+  check(tied.signum() > 0 && better + tied <= languageSize)
+  if (languageSize <= 10_000.toBigInteger()) {
+    val scores = mutableListOf<Double>()
+    val word = mutableListOf<String>()
+    fun enumerate(q: String) {
+      if (q in repair.F) scores.add(model.scoreTokens(word) - target)
+      repair.deltaMap[q].orEmpty().forEach { (label, next) ->
+        word.add(terminalNames[label]); enumerate(next); word.removeLast()
+      }
+    }
+    enumerate(repair.q_alpha)
+    check(scores.size.toBigInteger() == languageSize &&
+      scores.count { it > 1e-9 }.toBigInteger() == better &&
+      scores.count { it.absoluteValue <= 1e-9 }.toBigInteger() == tied)
+  }
+  return (better * BigInteger.TWO + tied + BigInteger.ONE).toBigDecimal().divide(2.toBigDecimal())
+}
+
+/** Compare both weight fits over complete Bar-Hillel repair languages, with no candidate shortlist. */
+fun compareWfaTrainingCorpora() {
+  val clock = TimeSource.Monotonic.markNow()
+  val alphabet = MakeMore.PyTokMap.mt
+  val decode = { text: String -> text.removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) } }
+  val dfa = buildPDFADFA(s2pg, 2)
+  val names = listOf("Synthetic repairs", "BIFI good code")
+  val models = names.mapIndexed { i, name ->
+    val encoded = if (i == 0) readWfaBlocks("so_ts_wfa.txt").filter { it.size >= 3 }.flatMap { it.drop(1) }
+      else File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+    println("Fitting $name on ${encoded.size} sequences (${"%.1f".format(clock.elapsedNow().inWholeMilliseconds / 1000.0)}s elapsed)")
+    // Decode on demand so millions of expanded token lists need not stay in memory.
+    val words = object : AbstractList<List<String>>() {
+      override val size = encoded.size
+      override fun get(index: Int) = decode(encoded[index])
+    }
+    dfa.trainDFAParallel(words).also { it.tokenStartState(); println("Fitted $name in ${clock.elapsedNow()} elapsed") }
+  }
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val cfg = vanillaS2PCFG
+  val groups = readWfaBlocks("so_vs_wfa.txt").map { it.take(2).map(decode) }
+  require(groups.isNotEmpty() && groups.all { it.size == 2 })
+  val csv = File("wfa_corpus_ranks.csv")
+  csv.writeText("instance,length,led,lev_radius,language_size,synthetic_rank,bifi_rank,status\n")
+  groups.forEachIndexed { i, (broken, gold) ->
+    val started = TimeSource.Monotonic.markNow()
+    // This is the same L(Python) ∩ Levenshtein-language construction as PythonBarHillelRepair.
+    val repair = sendCPU(broken.joinToString(" "), cfg)
+    val led = latestLangEditDistance
+    val radius = (led + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER)
+    val sizes = mutableMapOf<String, BigInteger>()
+    fun size(q: String): BigInteger = sizes.getOrPut(q) {
+      (if (q in repair!!.F) BigInteger.ONE else BigInteger.ZERO) +
+        repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { sum, next -> sum + size(next) }
+    }
+    val languageSize = repair?.let { size(it.q_alpha) } ?: BigInteger.ZERO
+    val present = repair?.recognizes(gold, cfg.tmLst) == true
+    val ranks = models.map { model ->
+      if (!present) return@map null
+      model.rankRepairLanguage(repair!!, gold, cfg.tmLst, languageSize)
+    }
+    val status = if (present) "ranked" else "outside_intersection"
+    csv.appendText(listOf(i + 1, broken.size, led, radius, languageSize,
+      ranks[0] ?: "", ranks[1] ?: "", status).joinToString(",") + "\n")
+    println("Intersection ${i + 1}/${groups.size} | words=$languageSize | ranks=$ranks | $status | ${started.elapsedNow()}")
+  }
+  renderWfaCorpusRanks()
+  println("Wrote wfa_corpus_ranks.csv and wfa_corpus_rank_cdf.{svg,pdf,png} in ${clock.elapsedNow()}")
+}
+
+/** Add PCFG and history-2 WDFA × PCFG probability ranks over the saved full repair languages. */
+fun addBifiPcfgRanks() {
+  val weights = trainBifiPCFG()
+  val alphabet = MakeMore.PyTokMap.mt
+  val encoded = File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+  val corpus = object : AbstractList<List<String>>() {
+    override val size = encoded.size
+    override fun get(index: Int) = encoded[index].removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) }
+  }
+  println("Fitting history=2 on ${corpus.size} BIFI snippets for WDFA × PCFG")
+  val model = buildPDFADFA(s2pg, 2).trainDFAParallel(corpus).also { it.tokenStartState() }
+  val cfg = vanillaS2PCFG
+  val csv = File("wfa_corpus_ranks.csv")
+  val lines = csv.readLines()
+  val columns = lines.first().split(',')
+  val originalColumns = columns.filterNot { it.startsWith("pcfg_") || it.startsWith("bifi_product_") }
+  val rows = lines.drop(1).filter(String::isNotBlank).map { columns.zip(it.split(',')).toMap() }
+  val groups = readWfaBlocks("so_vs_wfa.txt").map { block ->
+    block.take(2).map { requireNotNull(decodeWfaLine(it)) }
+  }
+  require(rows.size == groups.size && groups.all { it.size == 2 }) { "WFA CSV does not match the held-out set" }
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val output = File(csv.path + ".pcfg.tmp")
+  output.writeText((originalColumns + listOf("pcfg_rank", "pcfg_parse_trees", "pcfg_status",
+    "bifi_product_rank", "bifi_product_status")).joinToString(",") + "\n")
+  val clock = TimeSource.Monotonic.markNow()
+  groups.forEachIndexed { i, (broken, gold) ->
+    val started = TimeSource.Monotonic.markNow()
+    val row = rows[i]
+    require(row.getValue("instance").toInt() == i + 1 && row.getValue("length").toInt() == broken.size)
+    val repair = sendCPU(broken.joinToString(" "), cfg)
+    check(latestLangEditDistance == row.getValue("led").toInt() &&
+      (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER) == row.getValue("lev_radius").toInt()) {
+      "Repair radius changed in group ${i + 1}"
+    }
+    val sizes = mutableMapOf<String, BigInteger>()
+    fun size(q: String): BigInteger = sizes.getOrPut(q) {
+      (if (q in repair!!.F) BigInteger.ONE else BigInteger.ZERO) +
+        repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { sum, next -> sum + size(next) }
+    }
+    val words = repair?.let { size(it.q_alpha) } ?: BigInteger.ZERO
+    check(words == row.getValue("language_size").toBigInteger()) { "Repair language changed in group ${i + 1}" }
+    val present = repair?.recognizes(gold, cfg.tmLst) == true
+    check(present == (row.getValue("status") == "ranked")) { "Gold membership changed in group ${i + 1}" }
+    val sampler = repair?.let { IntersectionPCFGSampler(cfg, weights, it, cfg.tmLst) }
+    // Equal derivation/string counts certify unambiguity, hence PCFG string probability = tree probability.
+    check((sampler?.size ?: BigInteger.ZERO) == words) { "Ambiguous PCFG intersection in group ${i + 1}" }
+    val rank = if (present) sampler!!.probabilityRank(gold, words) else null
+    check((rank != null) == present)
+    if ("pcfg_rank" in row) check((rank?.toPlainString() ?: "") == row.getValue("pcfg_rank")) {
+      "PCFG baseline changed in group ${i + 1}"
+    }
+    val productRank = if (present) sampler!!.probabilityRank(gold, words, model) else null
+    check((productRank != null) == present)
+    val status = if (present) "ranked" else "outside_intersection"
+    output.appendText((originalColumns.map { row.getValue(it) } +
+      listOf(rank?.toPlainString() ?: "", sampler?.size ?: BigInteger.ZERO, status,
+        productRank?.toPlainString() ?: "", status)).joinToString(",") + "\n")
+    println("WDFA × PCFG ${i + 1}/${groups.size} | words=$words | pcfg=$rank | product=$productRank | $status | ${started.elapsedNow()}")
+  }
+  Files.move(output.toPath(), csv.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+    java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+  renderWfaCorpusRanks()
+  println("Added full-language PCFG and WDFA × PCFG ranks and rendered CDF in ${clock.elapsedNow()}")
+}
+
+/** Extend the saved comparison with the history-3 Nederhof WFA fitted to the same BIFI corpus. */
+fun addBifiHistory3Ranks() {
+  val clock = TimeSource.Monotonic.markNow()
+  val alphabet = MakeMore.PyTokMap.mt
+  val encoded = File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+  val words = object : AbstractList<List<String>>() {
+    override val size = encoded.size
+    override fun get(index: Int) = encoded[index].removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) }
+  }
+  val dfa = buildPDFADFA(s2pg, 3)
+  println("Fitting history=3 on ${words.size} BIFI snippets")
+  val model = dfa.trainDFAParallel(words).also { it.tokenStartState() }
+  println("Fitted history=3 in ${clock.elapsedNow()}")
+  val csv = File("wfa_corpus_ranks.csv")
+  val lines = csv.readLines()
+  val columns = lines.first().split(',')
+  val originalColumns = columns.filterNot { it.startsWith("bifi_h3_") }
+  val rows = lines.drop(1).filter(String::isNotBlank).map { columns.zip(it.split(',')).toMap() }
+  val groups = readWfaBlocks("so_vs_wfa.txt").map { block -> block.take(2).map { requireNotNull(decodeWfaLine(it)) } }
+  require(rows.size == groups.size && groups.all { it.size == 2 })
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val cfg = vanillaS2PCFG
+  val output = File(csv.path + ".h3.tmp")
+  output.writeText((originalColumns + listOf("bifi_h3_rank", "bifi_h3_status")).joinToString(",") + "\n")
+  groups.forEachIndexed { i, (broken, gold) ->
+    val started = TimeSource.Monotonic.markNow()
+    val row = rows[i]
+    require(row.getValue("instance").toInt() == i + 1 && row.getValue("length").toInt() == broken.size)
+    val repair = sendCPU(broken.joinToString(" "), cfg)
+    check(latestLangEditDistance == row.getValue("led").toInt() &&
+      (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER) == row.getValue("lev_radius").toInt())
+    val sizes = mutableMapOf<String, BigInteger>()
+    fun size(q: String): BigInteger = sizes.getOrPut(q) {
+      (if (q in repair!!.F) BigInteger.ONE else BigInteger.ZERO) +
+        repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { sum, next -> sum + size(next) }
+    }
+    val count = repair?.let { size(it.q_alpha) } ?: BigInteger.ZERO
+    check(count == row.getValue("language_size").toBigInteger()) { "Repair language changed in group ${i + 1}" }
+    val present = repair?.recognizes(gold, cfg.tmLst) == true
+    check(present == (row.getValue("status") == "ranked"))
+    val rank = if (present) model.rankRepairLanguage(repair!!, gold, cfg.tmLst, count) else null
+    val status = if (present) "ranked" else "outside_intersection"
+    output.appendText((originalColumns.map { row.getValue(it) } + listOf(rank?.toPlainString() ?: "", status))
+      .joinToString(",") + "\n")
+    println("History 3 ${i + 1}/${groups.size} | words=$count | rank=$rank | $status | ${started.elapsedNow()}")
+  }
+  Files.move(output.toPath(), csv.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+    java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+  renderWfaCorpusRanks()
+  println("Added history-3 ranks and rendered CDF in ${clock.elapsedNow()}")
+}
+
+/** Compare h=2 with its exact two-token-history refinement, using the same corpus and repair languages. */
+fun addBifiTokenHistoryRanks() {
+  val clock = TimeSource.Monotonic.markNow()
+  val alphabet = MakeMore.PyTokMap.mt
+  val encoded = File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+  val corpus = object : AbstractList<List<String>>() {
+    override val size = encoded.size
+    override fun get(index: Int) = encoded[index].removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) }
+  }
+  val (base, baseBuildTime) = measureTimedValue { buildPDFADFA(s2pg, 2) }
+  val (refined, refineTime) = measureTimedValue { buildPDFADFAWithTokenHistory(base, tokenHistory = 2) }
+  val automata = listOf(base, refined)
+  val names = listOf("BIFI h=2", "BIFI h=2 + token history=2")
+  val fits = automata.mapIndexed { i, dfa ->
+    println("Fitting ${names[i]} on ${corpus.size} BIFI snippets; ${dfa.summary()}")
+    measureTimedValue { dfa.trainDFAParallel(corpus).also { it.tokenStartState() } }
+      .also { println("Fitted ${names[i]} in ${it.duration}") }
+  }
+  val models = fits.map { it.value }
+  val csv = File("wfa_corpus_ranks.csv")
+  val lines = csv.readLines()
+  val columns = lines.first().split(',')
+  val originalColumns = columns.filterNot { it.startsWith("bifi_tok2_") || it.startsWith("bench_") }
+  val rows = lines.drop(1).filter(String::isNotBlank).map { columns.zip(it.split(',')).toMap() }
+  val groups = readWfaBlocks("so_vs_wfa.txt").map { block -> block.take(2).map { requireNotNull(decodeWfaLine(it)) } }
+  require(rows.size == groups.size && groups.all { it.size == 2 })
+  // Compile and warm scoring before measuring retrieval. The first intersection warms both decoders too.
+  repeat(3) { groups.take(100).forEach { (_, gold) -> models.forEach { it.scoreTokens(gold) } } }
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val cfg = vanillaS2PCFG
+  val output = File(csv.path + ".tok2.tmp")
+  val extraColumns = listOf("bifi_tok2_rank", "bifi_tok2_status", "bench_intersection_ms",
+    "bench_bifi_top1000_ms", "bench_tok2_top1000_ms", "bench_bifi_rank_ms", "bench_tok2_rank_ms",
+    "bench_bifi_returned", "bench_tok2_returned")
+  output.writeText((originalColumns + extraColumns).joinToString(",") + "\n")
+  val decodeTimes = Array(2) { mutableListOf<Double>() }
+  val rankTimes = Array(2) { mutableListOf<Double>() }
+  val intersectionTimes = mutableListOf<Double>()
+  var warmed = false
+  groups.forEachIndexed { i, (broken, gold) ->
+    val row = rows[i]
+    require(row.getValue("instance").toInt() == i + 1 && row.getValue("length").toInt() == broken.size)
+    val (repair, constructionTime) = measureTimedValue { sendCPU(broken.joinToString(" "), cfg) }
+    check(latestLangEditDistance == row.getValue("led").toInt() &&
+      (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER) == row.getValue("lev_radius").toInt())
+    val sizes = mutableMapOf<String, BigInteger>()
+    fun size(q: String): BigInteger = sizes.getOrPut(q) {
+      (if (q in repair!!.F) BigInteger.ONE else BigInteger.ZERO) +
+        repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { sum, next -> sum + size(next) }
+    }
+    val count = repair?.let { size(it.q_alpha) } ?: BigInteger.ZERO
+    check(count == row.getValue("language_size").toBigInteger()) { "Repair language changed in group ${i + 1}" }
+    val present = repair?.recognizes(gold, cfg.tmLst) == true
+    check(present == (row.getValue("status") == "ranked"))
+    val timings = DoubleArray(2)
+    val returned = IntArray(2)
+    if (repair != null) {
+      fun decode(model: WFA) = repair.repairsByWDFA(model, cfg.tmLst) { Long.MAX_VALUE }.take(1000).toList()
+      if (!warmed) { models.forEach { decode(it) }; warmed = true }
+      // Alternate order; each of three repetitions starts with a fresh suffix cache.
+      for (m in if (i % 2 == 0) listOf(0, 1) else listOf(1, 0)) {
+        val samples = List(3) {
+          val (top, duration) = measureTimedValue { decode(models[m]) }
+          check(top.size.toBigInteger() == minOf(count, 1000.toBigInteger()))
+          check(top.map { it.first }.toSet().size == top.size)
+          check(top.zipWithNext().all { (a, b) -> a.second >= b.second - 1e-9 })
+          if (top.isNotEmpty()) check((top.first().second - models[m].scoreTokens(top.first().first)).absoluteValue < 1e-9)
+          returned[m] = top.size
+          duration.inWholeNanoseconds / 1e6
+        }
+        timings[m] = samples.sorted()[1]
+      }
+    }
+    val ranks = models.mapIndexed { m, model ->
+      val (rank, duration) = measureTimedValue {
+        if (present) model.rankRepairLanguage(repair!!, gold, cfg.tmLst, count) else null
+      }
+      rankTimes[m].add(duration.inWholeNanoseconds / 1e6)
+      rank
+    }
+    check((ranks[0]?.toPlainString() ?: "") == row.getValue("bifi_rank")) { "BIFI baseline changed in group ${i + 1}" }
+    val status = if (present) "ranked" else "outside_intersection"
+    val constructionMs = constructionTime.inWholeNanoseconds / 1e6
+    intersectionTimes.add(constructionMs)
+    models.indices.forEach { decodeTimes[it].add(timings[it]) }
+    output.appendText((originalColumns.map { row.getValue(it) } + listOf(ranks[1]?.toPlainString() ?: "", status,
+      constructionMs, timings[0], timings[1], rankTimes[0].last(), rankTimes[1].last(), returned[0], returned[1]))
+      .joinToString(",") + "\n")
+    println("Token history ${i + 1}/${groups.size} | words=$count | ranks=$ranks | " +
+      "top1k_ms=${timings.toList()} | intersection_ms=$constructionMs | ${clock.elapsedNow()}")
+  }
+  Files.move(output.toPath(), csv.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+    java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+  val benchmark = File("wfa_corpus_ranks_benchmark.csv")
+  benchmark.writeText("model,corpus_snippets,states,transitions,build_ms,fit_ms,instances,mean_top1000_ms," +
+    "median_top1000_ms,p95_top1000_ms,mean_rank_ms,mean_intersection_ms\n")
+  models.indices.forEach { m ->
+    val times = decodeTimes[m].sorted()
+    val buildTime = if (m == 0) baseBuildTime else baseBuildTime + refineTime
+    benchmark.appendText(listOf(names[m], corpus.size, automata[m].allStates.size,
+      automata[m].transitions.values.sumOf { it.size }, buildTime.inWholeNanoseconds / 1e6,
+      fits[m].duration.inWholeNanoseconds / 1e6, groups.size, times.average(), times[times.size / 2],
+      times[kotlin.math.ceil(times.size * .95).toInt() - 1], rankTimes[m].average(), intersectionTimes.average())
+      .joinToString(",") + "\n")
+  }
+  renderWfaCorpusRanks()
+  println(benchmark.readText())
+  println("Added token-history ranks and retrieval benchmarks in ${clock.elapsedNow()}")
+}
+
+private data class BifiWdfaTrial(
+  val key: String, val label: String, val model: WFA, val build: Duration, val fit: Duration,
+  var losslessBytes: Long = 0, var packedBytes: Long = 0,
+  val ranks: MutableList<Double> = mutableListOf(), val decodeMs: MutableList<Double> = mutableListOf(),
+  val rankMs: MutableList<Double> = mutableListOf(), val goldHits: MutableList<Boolean> = mutableListOf()
+)
+
+/** Scale token context with h=2 fixed: 4/5-grams remember the previous 3/4 tokens respectively.
+ * Both use the same trigram prior, so the existing fourgram is an exact reproducibility baseline. */
+fun addBifiNgramRanks() {
+  val limit = 500_000_000L
+  val encoded = File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+  val alphabet = MakeMore.PyTokMap.mt
+  val corpus = object : AbstractList<List<String>>() {
+    override val size = encoded.size
+    override fun get(index: Int) = encoded[index].removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) }
+  }
+  val (trigram, baseBuild) = measureTimedValue { buildPDFADFAWithTokenHistory(buildPDFADFA(s2pg, 2), 2) }
+  val parent = trigram.trainDFAParallel(corpus)
+  val prior = parent.transitions.mapValues { (_, edges) -> edges.associate { it.label to kotlin.math.exp(it.weight) } }
+  val trials = listOf(4 to "fourgram", 5 to "fivegram").map { (order, key) ->
+    val projection = HashMap<Int, Int>()
+    val (dfa, build) = measureTimedValue {
+      buildPDFADFAWithTokenHistory(trigram, order - 1, parentProjection = projection, maxBytes = limit)
+    }
+    println("Fitting h2 + $order-gram on ${corpus.size} snippets; ${dfa.summary()}")
+    val (model, fit) = measureTimedValue {
+      dfa.trainDFAParallel(corpus, priorProbability = { q, token ->
+        val p = projection.getValue(q)
+        if (token == null) kotlin.math.exp(parent.finalWeights.getValue(p)) else prior.getValue(p).getValue(token)
+      }).also { it.tokenStartState() }
+    }
+    println("Fitted h2 + $order-gram in $fit")
+    BifiWdfaTrial(key, "h2 + $order-gram", model, baseBuild + build, fit)
+  }
+  benchmarkBifiWdfas(trials, corpus.size, limit, "ngram_intersection_ms")
+}
+
+/** Fixed unconditional state refinements, with a 50 MB lossless-model limit and trigram pseudocounts. */
+fun addBifiStateRefinementRanks() {
+  val clock = TimeSource.Monotonic.markNow()
+  val limit = 50_000_000L
+  val encoded = File("bifi_good_code.txt").useLines { it.filter(String::isNotBlank).toList() }
+  val alphabet = MakeMore.PyTokMap.mt
+  val corpus = object : AbstractList<List<String>>() {
+    override val size = encoded.size
+    override fun get(index: Int) = encoded[index].removePrefix("|").removeSuffix("}").map { alphabet.getValue(it) }
+  }
+  val (trigram, baseBuild) = measureTimedValue { buildPDFADFAWithTokenHistory(buildPDFADFA(s2pg, 2), 2) }
+  val (parent, baseFit) = measureTimedValue { trigram.trainDFAParallel(corpus).also { it.tokenStartState() } }
+  val prior = parent.transitions.mapValues { (_, edges) -> edges.associate { it.label to kotlin.math.exp(it.weight) } }
+  val assignments = setOf("=", "+=", "-=", "*=", "/=", "//=", "%=", "**=", "&=", "|=", "^=", ">>=", "<<=")
+  fun statement(state: Int, token: String): Int = when {
+    token == "NEWLINE" || token == ";" -> 0
+    token == "INDENT" || token == "DEDENT" -> state
+    state == 0 -> when (token) {
+      "return", "yield" -> 2
+      "import", "from", "global", "nonlocal" -> 3
+      "if", "elif", "else", "for", "while", "try", "except", "finally", "with", "match", "case" -> 4
+      "def", "class", "async" -> 5
+      "raise", "assert" -> 6
+      else -> 1
+    }
+    state == 1 && token in assignments -> 7
+    else -> state
+  }
+  fun keyword(state: Int, token: String): Int = when (token) {
+    "NEWLINE", ";" -> 0
+    "for", "in" -> 1
+    "if", "elif", "else" -> 2
+    "lambda" -> 3
+    "and", "or", "not" -> 4
+    "import", "from", "as" -> 5
+    "def", "class", "return", "yield", "raise" -> 6
+    else -> state
+  }
+  fun depth(state: Int, token: String): Int = when (token) {
+    "NEWLINE" -> 0
+    "(", "[", "{" -> (state + 1) % 4
+    ")", "]", "}" -> (state + 3) % 4
+    else -> state
+  }
+  val trials = mutableListOf(BifiWdfaTrial("trigram", "h2 + trigram", parent, baseBuild, baseFit))
+  fun add(key: String, label: String, history: Int = 0, states: Int = 1, update: (Int, String) -> Int = { s, _ -> s }) {
+    val projection = HashMap<Int, Int>()
+    try {
+      val (dfa, build) = measureTimedValue {
+        buildPDFADFAWithTokenHistory(trigram, history, states, update, projection, limit)
+      }
+      println("Fitting $label on ${corpus.size} snippets; ${dfa.summary()}")
+      val (model, fit) = measureTimedValue {
+        dfa.trainDFAParallel(corpus, priorProbability = { q, token ->
+          val p = projection.getValue(q)
+          if (token == null) kotlin.math.exp(parent.finalWeights.getValue(p)) else prior.getValue(p).getValue(token)
+        }).also { it.tokenStartState() }
+      }
+      trials.add(BifiWdfaTrial(key, label, model, baseBuild + build, fit))
+      println("Fitted $label in $fit")
+    } catch (e: PDFASizeLimit) { println("Skipping $label: ${e.message}") }
+  }
+  add("fourgram", "h2 + 4-gram", history = 3)
+  add("statement", "trigram + statement mode", states = 8, update = ::statement)
+  add("keyword", "trigram + recent keyword", states = 7, update = ::keyword)
+  add("depth", "trigram + bracket depth mod 4", states = 4, update = ::depth)
+  add("statement_depth", "trigram + coarse statement + depth", states = 20, update = { s, t ->
+    val mode = when (val next = statement(s / 4, t)) { 5 -> 4; 6 -> 2; 7 -> 1; else -> next }
+    mode * 4 + depth(s % 4, t)
+  })
+  benchmarkBifiWdfas(trials, corpus.size, limit, "ref_intersection_ms")
+  println("State-refinement training and comparison finished in ${clock.elapsedNow()}")
+}
+
+/** Append model results while retaining earlier experiments; time fresh-cache exact top-1k decoding. */
+private fun benchmarkBifiWdfas(
+  trials: List<BifiWdfaTrial>, corpusSize: Int, limit: Long, intersectionColumn: String
+) {
+  val clock = TimeSource.Monotonic.markNow()
+  val directory = File("models/wdfa_refinements").also { it.mkdirs() }
+  trials.forEach { trial ->
+    trial.losslessBytes = trial.model.writeLosslessWDFA(File(directory, "${trial.key}.wdfa64"))
+    val packed = File(directory, "${trial.key}.bin")
+    trial.model.writeWDFA(packed.path, s2pg)
+    trial.packedBytes = packed.length()
+    check(trial.losslessBytes < limit && trial.packedBytes < limit)
+    println("${trial.label}: ${trial.model.summary()}, lossless=${trial.losslessBytes}, compact=${trial.packedBytes} bytes")
+  }
+  val csv = File("wfa_corpus_ranks.csv")
+  val lines = csv.readLines()
+  val columns = lines.first().split(',')
+  val original = columns.filterNot { column ->
+    column == intersectionColumn || trials.any { column.startsWith("ref_${it.key}_") }
+  }
+  val rows = lines.drop(1).filter(String::isNotBlank).map { columns.zip(it.split(',')).toMap() }
+  val groups = readWfaBlocks("so_vs_wfa.txt").map { block -> block.take(2).map { requireNotNull(decodeWfaLine(it)) } }
+  check(rows.size == groups.size && groups.size == 723)
+  val output = File(csv.path + ".refinements.tmp")
+  output.writeText((original + intersectionColumn + trials.flatMap {
+    listOf("ref_${it.key}_rank", "ref_${it.key}_top1000_ms", "ref_${it.key}_rank_ms", "ref_${it.key}_gold_in_top1000")
+  }).joinToString(",") + "\n")
+  repeat(3) { groups.take(100).forEach { (_, gold) -> trials.forEach { it.model.scoreTokens(gold) } } }
+  MAX_RADIUS = 3; LED_BUFFER = 2
+  val cfg = vanillaS2PCFG
+  val constructionMs = mutableListOf<Double>()
+  groups.forEachIndexed { i, (broken, gold) ->
+    val row = rows[i]
+    check(row.getValue("instance").toInt() == i + 1 && row.getValue("length").toInt() == broken.size)
+    val (repair, elapsed) = measureTimedValue { sendCPU(broken.joinToString(" "), cfg) }
+    constructionMs.add(elapsed.inWholeNanoseconds / 1e6)
+    check(latestLangEditDistance == row.getValue("led").toInt() &&
+      (latestLangEditDistance + LED_BUFFER).coerceAtMost(MAX_RADIUS + LED_BUFFER) == row.getValue("lev_radius").toInt())
+    val sizes = mutableMapOf<String, BigInteger>()
+    fun size(q: String): BigInteger = sizes.getOrPut(q) {
+      (if (q in repair!!.F) BigInteger.ONE else BigInteger.ZERO) +
+        repair.deltaMap[q].orEmpty().values.fold(BigInteger.ZERO) { total, next -> total + size(next) }
+    }
+    val count = repair?.let { size(it.q_alpha) } ?: BigInteger.ZERO
+    check(count == row.getValue("language_size").toBigInteger())
+    val present = repair?.recognizes(gold, cfg.tmLst) == true
+    check(present == (row.getValue("status") == "ranked"))
+    fun decode(model: WFA) = repair!!.repairsByWDFA(model, cfg.tmLst) { Long.MAX_VALUE }.take(1000).toList()
+    if (i == 0 && repair != null) trials.forEach { decode(it.model) }
+    // Rotate model order. Every timed call rebuilds suffix scores; rank counting is timed separately.
+    for (offset in trials.indices) {
+      val trial = trials[(i + offset) % trials.size]
+      var goldHit = false
+      val samples = List(3) { repetition ->
+        val (top, duration) = measureTimedValue { if (repair == null) emptyList() else decode(trial.model) }
+        check(top.size.toBigInteger() == minOf(count, 1000.toBigInteger()))
+        check(top.map { it.first }.toSet().size == top.size)
+        check(top.zipWithNext().all { (a, b) -> a.second >= b.second - 1e-9 })
+        if (top.isNotEmpty()) check((top.first().second - trial.model.scoreTokens(top.first().first)).absoluteValue < 1e-9)
+        val hit = top.any { it.first == gold }
+        if (repetition == 0) goldHit = hit else check(hit == goldHit)
+        duration.inWholeNanoseconds / 1e6
+      }
+      trial.decodeMs.add(samples.sorted()[1])
+      trial.goldHits.add(goldHit)
+    }
+    val rankStrings = trials.map { trial ->
+      val (rank, duration) = measureTimedValue {
+        if (present) trial.model.rankRepairLanguage(repair!!, gold, cfg.tmLst, count) else null
+      }
+      trial.rankMs.add(duration.inWholeNanoseconds / 1e6)
+      if (rank != null) trial.ranks.add(rank.toDouble())
+      rank?.toPlainString() ?: ""
+    }
+    trials.forEachIndexed { m, trial ->
+      val previous = row["ref_${trial.key}_rank"] ?: if (trial.key == "trigram") row["bifi_tok2_rank"] else null
+      if (previous != null) check(rankStrings[m] == previous) { "${trial.key} baseline changed at ${i + 1}" }
+      row["ref_${trial.key}_gold_in_top1000"]?.let { previousHit ->
+        check(trial.goldHits.last().toString() == previousHit) { "${trial.key} top-1k changed at ${i + 1}" }
+      }
+    }
+    output.appendText((original.map { row.getValue(it) } + constructionMs.last() + trials.indices.flatMap { m ->
+      listOf(rankStrings[m], trials[m].decodeMs.last(), trials[m].rankMs.last(), trials[m].goldHits.last())
+    }).joinToString(",") + "\n")
+    println("Refinements ${i + 1}/${groups.size} | ranks=$rankStrings | top1k_ms=${trials.map { it.decodeMs.last() }} | ${clock.elapsedNow()}")
+  }
+  Files.move(output.toPath(), csv.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+    java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+  val benchmark = File("wfa_corpus_refinements.csv")
+  val header = ("key,model,corpus_snippets,states,transitions,lossless_bytes,compact_bytes,build_ms,incremental_fit_ms," +
+    "instances,average_tie_hit1000,average_tie_hit1000_percent,mean_rank,median_rank,mrr,mean_top1000_ms,median_top1000_ms,p95_top1000_ms," +
+    "mean_rank_ms,mean_intersection_ms,actual_hit1000,actual_hit1000_percent")
+  val summaries = linkedMapOf<String, String>()
+  if (benchmark.exists()) {
+    val previous = benchmark.readLines()
+    check(previous.first() == header)
+    previous.drop(1).filter(String::isNotBlank).forEach { summaries[it.substringBefore(',')] = it }
+  }
+  trials.forEach { trial ->
+    val times = trial.decodeMs.sorted()
+    val ranks = trial.ranks.sorted()
+    val hits = ranks.count { it <= 1000 }
+    val medianRank = (ranks[(ranks.size - 1) / 2] + ranks[ranks.size / 2]) / 2
+    summaries[trial.key] = listOf(trial.key, trial.label, corpusSize, trial.model.allStates.size,
+      trial.model.transitions.values.sumOf { it.size }, trial.losslessBytes, trial.packedBytes,
+      trial.build.inWholeNanoseconds / 1e6, trial.fit.inWholeNanoseconds / 1e6, groups.size,
+      hits, 100.0 * hits / groups.size, ranks.average(), medianRank, ranks.sumOf { 1 / it } / groups.size,
+      times.average(), times[times.size / 2], times[kotlin.math.ceil(times.size * .95).toInt() - 1],
+      trial.rankMs.average(), constructionMs.average(), trial.goldHits.count { it },
+      100.0 * trial.goldHits.count { it } / groups.size).joinToString(",")
+  }
+  benchmark.writeText(header + "\n" + summaries.values.joinToString("\n", postfix = "\n"))
+  renderWfaCorpusRanks()
+  println(benchmark.readText())
+  println("WDFA comparison finished in ${clock.elapsedNow()}")
+}
+
+private fun renderWfaCorpusRanks() {
+  val plot = """
+    import csv, pathlib, numpy as np, matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    with open('wfa_corpus_ranks.csv') as f: rows = list(csv.DictReader(f))
+    series = [('synthetic_rank', 'WFA h=2: synthetic repairs', '#d95f02'),
+              ('bifi_rank', 'WFA h=2: BIFI good code', '#2457a7')]
+    if 'pcfg_rank' in rows[0]: series.append(('pcfg_rank', 'PCFG: BIFI good code', '#238b45'))
+    if 'bifi_h3_rank' in rows[0]: series.append(('bifi_h3_rank', 'WFA h=3: BIFI good code', '#8b3fb0'))
+    if 'bifi_product_rank' in rows[0]: series.append(('bifi_product_rank', 'WDFA h=2 × PCFG: BIFI good code', '#c42b35'))
+    if 'bifi_tok2_rank' in rows[0]: series.append(('bifi_tok2_rank', 'WDFA h=2 + previous 2 tokens: BIFI', '#008b8b'))
+    if pathlib.Path('wfa_corpus_refinements.csv').exists():
+        with open('wfa_corpus_refinements.csv') as f: refinements = list(csv.DictReader(f))
+        colors = ['#e377c2', '#8c564b', '#7f7f7f', '#bcbd22', '#17becf', '#111111']
+        for r, color in zip([r for r in refinements if r['key'] != 'trigram'], colors):
+            col = 'ref_' + r['key'] + '_rank'
+            if col in rows[0]: series.append((col, r['model'], color))
+    xmax = max([10.] + [float(r[c]) for r in rows for c, _, _ in series if r[c]]) * 1.05
+    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    for col, label, color in series:
+        ranks = np.sort([float(row[col]) for row in rows if row[col]])
+        mean = ranks.mean() if len(ranks) else float('nan')
+        print(f'{label}: retrieved={len(ranks)}/{len(rows)}, mean rank (retrieved)={mean:.3f}, '
+              f'MRR={sum(1/ranks)/len(rows):.5f}, hit@10={100*sum(ranks <= 10)/len(rows):.2f}%, '
+              f'hit@1000={100*sum(ranks <= 1000)/len(rows):.2f}%')
+        ax.step(np.r_[1, ranks, xmax], np.r_[0, 100*np.arange(1, len(ranks)+1)/len(rows), 100*len(ranks)/len(rows)],
+                where='post', color=color, label=f'{label} (mean retrieved rank {mean:,.1f})')
+    ax.set(xscale='log', xlim=(1, xmax), ylim=(0, 100),
+           xlabel='Ground-truth rank in intersection (log scale; average ties)',
+           ylabel='Test set retrieved at or before rank (%)',
+           title=f'Full repair-language ranks (N={len(rows)})')
+    ax.grid(True, which='both', alpha=.2)
+    ax.legend(loc='lower right', fontsize=8)
+    for ext in ('svg', 'pdf', 'png'): fig.savefig(f'wfa_corpus_rank_cdf.{ext}', dpi=180)
+  """.trimIndent()
+  check(ProcessBuilder("python", "-c", plot).inheritIO().start().waitFor() == 0) { "Rank CDF plotting failed" }
 }
 
 data class PDFARefinementConfig(
@@ -1746,4 +2839,72 @@ fun Sequence<Σᐩ>.train(csv: File) {
       .also { csv.also { println("Writing CSV to ${it.absolutePath}") }.writeText(it.toCSV()) }
   }.let { println("Trained $MARKOV_MEMORY-gram Markov chain on ${it.value.counter.total.get()} " +
       "PY150 tokens in ${it.duration.inWholeSeconds}s"); it.value }
+}
+
+/** Streams an acyclic repair DFA's distinct words in descending WDFA log probability, including STOP. */
+fun ai.hypergraph.kaliningraph.automata.DFSM.repairsByWDFA(
+  model: WFA, terminalNames: List<String>, deadlineNanos: () -> Long
+): Sequence<Pair<List<String>, Double>> = sequence {
+  class Deadline : RuntimeException()
+  fun checkDeadline() { if (System.nanoTime() - deadlineNanos() >= 0) throw Deadline() }
+  data class Prefix(val previous: Prefix?, val terminal: Int, val depth: Int)
+  data class Path(
+    val state: String, val weightedState: Int, val score: Double, val prefix: Prefix?,
+    val complete: Boolean, val bound: Double, val order: Long
+  )
+  val suffixScores = HashMap<Pair<String, Int>, Double>()
+  fun bestSuffix(state: String, weightedState: Int): Double {
+    checkDeadline()
+    val key = state to weightedState
+    suffixScores[key]?.let { return it }
+    var best = if (state in F) model.tokenFinalWeight(weightedState) else Double.NEGATIVE_INFINITY
+    for ((terminal, next) in deltaMap[state].orEmpty()) {
+      checkDeadline()
+      val step = model.stepTokenState(weightedState, terminalNames[terminal])
+      best = maxOf(best, step.delta + bestSuffix(next, step.target))
+    }
+    suffixScores[key] = best
+    return best
+  }
+  val queue = PriorityQueue(
+    compareByDescending<Path> { it.bound }
+      .thenByDescending { it.complete }
+      .thenByDescending { it.prefix?.depth ?: 0 }
+      .thenBy { it.order }
+  )
+  var order = 0L
+  try {
+    checkDeadline()
+    val start = model.tokenStartState()
+    val startScore = model.tokenStartWeight()
+    queue.add(Path(q_alpha, start, startScore, null, false, startScore + bestSuffix(q_alpha, start), order++))
+    while (queue.isNotEmpty()) {
+      checkDeadline()
+      val path = queue.remove()
+      if (path.complete) {
+        val tokens = ArrayList<String>(path.prefix?.depth ?: 0)
+        var prefix = path.prefix
+        while (prefix != null) {
+          tokens.add(terminalNames[prefix.terminal])
+          prefix = prefix.previous
+        }
+        tokens.reverse()
+        yield(tokens to path.score)
+        continue
+      }
+      if (path.state in F) {
+        val score = path.score + model.tokenFinalWeight(path.weightedState)
+        queue.add(path.copy(score = score, complete = true, bound = score, order = order++))
+      }
+      for ((terminal, next) in deltaMap[path.state].orEmpty()) {
+        checkDeadline()
+        val step = model.stepTokenState(path.weightedState, terminalNames[terminal])
+        val score = path.score + step.delta
+        val prefix = Prefix(path.prefix, terminal, (path.prefix?.depth ?: 0) + 1)
+        queue.add(Path(next, step.target, score, prefix, false, score + bestSuffix(next, step.target), order++))
+      }
+    }
+  } catch (_: Deadline) {
+    // A caller can consume every candidate available before its shared per-instance deadline.
+  }
 }

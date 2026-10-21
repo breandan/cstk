@@ -1,5 +1,4 @@
 import numpy
-import time
 import heapq, itertools, collections, operator
 import json
 from functools import reduce
@@ -487,10 +486,10 @@ if __name__ == "__main__":
         except KeyError:
             pass
 
-    ranks = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288]
+    print("*** 1000th best sample:")
 
-    for k in ranks:
-        t0 = time.perf_counter()
-        deriv = result.derivation(k, earleytree)
-        us = (time.perf_counter() - t0) * 1e6
-        print(f"rank {k:>10,}: {us:8.1f} μs")
+    print(result.derivation(1_000, earleytree))
+
+    print("*** 10^6-th best sample:")
+
+    print(result.derivation(1_000_000, earleytree))
